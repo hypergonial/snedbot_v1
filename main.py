@@ -55,15 +55,21 @@ async def LEROY(ctx):
 #The TL;DR version of this command is the following: It DMs the user, asks them some questions,
 #evaluates the answers based on some criteria, then use those answers to construct a formatted
 #multiplayer listing, which will then in turn go into a preconfigured channel. It will also ping a
-#designated role if set.
-@bot.command(description="Start matchmaking! Takes no arguments.")
+#designated role if set. Can be limited as to which channels it can be run from via the COMMANDSCHANNEL setting.
+@bot.command(description="Start matchmaking! Takes no arguments.", aliases=['multiplayer', 'init'])
 @commands.guild_only()
-async def init(ctx):
-    #Defining the emojies that will be used.
+@commands.max_concurrency(1, per=commands.BucketType.member,wait=False)
+async def matchmaking(ctx):
+    cmdchannel = retrievesetting("COMMANDSCHANNEL", ctx.guild.id)
+    #Performs check if the command is executed in the right channel, if this is 0, this feature is disabled.
+    if cmdchannel != "0" :
+        if int(cmdchannel) != ctx.channel.id :
+            print("[WARN]: Matchmaking initiated in disabled channel.")
+            return
     mpsessiondata = []
     #Messaging the channel to provide feedback
+    #It sends these seperately to ideally grab the user's attention, but can be merged.
     await ctx.channel.send(f"Starting matchmaking for **{ctx.author.name}**. Check your DMs!")
-
     await ctx.author.send("**Hello! I will help you set up a multiplayer listing!**")
     #Sending initial DM
     msg = await ctx.author.send("Please type in your Ubisoft Connect username!")
@@ -108,7 +114,6 @@ async def init(ctx):
             await msg.delete()
             await ctx.author.send("Gamemode set to **Co-op**")
             mpsessiondata.append("Co-op")
-        #In the event that the emoji is not any of the above, we can eliminate an edge-case here
         else :
             await ctx.author.send("**Error:** Invalid reaction entered. Matchmaking cancelled.")
             return
@@ -150,7 +155,6 @@ async def init(ctx):
             await msg.delete()
             await ctx.author.send("Player count set to: **5 or more**")
             mpsessiondata.append("5 or more")
-        #In the event that the emoji is not any of the above, we can eliminate an edge-case here
         else :
             await ctx.author.send("**Error:** Invalid reaction entered. Matchmaking cancelled.")
             return
@@ -183,7 +187,6 @@ async def init(ctx):
         payload = await bot.wait_for('raw_reaction_add', timeout=60.0, check=confirmDLCcheck)
         #Check reaction emoji
         DLC = []
-        #DMC = ctx.author.DMChannel
         msg = await ctx.author.fetch_message(msgid)
         if msg.reactions[0].count == 2:
             DLC.append("The Anarchist")
@@ -205,31 +208,27 @@ async def init(ctx):
         if len(DLC) == 8:
             await msg.delete()
             await ctx.author.send(f"DLCs selected:**All**")
+            DLC = "All"
         elif len(DLC) == 0:
             await msg.delete()
             await ctx.author.send(f"DLCs selected:**None**")
+            DLC = "None"
         else:
             await msg.delete()
             await ctx.author.send(f"DLCs selected:**{DLC}**")
-        #In the event that the emoji is not any of the above, we can eliminate an edge-case here
-    #If we dont get a response within 60 seconds it times out.
+        
     except asyncio.TimeoutError:
         await ctx.author.send("**Error: **Timed out. Matchmaking cancelled.")
         return
-
+    #Add msg
     msg = await ctx.author.send("Are you going to use mods?")
-    #Saving the ID of this message we just sent
     msgid = msg.id
-
+    #Add emoji
     await msg.add_reaction("✅")
     await msg.add_reaction("❌")
 
-    #We create a function to check some properties of the payload
-    #We check if the message ID is the same, so this is not a different message.
-    #We also check if the user who reacted was the user who sent the command.
     def modcheck(payload):
         return payload.message_id == msgid and payload.user_id == ctx.author.id
-    #Now we will try to wait for a reaction add event for 60 seconds
     try:
         payload = await bot.wait_for('raw_reaction_add', timeout=60.0, check=modcheck)
         #Check reaction emoji
@@ -241,9 +240,10 @@ async def init(ctx):
             await msg.delete()
             mpsessiondata.append("No")
             await ctx.author.send("Modded: **No**")
+        else :
+            await ctx.author.send("**Error:** Invalid reaction entered. Matchmaking cancelled.")
+            return
 
-        #In the event that the emoji is not any of the above, we can eliminate an edge-case here
-    #If we dont get a response within 60 seconds it times out.
     except asyncio.TimeoutError:
         await ctx.author.send("**Error: **Timed out. Matchmaking cancelled.")
         return
@@ -344,14 +344,19 @@ async def init(ctx):
             await ctx.author.send("Cancelled matchmaking. If you have found a bug or experienced issues, please contact `Hyper#0001`!")
             print(f"[INFO]: {ctx.author} User cancelled matchmaking.")
             return
+        else :
+            await ctx.author.send("**Error:** Invalid reaction entered. Matchmaking cancelled.")
+            return
 
-        #In the event that the emoji is not any of the above, we can eliminate an edge-case here
     #If we dont get a response within 60 seconds it times out.
     except asyncio.TimeoutError:
         await ctx.author.send("**Error: **Timed out. Matchmaking cancelled.")
         return
 
-
+@matchmaking.error
+async def matchmaking_error(ctx, error):
+    if isinstance(error, commands.MaxConcurrencyReached):
+        await ctx.channel.send("**Error: ** You already have a matchmaking process in progress.")
 
 #Reaction roles for LFG
 @bot.event
@@ -409,7 +414,7 @@ def hasPriviliged(ctx):
     #Gets a list of all the roles the user has, then gets the name from that.
     userRoles = [x.name for x in ctx.author.roles]
     #Check if any of the roles in user's roles are contained in the priviliged roles.
-    return any(role in userRoles for role in checkprivs(ctx.guild.id))
+    return any(role in userRoles for role in checkprivs(ctx.guild.id)) or (ctx.author.id == creatorID or ctx.author.id == ctx.guild.owner_id)
 
 #Fun command, because yes. (Needs mod privilege as it can be abused for spamming)
 @bot.command(hidden = True, description = "Deploys the duck army.")
@@ -420,7 +425,7 @@ async def quack(ctx):
     await ctx.message.delete()
 
 #Commands used to add and/or remove other roles from executing potentially unwanted things
-@bot.command(hidden=True, aliases=['addprivrole', 'addbotadminrole'])
+@bot.command(hidden=True, aliases=['addprivrole', 'addbotadminrole'], description="Adds a role to the list of priviliged roles, allowing them to execute admin commands.")
 @commands.check(hasOwner)
 @commands.guild_only()
 async def addpriviligedrole(ctx, role):
@@ -430,7 +435,7 @@ async def addpriviligedrole(ctx, role):
         roles.append(role)
         rolesRaw = ",".join(roles)
         modifysettings("PRIVROLES", rolesRaw, ctx.guild.id)
-        await ctx.channel.send(f"[WIP] **{role}** has been granted bot admin priviliges.")
+        await ctx.channel.send(f"**{role}** has been granted bot admin priviliges.")
     else :
         await ctx.channel.send("**Error:** Role already added.")
 
@@ -439,7 +444,7 @@ async def addprivilegedrole_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.channel.send("**Error: ** Insufficient permissions.")
 
-@bot.command(hidden=True, aliases=['remprivrole', 'removeprivrole', 'removebotadminrole', 'rembotadminrole'])
+@bot.command(hidden=True, aliases=['remprivrole', 'removeprivrole', 'removebotadminrole', 'rembotadminrole'], description="Removes a role to the list of priviliged roles, revoking their permission to execute admin commands.")
 @commands.check(hasOwner)
 @commands.guild_only()
 async def removepriviligedrole(ctx,role):
@@ -449,10 +454,14 @@ async def removepriviligedrole(ctx,role):
         roles.remove(role)
         rolesRaw = ",".join(roles)
         modifysettings("PRIVROLES", rolesRaw, ctx.guild.id)
-        await ctx.channel.send(f"[WIP] **{role}** had it's bot admin priviliges revoked.")
+        await ctx.channel.send(f"**{role}** had it's bot admin priviliges revoked.")
     else :
         await ctx.channel.send("**Error:** Role not found.")
 
+@removepriviligedrole.error
+async def removeprivilegedrole_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.channel.send("**Error: ** Insufficient permissions.")
 
 
 #Ahh yes, the setup command... *instant PTSD*
@@ -462,6 +471,7 @@ async def removepriviligedrole(ctx,role):
 @bot.command(hidden=True, description = "Used to set up and configurate different parts of the bot. Only usable by priviliged users.")
 @commands.check(hasPriviliged)
 @commands.guild_only()
+@commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
 async def setup (ctx, setuptype):
     #This is the LFG setup variant, it will set up role reactions on either an existing message or a new one.
     #More setup variants may be added in the future
@@ -578,19 +588,62 @@ async def setup (ctx, setuptype):
                 except asyncio.TimeoutError:
                     await ctx.channel.send("**Error: **Timed out. Setup process cancelled.")
                     return
-                except ValueError:
-                    await ctx.channel.send("**Error: ** Invalid value. Setup process cancelled.")
-                    return
                 except commands.ChannelNotFound:
                     await ctx.channel.send("**Error: ** Unable to locate channel. Setup process cancelled.")
                     return
+            else :
+                await ctx.channel.send("**Error:** Invalid reaction. Setup process cancelled.")
+                return
         except asyncio.TimeoutError:
             await ctx.channel.send("**Error: **Timed out. Setup process cancelled.")
             return
+    #This setup will set up the !matchmaking command to work properly.
+    if setuptype == "matchmaking" or "Matchmaking" or "MATCHMAKING":
+        await ctx.channel.send("Initializing matchmaking setup...\nPlease mention a channel where users should send the command to start matchmaking! Type `disable` to disable this feature.")
+        try:
+            #Gathering info
+            def check(payload):
+                return payload.author == ctx.author and payload.channel.id == ctx.channel.id
+            payload = await bot.wait_for('message', timeout =60.0, check=check)
+            if payload.content == "disable":
+                cmdchannel = "0"
+                await ctx.channel.send("Commands channel **disabled.**")
+            else :
+                cmdchannel = await commands.TextChannelConverter().convert(ctx, payload.content)
+                await ctx.channel.send(f"Commands channel set to {cmdchannel.mention}")
+
+            await ctx.channel.send("Now please mention the channel where the multiplayer listings should go. If you already have LFG reaction roles set up, they will also be pinged once a listing goes live.")
+            payload = await bot.wait_for('message', timeout=60.0, check=check)
+            announcechannel = await commands.TextChannelConverter().convert(ctx, payload.content)
+            await ctx.channel.send(f"Multiplayer listings channel set to {announcechannel.mention}")
+
+            #Executing based on info
+
+            if cmdchannel == "0" :
+                modifysettings("COMMANDSCHANNEL", "0", ctx.guild.id)
+            else :
+                modifysettings("COMMANDSCHANNEL", str(cmdchannel.id), ctx.guild.id)
+            modifysettings("ANNOUNCECHANNEL", str(announcechannel.id), ctx.guild.id)
+            await ctx.channel.send("✅ Setup completed. Matchmaking set up!")
+
+        except commands.ChannelNotFound:
+            await ctx.channel.send("**Error:** Unable to locate channel. Setup process cancelled.")
+            return
+        except asyncio.TimeoutError:
+            await ctx.channel.send("**Error: **Timed out. Setup process cancelled.")
+            return
+
+
     else:
-        await ctx.channel.send("**Error:** Unable to find requested setup process.")
+        await ctx.channel.send("**Error:** Unable to find requested setup process. Valid setups: `LFG, matchmaking`.")
         return
 
+@setup.error
+async def setup_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.channel.send("**Error: ** Insufficient permissions.")
+    elif isinstance(error, commands.MaxConcurrencyReached):
+        await ctx.channel.send("**Error: ** Setup is already running.")
 
 #Command used for deleting a guild settings file
 @bot.command(hidden=True, description = "Resets all settings. Irreversible.")
@@ -612,8 +665,13 @@ async def resetsettings(ctx):
     except asyncio.TimeoutError:
         await ctx.channel.send("**Error:** Timed out. Settings preserved.")
 
+@resetsettings.error
+async def resetsettings_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.channel.send("**Error: ** Insufficient permissions.")
+
 #Display the current settings for this guild.
-@bot.command(hidden=True)
+@bot.command(hidden=True, description="Displays the settings for the current guild.")
 @commands.check(hasPriviliged)
 @commands.guild_only()
 async def settings(ctx):
@@ -624,8 +682,13 @@ async def settings(ctx):
         formatteddata = "".join(settingsdata)
         await ctx.channel.send(f"```Settings for guild {ctx.guild.id}: \n \n{formatteddata}```")
 
+@settings.error
+async def settings_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.channel.send("**Error: ** Insufficient permissions.")
+
 #Modify a value in the settings, use with care or it will break things
-@bot.command(hidden=True)
+@bot.command(hidden=True, description="Modifies a single value in the settings, can break things! Use !setup instead.")
 @commands.check(hasPriviliged)
 @commands.guild_only()
 async def modify(ctx, datatype, value) :
@@ -640,6 +703,11 @@ async def modify(ctx, datatype, value) :
         await ctx.channel.send("**Error: **Invalid value!")
     except:
         await ctx.channel.send("**Error: ** Unknown error encountered!")
+
+@modify.error
+async def modify_error(ctx, error):
+    if isinstance(error, commands.CheckFailure):
+        await ctx.channel.send("**Error: ** Insufficient permissions.")
 
 
 #
