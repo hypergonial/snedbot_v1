@@ -313,34 +313,40 @@ async def init(ctx):
         await ctx.author.send("**Error: **Timed out. Matchmaking cancelled.")
         return
 
-#Reaction roles (WIP)
+#Reaction roles
 @bot.event
 async def on_raw_reaction_add(payload):
     setmsg = retrievesetting("ROLEREACTMSG", payload.guild_id)
-    print("Started...")
     if int(setmsg) == payload.message_id :
-        print("Message match.")
-        print(str(payload.emoji) + " " + str(retrievesetting("LFGREACTEMOJI", payload.guild_id)))
-        if str(payload.emoji) == str(retrievesetting("LFGREACTEMOJI", payload.guild_id)):
-            print("Emoji match.")
-            user = bot.get_user(payload.user_id)
+        guild = bot.get_guild(payload.guild_id)
+        emoji = discord.utils.get(guild.emojis, name=retrievesetting("LFGREACTEMOJI", payload.guild_id))
+        if payload.emoji == emoji:
+            member = guild.get_member(payload.user_id)
             try:
-                Role = discord.utils.get(user.server.roles, name = retrievesetting("LFGREACTEMOJI", payload.guild_id))
-                await user.add_roles(user, Role)
-                print("Role granted.")
-                await user.send("You are now looking for games, and will be notified of any new multiplayer posting!")
+                role = discord.utils.get(guild.roles, name = retrievesetting("LFGROLENAME", payload.guild_id))
+                await member.add_roles(role)
+                print(f"[INFO]: Role {role} added to {member}")
+                await member.send("You are now looking for games, and will be notified of any new multiplayer listing!")
             except:
-                await user.send("**Error:** Server configuration error, contact an administrator! Unable to add role.")
-    else :
-        print("No match.")
+                await member.send("**Error:** Server configuration error, contact an administrator! Unable to add role.")
+                print(f"[ERROR]: Unable to modify roles for {member}. Possible permissions issue.")
 @bot.event
 async def on_raw_reaction_remove(payload):
     setmsg = retrievesetting("ROLEREACTMSG", payload.guild_id)
-    if setmsg == payload.message_id :
-        if str(payload.emoji) == retrievesetting("LFGREACTEMOJI", payload.guild_id):
-            user = bot.get_user(payload.user_id)
-            Role = discord.utils.get(user.server.roles, name = retrievesetting("LFGREACTEMOJI", payload.guild_id))
-            await user.remove_roles(user, Role)
+    if int(setmsg) == payload.message_id :
+        guild = bot.get_guild(payload.guild_id)
+        emoji = discord.utils.get(guild.emojis, name=retrievesetting("LFGREACTEMOJI", payload.guild_id))
+        if payload.emoji == emoji:
+            member = guild.get_member(payload.user_id)
+            try:
+                role = discord.utils.get(guild.roles, name = retrievesetting("LFGROLENAME", payload.guild_id))
+                await member.remove_roles(role)
+                print(f"[INFO]: Role {role} removed from {member}")
+                await member.send("You will no longer get notifications on multiplayer game listings.")
+            except:
+                await member.send("**Error:** Server configuration error, contact an administrator! Unable to remove role.")
+                print(f"[ERROR]: Unable to modify roles for {member}. Possible permissions issue.")
+
 #Notes: TODO: add a command to actually create a message and correctly set it up
 
 
@@ -355,6 +361,7 @@ async def settings(ctx):
         formatteddata = "".join(settingsdata)
         await ctx.channel.send(f"```Settings for guild {ctx.guild.id}: \n{formatteddata}```")
 
+#Modify a value in the settings, use with care or it will break things
 @bot.command(hidden=True)
 @commands.has_any_role("Moderator","Admin")
 async def modify(ctx, datatype, value) :
@@ -362,7 +369,7 @@ async def modify(ctx, datatype, value) :
         await ctx.channel.send("**Error: ** Invalid datatype.")
         return
     try:
-        int(value)
+        #int(value)
         modifysettings(datatype, value, ctx.guild.id)
         await ctx.channel.send(f"**{datatype}** is now set to **{value}** for guild **{ctx.guild.id}**!")
     except ValueError:
