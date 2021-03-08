@@ -114,7 +114,6 @@ async def matchmaking(ctx):
             await msg.delete()
             await ctx.author.send("Gamemode set to **Co-op**")
             mpsessiondata.append("Co-op")
-        #In the event that the emoji is not any of the above, we can eliminate an edge-case here
         else :
             await ctx.author.send("**Error:** Invalid reaction entered. Matchmaking cancelled.")
             return
@@ -156,7 +155,6 @@ async def matchmaking(ctx):
             await msg.delete()
             await ctx.author.send("Player count set to: **5 or more**")
             mpsessiondata.append("5 or more")
-        #In the event that the emoji is not any of the above, we can eliminate an edge-case here
         else :
             await ctx.author.send("**Error:** Invalid reaction entered. Matchmaking cancelled.")
             return
@@ -242,6 +240,9 @@ async def matchmaking(ctx):
             await msg.delete()
             mpsessiondata.append("No")
             await ctx.author.send("Modded: **No**")
+        else :
+            await ctx.author.send("**Error:** Invalid reaction entered. Matchmaking cancelled.")
+            return
 
     except asyncio.TimeoutError:
         await ctx.author.send("**Error: **Timed out. Matchmaking cancelled.")
@@ -343,8 +344,10 @@ async def matchmaking(ctx):
             await ctx.author.send("Cancelled matchmaking. If you have found a bug or experienced issues, please contact `Hyper#0001`!")
             print(f"[INFO]: {ctx.author} User cancelled matchmaking.")
             return
+        else :
+            await ctx.author.send("**Error:** Invalid reaction entered. Matchmaking cancelled.")
+            return
 
-        #In the event that the emoji is not any of the above, we can eliminate an edge-case here
     #If we dont get a response within 60 seconds it times out.
     except asyncio.TimeoutError:
         await ctx.author.send("**Error: **Timed out. Matchmaking cancelled.")
@@ -422,7 +425,7 @@ async def quack(ctx):
     await ctx.message.delete()
 
 #Commands used to add and/or remove other roles from executing potentially unwanted things
-@bot.command(hidden=True, aliases=['addprivrole', 'addbotadminrole'])
+@bot.command(hidden=True, aliases=['addprivrole', 'addbotadminrole'], description="Adds a role to the list of priviliged roles, allowing them to execute admin commands.")
 @commands.check(hasOwner)
 @commands.guild_only()
 async def addpriviligedrole(ctx, role):
@@ -441,7 +444,7 @@ async def addprivilegedrole_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.channel.send("**Error: ** Insufficient permissions.")
 
-@bot.command(hidden=True, aliases=['remprivrole', 'removeprivrole', 'removebotadminrole', 'rembotadminrole'])
+@bot.command(hidden=True, aliases=['remprivrole', 'removeprivrole', 'removebotadminrole', 'rembotadminrole'], description="Removes a role to the list of priviliged roles, revoking their permission to execute admin commands.")
 @commands.check(hasOwner)
 @commands.guild_only()
 async def removepriviligedrole(ctx,role):
@@ -594,7 +597,7 @@ async def setup (ctx, setuptype):
         except asyncio.TimeoutError:
             await ctx.channel.send("**Error: **Timed out. Setup process cancelled.")
             return
-    #[WIP] This setup will set up the !init command to work properly.
+    #This setup will set up the !matchmaking command to work properly.
     if setuptype == "matchmaking" or "Matchmaking" or "MATCHMAKING":
         await ctx.channel.send("Initializing matchmaking setup...\nPlease mention a channel where users should send the command to start matchmaking! Type `disable` to disable this feature.")
         try:
@@ -624,10 +627,11 @@ async def setup (ctx, setuptype):
             await ctx.channel.send("✅ Setup completed. Matchmaking set up!")
 
         except commands.ChannelNotFound:
-            await ctx.channel.send("**Error: ** Unable to locate channel. Setup process cancelled.")
+            await ctx.channel.send("**Error:** Unable to locate channel. Setup process cancelled.")
             return
         except asyncio.TimeoutError:
             await ctx.channel.send("**Error: **Timed out. Setup process cancelled.")
+            return
 
 
     else:
@@ -667,7 +671,7 @@ async def resetsettings_error(ctx, error):
         await ctx.channel.send("**Error: ** Insufficient permissions.")
 
 #Display the current settings for this guild.
-@bot.command(hidden=True)
+@bot.command(hidden=True, description="Displays the settings for the current guild.")
 @commands.check(hasPriviliged)
 @commands.guild_only()
 async def settings(ctx):
@@ -684,7 +688,7 @@ async def settings_error(ctx, error):
         await ctx.channel.send("**Error: ** Insufficient permissions.")
 
 #Modify a value in the settings, use with care or it will break things
-@bot.command(hidden=True)
+@bot.command(hidden=True, description="Modifies a single value in the settings, can break things! Use !setup instead.")
 @commands.check(hasPriviliged)
 @commands.guild_only()
 async def modify(ctx, datatype, value) :
