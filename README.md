@@ -24,6 +24,7 @@
 `!resetsettings` Resets all bot settings, irreversible. Requires priviliged access.
 
 `!modify <datatype> <value>` Modifies a datatype in settings to a new value. Improper use will break things, use setups if you don't know what you're doing! Requires priviliged access.
+
 `!quack` ???
 ### How to use:
 After installing discord.py, create a .env in your project folder with your bot token in this format: `TOKEN=yourtokenhere`. The bot should then run correctly.
