@@ -662,6 +662,8 @@ async def resetsettings(ctx):
             await ctx.channel.send("Settings reset. \n \n *Goodbye cruel world!* 😢")
         elif str(payload.emoji) == "❌" :
             await ctx.channel.send("Settings reset cancelled by user.")
+        else :
+            await ctx.channel.send("**Error:** Invalid reaction. Settings preserved.")
     except asyncio.TimeoutError:
         await ctx.channel.send("**Error:** Timed out. Settings preserved.")
 
