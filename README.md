@@ -1,6 +1,6 @@
 # Anno Matchmaking Bot v1.1
 
-## A Discord bot written with [Discord.py](https://github.com/Rapptz/discord.py)  for matchmaking on the Annoverse discord guild.
+## A Discord bot written with [discord.py](https://github.com/Rapptz/discord.py)  for matchmaking on the Annoverse discord guild.
 
 ### Features:
  - Generate neatly formatted multiplayer listings based on a list of criteria
