@@ -76,7 +76,7 @@ async def matchmaking(ctx):
     def usernamecheck(payload):
         return payload.author == ctx.author and payload.guild is None
     try:
-        payload = await bot.wait_for('message', timeout=60.0, check=usernamecheck)
+        payload = await bot.wait_for('message', timeout=90.0, check=usernamecheck)
         #32char username limit
         if len(payload.content) > 32 :
             await ctx.author.send("**Error:** Invalid username. (Too long) Matchmaking cancelled.")
@@ -163,7 +163,7 @@ async def matchmaking(ctx):
         await ctx.author.send("**Error:**Timed out. Matchmaking cancelled.")
         return
 
-    msg = await ctx.author.send("Now react with the symbol of **all** the DLCs you own! Click the green checkmark (✅) once done! \n 🔥 - The Anarchist \n 🤿 - Sunkean Treasures \n 🌹 - Botanica \n ❄️ - The Passage \n 🏛️ - Seat of Power \n 🚜 - Bright Harvest \n 🦁 - Land of Lions \n ⚓ - Docklands")
+    msg = await ctx.author.send("Now react with the symbol of **all** the DLCs you want to use! Click the green checkmark (✅) once done! \n 🔥 - The Anarchist \n 🤿 - Sunkean Treasures \n 🌹 - Botanica \n ❄️ - The Passage \n 🏛️ - Seat of Power \n 🚜 - Bright Harvest \n 🦁 - Land of Lions \n ⚓ - Docklands \n*Note: If you do not own any DLC, just simply press ✅ to continue.*")
     #Saving the ID of this message we just sent
     msgid = msg.id
 
@@ -248,7 +248,7 @@ async def matchmaking(ctx):
         await ctx.author.send("**Error: **Timed out. Matchmaking cancelled.")
         return
     
-    msg = await ctx.author.send("Specify your timezone as an UTC offset! *For example: If your timezone is UTC+1, type in 1! \nIf you are unsure what timezone you are in, check here:* <https://www.timeanddate.com/time/map>")
+    msg = await ctx.author.send("Specify your timezone as an UTC offset! *For example: If your timezone is UTC+1,* ***type in 1!*** \n*If you are unsure what timezone you are in, check here:* <https://www.timeanddate.com/time/map>")
     def timezonecheck(payload):
         return payload.author == ctx.author and payload.guild is None
     try:
@@ -275,7 +275,6 @@ async def matchmaking(ctx):
         except ValueError:
             await ctx.author.send("**Error:** Invalid timezone. Matchmaking cancelled.")
             return
-
     except asyncio.TimeoutError:
         await ctx.author.send("**Error: **Timed out. Matchmaking cancelled.")
         return
@@ -301,6 +300,7 @@ async def matchmaking(ctx):
         await ctx.author.send("**Error: **Timed out. Matchmaking cancelled.")
         return
     
+    await ctx.author.send(f"```Looking for Players: Anno 1800 \n \n Ubisoft Connect Username: {mpsessiondata[0]} \n Gamemode: {mpsessiondata[1]} \n Players: {mpsessiondata[2]} \n DLC: {DLC} \n Mods: {mpsessiondata[3]} \n Timezone: {mpsessiondata[4]} \n Additional info: {mpsessiondata[5]} \n \n Contact {ctx.message.author} in DMs if you are interested!```")
     msg = await ctx.author.send("Please review your listing! If everything looks good, hit ✅ to submit!")
     #Saving the ID of this message we just sent
     msgid = msg.id
@@ -310,10 +310,9 @@ async def matchmaking(ctx):
     async def createposting(mpsessiondata, DLC):
         try:
             channel = bot.get_channel(int(retrievesetting("ANNOUNCECHANNEL", ctx.guild.id)))
-
+            lfgrole = ctx.guild.get_role(int(retrievesetting("LFGROLE", ctx.guild.id)))
             #If LFG role is not set up, we will not include a mention to it at the end.
-            if retrievesetting("LFGROLENAME", ctx.guild.id) == "-1" :
-                lfgrole = discord.utils.get(ctx.guild.roles, name = retrievesetting("LFGROLENAME", ctx.guild.id))
+            if retrievesetting("LFGROLE", ctx.guild.id) == "-1" :
                 #yeah this is long lol
                 await channel.send(f"**__Looking for Players: Anno 1800__** \n \n **Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {DLC} \n **Mods:** {mpsessiondata[3]} \n **Timezone:** {mpsessiondata[4]} \n **Additional info:** {mpsessiondata[5]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested!")
                 await ctx.author.send("Matchmaking post made! Thanks for using my service! If you have found a bug or experienced issues, please contact `Hyper#0001`!")
@@ -322,12 +321,11 @@ async def matchmaking(ctx):
                 await channel.send(f"**__Looking for Players: Anno 1800__** \n \n **Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {DLC} \n **Mods:** {mpsessiondata[3]} \n **Timezone:** {mpsessiondata[4]} \n **Additional info:** {mpsessiondata[5]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested! \n \n {lfgrole.mention}")
                 await ctx.author.send("Matchmaking post made! Thanks for using my service! If you have found a bug or experienced issues, please contact `Hyper#0001`!")
                 print(f"[INFO]: {ctx.author} User created new multiplayer listing. Session: {mpsessiondata} DLC: {DLC}")
-        except AttributeError:
-            #If for whatever reason the message cannot be made, we message the user about it.
-            print(f"[ERROR]: Could not create listing for {ctx.author}. Did you set up the announcement channel?")
+        except:
+        #    #If for whatever reason the message cannot be made, we message the user about it.
+            print(f"[ERROR]: Could not create listing for {ctx.author}. Did you set up matchmaking?")
             await ctx.author.send("**Error: **Exception encountered when trying to generate listing. Contact an administrator! Matchmaking cancelled!")
-            return
-        
+            return  
         
     #We create a function to check some properties of the payload
     #We check if the message ID is the same, so this is not a different message.
@@ -365,13 +363,13 @@ async def on_raw_reaction_add(payload):
     #Check if it is the message we set
     if int(setmsg) == payload.message_id and payload.user_id != bot.user.id :
         guild = bot.get_guild(payload.guild_id)
-        emoji = discord.utils.get(guild.emojis, name=retrievesetting("LFGREACTEMOJI", payload.guild_id))
+        emoji = bot.get_emoji(int(retrievesetting("LFGREACTEMOJI", guild.id)))
         #Check the emoji
         if payload.emoji == emoji:
             member = guild.get_member(payload.user_id)
             try:
                 #Then set the role for the user
-                role = discord.utils.get(guild.roles, name = retrievesetting("LFGROLENAME", payload.guild_id))
+                role = guild.get_role(int(retrievesetting("LFGROLE", guild.id)))
                 await member.add_roles(role)
                 print(f"[INFO]: Role {role} added to {member}")
                 #Also DM the user about the change, and let them know that the action was performed successfully.
@@ -387,11 +385,11 @@ async def on_raw_reaction_remove(payload):
     setmsg = retrievesetting("ROLEREACTMSG", payload.guild_id)
     if int(setmsg) == payload.message_id :
         guild = bot.get_guild(payload.guild_id)
-        emoji = discord.utils.get(guild.emojis, name=retrievesetting("LFGREACTEMOJI", payload.guild_id))
+        emoji = bot.get_emoji(int(retrievesetting("LFGREACTEMOJI", guild.id)))
         if payload.emoji == emoji and payload.user_id != bot.user.id:
             member = guild.get_member(payload.user_id)
             try:
-                role = discord.utils.get(guild.roles, name = retrievesetting("LFGROLENAME", payload.guild_id))
+                role = guild.get_role(int(retrievesetting("LFGROLE", guild.id)))
                 await member.remove_roles(role)
                 print(f"[INFO]: Role {role} removed from {member}")
                 await member.send("You will no longer get notifications on multiplayer game listings.")
@@ -495,24 +493,22 @@ async def setup (ctx, setuptype):
                 msg = await reactchannel.send(str(msgcontent))
                 #Add reaction
                 await msg.add_reaction(reactemoji)
-                #Saving all the values
-                #These are the values other code listens to, at this point this means that the function is live.
-                modifysettings("LFGREACTEMOJI", reactemoji.name, ctx.guild.id)
-                modifysettings("LFGROLENAME", rolename, ctx.guild.id)
-                modifysettings("ROLEREACTMSG", str(msg.id), ctx.guild.id)
-                print(f"[INFO]: Setup for {setuptype} concluded successfully.")
-                await ctx.channel.send("✅ Setup completed. Role reactions set up!")
+
             elif createmsg == False :
                 #Get message
                 msg = reactmsg
+                #Add reaction
                 await msg.add_reaction(reactemoji)
-                #Saving all the values
-                #These are the values other code listens to, at this point this means that the function is live.
-                modifysettings("LFGREACTEMOJI", reactemoji.name, ctx.guild.id)
-                modifysettings("LFGROLENAME", rolename, ctx.guild.id)
-                modifysettings("ROLEREACTMSG", str(msg.id), ctx.guild.id)
-                print(f"[INFO]: Setup for {setuptype} concluded successfully.")
-                await ctx.channel.send("✅ Setup completed. Role reactions set up!")
+
+            #Get role
+            role = discord.utils.get(ctx.guild.roles, name = rolename)
+            #Saving all the values
+            #These are the values other code listens to, at this point this means that the function is live.
+            modifysettings("LFGREACTEMOJI", str(reactemoji.id), ctx.guild.id)
+            modifysettings("LFGROLE", str(role.id), ctx.guild.id)
+            modifysettings("ROLEREACTMSG", str(msg.id), ctx.guild.id)
+            print(f"[INFO]: Setup for {setuptype} concluded successfully.")
+            await ctx.channel.send("✅ Setup completed. Role reactions set up!")
 
         #The common part of the LFG setup
         async def continueprocess(reactchannel, msgcontent, reactmsg, createmsg):
@@ -558,6 +554,7 @@ async def setup (ctx, setuptype):
                     await ctx.channel.send(f"Reaction message set to the following: \n*{reactmsg.content}* **in** {reactchannel.mention}")
                     #Pass all collected values to continue
                     await continueprocess(reactchannel, msgcontent, reactmsg, createmsg)
+                    return
                 except asyncio.TimeoutError:
                     await ctx.channel.send("**Error: **Timed out. Setup process cancelled.")
                     return
@@ -585,6 +582,7 @@ async def setup (ctx, setuptype):
 
                     #Pass all collected values to continue
                     await continueprocess(reactchannel, msgcontent, reactmsg, createmsg)
+                    return
                 except asyncio.TimeoutError:
                     await ctx.channel.send("**Error: **Timed out. Setup process cancelled.")
                     return
@@ -625,6 +623,7 @@ async def setup (ctx, setuptype):
                 modifysettings("COMMANDSCHANNEL", str(cmdchannel.id), ctx.guild.id)
             modifysettings("ANNOUNCECHANNEL", str(announcechannel.id), ctx.guild.id)
             await ctx.channel.send("✅ Setup completed. Matchmaking set up!")
+            return
 
         except commands.ChannelNotFound:
             await ctx.channel.send("**Error:** Unable to locate channel. Setup process cancelled.")
