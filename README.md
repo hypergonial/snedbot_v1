@@ -1,4 +1,6 @@
-# Anno Matchmaking Bot v1.1.1
+# Anno Matchmaking Bot EXPERIMENTAL
+
+## Note: This is an experimental build, expect bugs and incomplete features!
 
 ## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  for matchmaking on the Annoverse discord guild.
 
