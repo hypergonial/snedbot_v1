@@ -308,7 +308,7 @@ async def matchmaking(ctx):
     await msg.add_reaction("❌")
     #Called to create a new multiplayer posting
     async def createposting(mpsessiondata, DLC):
-        #try:
+        try:
             channel = bot.get_channel(int(retrievesetting("ANNOUNCECHANNEL", ctx.guild.id)))
             lfgrole = ctx.guild.get_role(int(retrievesetting("LFGROLE", ctx.guild.id)))
             #If LFG role is not set up, we will not include a mention to it at the end.
@@ -321,11 +321,11 @@ async def matchmaking(ctx):
                 await channel.send(f"**__Looking for Players: Anno 1800__** \n \n **Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {DLC} \n **Mods:** {mpsessiondata[3]} \n **Timezone:** {mpsessiondata[4]} \n **Additional info:** {mpsessiondata[5]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested! \n \n {lfgrole.mention}")
                 await ctx.author.send("Matchmaking post made! Thanks for using my service! If you have found a bug or experienced issues, please contact `Hyper#0001`!")
                 print(f"[INFO]: {ctx.author} User created new multiplayer listing. Session: {mpsessiondata} DLC: {DLC}")
-        #except:
+        except:
         #    #If for whatever reason the message cannot be made, we message the user about it.
-        #    print(f"[ERROR]: Could not create listing for {ctx.author}. Did you set up matchmaking?")
-        #    await ctx.author.send("**Error: **Exception encountered when trying to generate listing. Contact an administrator! Matchmaking cancelled!")
-        #    return  
+            print(f"[ERROR]: Could not create listing for {ctx.author}. Did you set up matchmaking?")
+            await ctx.author.send("**Error: **Exception encountered when trying to generate listing. Contact an administrator! Matchmaking cancelled!")
+            return  
         
     #We create a function to check some properties of the payload
     #We check if the message ID is the same, so this is not a different message.
