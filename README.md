@@ -1,4 +1,4 @@
-# Anno Matchmaking Bot EXPERIMENTAL
+# Anno Matchmaking Bot v2.0.0a EXPERIMENTAL
 
 ## Note: This is an experimental build, expect bugs and incomplete features!
 
