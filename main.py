@@ -7,32 +7,47 @@ import asyncio
 import os
 import shutil
 from dotenv import load_dotenv
+import aiosqlite
+
 
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
+#Get token from .env
 TOKEN = os.getenv("TOKEN")
-#Enabling logging
-logging.basicConfig(level=logging.INFO)
-#Can modify command prefix & intents here (and probably a lot of other cool stuff I am not aware of)
-creatorID = 163979124820541440
-bot = commands.Bot(command_prefix='!', intents= discord.Intents.all(), owner_id=creatorID)
+#Database name/path
+dbPath = "database.db"
+#Is this build experimental?
+experimentalBuild = True
+#Bot commands prefix
+prefix = '!'
+#Determining the bot prefix & logging based on the build state.
+if experimentalBuild == True :
+    prefix = '?'
+    logging.basicConfig(level=logging.DEBUG)
+else :
+    logging.basicConfig(level=logging.INFO)
+
 #This is just my user ID, used for setting up who can & cant use priviliged commands along with a server owner.
+creatorID = 163979124820541440
+#Can modify command prefix & intents here (and probably a lot of other cool stuff I am not aware of)
+bot = commands.Bot(command_prefix=prefix, intents= discord.Intents.all(), owner_id=creatorID)
 
 
 print("[INFO]: New Session Started.")
 
-#Contains all the valid datatypes in settings. Gets populated by initsettings()
-datatypes = []
+#Contains all the valid datatypes in settings. If you add a new one here, it will be automatically generated
+#upon a new request to retrieve/modify that datatype.
+datatypes = ["COMMANDSCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI"]
 
 #Executes when the bot starts & is ready.
 @bot.event
 async def on_ready():
-    print("[INFO]: Initialized as {0.user}".format(bot))
     #Presence setup
     activity = discord.Activity(name='you', type=discord.ActivityType.watching)
     await bot.change_presence(activity=activity)
-    #Populate datatypes[] with all valid datatypes
-    initsettings()
+    print("[INFO]: Initialized as {0.user}".format(bot))
+    if experimentalBuild == True :
+        print("[WARN]: Experimental mode is enabled.")
 
 #
 #Normal commands
@@ -60,10 +75,10 @@ async def LEROY(ctx):
 @commands.guild_only()
 @commands.max_concurrency(1, per=commands.BucketType.member,wait=False)
 async def matchmaking(ctx):
-    cmdchannel = retrievesetting("COMMANDSCHANNEL", ctx.guild.id)
+    cmdchannel = await retrievesetting("COMMANDSCHANNEL", ctx.guild.id)
     #Performs check if the command is executed in the right channel, if this is 0, this feature is disabled.
-    if cmdchannel != "0" :
-        if int(cmdchannel) != ctx.channel.id :
+    if cmdchannel != 0 :
+        if cmdchannel != ctx.channel.id :
             print("[WARN]: Matchmaking initiated in disabled channel.")
             return
     mpsessiondata = []
@@ -76,7 +91,7 @@ async def matchmaking(ctx):
     def usernamecheck(payload):
         return payload.author == ctx.author and payload.guild is None
     try:
-        payload = await bot.wait_for('message', timeout=90.0, check=usernamecheck)
+        payload = await bot.wait_for('message', timeout=300.0, check=usernamecheck)
         #32char username limit
         if len(payload.content) > 32 :
             await ctx.author.send("**Error:** Invalid username. (Too long) Matchmaking cancelled.")
@@ -104,7 +119,7 @@ async def matchmaking(ctx):
         return payload.message_id == msgid and payload.user_id == ctx.author.id
     #Now we will try to wait for a reaction add event for 60 seconds
     try:
-        payload = await bot.wait_for('raw_reaction_add', timeout=60.0, check=gamemodecheck)
+        payload = await bot.wait_for('raw_reaction_add', timeout=300.0, check=gamemodecheck)
         #Check reaction emoji
         if str(payload.emoji) == "⚔️":
             await msg.delete()
@@ -137,7 +152,7 @@ async def matchmaking(ctx):
         return payload.message_id == msgid and payload.user_id == ctx.author.id
     #Now we will try to wait for a reaction add event for 60 seconds
     try:
-        payload = await bot.wait_for('raw_reaction_add', timeout=60.0, check=playercountcheck)
+        payload = await bot.wait_for('raw_reaction_add', timeout=300.0, check=playercountcheck)
         #Check reaction emoji
         if str(payload.emoji) == "2️⃣":
             await msg.delete()
@@ -184,7 +199,7 @@ async def matchmaking(ctx):
         return payload.message_id == msgid and payload.user_id == ctx.author.id and str(payload.emoji) == "✅"
     #Now we will try to wait for a reaction add event for 60 seconds
     try:
-        payload = await bot.wait_for('raw_reaction_add', timeout=60.0, check=confirmDLCcheck)
+        payload = await bot.wait_for('raw_reaction_add', timeout=300.0, check=confirmDLCcheck)
         #Check reaction emoji
         DLC = []
         msg = await ctx.author.fetch_message(msgid)
@@ -230,7 +245,7 @@ async def matchmaking(ctx):
     def modcheck(payload):
         return payload.message_id == msgid and payload.user_id == ctx.author.id
     try:
-        payload = await bot.wait_for('raw_reaction_add', timeout=60.0, check=modcheck)
+        payload = await bot.wait_for('raw_reaction_add', timeout=300.0, check=modcheck)
         #Check reaction emoji
         if str(payload.emoji) == "✅":
             await msg.delete()
@@ -252,12 +267,12 @@ async def matchmaking(ctx):
     def timezonecheck(payload):
         return payload.author == ctx.author and payload.guild is None
     try:
-        payload = await bot.wait_for('message', timeout=60.0, check=timezonecheck)
+        payload = await bot.wait_for('message', timeout=300.0, check=timezonecheck)
         try:
             #We will check if it is an int
             int(payload.content)
             #Check if it is a valid value for a timezone
-            if int(payload.content) not in range(-11, 14) :
+            if int(payload.content) not in range(-12, 14) :
                 await ctx.author.send("**Error:** Invalid timezone. Matchmaking cancelled.")
                 return
             #If it is smaller than 0, we will make it UTC-
@@ -309,10 +324,10 @@ async def matchmaking(ctx):
     #Called to create a new multiplayer posting
     async def createposting(mpsessiondata, DLC):
         try:
-            channel = bot.get_channel(int(retrievesetting("ANNOUNCECHANNEL", ctx.guild.id)))
-            lfgrole = ctx.guild.get_role(int(retrievesetting("LFGROLE", ctx.guild.id)))
+            channel = bot.get_channel(await retrievesetting("ANNOUNCECHANNEL", ctx.guild.id))
+            lfgrole = ctx.guild.get_role(await retrievesetting("LFGROLE", ctx.guild.id))
             #If LFG role is not set up, we will not include a mention to it at the end.
-            if retrievesetting("LFGROLE", ctx.guild.id) == "-1" :
+            if await retrievesetting("LFGROLE", ctx.guild.id) == -1 :
                 #yeah this is long lol
                 await channel.send(f"**__Looking for Players: Anno 1800__** \n \n **Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {DLC} \n **Mods:** {mpsessiondata[3]} \n **Timezone:** {mpsessiondata[4]} \n **Additional info:** {mpsessiondata[5]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested!")
                 await ctx.author.send("Matchmaking post made! Thanks for using my service! If you have found a bug or experienced issues, please contact `Hyper#0001`!")
@@ -359,43 +374,47 @@ async def matchmaking_error(ctx, error):
 #Reaction roles for LFG
 @bot.event
 async def on_raw_reaction_add(payload):
-    setmsg = retrievesetting("ROLEREACTMSG", payload.guild_id)
-    #Check if it is the message we set
-    if int(setmsg) == payload.message_id and payload.user_id != bot.user.id :
-        guild = bot.get_guild(payload.guild_id)
-        emoji = bot.get_emoji(int(retrievesetting("LFGREACTEMOJI", guild.id)))
-        #Check the emoji
-        if payload.emoji == emoji:
-            member = guild.get_member(payload.user_id)
-            try:
-                #Then set the role for the user
-                role = guild.get_role(int(retrievesetting("LFGROLE", guild.id)))
-                await member.add_roles(role)
-                print(f"[INFO]: Role {role} added to {member}")
-                #Also DM the user about the change, and let them know that the action was performed successfully.
-                await member.send("You are now looking for games, and will be notified of any new multiplayer listing!")
-            except:
-                #In case anything goes wrong, we will tell the user to bully admins who can then bully me :) /s
-                await member.send("**Error:** Server configuration error, contact an administrator! Unable to add role.")
-                print(f"[ERROR]: Unable to modify roles for {member}. Possible permissions issue.")
+    #Check if we are in a guild so we dont bombard the database with Null errors.
+    if payload.guild_id != None :
+        setmsg = await retrievesetting("ROLEREACTMSG", payload.guild_id)
+        #Check if it is the message we set
+        if setmsg == payload.message_id and payload.user_id != bot.user.id :
+            print("Match")
+            guild = bot.get_guild(payload.guild_id)
+            emoji = bot.get_emoji(await retrievesetting("LFGREACTIONEMOJI", guild.id))
+            #Check the emoji
+            if payload.emoji == emoji:
+                member = guild.get_member(payload.user_id)
+                try:
+                    #Then set the role for the user
+                    role = guild.get_role(await retrievesetting("LFGROLE", guild.id))
+                    await member.add_roles(role)
+                    print(f"[INFO]: Role {role} added to {member}")
+                    #Also DM the user about the change, and let them know that the action was performed successfully.
+                    await member.send("You are now looking for games, and will be notified of any new multiplayer listing!")
+                except:
+                    #In case anything goes wrong, we will tell the user to bully admins who can then bully me :) /s
+                    await member.send("**Error:** Server configuration error, contact an administrator! Unable to add role.")
+                    print(f"[ERROR]: Unable to modify roles for {member}. Possible permissions issue.")
 
 #Same thing but in reverse
 @bot.event
 async def on_raw_reaction_remove(payload):
-    setmsg = retrievesetting("ROLEREACTMSG", payload.guild_id)
-    if int(setmsg) == payload.message_id :
-        guild = bot.get_guild(payload.guild_id)
-        emoji = bot.get_emoji(int(retrievesetting("LFGREACTEMOJI", guild.id)))
-        if payload.emoji == emoji and payload.user_id != bot.user.id:
-            member = guild.get_member(payload.user_id)
-            try:
-                role = guild.get_role(int(retrievesetting("LFGROLE", guild.id)))
-                await member.remove_roles(role)
-                print(f"[INFO]: Role {role} removed from {member}")
-                await member.send("You will no longer get notifications on multiplayer game listings.")
-            except:
-                await member.send("**Error:** Server configuration error, contact an administrator! Unable to remove role.")
-                print(f"[ERROR]: Unable to modify roles for {member}. Possible permissions or hierarchy issue.")
+    if payload.guild_id != None :
+        setmsg = await retrievesetting("ROLEREACTMSG", payload.guild_id)
+        if setmsg == payload.message_id :
+            guild = bot.get_guild(payload.guild_id)
+            emoji = bot.get_emoji(await retrievesetting("LFGREACTIONEMOJI", guild.id))
+            if payload.emoji == emoji and payload.user_id != bot.user.id:
+                member = guild.get_member(payload.user_id)
+                try:
+                    role = guild.get_role(await retrievesetting("LFGROLE", guild.id))
+                    await member.remove_roles(role)
+                    print(f"[INFO]: Role {role} removed from {member}")
+                    await member.send("You will no longer get notifications on multiplayer game listings.")
+                except:
+                    await member.send("**Error:** Server configuration error, contact an administrator! Unable to remove role.")
+                    print(f"[ERROR]: Unable to modify roles for {member}. Possible permissions or hierarchy issue.")
 
 #
 #ADMIN/Config commands
@@ -404,15 +423,15 @@ async def on_raw_reaction_remove(payload):
 
 
 #Check performed to see if the person is either the guild owner or the bot owner.
-def hasOwner(ctx):
+async def hasOwner(ctx):
     return ctx.author.id == creatorID or ctx.author.id == ctx.guild.owner_id
 
 #Check performed to see if the user has priviliged access.
-def hasPriviliged(ctx):
+async def hasPriviliged(ctx):
     #Gets a list of all the roles the user has, then gets the name from that.
-    userRoles = [x.name for x in ctx.author.roles]
+    userRoles = [x.id for x in ctx.author.roles]
     #Check if any of the roles in user's roles are contained in the priviliged roles.
-    return any(role in userRoles for role in checkprivs(ctx.guild.id)) or (ctx.author.id == creatorID or ctx.author.id == ctx.guild.owner_id)
+    return any(role in userRoles for role in await checkprivs(ctx.guild.id)) or (ctx.author.id == creatorID or ctx.author.id == ctx.guild.owner_id)
 
 #Fun command, because yes. (Needs mod privilege as it can be abused for spamming)
 @bot.command(hidden = True, description = "Deploys the duck army.")
@@ -426,16 +445,22 @@ async def quack(ctx):
 @bot.command(hidden=True, aliases=['addprivrole', 'addbotadminrole'], description="Adds a role to the list of priviliged roles, allowing them to execute admin commands.")
 @commands.check(hasOwner)
 @commands.guild_only()
-async def addpriviligedrole(ctx, role):
-    rolesRaw = retrievesetting("PRIVROLES", ctx.guild.id)
-    roles = rolesRaw.split(",")
-    if role not in roles :
-        roles.append(role)
-        rolesRaw = ",".join(roles)
-        modifysettings("PRIVROLES", rolesRaw, ctx.guild.id)
-        await ctx.channel.send(f"**{role}** has been granted bot admin priviliges.")
-    else :
-        await ctx.channel.send("**Error:** Role already added.")
+async def addpriviligedrole(ctx, rolename):
+    try :
+        role = discord.utils.get(ctx.guild.roles, name=rolename)
+    except :
+        await ctx.channel.send("**Error:** Unable to locate role.")
+    async with aiosqlite.connect(dbPath) as db:
+
+        cursor = await db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ? AND priviliged_role_id = ?", [ctx.guild.id, role.id])
+        reply = await cursor.fetchone()
+        if reply != None :
+            await ctx.channel.send("**Error:** Role already added.")
+        else :
+            await db.execute("INSERT INTO priviliged (guild_id, priviliged_role_id) VALUES (?, ?)", [ctx.guild.id, role.id])
+            await db.commit()
+            await ctx.channel.send(f"**{role.name}** has been granted bot admin priviliges.")
+
 
 @addpriviligedrole.error
 async def addprivilegedrole_error(ctx, error):
@@ -445,21 +470,52 @@ async def addprivilegedrole_error(ctx, error):
 @bot.command(hidden=True, aliases=['remprivrole', 'removeprivrole', 'removebotadminrole', 'rembotadminrole'], description="Removes a role to the list of priviliged roles, revoking their permission to execute admin commands.")
 @commands.check(hasOwner)
 @commands.guild_only()
-async def removepriviligedrole(ctx,role):
-    rolesRaw = retrievesetting("PRIVROLES", ctx.guild.id)
-    roles = rolesRaw.split(",")
-    if role in roles :
-        roles.remove(role)
-        rolesRaw = ",".join(roles)
-        modifysettings("PRIVROLES", rolesRaw, ctx.guild.id)
-        await ctx.channel.send(f"**{role}** had it's bot admin priviliges revoked.")
-    else :
-        await ctx.channel.send("**Error:** Role not found.")
+async def removepriviligedrole(ctx,rolename):
+    try :
+        role = discord.utils.get(ctx.guild.roles, name=rolename)
+    except :
+        await ctx.channel.send("**Error:** Unable to locate role.")
+    async with aiosqlite.connect(dbPath) as db:
+        cursor = await db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ? AND priviliged_role_id = ?", [ctx.guild.id, role.id])
+        reply = await cursor.fetchone()
+        if reply == None :
+            await ctx.channel.send("**Error:** Role not priviliged.")
+        else :
+            await db.execute("DELETE FROM priviliged WHERE guild_id = ? AND priviliged_role_id = ?", [ctx.guild.id, role.id])
+            await db.commit()
+            await ctx.channel.send(f"**{role}** has had it's bot admin priviliges revoked.")
 
 @removepriviligedrole.error
 async def removeprivilegedrole_error(ctx, error):
     if isinstance(error, commands.CheckFailure):
         await ctx.channel.send("**Error: ** Insufficient permissions.")
+
+@bot.command(hidden=True, aliases=['privroles', 'botadminroles'])
+@commands.check(hasOwner)
+@commands.guild_only()
+async def priviligedroles(ctx) :
+    async with aiosqlite.connect(dbPath) as db :
+        cursor = await db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ?", [ctx.guild.id])
+        roleIDs = await cursor.fetchall()
+        if len(roleIDs) == 0 :
+            await ctx.channel.send("**Error:** No priviliged roles set.")
+            return
+        else :
+            roles = []
+            roleNames = []
+            for item in roleIDs :
+                roles.append(ctx.guild.get_role(item[0]))
+            print("---------------------------")
+            print(roles)
+            print("---------------------------")
+            for item in roles :
+                roleNames.append(item.name)
+            await ctx.channel.send(f"Priviliged roles for this guild: `{roleNames}`")
+
+
+
+
+
 
 
 #Ahh yes, the setup command... *instant PTSD*
@@ -504,9 +560,9 @@ async def setup (ctx, setuptype):
             role = discord.utils.get(ctx.guild.roles, name = rolename)
             #Saving all the values
             #These are the values other code listens to, at this point this means that the function is live.
-            modifysettings("LFGREACTEMOJI", str(reactemoji.id), ctx.guild.id)
-            modifysettings("LFGROLE", str(role.id), ctx.guild.id)
-            modifysettings("ROLEREACTMSG", str(msg.id), ctx.guild.id)
+            await modifysettings("LFGREACTIONEMOJI", reactemoji.id, ctx.guild.id)
+            await modifysettings("LFGROLE", role.id, ctx.guild.id)
+            await modifysettings("ROLEREACTMSG", msg.id, ctx.guild.id)
             print(f"[INFO]: Setup for {setuptype} concluded successfully.")
             await ctx.channel.send("✅ Setup completed. Role reactions set up!")
 
@@ -604,7 +660,7 @@ async def setup (ctx, setuptype):
                 return payload.author == ctx.author and payload.channel.id == ctx.channel.id
             payload = await bot.wait_for('message', timeout =60.0, check=check)
             if payload.content == "disable":
-                cmdchannel = "0"
+                cmdchannel = 0
                 await ctx.channel.send("Commands channel **disabled.**")
             else :
                 cmdchannel = await commands.TextChannelConverter().convert(ctx, payload.content)
@@ -617,11 +673,11 @@ async def setup (ctx, setuptype):
 
             #Executing based on info
 
-            if cmdchannel == "0" :
-                modifysettings("COMMANDSCHANNEL", "0", ctx.guild.id)
+            if cmdchannel == 0 :
+                await modifysettings("COMMANDSCHANNEL", 0, ctx.guild.id)
             else :
-                modifysettings("COMMANDSCHANNEL", str(cmdchannel.id), ctx.guild.id)
-            modifysettings("ANNOUNCECHANNEL", str(announcechannel.id), ctx.guild.id)
+                await modifysettings("COMMANDSCHANNEL", cmdchannel.id, ctx.guild.id)
+            await modifysettings("ANNOUNCECHANNEL", announcechannel.id, ctx.guild.id)
             await ctx.channel.send("✅ Setup completed. Matchmaking set up!")
             return
 
@@ -657,7 +713,7 @@ async def resetsettings(ctx):
     try:
         payload = await bot.wait_for('raw_reaction_add', timeout=10.0,check=check)
         if str(payload.emoji) == "✅":
-            deletesettings(ctx.guild.id)
+            await deletesettings(ctx.guild.id)
             await ctx.channel.send("Settings reset. \n \n *Goodbye cruel world!* 😢")
         elif str(payload.emoji) == "❌" :
             await ctx.channel.send("Settings reset cancelled by user.")
@@ -676,7 +732,7 @@ async def resetsettings_error(ctx, error):
 @commands.check(hasPriviliged)
 @commands.guild_only()
 async def settings(ctx):
-    settingsdata = displaysettings(ctx.guild.id)
+    settingsdata = await displaysettings(ctx.guild.id)
     if settingsdata == -1 :
         await ctx.channel.send("**Error:** No settings for this guild.")
     else :
@@ -697,8 +753,8 @@ async def modify(ctx, datatype, value) :
         await ctx.channel.send("**Error: ** Invalid datatype.")
         return
     try:
-        #int(value)
-        modifysettings(datatype, value, ctx.guild.id)
+        int(value)
+        await modifysettings(datatype, int(value), ctx.guild.id)
         await ctx.channel.send(f"**{datatype}** is now set to **{value}** for guild **{ctx.guild.id}**!")
     except ValueError:
         await ctx.channel.send("**Error: **Invalid value!")
@@ -714,103 +770,124 @@ async def modify_error(ctx, error):
 #
 #   SETTINGS HANDLER
 #
-#It is basic and inefficient, but it works :P
+# ALERT: Under major rewrite to support SQLite
 
 #Deletes a guild specific settings file.
-def deletesettings(guildID):
-    os.remove(f"{guildID}_settings.cfg")
-    print(f"[WARN]: Settings have been reset for guild {guildID}.")
+async def deletesettings(guildID):
+    #Delete all data relating to this guild.
+    async with aiosqlite.connect(dbPath) as db:
+        await db.execute("DELETE FROM settings WHERE guild_id = ?", [guildID])
+        await db.execute("DELETE FROM priviliged WHERE guild_id = ?", [guildID])
+        await db.commit()
+        #os.remove(f"{guildID}_settings.cfg")
+        print(f"[WARN]: Settings have been reset for guild {guildID}.")
 
 #Returns the priviliged roles for a specific guild as a list.
-def checkprivs(guildID):
-    rolesRaw = retrievesetting("PRIVROLES", guildID)
-    roles = rolesRaw.split(",")
-    return roles
+async def checkprivs(guildID):
+    async with aiosqlite.connect(dbPath) as db:
+        cursor = await db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ?", [guildID])
+        return await cursor.fetchall()
 
-def modifysettings(datatype, value, guildID):
-    #Get all data from settings file if it exists
-    if os.path.isfile(f"{guildID}_settings.cfg") :
-        settings = open(f"{guildID}_settings.cfg","r")
-        settingslines = settings.readlines()
-        settings.close()
-    #If not, we copy it from a template, then open it up
-    else :
-        shutil.copyfile("settingsdefault.cfg", f"{guildID}_settings.cfg")
-        settings = open(f"{guildID}_settings.cfg","r")
-        settingslines = settings.readlines()
-        settings.close()
-
-    linetomodify = 0
-    i = 0
-    #Find the datatype we want to modify
-    while i != len(settingslines):
-        if settingslines[i].split("=")[0] == datatype :
-            linetomodify = i
-            break
-        i += 1
-    print("Data modification info \n")
-    print("Initial data:")
-    print(settingslines)
-    #Modify the entire line to be of new datatype and value
-    settingslines[linetomodify] = datatype+"="+value+"\n"
-    print("Modified data:")
-    print(settingslines)
-    #Open up the file, and write back the modified data.
-    settings = open(f"{guildID}_settings.cfg", "a")
-    settings.truncate(0)
-    i = 0
-    while i != len(settingslines) :
-        settings.write(settingslines[i])
-        i += 1
-    settings.close()
-
-def retrievesetting(datatype, guildID) :
+async def modifysettings(datatype, value, guildID):
     if datatype in datatypes :
-        #Check if file exists, get all data
-        if os.path.isfile(f"{guildID}_settings.cfg") :
-            settings = open(f"{guildID}_settings.cfg","r")
-            settingslines = settings.readlines()
-            settings.close()
-        #If not, we copy it from a template, then open it up
-        else :
-            shutil.copyfile("settingsdefault.cfg", f"{guildID}_settings.cfg")
-            settings = open(f"{guildID}_settings.cfg","r")
-            settingslines = settings.readlines()
-            settings.close()
-        #Search for the datatype, then get the value.
-        i = 0
-        while i != len(settingslines):
-            if settingslines[i].split("=")[0] == datatype :
-                linetoreturn = i
-                break
-            i += 1
-        #Return the part after the "=" aka the value, stripped of \n
-        #print("Returned this: " + settingslines[linetoreturn].split("=")[1].strip())
-        return settingslines[linetoreturn].split("=")[1].strip()
+        #Check if we have values for this guild
+        print("Check")
+        async with aiosqlite.connect(dbPath) as db:
+            cursor = await db.execute("SELECT guild_id FROM settings WHERE guild_id = ?", [guildID])
+            result = await cursor.fetchone()
+            if result != None :
+                print("Guild Exists")
+                #Looking for the datatype
+                cursor = await db.execute("SELECT datatype FROM settings WHERE guild_id = ? AND datatype = ?", [guildID, datatype])
+                result = await cursor.fetchone()
+                #If the datatype does exist, we return the value
+                if result != None :
+                    print("Data exists")
+                    #We update the matching record with our new value
+                    await db.execute("UPDATE settings SET guild_id = ?, datatype = ?, value = ? WHERE guild_id = ? AND datatype = ?", [guildID, datatype, value, guildID, datatype])
+                    await db.commit()
+                    return
+                #If it does not, for example if a new valid datatype is added to the code, we will create it, and assign it the value.
+                else :
+                    print("New data added")
+                    await db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, ?)", [guildID, datatype, value])
+                    await db.commit()
+                    return
+            #If no data relating to the guild can be found, we will create every datatype for the guild, and return their value.
+            #Theoretically not necessary, but it outputs better into displaysettings()
+            else :
+                for item in datatypes :
+                    print("Guild data missing... creating..")
+                    #We insert every datatype into the table for this guild.
+                    await db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, 0)", [guildID, item])
+                await db.commit()
+                #And then we update the value we wanted to change in the first place.
+                await db.execute("UPDATE settings SET guild_id = ?, datatype = ?, value = ? WHERE guild_id = ? AND datatype = ?", [guildID, datatype, value, guildID, datatype])
+                await db.commit()
+                return
+
+
+#Retrieves a setting for a specified guild.
+async def retrievesetting(datatype, guildID) :
+    if datatype in datatypes :
+        #Check if we have values for this guild
+        async with aiosqlite.connect(dbPath) as db:
+            cursor = await db.execute("SELECT guild_id FROM settings WHERE guild_id = ?", [guildID])
+            result = await cursor.fetchone()
+            #If we do, we check if the datatype exists
+            if result != None :
+                #Looking for the datatype
+                cursor = await db.execute("SELECT datatype FROM settings WHERE guild_id = ? AND datatype = ?", [guildID, datatype])
+                result = await cursor.fetchone()
+                #If the datatype does exist, we return the value
+                if result != None :
+                    cursor = await db.execute("SELECT value FROM settings WHERE guild_id = ? AND datatype = ?", [guildID, datatype])
+                    #This is necessary as fetchone() returns it as a tuple of one element.
+                    value = await cursor.fetchone()
+                    return value[0]
+                #If it does not, for example if a new valid datatype is added to the code, we will create it, then return it's value.
+                else :
+                    await db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES ?, ?, 0", [guildID, datatype])
+                    cursor = await db.execute("SELECT value FROM settings WHERE guild_id = ? AND datatype = ?", [guildID, datatype])
+                    value = await cursor.fetchone()
+                    return value[0]
+            #If no data relating to the guild can be found, we will create every datatype for the guild, and return their value.
+            #Theoretically not necessary, but it outputs better into displaysettings()
+            else :
+                for item in datatypes :
+                    #We insert every datatype into the table for this guild.
+                    await db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, 0)", [guildID, item])
+                await db.commit()
+                #And then we essentially return 0
+                cursor = await db.execute("SELECT value IN settings WHERE guild_id = ? AND datatype = ?", [guildID, datatype])
+                value = await cursor.fetchone()
+                return value[0]
     else :
         print(f"[INTERNAL ERROR]: Invalid datatype called in retrievesetting() (Called datatype: {datatype})")
 
-def displaysettings(guildID) :
-        #Check if file exists, get all data
-    if os.path.isfile(f"{guildID}_settings.cfg") :
-        settings = open(f"{guildID}_settings.cfg","r")
-        settingslines = settings.readlines()
-        settings.close()
-        return settingslines
-
-    #If not, then return -1, indicating the fact that there are no settings for this guild.
-    else :
-        return -1
-#Gathers all valid datatypes from the default settings
-#Notice: If there is a missing datatype in the specific guild settings files, stuff will break
-#TODO: Settings versioning
-def initsettings() :
-
-    settingsdefault = open("settingsdefault.cfg", "r")
-    defaultlines = settingsdefault.readlines()
-    settingsdefault.close()
-    for line in defaultlines :
-        datatypes.append(line.split("=")[0])
+async def displaysettings(guildID) :
+    #Check if there are any values stored related to the guild.
+    #If this is true, guild settings exist.
+    async with aiosqlite.connect(dbPath) as db:
+        cursor = await db.execute("SELECT guild_id FROM settings WHERE guild_id = ?", [guildID])
+        result = await cursor.fetchone()
+        #If we find something, we gather it, return it.
+        if result != None :
+            #This gets datapairs in a tuple, print it below if you want to see how it looks
+            cursor = await db.execute("SELECT datatype, value FROM settings WHERE guild_id = ?", [guildID])
+            dbSettings = await cursor.fetchall()
+            #print(dbSettings)
+            #The array we will return to send in the message
+            settings = []
+            #Now we just combine them.
+            i = 0
+            for i in range(len(dbSettings)) :
+                settings.append(f"{dbSettings[i][0]} = {dbSettings[i][1]} \n")
+                i += 1
+            return settings
+        #If not, we return error code -1, corresponding to no settings.
+        else:
+            return -1
 
 #Run bot with token from .env
 bot.run(TOKEN)
