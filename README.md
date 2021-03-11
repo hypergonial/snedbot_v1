@@ -2,6 +2,8 @@
 
 ## Note: This is an experimental build, expect bugs and incomplete features!
 
+# Experimental versions use the prefix `?` instead of `!` and have additional debug features enabled.
+
 ## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  for matchmaking on the Annoverse discord guild.
 
 ### Features:
@@ -18,6 +20,8 @@
 `!addpriviligedrole <rolename>` Adds a role to priviliged roles. This will allow them to access bot admin commands. Can only be executed by a guild owner.
 
 `!removepriviligedrole <rolename>` Removes a role from priviliged roles, thus revoking their access from bot admin commands. Can only be executed by a guild owner.
+
+`!priviligedroles` Lists all priviliged roles. Can only be executed by a guild owner.
 
 `!setup <setuptype>` Initialize a setup, for configuring the server. Example: `!setup LFG` will start a setup helping you set up reaction roles. Requires priviliged access. Current setups: `LFG, matchmaking`
 
