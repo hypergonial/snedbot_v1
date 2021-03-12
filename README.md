@@ -1,4 +1,4 @@
-# Anno Matchmaking Bot v2.0.1
+# Anno Matchmaking Bot v2.1.0
 
 ## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  for matchmaking on the Annoverse discord guild.
 
@@ -8,6 +8,8 @@
  - Setup commands to simplify configuration
 
 ### Commands:
+`!help` Displays all commands a user has permission to execute. Alternatively, use `!help <command>` to get more information about a specific command.
+
 `!ping` Returns the ping of the bot in ms.
 
 `!version` Returns the current version of the bot.
