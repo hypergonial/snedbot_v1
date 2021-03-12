@@ -31,5 +31,5 @@
 
 `!quack` ???
 ### How to use:
-After installing [discord.py](https://github.com/Rapptz/discord.py) and [aiosqlite](https://pypi.org/project/aiosqlite/), create a .env in your project folder with your bot token in this format: `TOKEN=yourtokenhere`. The bot should then run correctly.
+Install dependencies from requirements.txt (or with PipEnv), then create a .env in your project folder with your bot token in this format: `TOKEN=yourtokenhere`. The bot should then run correctly.
 
