@@ -8,6 +8,10 @@ import os
 import shutil
 from dotenv import load_dotenv
 import aiosqlite
+from difflib import get_close_matches
+import sys
+import traceback
+from itertools import chain
 
 
 #Loading token from .env file. If this file does not exist, nothing will work.
@@ -17,7 +21,7 @@ TOKEN = os.getenv("TOKEN")
 #Database name/path
 dbPath = "database.db"
 #Current version
-currentVersion = "2.0.1"
+currentVersion = "2.1.0"
 #Is this build experimental?
 experimentalBuild = False
 #Bot commands prefix
@@ -35,14 +39,17 @@ else :
 #This is just my user ID, used for setting up who can & cant use priviliged commands along with a server owner.
 creatorID = 163979124820541440
 #Can modify command prefix & intents here (and probably a lot of other cool stuff I am not aware of)
-bot = commands.Bot(command_prefix=prefix, intents= discord.Intents.all(), owner_id=creatorID)
-
+bot = commands.Bot(command_prefix=prefix, intents= discord.Intents.all(), owner_id=creatorID, case_insensitive=True, help_command=None)
 
 print("[INFO]: New Session Started.")
 
 #Contains all the valid datatypes in settings. If you add a new one here, it will be automatically generated
 #upon a new request to retrieve/modify that datatype.
 datatypes = ["COMMANDSCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI"]
+
+#Overriding the default help command
+#I actually have very little clue as to how this work, but it does, so it should be fine(tm)
+
 
 #Executes when the bot starts & is ready.
 @bot.event
@@ -74,20 +81,89 @@ checkFailDesc = f"Type `{prefix}help` for a list of available commands."
 #
 #Note: These commands can be used by everyone on the server.
 
+#Custom help command, shows all commands a user can execute based on their priviliges.
+#Also has an alternate mode where it shows information about a specific command, if specified as an argument.
+@bot.command(brief="Displays this help message.", description="Displays all available commands you can execute, based on your permission level.", usage=f"{prefix}help [command]")
+async def help(ctx, commandname : str=None):
+    #Retrieve all commands except hidden, unless user is priviliged.
+    
+    #Direct copy of hasPriviliged()
+    #If user is priviliged, get all commands, including hidden ones, otherwise just the not hidden ones.
+
+    #Note: checkprivs() returns a list of tuples as roleIDs
+    userRoles = [role.id for role in ctx.author.roles]
+    privroles = [role[0] for role in await checkprivs(ctx.guild.id)]
+    
+    if any(roleID in userRoles for roleID in privroles) or (ctx.author.id == creatorID or ctx.author.id == ctx.guild.owner_id) :
+        cmds = [cmd.name for cmd in bot.commands]
+        briefs = [cmd.brief for cmd in bot.commands]
+        allAliases = [cmd.aliases for cmd in bot.commands]
+    else :
+        cmds = [cmd.name for cmd in bot.commands if not cmd.hidden]
+        briefs = [cmd.brief for cmd in bot.commands if not cmd.hidden]
+        allAliases = [cmd.aliases for cmd in bot.commands if not cmd.hidden]
+    i = 0
+    #Note: allAliases is a matrix of multiple lists, this will convert it into a singular list
+    aliases = list(chain(*allAliases))
+    if commandname == None :
+        formattedmsg = []
+        i = 0
+        formattedmsg.append(f"You can also use `{prefix}help <command>` to get more information about a specific command. \n \n")
+        for i in range(len(cmds)) :
+            if briefs[i] != None :
+                formattedmsg.append(f"`{prefix}{cmds[i]}` - {briefs[i]} \n")
+            else :
+                formattedmsg.append(f"`{prefix}{cmds[i]}` \n")
+
+        final = "".join(formattedmsg)
+        embed=discord.Embed(title="⚙️ __Available commands:__", description=final, color=0x009dff)
+        await ctx.send(embed=embed)
+        return
+    else :
+
+        #If our user is a dumbass and types ?help ?command instead of ?help command, we will remove the prefix from it first
+        if commandname.startswith(prefix) :
+            #Remove first character
+            commandname = commandname[0 : 0 : ] + commandname[0 + 1 : :]
+        #If found, we will try to retrieve detailed command information about it, and provide it to the user.
+        if commandname in cmds or commandname in aliases :
+            command = bot.get_command(commandname)
+            print("----------------")
+            print(command.aliases)
+            if len(command.aliases) > 0 :
+                #Add the prefix to the aliases before displaying
+                commandaliases = ["`" + prefix + alias + "`" for alias in command.aliases]
+                #Then join them together
+                commandaliases = ", ".join(commandaliases)
+                embed=discord.Embed(title=f"⚙️ Command: {prefix}{command.name}", description=f"{command.description} \n \n**Usage:** `{command.usage}` \n**Aliases:** {commandaliases}", color=0x009dff)
+                await ctx.send(embed=embed)
+                return
+            else :
+                command = bot.get_command(commandname)
+                embed=discord.Embed(title=f"⚙️ Command: {prefix}{command.name}", description=f"{command.description} \n \n**Usage:** `{command.usage}`", color=0x009dff)
+                await ctx.send(embed=embed)
+                return
+        else :
+            embed=discord.Embed(title="❓ Unknown command!", description=f"Use `{prefix}help` for a list of available commands.", color=0xbe1931)
+            await ctx.send(embed=embed)
+            return
+
+
+
 #Gets the ping of the bot.
-@bot.command(description="Displays bot ping.")
+@bot.command(brief="Displays bot ping.", description="Displays the current ping of the bot in miliseconds. Takes no arguments.", usage=f"{prefix}ping")
 async def ping(ctx):
     embed=discord.Embed(title="🏓 Pong!", description=f"Latency: `{round(bot.latency * 1000)}ms`", color=0xffffff)
     await ctx.channel.send(embed=embed)
 
 #A more fun way to get the ping.
-@bot.command(hidden = True)
-async def LEROY(ctx):
+@bot.command(hidden = True, brief="A better way to get the ping.", description="Why? because yes. Displays the current ping of the bot in miliseconds. Takes no arguments.", usage=f"{prefix}LEROY")
+async def leroy(ctx):
     embed=discord.Embed(title="JEEEEENKINS!", description=f"`{round(bot.latency * 1000)}ms`", color =0xffffff)
     embed.set_footer(text="Oh my god he just ran in. 👀")
     await ctx.channel.send(embed=embed)
 
-@bot.command(description="Displays the current version of the bot.")
+@bot.command(brief="Displays the current version of the bot.", description="Displays the current version of the bot. Takes no arguments.", usage=f"{prefix}version")
 async def version(ctx):
     embed=discord.Embed(title="ℹ️ Bot version", description=f"Current version: {currentVersion}", color=0xffffff)
     await ctx.channel.send(embed=embed)
@@ -99,7 +175,7 @@ async def version(ctx):
 #evaluates the answers based on some criteria, then use those answers to construct a formatted
 #multiplayer listing, which will then in turn go into a preconfigured channel. It will also ping a
 #designated role if set. Can be limited as to which channels it can be run from via the COMMANDSCHANNEL setting.
-@bot.command(description="Start matchmaking! Takes no arguments.", aliases=['multiplayer', 'init'])
+@bot.command(brief="Start setting up a new multiplayer listing.", description="Start matchmaking! After command execution, you will receive a direct message to help you set up a multiplayer listing! Takes no arguments.", aliases=['multiplayer', 'init', 'match','multi','mp'], usage=f"{prefix}matchmaking")
 @commands.guild_only()
 @commands.max_concurrency(1, per=commands.BucketType.member,wait=False)
 async def matchmaking(ctx):
@@ -184,17 +260,14 @@ async def matchmaking(ctx):
     msg = await ctx.author.send(embed=embed)
     #Saving the ID of this message we just sent
     msgid = msg.id
-    await msg.add_reaction("2️⃣")
-    await msg.add_reaction("3️⃣")
-    await msg.add_reaction("4️⃣")
-    await msg.add_reaction("♾️")
+    playersEmoji =["2️⃣", "3️⃣", "4️⃣", "♾️"]
+    for emoji in playersEmoji :
+        await msg.add_reaction(emoji)
 
-    #We create a function to check some properties of the payload
     #We check if the message ID is the same, so this is not a different message.
     #We also check if the user who reacted was the user who sent the command.
     def playercountcheck(payload):
         return payload.message_id == msgid and payload.user_id == ctx.author.id
-    #Now we will try to wait for a reaction add event for 60 seconds
     try:
         payload = await bot.wait_for('raw_reaction_add', timeout=300.0, check=playercountcheck)
         #Check reaction emoji
@@ -231,23 +304,14 @@ async def matchmaking(ctx):
     msg = await ctx.author.send(embed=embed)
     #Saving the ID of this message we just sent
     msgid = msg.id
+    DLCemojies = ["🔥", "🤿", "🌹", "❄️", "🏛️", "🚜", "🦁", "⚓", "✅"]
+    for emoji in DLCemojies :
+        await msg.add_reaction(emoji)
 
-    await msg.add_reaction("🔥")
-    await msg.add_reaction("🤿")
-    await msg.add_reaction("🌹")
-    await msg.add_reaction("❄️")
-    await msg.add_reaction("🏛️")
-    await msg.add_reaction("🚜")
-    await msg.add_reaction("🦁")
-    await msg.add_reaction("⚓")
-    await msg.add_reaction("✅")
-
-    #We create a function to check some properties of the payload
     #We check if the message ID is the same, so this is not a different message.
     #We also check if the user who reacted was the user who sent the command.
     def confirmDLCcheck(payload):
         return payload.message_id == msgid and payload.user_id == ctx.author.id and str(payload.emoji) == "✅"
-    #Now we will try to wait for a reaction add event for 60 seconds
     try:
         payload = await bot.wait_for('raw_reaction_add', timeout=300.0, check=confirmDLCcheck)
         #Check reaction emoji
@@ -383,8 +447,11 @@ async def matchmaking(ctx):
         embed = discord.Embed(title=timeoutTitle, description=timeoutDesc, color=errorColor)
         await ctx.author.send(embed=embed)
         return
-    
-    await ctx.author.send(f"```Looking for Players: Anno 1800 \n \n Ubisoft Connect Username: {mpsessiondata[0]} \n Gamemode: {mpsessiondata[1]} \n Players: {mpsessiondata[2]} \n DLC: {DLC} \n Mods: {mpsessiondata[3]} \n Timezone: {mpsessiondata[4]} \n Additional info: {mpsessiondata[5]} \n \n Contact {ctx.message.author} in DMs if you are interested!```")
+
+    #Send listing preview
+    embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {DLC} \n **Mods:** {mpsessiondata[3]} \n **Timezone:** {mpsessiondata[4]} \n **Additional info:** {mpsessiondata[5]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested!", color=0xffdd00)
+    embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/203158031511453696/446da0b60a670b6866cd463fb5e87195.png?size=1024")
+    await ctx.author.send(embed=embed)
     embed=discord.Embed(title="Please review your listing!", description="If everything looks good, hit ✅ to submit!", color=0xffdd00)
     msg = await ctx.author.send(embed=embed)
     #Saving the ID of this message we just sent
@@ -424,7 +491,7 @@ async def matchmaking(ctx):
         return payload.message_id == msgid and payload.user_id == ctx.author.id
     #Now we will try to wait for a reaction add event for 60 seconds
     try:
-        payload = await bot.wait_for('raw_reaction_add', timeout=60.0, check=confirmcheck)
+        payload = await bot.wait_for('raw_reaction_add', timeout=300.0, check=confirmcheck)
         #Check reaction emoji
         if str(payload.emoji) == "✅":
             await createposting(mpsessiondata, DLC)
@@ -433,12 +500,13 @@ async def matchmaking(ctx):
             return
 
         elif str(payload.emoji) == "❌":
-            embed=discord.Embed(title="❌ Submission cancelled.", description="If you have found a bug or want to give feedback, please contact `Hyper#0001`!", color=0xff0000)
+            embed=discord.Embed(title="❌ Submission cancelled.", description="If you have found a bug or want to give feedback, please contact `Hyper#0001`!", color=errorColor)
             await ctx.author.send(embed=embed)
             print(f"[INFO]: {ctx.author} User cancelled matchmaking.")
             return
         else :
-            await ctx.author.send("**Error:** Invalid reaction entered. Matchmaking cancelled.")
+            embed = discord.Embed(title=invalidEmojiTitle, description=invalidEmojiDesc, color=errorColor)
+            await ctx.author.send(embed=embed)
             return
 
     except asyncio.TimeoutError:
@@ -451,6 +519,39 @@ async def matchmaking_error(ctx, error):
     if isinstance(error, commands.MaxConcurrencyReached):
         embed = discord.Embed(title="❌ Error: Max concurrency reached!", description="You already have a matchmaking request in progress.", color=errorColor)
         await ctx.channel.send(embed=embed)
+
+
+ #
+#Event Handlers
+#
+#Note: This is where stuff that is not a command is handled
+
+
+#Generic error handling. Will catch all errors with these types
+@bot.event
+async def on_command_error(ctx, error):
+    #This gets sent whenever a user has insufficient permissions to execute a command.
+    if isinstance(error, commands.CheckFailure):
+        embed=discord.Embed(title=checkFailTitle, description=checkFailDesc, color=errorColor)
+        await ctx.send(embed=embed)
+    elif isinstance(error, commands.CommandNotFound):
+        #This is a fancy suggestion thing that will suggest commands that are similar in case of typos.
+        #Get original cmd, and convert it into lowercase as to make it case-insensitive
+        cmd = ctx.invoked_with.lower()
+        #Gets all close matches
+        cmds = [cmd.name for cmd in bot.commands if not cmd.hidden]
+        matches = get_close_matches(cmd, cmds)
+        if len(matches) > 0:
+            embed=discord.Embed(title="❓ Unknown command!", description=f"Did you mean `{prefix}{matches[0]}`?", color=0xbe1931)
+            await ctx.send(embed=embed)
+        else:
+            embed=discord.Embed(title="❓ Unknown command!", description=f"Use `{prefix}help` for a list of available commands.", color=0xbe1931)
+            await ctx.send(embed=embed)
+    else :
+        #If no known error has been passed, we will print the exception to console as usual
+        #IMPORTANT!!! If you remove this, your command errors will not get output to console.
+        print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 #Reaction roles for LFG
 @bot.event
@@ -518,7 +619,7 @@ async def hasPriviliged(ctx):
     return any(role in userRoles for role in await checkprivs(ctx.guild.id)) or (ctx.author.id == creatorID or ctx.author.id == ctx.guild.owner_id)
 
 #Fun command, because yes. (Needs mod privilege as it can be abused for spamming)
-@bot.command(hidden = True, description = "Deploys the duck army.")
+@bot.command(hidden = True, brief = "Deploys the duck army.", description="🦆 I am surprised you even need help for this...", usage=f"{prefix}quack")
 @commands.check(hasPriviliged)
 @commands.guild_only()
 async def quack(ctx):
@@ -526,7 +627,7 @@ async def quack(ctx):
     await ctx.message.delete()
 
 #Commands used to add and/or remove other roles from executing potentially unwanted things
-@bot.command(hidden=True, aliases=['addprivrole', 'addbotadminrole'], description="Adds a role to the list of priviliged roles, allowing them to execute admin commands.")
+@bot.command(hidden=True, aliases=['addprivrole', 'addbotadminrole'], brief="Add role to priviliged roles", description="Adds a role to the list of priviliged roles, allowing them to execute admin commands.", usage=f"{prefix}addpriviligedrole <rolename>")
 @commands.check(hasOwner)
 @commands.guild_only()
 async def addpriviligedrole(ctx, rolename):
@@ -546,13 +647,7 @@ async def addpriviligedrole(ctx, rolename):
             await ctx.channel.send(f"**{role.name}** has been granted bot admin priviliges.")
 
 
-@addpriviligedrole.error
-async def addprivilegedrole_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        embed=discord.Embed(title=checkFailTitle, description=checkFailDesc, color=errorColor)
-        await ctx.channel.send(embed=embed)
-
-@bot.command(hidden=True, aliases=['remprivrole', 'removeprivrole', 'removebotadminrole', 'rembotadminrole'], description="Removes a role to the list of priviliged roles, revoking their permission to execute admin commands.")
+@bot.command(hidden=True, aliases=['remprivrole', 'removeprivrole', 'removebotadminrole', 'rembotadminrole'], brief="Remove role from priviliged roles.", description="Removes a role to the list of priviliged roles, revoking their permission to execute admin commands.", usage=f"{prefix}removepriviligedrole <rolename>")
 @commands.check(hasOwner)
 @commands.guild_only()
 async def removepriviligedrole(ctx,rolename):
@@ -570,13 +665,8 @@ async def removepriviligedrole(ctx,rolename):
             await db.commit()
             await ctx.channel.send(f"**{role}** has had it's bot admin priviliges revoked.")
 
-@removepriviligedrole.error
-async def removeprivilegedrole_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        embed=discord.Embed(title=checkFailTitle, description=checkFailDesc, color=errorColor)
-        await ctx.channel.send(embed=embed)
 
-@bot.command(hidden=True, aliases=['privroles', 'botadminroles'], description="Returns all priviliged roles on this server.")
+@bot.command(hidden=True, aliases=['privroles', 'botadminroles'],brief="List all priviliged roles.", description="Returns all priviliged roles on this server.", usage=f"{prefix}priviligedroles")
 @commands.check(hasOwner)
 @commands.guild_only()
 async def priviligedroles(ctx) :
@@ -595,19 +685,12 @@ async def priviligedroles(ctx) :
                 roleNames.append(item.name)
             await ctx.channel.send(f"Priviliged roles for this guild: `{roleNames}`")
 
-@priviligedroles.error
-async def priviligedroles_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        embed=discord.Embed(title=checkFailTitle, description=checkFailDesc, color=errorColor)
-        await ctx.channel.send(embed=embed)
-
-
 
 #Ahh yes, the setup command... *instant PTSD*
 #It basically just collects a bunch of values from the user, in this case an admin, and then changes the settings
 #based on that, instead of the admin having to use !modify for every single value
 #TL;DR: fancy setup thing
-@bot.command(hidden=True, description = "Used to set up and configurate different parts of the bot. Only usable by priviliged users.")
+@bot.command(hidden=True,brief="Starts bot configuration setups.", description = "Used to set up and configure different parts of the bot. Valid setup-types: `matchmaking, LFG` Only usable by priviliged users.", usage=f"{prefix}setup <setuptype>")
 @commands.check(hasPriviliged)
 @commands.guild_only()
 @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
@@ -780,15 +863,13 @@ async def setup (ctx, setuptype):
 
 @setup.error
 async def setup_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        embed=discord.Embed(title=checkFailTitle, description=checkFailDesc, color=errorColor)
-        await ctx.channel.send(embed=embed)
-    elif isinstance(error, commands.MaxConcurrencyReached):
+    if isinstance(error, commands.MaxConcurrencyReached):
         embed = discord.Embed(title="❌ Error: Max concurrency reached!", description="You already have a setup process running.", color=errorColor)
         await ctx.channel.send(embed=embed)
 
+
 #Command used for deleting a guild settings file
-@bot.command(hidden=True, description = "Resets all settings. Irreversible.")
+@bot.command(hidden=True, brief="Resets all settings for this guild.", description = "Resets all settings for this guild. Irreversible.", usage=f"{prefix}resetsettings")
 @commands.check(hasPriviliged)
 @commands.guild_only()
 async def resetsettings(ctx):
@@ -809,14 +890,9 @@ async def resetsettings(ctx):
     except asyncio.TimeoutError:
         await ctx.channel.send("**Error:** Timed out. Settings preserved.")
 
-@resetsettings.error
-async def resetsettings_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        embed=discord.Embed(title=checkFailTitle, description=checkFailDesc, color=errorColor)
-        await ctx.channel.send(embed=embed)
 
 #Display the current settings for this guild.
-@bot.command(hidden=True, description="Displays the settings for the current guild.")
+@bot.command(hidden=True, brief="Displays settings.", description="Displays the settings for the current guild.", usage=f"{prefix}settings")
 @commands.check(hasPriviliged)
 @commands.guild_only()
 async def settings(ctx):
@@ -827,14 +903,9 @@ async def settings(ctx):
         formatteddata = "".join(settingsdata)
         await ctx.channel.send(f"```Settings for guild {ctx.guild.id}: \n \n{formatteddata}```")
 
-@settings.error
-async def settings_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        embed=discord.Embed(title=checkFailTitle, description=checkFailDesc, color=errorColor)
-        await ctx.channel.send(embed=embed)
 
 #Modify a value in the settings, use with care or it will break things
-@bot.command(hidden=True, description="Modifies a single value in the settings, can break things! Use !setup instead.")
+@bot.command(hidden=True, brief=f"Modifies a setting value. Recommended to use `{prefix}setup` instead.", description=f"Modifies a single value in the settings, improper use can and will break things! Use `{prefix}setup` instead.", usage=f"{prefix}modify <datatype> <value>")
 @commands.check(hasPriviliged)
 @commands.guild_only()
 async def modify(ctx, datatype, value) :
@@ -846,15 +917,9 @@ async def modify(ctx, datatype, value) :
         await modifysettings(datatype, int(value), ctx.guild.id)
         await ctx.channel.send(f"**{datatype}** is now set to **{value}** for guild **{ctx.guild.id}**!")
     except ValueError:
-        await ctx.channel.send("**Error: **Invalid value!")
+        await ctx.channel.send("**Error: **Invalid value.")
     except:
         await ctx.channel.send("**Error: ** Unknown error encountered!")
-
-@modify.error
-async def modify_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        embed=discord.Embed(title=checkFailTitle, description=checkFailDesc, color=errorColor)
-        await ctx.channel.send(embed=embed)
 
 
 #
