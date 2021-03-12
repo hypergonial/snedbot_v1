@@ -10,6 +10,8 @@
 ### Commands:
 `!ping` Returns the ping of the bot in ms.
 
+`!version` Returns the current version of the bot.
+
 `!matchmaking` Starts the matchmaking system. Creates a multiplayer listing in desired channel upon completion.
 
 ### Commands for server owners & admins:
