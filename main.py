@@ -22,9 +22,9 @@ TOKEN = os.getenv("TOKEN")
 #Database name/path
 dbPath = "database.db"
 #Current version
-currentVersion = "2.2.0b"
+currentVersion = "2.2.0"
 #Is this build experimental?
-experimentalBuild = True
+experimentalBuild = False
 #Bot commands prefix
 prefix = '!'
 
