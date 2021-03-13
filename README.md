@@ -1,4 +1,8 @@
-# Anno Matchmaking Bot v2.0.0
+# Anno Matchmaking Bot v2.2.0 EXPERIMENTAL
+
+##Note: This build is experimental, expect bugs and missing features.
+
+##Experimental builds use the `?` prefix for commands instead of `!`.
 
 ## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  for matchmaking on the Annoverse discord guild.
 
@@ -8,7 +12,11 @@
  - Setup commands to simplify configuration
 
 ### Commands:
+`!help` Displays all commands a user has permission to execute. Alternatively, use `!help <command>` to get more information about a specific command.
+
 `!ping` Returns the ping of the bot in ms.
+
+`!version` Returns the current version of the bot.
 
 `!matchmaking` Starts the matchmaking system. Creates a multiplayer listing in desired channel upon completion.
 
@@ -29,5 +37,7 @@
 
 `!quack` ???
 ### How to use:
-After installing [discord.py](https://github.com/Rapptz/discord.py) and [aiosqlite](https://pypi.org/project/aiosqlite/), create a .env in your project folder with your bot token in this format: `TOKEN=yourtokenhere`. The bot should then run correctly.
+Install dependencies from requirements.txt (or with PipEnv), then create a .env in your project folder with your bot token in this format: `TOKEN=yourtokenhere`. The bot should then run correctly.
+
+Note: The bot is configured by default to look for a database with the name `database.db`, either modify the dbPath variable in code, or create a database with matching name in the same folder. You can use `database_template.db` for this purpose.
 
