@@ -20,11 +20,13 @@ load_dotenv()
 #Get token from .env
 TOKEN = os.getenv("TOKEN")
 #Database name/path
-dbPath = "database.db"
+dbName = "database.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+dbPath = os.path.join(BASE_DIR, dbName)
 #Current version
-currentVersion = "2.2.0"
+currentVersion = "2.2.1"
 #Is this build experimental?
-experimentalBuild = False
+experimentalBuild = True
 #Bot commands prefix
 prefix = '!'
 
@@ -185,10 +187,11 @@ async def leroy(ctx):
     embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
     await ctx.channel.send(embed=embed)
 
-@bot.command(brief="Displays the current version of the bot.", description="Displays the current version of the bot. Takes no arguments.", aliases=['ver'], usage=f"{prefix}version")
-async def version(ctx):
-    embed=discord.Embed(title="ℹ️ Bot version", description=f"Current version: {currentVersion}", color=0xffffff)
+@bot.command(brief="Displays information about the bot.", description="Displays information about the bot. Takes no arguments.", usage=f"{prefix}about")
+async def about(ctx):
+    embed=discord.Embed(title=f"ℹ️ About {bot.user.name}", description=f"**Version:** {currentVersion} \n**Made by:** Hyper#0001 \n**GitHub:** https://github.com/HyperGH/AnnoSnedBot", color=0x009dff)
     embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+    embed.set_thumbnail(url=bot.user.avatar_url)
     await ctx.channel.send(embed=embed)
 
 @bot.command(brief="Displays a user's avatar.", description="Displays a user's avatar for your viewing (or stealing) pleasure.", usage=f"{prefix}avatar <userID|userMention|userName>")
