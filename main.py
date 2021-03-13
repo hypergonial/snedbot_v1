@@ -12,6 +12,7 @@ from difflib import get_close_matches
 import sys
 import traceback
 from itertools import chain
+import datetime
 
 
 #Loading token from .env file. If this file does not exist, nothing will work.
@@ -21,7 +22,7 @@ TOKEN = os.getenv("TOKEN")
 #Database name/path
 dbPath = "database.db"
 #Current version
-currentVersion = "2.2.0a"
+currentVersion = "2.2.0b"
 #Is this build experimental?
 experimentalBuild = True
 #Bot commands prefix
@@ -77,16 +78,15 @@ errorFormatTitle = "❌ Error: Invalid format entered."
 errorFormatDesc = "Operation cancelled."
 errorCheckFailTitle = "❌ Error: Insufficient permissions."
 errorCheckFailDesc = f"Type `{prefix}help` for a list of available commands."
+errorCooldownTitle = "🕘 Error: This command is on cooldown."
 #Warns:
 warnColor = 0xffcc4d
 warnDataTitle = "⚠️ Warning: Invalid data entered."
-warnDataDesc = "Please check command usage. Operation cancelled."
+warnDataDesc = "Please check command usage."
 warnEmojiTitle = "⚠️ Warning: Invalid reaction entered."
-warnEmojiDesc = "Operation cancelled."
+warnEmojiDesc = "Please enter a valid reaction."
 warnFormatTitle = "⚠️ Warning: Invalid format entered."
 warnFormatDesc = "Please try entering valid data."
-warnFailTitle = "⚠️ Warning: Insufficient permissions."
-warnFailDesc = f"Type `{prefix}help` for a list of available commands."
 
 #
 #Normal commands
@@ -106,6 +106,7 @@ async def help(ctx, commandname : str=None):
     userRoles = [role.id for role in ctx.author.roles]
     privroles = [role[0] for role in await checkprivs(ctx.guild.id)]
     
+    #Determine how many commands and associated details we need to retrieve, then retrieve them.
     if any(roleID in userRoles for roleID in privroles) or (ctx.author.id == creatorID or ctx.author.id == ctx.guild.owner_id) :
         cmds = [cmd.name for cmd in bot.commands]
         briefs = [cmd.brief for cmd in bot.commands]
@@ -117,6 +118,7 @@ async def help(ctx, commandname : str=None):
     i = 0
     #Note: allAliases is a matrix of multiple lists, this will convert it into a singular list
     aliases = list(chain(*allAliases))
+    helpFooter=f"Requested by {ctx.author.name}#{ctx.author.discriminator}"
     if commandname == None :
         formattedmsg = []
         i = 0
@@ -129,12 +131,14 @@ async def help(ctx, commandname : str=None):
 
         final = "".join(formattedmsg)
         embed=discord.Embed(title="⚙️ __Available commands:__", description=final, color=0x009dff)
+        embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
         return
     else :
         #Oh no, you found me o_o
         if commandname == "Hyper" :
             embed=discord.Embed(title="❓ I can't...", description=f"I am sorry, but he can't be helped. He is beyond redemption.", color=0xbe1931)
+            embed.set_footer(text="Requested by a stinky person.", icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
             return
         #If our user is a dumbass and types ?help ?command instead of ?help command, we will remove the prefix from it first
@@ -150,15 +154,18 @@ async def help(ctx, commandname : str=None):
                 #Then join them together
                 commandaliases = ", ".join(commandaliases)
                 embed=discord.Embed(title=f"⚙️ Command: {prefix}{command.name}", description=f"{command.description} \n \n**Usage:** `{command.usage}` \n**Aliases:** {commandaliases}", color=0x009dff)
+                embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
                 await ctx.send(embed=embed)
                 return
             else :
                 command = bot.get_command(commandname)
                 embed=discord.Embed(title=f"⚙️ Command: {prefix}{command.name}", description=f"{command.description} \n \n**Usage:** `{command.usage}`", color=0x009dff)
+                embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
                 await ctx.send(embed=embed)
                 return
         else :
             embed=discord.Embed(title="❓ Unknown command!", description=f"Use `{prefix}help` for a list of available commands.", color=0xbe1931)
+            embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
             return
 
@@ -168,30 +175,35 @@ async def help(ctx, commandname : str=None):
 @bot.command(brief="Displays bot ping.", description="Displays the current ping of the bot in miliseconds. Takes no arguments.", usage=f"{prefix}ping")
 async def ping(ctx):
     embed=discord.Embed(title="🏓 Pong!", description=f"Latency: `{round(bot.latency * 1000)}ms`", color=0xffffff)
+    embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
     await ctx.channel.send(embed=embed)
 
 #A more fun way to get the ping.
 @bot.command(hidden = True, brief="A better way to get the ping.", description="Why? because yes. Displays the current ping of the bot in miliseconds. Takes no arguments.", usage=f"{prefix}LEROY")
 async def leroy(ctx):
-    embed=discord.Embed(title="JEEEEENKINS!", description=f"`{round(bot.latency * 1000)}ms`", color =0xffffff)
-    embed.set_footer(text="Oh my god he just ran in. 👀")
+    embed=discord.Embed(title="JEEEEENKINS!", description=f"... Oh my god he just ran in. 👀 `{round(bot.latency * 1000)}ms`", color =0xffffff)
+    embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
     await ctx.channel.send(embed=embed)
 
-@bot.command(brief="Displays the current version of the bot.", description="Displays the current version of the bot. Takes no arguments.", usage=f"{prefix}version")
+@bot.command(brief="Displays the current version of the bot.", description="Displays the current version of the bot. Takes no arguments.", aliases=['ver'], usage=f"{prefix}version")
 async def version(ctx):
     embed=discord.Embed(title="ℹ️ Bot version", description=f"Current version: {currentVersion}", color=0xffffff)
+    embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
     await ctx.channel.send(embed=embed)
 
 @bot.command(brief="Displays a user's avatar.", description="Displays a user's avatar for your viewing (or stealing) pleasure.", usage=f"{prefix}avatar <userID|userMention|userName>")
+@commands.cooldown(1, 30, type=commands.BucketType.member)
 async def avatar(ctx, member : discord.Member) :
     embed=discord.Embed(title=f"{member.name}'s avatar:")
     embed.set_image(url=member.avatar_url)
+    embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
     await ctx.channel.send(embed=embed)
 
 @avatar.error
 async def avatar_error(ctx, error):
     if isinstance(error, discord.ext.commands.errors.MemberNotFound) :
         embed=discord.Embed(title="❌ Unable to find user.", description="Please check if you typed everything correctly, then try again.", color=errorColor)
+        embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
 
 
@@ -203,7 +215,8 @@ async def avatar_error(ctx, error):
 #designated role if set. Can be limited as to which channels it can be run from via the COMMANDSCHANNEL setting.
 @bot.command(brief="Start setting up a new multiplayer listing.", description="Start matchmaking! After command execution, you will receive a direct message to help you set up a multiplayer listing! Takes no arguments.", aliases=['multiplayer', 'init', 'match','multi','mp'], usage=f"{prefix}matchmaking")
 @commands.guild_only()
-@commands.max_concurrency(1, per=commands.BucketType.member,wait=False)
+@commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
+@commands.cooldown(1, 43200, type=commands.BucketType.member)
 async def matchmaking(ctx):
     cmdchannel = await retrievesetting("COMMANDSCHANNEL", ctx.guild.id)
     #Performs check if the command is executed in the right channel, if this is 0, this feature is disabled.
@@ -212,14 +225,14 @@ async def matchmaking(ctx):
             print("[WARN]: Matchmaking initiated in disabled channel.")
             return
     mpsessiondata = []
-    mpEmbedColor = 0x530080
+    mpEmbedColor = 0xd76b00
     #This should be a list of all the names of the functions below
     #Note: The questions will be asked in this order specified here, change it here to change the order. confirmlisting must be last.
     #Scroll to the bottom of the command scope to see how & where this is used.
     qtypes = ["UbiName", "GameMode", "PlayerCount", "DLC", "Mods", "TimeZone", "Additional", "ConfirmListing"]
     #Messaging the channel to provide feedback
     #It sends these seperately to ideally grab the user's attention, but can be merged.
-    embed=discord.Embed(title="**Starting matchmaking...**", description=f"Started matchmaking for **{ctx.author.name}**. Please check your DMs!", color=mpEmbedColor)
+    embed=discord.Embed(title="**Starting matchmaking...**", description=f"Started matchmaking for **{ctx.author.name}#{ctx.author.discriminator}**. Please check your DMs!", color=mpEmbedColor)
     embed.set_footer(text="If you didn't receive a DM, make sure you have direct messages enabled from server members.")
     await ctx.channel.send(embed=embed)
     embed=discord.Embed(title="**Hello!**", description="I will help you set up a new multiplayer listing!  Follow the steps below! Note: You can edit your submission in case you made any errors!", color=mpEmbedColor)
@@ -308,6 +321,7 @@ async def matchmaking(ctx):
             #Saving the ID of this message we just sent
             msgid = msg.id
             playersEmoji =["2️⃣", "3️⃣", "4️⃣", "♾️"]
+            playersOptions =["2", "3", "4", "5 or more"]
             for emoji in playersEmoji :
                 await msg.add_reaction(emoji)
 
@@ -317,20 +331,20 @@ async def matchmaking(ctx):
                 return payload.message_id == msgid and payload.user_id == ctx.author.id
             try:
                 payload = await bot.wait_for('raw_reaction_add', timeout=300.0, check=playercountcheck)
-                #Check reaction emoji
-                if str(payload.emoji) == "2️⃣":
-                    playernum = "2"
-                elif str(payload.emoji) == "3️⃣":
-                    playernum = "3"
-                elif str(payload.emoji) == "4️⃣":
-                    playernum = "4"
-                elif str(payload.emoji) == "♾️":
-                    playernum = "5 or more"
-                elif str(payload.emoji) not in playersEmoji :
-                    await msg.delete()
-                    embed = discord.Embed(title=warnEmojiTitle, description=warnEmojiDesc, color=warnColor)
-                    await ctx.author.send(embed=embed)
-                    return -2
+                i = 0
+                playernum = "[DefaultCount] If you see this, something is very wrong..."
+                #Check if emoj is invalid, otherwise check for match & break on match
+                while i != len(playersOptions):
+                    if str(payload.emoji) not in playersEmoji :
+                        await msg.delete()
+                        embed = discord.Embed(title=warnEmojiTitle, description=warnEmojiDesc, color=warnColor)
+                        await ctx.author.send(embed=embed)
+                        return -2
+                    elif str(payload.emoji) == playersEmoji[i]:
+                        playernum = playersOptions[i]
+                        await msg.delete()
+                        break
+                    i += 1
                 
                 await modifymatchmaking(qType, playernum, isModifying)
                 embed=discord.Embed(title="✅ Number of players set.", description=f"Number of players: **{playernum}**", color=mpEmbedColor)
@@ -344,38 +358,33 @@ async def matchmaking(ctx):
             embed=discord.Embed(title="Now react with the symbol of **all** the DLCs you want to use! Click the green checkmark (✅) once done!", description=" 🔥 - The Anarchist \n 🤿 - Sunken Treasures \n 🌹 - Botanica \n ❄️ - The Passage \n 🏛️ - Seat of Power \n 🚜 - Bright Harvest \n 🦁 - Land of Lions \n ⚓ - Docklands", color=mpEmbedColor)
             embed.set_footer(text="Note: If you do not own any DLC, just simply press ✅ to continue.")
             msg = await ctx.author.send(embed=embed)
-            msgid = msg.id
+            #Add to the list of DLC here. Note: the emojies & DLC must be in the same order, & a green tick must be at the end of emojies. 
             DLCemojies = ["🔥", "🤿", "🌹", "❄️", "🏛️", "🚜", "🦁", "⚓", "✅"]
+            allDLCs = ["The Anarchist", "Sunken Treasures", "Botanica", "The Passage", "Seat of Power", "Bright Harvest", "Land of Lions", "Docklands" ]
             for emoji in DLCemojies :
                 await msg.add_reaction(emoji)
             DLC = []
             #We check if the message ID is the same, so this is not a different message.
             #We also check if the user who reacted was the user who sent the command.
             def confirmDLCcheck(payload):
-                return payload.message_id == msgid and payload.user_id == ctx.author.id and str(payload.emoji) == "✅"
+                return payload.message_id == msg.id and payload.user_id == ctx.author.id and str(payload.emoji) == "✅"
             try:
                 payload = await bot.wait_for('raw_reaction_add', timeout=300.0, check=confirmDLCcheck)
-                #Check reaction emoji
-                msg = await ctx.author.fetch_message(msgid)
-                #Error out if there are any emojies that are foreign
-                
-                if msg.reactions[0].count == 2:
-                    DLC.append("The Anarchist")
-                if msg.reactions[1].count == 2:
-                    DLC.append("Sunken Treasures")
-                if msg.reactions[2].count == 2:
-                    DLC.append("Botanica")
-                if msg.reactions[3].count == 2:
-                    DLC.append("The Passage")
-                if msg.reactions[4].count == 2:
-                    DLC.append("Seat of Power")
-                if msg.reactions[5].count == 2:
-                    DLC.append("Bright Harvest")
-                if msg.reactions[6].count == 2:
-                    DLC.append("Land of Lions")
-                if msg.reactions[7].count == 2:
-                    DLC.append("Docklands")
-
+                #We have to fetch here otherwise reaction counting does not work for some reason..?
+                msg = await ctx.author.fetch_message(msg.id)
+                #Count all the emojies
+                i = 0
+                while i != len(allDLCs) :
+                    #If emoji is invalid, we re-run question    
+                    if str(msg.reactions[i]) not in DLCemojies :
+                        await msg.delete()
+                        embed = discord.Embed(title=warnEmojiTitle, description=warnEmojiDesc, color=warnColor)
+                        await ctx.author.send(embed=embed)
+                        return -2
+                    #Otherwise we add to the list of DLC
+                    elif msg.reactions[i].count == 2 :
+                        DLC.append(allDLCs[i])
+                    i += 1
                 #We can override this field so it is easier to read
                 if len(DLC) == 8:
                     DLC = "All"
@@ -399,14 +408,13 @@ async def matchmaking(ctx):
             embed=discord.Embed(title="Are you going to use mods in this match?", description="React below with your response!", color=mpEmbedColor)
             embed.set_footer(text="Note: Mods are not officially supported. All participants must share the same mods to play together. Please share the mods you use at the end of the form. ")
             msg = await ctx.author.send(embed=embed)
-            msgid = msg.id
             #Add emoji
             await msg.add_reaction("✅")
             await msg.add_reaction("❌")
             modemojies = ["✅", "❌"]
 
             def modcheck(payload):
-                return payload.message_id == msgid and payload.user_id == ctx.author.id
+                return payload.message_id == msg.id and payload.user_id == ctx.author.id
             try:
                 payload = await bot.wait_for('raw_reaction_add', timeout=300.0, check=modcheck)
                 #Check reaction emoji
@@ -488,7 +496,7 @@ async def matchmaking(ctx):
                     await ctx.author.send(embed=embed)
                     return -2
                 else :
-                    if payload.content == "skip" :
+                    if payload.content.lower() == "skip" :
                         await modifymatchmaking(qType, "-", isModifying)
                         await msg.delete()
                         embed=discord.Embed(title="✅ Additional info skipped.", description="You skipped this step.", color=mpEmbedColor)
@@ -507,8 +515,9 @@ async def matchmaking(ctx):
         
         if qType == "ConfirmListing" :
             #Send listing preview
-            embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {mpsessiondata[3]} \n **Mods:** {mpsessiondata[4]} \n **Timezone:** {mpsessiondata[5]} \n **Additional info:** {mpsessiondata[6]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested!", color=mpEmbedColor)
+            embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {mpsessiondata[3]} \n **Mods:** {mpsessiondata[4]} \n **Timezone:** {mpsessiondata[5]} \n **Additional info:** {mpsessiondata[6]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested, or react with ⏫! This will notify the host when {mpsessiondata[2]} players have expressed interest! (including the host)", color=mpEmbedColor)
             embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/203158031511453696/446da0b60a670b6866cd463fb5e87195.png?size=1024")
+            embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more join interests can be submitted.")
             await ctx.author.send(embed=embed)
             embed=discord.Embed(title="Please review your listing!", description="If everything looks good, hit ✅ to submit! If you want to edit any information, hit 🖊️. If you want to cancel your submission, hit ❌.", color=mpEmbedColor)
             msg = await ctx.author.send(embed=embed)
@@ -523,15 +532,19 @@ async def matchmaking(ctx):
                     #If LFG role is not set up, we will not include a mention to it at the end.
                     if await retrievesetting("LFGROLE", ctx.guild.id) == 0 :
                         #yeah this is long lol
-                        embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {mpsessiondata[3]} \n **Mods:** {mpsessiondata[4]} \n **Timezone:** {mpsessiondata[5]} \n **Additional info:** {mpsessiondata[6]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested!")
+                        embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {mpsessiondata[3]} \n **Mods:** {mpsessiondata[4]} \n **Timezone:** {mpsessiondata[5]} \n **Additional info:** {mpsessiondata[6]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested, or react with ⏫! This will notify the host when {mpsessiondata[2]} players have expressed interest! (including the host)")
                         embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/203158031511453696/446da0b60a670b6866cd463fb5e87195.png?size=1024")
-                        await channel.send(embed=embed)
+                        embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more join interests can be submitted.")
+                        posting = await channel.send(embed=embed)
+                        await posting.add_reaction("⏫")
                         #await channel.send(f"**__Looking for Players: Anno 1800__** \n \n **Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {DLC} \n **Mods:** {mpsessiondata[3]} \n **Timezone:** {mpsessiondata[4]} \n **Additional info:** {mpsessiondata[5]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested!")
                         print(f"[INFO]: {ctx.author} User created new multiplayer listing. Session: {mpsessiondata}")   
                     else :
-                        embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {mpsessiondata[3]} \n **Mods:** {mpsessiondata[4]} \n **Timezone:** {mpsessiondata[5]} \n **Additional info:** {mpsessiondata[6]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested! \n \n")
+                        embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {mpsessiondata[3]} \n **Mods:** {mpsessiondata[4]} \n **Timezone:** {mpsessiondata[5]} \n **Additional info:** {mpsessiondata[6]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested, or react with ⏫! This will notify the host when {mpsessiondata[2]} players have expressed interest! (including the host)")
                         embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/203158031511453696/446da0b60a670b6866cd463fb5e87195.png?size=1024")
-                        await channel.send(embed=embed,content=lfgrole.mention)
+                        embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more join interests can be submitted.")
+                        posting = await channel.send(embed=embed,content=lfgrole.mention)
+                        await posting.add_reaction("⏫")
                         #await channel.send(f"**__Looking for Players: Anno 1800__** \n \n **Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {DLC} \n **Mods:** {mpsessiondata[3]} \n **Timezone:** {mpsessiondata[4]} \n **Additional info:** {mpsessiondata[5]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested! \n \n {lfgrole.mention}")
                         print(f"[INFO]: {ctx.author} User created new multiplayer listing. Session: {mpsessiondata}") 
                 except:
@@ -570,7 +583,7 @@ async def matchmaking(ctx):
                                 return -1
                             #Otherwise it is an invalid value, so we check if we reached warn limit
                             else :
-                                if warns == 4:
+                                if warns == 2:
                                     embed=discord.Embed(title="❌ Exceeded error limit.", description="You have made too many errors. Please retry your submission.", color=errorColor)
                                     await ctx.author.send(embed=embed)
                                     return -1
@@ -639,33 +652,45 @@ async def matchmaking(ctx):
     # 0 = success, continue
     # -1 = Fatal error, cancel command
     # -2 = Invalid value, repeat question
-    # -3 = Repeat question, no error
+    # -3 = Repeat question, no error, only triggered when editing
     #  
     #
-    #This means that we keep looping until our error code is -2, stop loop when it is 0
+    #This means that we keep looping until our error code is -2 or -3, stop loop when it is 0
     #And return the whole command if it is -1
     
-    #I also count how many invalid values have been added, and if it reaches a value, it will cancel the command.
+    #I also count how many invalid values have been added, and how many edits have been made, and if it reaches a value, it will cancel the command.
     warns = 0
+    edits = 0
     #Current question we are at
     question = 0
+    #Every time a question is asked, a number is returned to this value
     errcode=-2
     #We will run until it finishes (aka errcode is 1)
     while errcode != 1:
-        #Get the current question, evaluate it
+        #Get the current question, evaluate the code
         errcode = await ask(qtypes[question], False)
         #If it is fatal, return the whole command
         if errcode == -1:
+            matchmaking.reset_cooldown(ctx)
             return
-        #If it succeeds, we increment the question
+        #If it succeeds, we move to the next question
         elif errcode == 0:
             question += 1
-
+        #If editing, we will add one to the edits variable.
+        elif errcode == -3:
+            if edits == 6:
+                embed=discord.Embed(title="❌ Exceeded edit limit.", description="You cannot make more edits to your submission. Please try executing the command again.",color=errorColor)
+                await ctx.author.send(embed=embed)
+                matchmaking.reset_cooldown(ctx)
+                return
+            else :
+                edits += 1
         #If it is an invalid value, add a warn
         elif errcode == -2 :
             if warns == 4:
                 embed=discord.Embed(title="❌ Exceeded error limit.", description="You have made too many errors. Please retry your submission.", color=errorColor)
                 await ctx.author.send(embed=embed)
+                matchmaking.reset_cooldown(ctx)
                 return
             else:
                 warns += 1
@@ -674,12 +699,14 @@ async def matchmaking(ctx):
 
 @matchmaking.error
 async def matchmaking_error(ctx, error):
+    #Due to it's performance requirements and complexity, this command is limited to 1 per user
     if isinstance(error, commands.MaxConcurrencyReached):
         embed = discord.Embed(title="❌ Error: Max concurrency reached!", description="You already have a matchmaking request in progress.", color=errorColor)
+        embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
         await ctx.channel.send(embed=embed)
 
 
- #
+#
 #Event Handlers
 #
 #Note: This is where stuff that is not a command is handled
@@ -691,20 +718,42 @@ async def on_command_error(ctx, error):
     #This gets sent whenever a user has insufficient permissions to execute a command.
     if isinstance(error, commands.CheckFailure):
         embed=discord.Embed(title=errorCheckFailTitle, description=errorCheckFailDesc, color=errorColor)
+        embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
     elif isinstance(error, commands.CommandNotFound):
         #This is a fancy suggestion thing that will suggest commands that are similar in case of typos.
         #Get original cmd, and convert it into lowercase as to make it case-insensitive
         cmd = ctx.invoked_with.lower()
-        #Gets all close matches
+        #Gets all cmds and aliases
         cmds = [cmd.name for cmd in bot.commands if not cmd.hidden]
+        allAliases = [cmd.aliases for cmd in bot.commands if not cmd.hidden]
+        aliases = list(chain(*allAliases))
+        #Get close matches
         matches = get_close_matches(cmd, cmds)
+        aliasmatches = get_close_matches(cmd, aliases)
+        #Check if there are any matches, then suggest if yes.
         if len(matches) > 0:
             embed=discord.Embed(title="❓ Unknown command!", description=f"Did you mean `{prefix}{matches[0]}`?", color=0xbe1931)
+            embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+            await ctx.send(embed=embed)
+        elif len(aliasmatches) > 0:
+            embed=discord.Embed(title="❓ Unknown command!", description=f"Did you mean `{prefix}{aliasmatches[0]}`?", color=0xbe1931)
+            embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
         else:
             embed=discord.Embed(title="❓ Unknown command!", description=f"Use `{prefix}help` for a list of available commands.", color=0xbe1931)
+            embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
+    elif isinstance(error, commands.CommandOnCooldown):
+        embed=discord.Embed(title=errorCooldownTitle, description=f"Please retry in: `{datetime.timedelta(seconds=round(error.retry_after))}`", color=errorColor)
+        embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=embed)
+    elif isinstance(error, commands.MissingRequiredArgument):
+        embed=discord.Embed(title="❌ Missing argument.", description=f"One or more arguments are missing. \n__Hint:__ You can use `{prefix}help {ctx.command.name}` to view command usage.", color=errorColor)
+        embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=embed)
+
+
     else :
         #If no known error has been passed, we will print the exception to console as usual
         #IMPORTANT!!! If you remove this, your command errors will not get output to console.
@@ -715,14 +764,12 @@ async def on_command_error(ctx, error):
 @bot.event
 async def on_raw_reaction_add(payload):
     #Check if we are in a guild so we dont bombard the database with Null errors.
-    if payload.guild_id != None :
-        setmsg = await retrievesetting("ROLEREACTMSG", payload.guild_id)
+    if payload.guild_id != None : 
+        guild = bot.get_guild(payload.guild_id)
         #Check if it is the message we set
-        if setmsg == payload.message_id and payload.user_id != bot.user.id :
-            guild = bot.get_guild(payload.guild_id)
-            emoji = bot.get_emoji(await retrievesetting("LFGREACTIONEMOJI", guild.id))
+        if await retrievesetting("ROLEREACTMSG", payload.guild_id) == payload.message_id :
             #Check the emoji
-            if payload.emoji == emoji:
+            if payload.emoji == bot.get_emoji(await retrievesetting("LFGREACTIONEMOJI", guild.id)) and payload.user_id != bot.user.id:
                 member = guild.get_member(payload.user_id)
                 try:
                     #Then set the role for the user
@@ -732,11 +779,58 @@ async def on_raw_reaction_add(payload):
                     #Also DM the user about the change, and let them know that the action was performed successfully.
                     embed=discord.Embed(title="💬 Notifications enabled.", description="You are now looking for games, and will be notified of any new multiplayer listing!", color=0x00ff2a)
                     await member.send(embed=embed)
+                    return
                 except:
                     #In case anything goes wrong, we will tell the user to bully admins who can then bully me :) /s
                     embed=discord.Embed(title="❌ Error: Exception encountered.", description="Failed to add role. Contact an administrator! Operation cancelled.", color=errorColor)
                     await member.send(embed=embed)
                     print(f"[ERROR]: Unable to modify roles for {member}. Possible permissions issue.")
+                    return
+        elif await retrievesetting("ANNOUNCECHANNEL", guild.id) == payload.channel_id:
+            if str(payload.emoji) == "⏫" and payload.user_id != bot.user.id:
+                #The listing message
+                listing = await guild.get_channel(payload.channel_id).fetch_message(payload.message_id)
+                #If the message is older than 2 weeks, we ignore this request
+                if (datetime.datetime.utcnow() - listing.created_at).days >= 7 :
+                    return
+                #The person who reacted
+                member = guild.get_member(payload.user_id)
+                #Get context for this message
+                ctx = await bot.get_context(listing)
+                #Get the content, then lines seperated into a list of the listing
+                listingContent = listing.embeds
+                listingLines = listingContent[0].description.splitlines()
+                #The second line contains information about playercount
+                playerCount = listingLines[2].split(": ** ")[1]
+                #We get the mention that is in-between the words Contact... and ...in, and convert it to type of member.
+                converter = commands.MemberConverter()
+                host = await converter.convert(ctx, listingLines[len(listingLines)-1].split("Contact ")[1].split(" in")[0])
+                #We get a list of users who reacted to this
+                interestedPlayers = await listing.reactions[0].users().flatten()
+                #Remove bot accounts from this list, and join them together in a new str.
+                for player in interestedPlayers :
+                    if player.bot == True or player == host :
+                        interestedPlayers.remove(player)
+                interestedMentions = ", ".join([member.mention for member in interestedPlayers])
+                #Convert the playercount to int, subtract 1 as to not count the host itself
+                try :
+                    playerCount = int(playerCount)-1
+                except ValueError :
+                    playerCount = 4
+                #Sending confirmation to user who signed up
+                if member != host :
+                    embed=discord.Embed(title=f"📝 You expressed intent to join {host.name}'s game!", description="They will receive a notification when their desired playercap has been reached.", color=0x00ff2a)
+                    await member.send(embed=embed)
+                    print(f"[INFO]: {member.name}#{member.discriminator} expressed interest to join {host.name}#{host.discriminator}'s game.")
+                #If we have reached the desired playercount, we will message to the host. This message will get every time a new player reacts.
+                if len(interestedPlayers) >= playerCount :
+                    embed=discord.Embed(title="📝 Your listing reached your set playercap!", description=f"Hello! Just letting you know that your multiplayer listing on **{guild.name}** has reached {playerCount} or more interested players.\nPlayers who want to play with you in this match: {interestedMentions}", color=0x00ff2a)
+                    embed.set_footer(text="If you believe that this feature was abused, contact a moderator immediately!")
+                    await host.send(embed=embed)
+                    print(f"[INFO]: {host.name}#{host.discriminator}'s listing reached cap. Host notified.")
+                return
+
+
 
 #Same thing but in reverse
 @bot.event
@@ -745,8 +839,7 @@ async def on_raw_reaction_remove(payload):
         setmsg = await retrievesetting("ROLEREACTMSG", payload.guild_id)
         if setmsg == payload.message_id :
             guild = bot.get_guild(payload.guild_id)
-            emoji = bot.get_emoji(await retrievesetting("LFGREACTIONEMOJI", guild.id))
-            if payload.emoji == emoji and payload.user_id != bot.user.id:
+            if payload.emoji == bot.get_emoji(await retrievesetting("LFGREACTIONEMOJI", guild.id)) and payload.user_id != bot.user.id:
                 member = guild.get_member(payload.user_id)
                 try:
                     role = guild.get_role(await retrievesetting("LFGROLE", guild.id))
@@ -771,10 +864,12 @@ async def hasOwner(ctx):
 
 #Check performed to see if the user has priviliged access.
 async def hasPriviliged(ctx):
-    #Gets a list of all the roles the user has, then gets the name from that.
+    #Gets a list of all the roles the user has, then gets the ID from that.
     userRoles = [x.id for x in ctx.author.roles]
+    #Also get privliged roles, then compare
+    privroles = [role[0] for role in await checkprivs(ctx.guild.id)]
     #Check if any of the roles in user's roles are contained in the priviliged roles.
-    return any(role in userRoles for role in await checkprivs(ctx.guild.id)) or (ctx.author.id == creatorID or ctx.author.id == ctx.guild.owner_id)
+    return any(role in userRoles for role in privroles) or (ctx.author.id == creatorID or ctx.author.id == ctx.guild.owner_id)
 
 #Fun command, because yes. (Needs mod privilege as it can be abused for spamming)
 @bot.command(hidden = True, brief = "Deploys the duck army.", description="🦆 I am surprised you even need help for this...", usage=f"{prefix}quack")
@@ -848,10 +943,10 @@ async def priviligedroles(ctx) :
 @commands.check(hasPriviliged)
 @commands.guild_only()
 async def whois(ctx, member : discord.Member) :
-    #First we check if what we got provided is an ID, or a mention.
     rolelist = [role.name for role in member.roles]
     roleformatted = ", ".join(rolelist)
     embed=discord.Embed(title=f"User information: {member.name}", description=f"Username: `{member.name}` \nNickname: `{member.display_name}` \nUser ID: `{member.id}` \nStatus: `{member.raw_status}` \nBot: `{member.bot}` \nAccount creation date: `{member.created_at}` \nJoin date: `{member.joined_at}` \nRoles: `{roleformatted}`", color=0x009dff)
+    embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
     embed.set_thumbnail(url=member.avatar_url)
     await ctx.channel.send(embed=embed)
 @whois.error
