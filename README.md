@@ -14,7 +14,9 @@
 
 `!version` Returns the current version of the bot.
 
-`!matchmaking` Starts the matchmaking system. Creates a multiplayer listing in desired channel upon completion.
+`!avatar <user>` Return the avatar of the specified user. Has a 30 second cooldown per user.
+
+`!matchmaking` Starts the matchmaking system. Creates a multiplayer listing in desired channel upon completion. Has a 12 hour cooldown per user.
 
 ### Commands for server owners & admins:
 `!addpriviligedrole <rolename>` Adds a role to priviliged roles. This will allow them to access bot admin commands. Can only be executed by a guild owner.
