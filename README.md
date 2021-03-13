@@ -4,6 +4,7 @@
 
 ### Features:
  - Generate neatly formatted multiplayer listings based on a list of criteria
+ - Allow users to add themselves to these listings and express join intent
  - Easy to use commands
  - Setup commands to simplify configuration
 
