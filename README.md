@@ -1,4 +1,4 @@
-# Anno Bot "Sned" v2.2.0
+# Anno Bot "Sned" v2.2.1
 
 ## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  for matchmaking and other purposes on the Annoverse discord guild.
 
@@ -13,7 +13,7 @@
 
 `!ping` Returns the ping of the bot in ms.
 
-`!version` Returns the current version of the bot.
+`!about` Displays information about the bot.
 
 `!avatar <user>` Return the avatar of the specified user. Has a 30 second cooldown per user.
 
