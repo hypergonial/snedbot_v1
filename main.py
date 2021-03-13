@@ -26,7 +26,7 @@ dbPath = os.path.join(BASE_DIR, dbName)
 #Current version
 currentVersion = "2.2.1"
 #Is this build experimental?
-experimentalBuild = True
+experimentalBuild = False
 #Bot commands prefix
 prefix = '!'
 
