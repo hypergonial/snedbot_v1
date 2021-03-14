@@ -24,7 +24,7 @@ dbName = "database.db"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 dbPath = os.path.join(BASE_DIR, dbName)
 #Current version
-currentVersion = "2.2.2a"
+currentVersion = "2.2.3"
 #Is this build experimental?
 experimentalBuild = False
 #Bot commands prefix
@@ -94,6 +94,8 @@ warnFormatDesc = "Please try entering valid data."
 #Misc:
 embedBlue = 0x009dff
 embedGreen = 0x00ff2a
+unknownColor = 0xbe1931
+miscColor = 0xc2c2c2
 
 #
 #Normal commands
@@ -144,7 +146,7 @@ async def help(ctx, commandname : str=None):
     else :
         #Oh no, you found me o_o
         if commandname == "Hyper" :
-            embed=discord.Embed(title="❓ I can't...", description=f"I am sorry, but he can't be helped. He is beyond redemption.", color=0xbe1931)
+            embed=discord.Embed(title="❓ I can't...", description=f"I am sorry, but he can't be helped. He is beyond redemption.", color=unknownColor)
             embed.set_footer(text="Requested by a stinky person.", icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
             return
@@ -171,7 +173,7 @@ async def help(ctx, commandname : str=None):
                 await ctx.send(embed=embed)
                 return
         else :
-            embed=discord.Embed(title="❓ Unknown command!", description=f"Use `{prefix}help` for a list of available commands.", color=0xbe1931)
+            embed=discord.Embed(title="❓ Unknown command!", description=f"Use `{prefix}help` for a list of available commands.", color=unknownColor)
             embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
             return
@@ -181,14 +183,14 @@ async def help(ctx, commandname : str=None):
 #Gets the ping of the bot.
 @bot.command(brief="Displays bot ping.", description="Displays the current ping of the bot in miliseconds. Takes no arguments.", usage=f"{prefix}ping")
 async def ping(ctx):
-    embed=discord.Embed(title="🏓 Pong!", description=f"Latency: `{round(bot.latency * 1000)}ms`", color=0xffffff)
+    embed=discord.Embed(title="🏓 Pong!", description=f"Latency: `{round(bot.latency * 1000)}ms`", color=miscColor)
     embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
     await ctx.channel.send(embed=embed)
 
 #A more fun way to get the ping.
 @bot.command(hidden = True, brief="A better way to get the ping.", description="Why? because yes. Displays the current ping of the bot in miliseconds. Takes no arguments.", usage=f"{prefix}LEROY")
 async def leroy(ctx):
-    embed=discord.Embed(title="JEEEEENKINS!", description=f"... Oh my god he just ran in. 👀 `{round(bot.latency * 1000)}ms`", color =0xffffff)
+    embed=discord.Embed(title="JEEEEENKINS!", description=f"... Oh my god he just ran in. 👀 `{round(bot.latency * 1000)}ms`", color =miscColor)
     embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
     await ctx.channel.send(embed=embed)
 
@@ -202,7 +204,7 @@ async def about(ctx):
 @bot.command(brief="Displays a user's avatar.", description="Displays a user's avatar for your viewing (or stealing) pleasure.", usage=f"{prefix}avatar <userID|userMention|userName>")
 @commands.cooldown(1, 30, type=commands.BucketType.member)
 async def avatar(ctx, member : discord.Member) :
-    embed=discord.Embed(title=f"{member.name}'s avatar:")
+    embed=discord.Embed(title=f"{member.name}'s avatar:", color=miscColor)
     embed.set_image(url=member.avatar_url)
     embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
     await ctx.channel.send(embed=embed)
@@ -233,7 +235,8 @@ async def tag(ctx, name):
             tag.reset_cooldown(ctx)
             return
         else :
-            await ctx.channel.send(tagContent)
+            embed=discord.Embed(description=f"Tag requested by {ctx.author.name}#{ctx.author.discriminator}", color=miscColor)
+            await ctx.channel.send(embed=embed, content=tagContent)
 
 @bot.command(brief="Displays all tags.", description="Shows a list of all available tags.", usage=f"{prefix}tags")
 @commands.cooldown(1, 60, type=commands.BucketType.member)
@@ -772,15 +775,15 @@ async def on_command_error(ctx, error):
         aliasmatches = get_close_matches(cmd, aliases)
         #Check if there are any matches, then suggest if yes.
         if len(matches) > 0:
-            embed=discord.Embed(title="❓ Unknown command!", description=f"Did you mean `{prefix}{matches[0]}`?", color=0xbe1931)
+            embed=discord.Embed(title="❓ Unknown command!", description=f"Did you mean `{prefix}{matches[0]}`?", color=unknownColor)
             embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
         elif len(aliasmatches) > 0:
-            embed=discord.Embed(title="❓ Unknown command!", description=f"Did you mean `{prefix}{aliasmatches[0]}`?", color=0xbe1931)
+            embed=discord.Embed(title="❓ Unknown command!", description=f"Did you mean `{prefix}{aliasmatches[0]}`?", color=unknownColor)
             embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
         else:
-            embed=discord.Embed(title="❓ Unknown command!", description=f"Use `{prefix}help` for a list of available commands.", color=0xbe1931)
+            embed=discord.Embed(title="❓ Unknown command!", description=f"Use `{prefix}help` for a list of available commands.", color=unknownColor)
             embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
     elif isinstance(error, commands.CommandOnCooldown):
@@ -826,14 +829,16 @@ async def on_raw_reaction_add(payload):
                     print(f"[ERROR]: Unable to modify roles for {member}. Possible permissions issue.")
                     return
         elif await retrievesetting("ANNOUNCECHANNEL", guild.id) == payload.channel_id:
+            #I put a fair number of logging in here to track abuse of this feature
             if str(payload.emoji) == "⏫" and payload.user_id != bot.user.id:
                 #The listing message
                 listing = await guild.get_channel(payload.channel_id).fetch_message(payload.message_id)
-                #If the message is older than 2 weeks, we ignore this request
-                if (datetime.datetime.utcnow() - listing.created_at).days >= 7 :
-                    return
                 #The person who reacted
                 member = guild.get_member(payload.user_id)
+                #If the message is older than a week, we ignore this request
+                if (datetime.datetime.utcnow() - listing.created_at).days >= 7 :
+                    print(f"[INFO]: {member.name}#{member.discriminator} tried to join an expired listing.")
+                    return
                 #Get context for this message
                 ctx = await bot.get_context(listing)
                 #Get the content, then lines seperated into a list of the listing
@@ -858,7 +863,7 @@ async def on_raw_reaction_add(payload):
                     playerCount = 4
                 #Sending confirmation to user who signed up
                 if member != host :
-                    embed=discord.Embed(title=f"📝 You expressed intent to join {host.name}'s game!", description="They will receive a notification when their desired playercap has been reached.", color=embedGreen)
+                    embed=discord.Embed(title=f"📝 You subscribed to {host.name}'s game!", description="They will receive a notification when their desired playercap has been reached.", color=embedGreen)
                     await member.send(embed=embed)
                     print(f"[INFO]: {member.name}#{member.discriminator} expressed interest to join {host.name}#{host.discriminator}'s game.")
                 #If we have reached the desired playercount, we will message to the host. This message will get every time a new player reacts.
@@ -876,8 +881,8 @@ async def on_raw_reaction_add(payload):
 async def on_raw_reaction_remove(payload):
     if payload.guild_id != None :
         setmsg = await retrievesetting("ROLEREACTMSG", payload.guild_id)
+        guild = bot.get_guild(payload.guild_id)
         if setmsg == payload.message_id :
-            guild = bot.get_guild(payload.guild_id)
             if payload.emoji == bot.get_emoji(await retrievesetting("LFGREACTIONEMOJI", guild.id)) and payload.user_id != bot.user.id:
                 member = guild.get_member(payload.user_id)
                 try:
@@ -891,23 +896,49 @@ async def on_raw_reaction_remove(payload):
                     await member.send(embed=embed)
                     print(f"[ERROR]: Unable to modify roles for {member}. Possible permissions or hierarchy issue.")
 
+        elif await retrievesetting("ANNOUNCECHANNEL", guild.id) == payload.channel_id:
+            #I put a fair number of logging in here to track abuse of this feature
+            if str(payload.emoji) == "⏫" and payload.user_id != bot.user.id:
+                #The person who reacted
+                member = guild.get_member(payload.user_id)
+                #Listing
+                listing = await guild.get_channel(payload.channel_id).fetch_message(payload.message_id)
+                listingContent = listing.embeds
+                listingLines = listingContent[0].description.splitlines()
+                #Getting host
+                ctx = await bot.get_context(listing)
+                converter = commands.MemberConverter()
+                host = await converter.convert(ctx, listingLines[len(listingLines)-1].split("Contact ")[1].split(" in")[0])
+                #If the message is older than a week, we ignore this request
+                if (datetime.datetime.utcnow() - listing.created_at).days >= 7 :
+                    print(f"[INFO]: {member.name}#{member.discriminator} tried to join an expired listing.")
+                    return
+                if member != host :
+                    print(f"[INFO]: {member.name}#{member.discriminator} removed themselves from a listing.")
+                    embed=discord.Embed(title=f"📝 You have unsubscribed from {host.name}'s listing.", description="The host will no longer see you signed up to this listing.", color=errorColor)
+                    await member.send(embed=embed)
+                    return
+
+
 #Keep-On-Top message functionality
 @bot.event
 async def on_message(message):
-    topChannelID = await retrievesetting("KEEP_ON_TOP_CHANNEL", message.guild.id)
-    if message.channel.id == topChannelID:
-        keepOnTopContent = await retrievetext("KEEP_ON_TOP_CONTENT", message.guild.id)
-        if keepOnTopContent != message.content :
-            #Get rid of previous message
-            previousTop = await message.channel.fetch_message(await retrievesetting("KEEP_ON_TOP_MSG", message.guild.id))
-            await previousTop.delete()
-            #Send new message
-            newTop = await message.channel.send(keepOnTopContent)
-            #Set the id to keep the ball rolling
-            await modifysettings("KEEP_ON_TOP_MSG", newTop.id, newTop.guild.id)
-    elif topChannelID == None :
-        return
-    #This is necessary, otherwise bot commands will break because on_message would override them
+    #Check if we are in a guild to avoid exceptions
+    if message.guild != None:
+        topChannelID = await retrievesetting("KEEP_ON_TOP_CHANNEL", message.guild.id)
+        if message.channel.id == topChannelID:
+            keepOnTopContent = await retrievetext("KEEP_ON_TOP_CONTENT", message.guild.id)
+            if keepOnTopContent != message.content :
+                #Get rid of previous message
+                previousTop = await message.channel.fetch_message(await retrievesetting("KEEP_ON_TOP_MSG", message.guild.id))
+                await previousTop.delete()
+                #Send new message
+                newTop = await message.channel.send(keepOnTopContent)
+                #Set the id to keep the ball rolling
+                await modifysettings("KEEP_ON_TOP_MSG", newTop.id, newTop.guild.id)
+        elif topChannelID == None :
+            print("Settings not found.")
+        #This is necessary, otherwise bot commands will break because on_message would override them
     await bot.process_commands(message)
 
 #
@@ -942,39 +973,50 @@ async def quack(ctx):
 @commands.check(hasOwner)
 @commands.guild_only()
 async def addpriviligedrole(ctx, rolename):
-    try :
-        role = discord.utils.get(ctx.guild.roles, name=rolename)
-    except :
-        await ctx.channel.send("**Error:** Unable to locate role.")
+    role = discord.utils.get(ctx.guild.roles, name=rolename)
+    if role == None:
+        embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.", color=errorColor)
+        await ctx.channel.send(embed=embed)
+        return
     async with aiosqlite.connect(dbPath) as db:
 
         cursor = await db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ? AND priviliged_role_id = ?", [ctx.guild.id, role.id])
         reply = await cursor.fetchone()
         if reply != None :
-            await ctx.channel.send("**Error:** Role already added.")
+            embed=discord.Embed(title="❌ Error: Role already added.", description=f"This role already has priviliged access.", color=errorColor)
+            await ctx.channel.send(embed=embed)
+            return
         else :
             await db.execute("INSERT INTO priviliged (guild_id, priviliged_role_id) VALUES (?, ?)", [ctx.guild.id, role.id])
             await db.commit()
-            await ctx.channel.send(f"**{role.name}** has been granted bot admin priviliges.")
+            embed=discord.Embed(title="✅ Priviliged access granted.", description=f"**{role.name}** has been granted bot admin priviliges.", color=embedGreen)
+            await ctx.channel.send(embed=embed)
+            return
 
 
 @bot.command(hidden=True, aliases=['remprivrole', 'removeprivrole', 'removebotadminrole', 'rembotadminrole'], brief="Remove role from priviliged roles.", description="Removes a role to the list of priviliged roles, revoking their permission to execute admin commands.", usage=f"{prefix}removepriviligedrole <rolename>")
 @commands.check(hasOwner)
 @commands.guild_only()
 async def removepriviligedrole(ctx,rolename):
-    try :
-        role = discord.utils.get(ctx.guild.roles, name=rolename)
-    except :
-        await ctx.channel.send("**Error:** Unable to locate role.")
+
+    role = discord.utils.get(ctx.guild.roles, name=rolename)
+    if role == None:
+        embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.", color=errorColor)
+        await ctx.channel.send(embed=embed)
+        return
     async with aiosqlite.connect(dbPath) as db:
         cursor = await db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ? AND priviliged_role_id = ?", [ctx.guild.id, role.id])
         reply = await cursor.fetchone()
         if reply == None :
-            await ctx.channel.send("**Error:** Role not priviliged.")
+            embed=discord.Embed(title="❌ Error: Role not priviliged.", description=f"This role is not priviliged.", color=errorColor)
+            await ctx.channel.send(embed=embed)
+            return
         else :
             await db.execute("DELETE FROM priviliged WHERE guild_id = ? AND priviliged_role_id = ?", [ctx.guild.id, role.id])
             await db.commit()
-            await ctx.channel.send(f"**{role}** has had it's bot admin priviliges revoked.")
+            embed=discord.Embed(title="✅ Priviliged access revoked.", description=f"**{role}** has had it's bot admin priviliges revoked.", color=embedGreen)
+            await ctx.channel.send(embed=embed)
+            return
 
 
 @bot.command(hidden=True, aliases=['privroles', 'botadminroles'],brief="List all priviliged roles.", description="Returns all priviliged roles on this server.", usage=f"{prefix}priviligedroles")
@@ -985,7 +1027,8 @@ async def priviligedroles(ctx) :
         cursor = await db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ?", [ctx.guild.id])
         roleIDs = await cursor.fetchall()
         if len(roleIDs) == 0 :
-            await ctx.channel.send("**Error:** No priviliged roles set.")
+            embed=discord.Embed(title="❌ Error: No priviliged roles set.", description=f"You can add a priviliged role via `{prefix}addpriviligedrole <rolename>`.", color=errorColor)
+            await ctx.channel.send(embed=embed)
             return
         else :
             roles = []
@@ -994,7 +1037,9 @@ async def priviligedroles(ctx) :
                 roles.append(ctx.guild.get_role(item[0]))
             for item in roles :
                 roleNames.append(item.name)
-            await ctx.channel.send(f"Priviliged roles for this guild: `{roleNames}`")
+            roleNames = ", ".join(roleNames)
+            embed=discord.Embed(title="Priviliged roles for this guild:", description=f"`{roleNames}`", color=embedBlue)
+            await ctx.channel.send(embed=embed)
 
 #Returns basically all information we know about a given member of this guild.
 @bot.command(hidden=True, brief="Get information about a user.", description="Provides information about a specified user in the guild.", usage=f"{prefix}whois <userID|userMention|userName>")
@@ -1066,7 +1111,8 @@ async def setup (ctx, setuptype):
     #This is the LFG setup variant, it will set up role reactions on either an existing message or a new one.
     #More setup variants may be added in the future
     if setuptype.lower() == "lfg":
-        msg = await ctx.channel.send("Initializing LFG role setup... \n Do you already have an existing message for rolereact?")
+        embed = discord.Embed(title="🛠️ LFG role setup", description="Do you already have an existing message for rolereact?", color=embedBlue)
+        msg = await ctx.channel.send(embed=embed)
         await msg.add_reaction("✅")
         await msg.add_reaction("❌")
 
@@ -1099,8 +1145,9 @@ async def setup (ctx, setuptype):
             await modifysettings("LFGREACTIONEMOJI", reactemoji.id, ctx.guild.id)
             await modifysettings("LFGROLE", role.id, ctx.guild.id)
             await modifysettings("ROLEREACTMSG", msg.id, ctx.guild.id)
+            embed=discord.Embed(title="🛠️ LFG role setup", description="✅ Setup completed. Role reactions set up!", color=embedGreen)
+            await ctx.channel.send(embed=embed)
             print(f"[INFO]: Setup for {setuptype} concluded successfully.")
-            await ctx.channel.send("✅ Setup completed. Role reactions set up!")
 
         #The common part of the LFG setup
         async def continueprocess(reactchannel, msgcontent, reactmsg, createmsg):
@@ -1108,19 +1155,24 @@ async def setup (ctx, setuptype):
                 def confirmemoji(payload):
                     return payload.message_id == msg.id and payload.user_id == ctx.author.id
                 #Get emoji
-                msg = await ctx.channel.send("React **to this message** with the emoji you want to use!")
+                embed=discord.Embed(title="🛠️ LFG role setup", description="React **to this message** with the emoji you want to use!\nNote: Use a __custom__ emoji from __this server__, I have no way of accessing emojies outside this server!", color=embedBlue)
+                msg = await ctx.channel.send(embed=embed)
                 payload = await bot.wait_for('raw_reaction_add', timeout=60.0,check=confirmemoji)
                 reactemoji = payload.emoji
-                await ctx.channel.send(f"Emoji to be used will be {reactemoji}")
+                embed=discord.Embed(title="🛠️ LFG role setup", description=f"Emoji to be used will be {reactemoji}", color=embedBlue)
+                msg = await ctx.channel.send(embed=embed)
                 #Get the name of the role, then pass it on
-                await ctx.channel.send("Name the role that will be handed out!")
+                embed=discord.Embed(title="🛠️ LFG role setup", description="Name the role that will be handed out!", color=embedBlue)
+                await ctx.channel.send(embed=embed)
                 payload = await bot.wait_for('message', timeout=60.0, check=idcheck)
                 rolename = payload.content
-                await ctx.channel.send(f"Role set to **{rolename}**")
+                embed=discord.Embed(title="🛠️ LFG role setup", description=f"Role set to **{rolename}**", color=embedBlue)
+                await ctx.channel.send(embed=embed)
                 #Pass all values to configurator
                 await configurevalues(createmsg, reactmsg, msgcontent, reactchannel, reactemoji, rolename)
             except asyncio.TimeoutError:
-                await ctx.channel.send("**Error: **Timed out. Setup process cancelled.")
+                embed=discord.Embed(title=errorTimeoutTitle, description=errorTimeoutDesc, color=errorColor)
+                await ctx.channel.send(embed=embed)
                 return
         try:
             payload = await bot.wait_for('raw_reaction_add', timeout=60.0, check=confirmcheck)
@@ -1130,47 +1182,57 @@ async def setup (ctx, setuptype):
                     #Defining these to be None, because they need to be passed to continueprocess
                     reactchannel = None
                     msgcontent = None
-                    await ctx.channel.send("Send a channel mention of the channel where the message is located!")
+                    embed=discord.Embed(title="🛠️ LFG role setup", description="Send a channel mention of the channel where the message is located!", color=embedBlue)
+                    await ctx.channel.send(embed=embed)
                     payload = await bot.wait_for('message', timeout =60.0, check=idcheck)
                     #We will attempt to convert this from a channel mention
                     reactchannel = await commands.TextChannelConverter().convert(ctx, payload.content)
                     createmsg = True
-                    await ctx.channel.send(f"Channel set to **{reactchannel.mention}**")
+                    embed=discord.Embed(title="🛠️ LFG role setup", description=f"Channel set to **{reactchannel.mention}**", color=embedBlue)
+                    await ctx.channel.send(embed=embed)
                     #Since the message already exists, we will try to get it's ID from the user
-                    await ctx.channel.send("Please specify the ID of the message.")
+                    embed=discord.Embed(title="🛠️ LFG role setup", description="Please specify the ID of the message.", color=embedBlue)
+                    await ctx.channel.send(embed=embed)
                     payload = await bot.wait_for('message', timeout=60.0, check=idcheck)
                     #We will attempt to convert this to an int to check if it is one
                     int(payload.content)
                     reactmsg = await reactchannel.fetch_message(int(payload.content))
                     createmsg = False
-                    await ctx.channel.send(f"Reaction message set to the following: \n*{reactmsg.content}* **in** {reactchannel.mention}")
+                    embed=discord.Embed(title="🛠️ LFG role setup", description=f"Reaction message set to the following: \n*{reactmsg.content}* **in** {reactchannel.mention}", color=embedBlue)
+                    await ctx.channel.send(embed=embed)
                     #Pass all collected values to continue
                     await continueprocess(reactchannel, msgcontent, reactmsg, createmsg)
                     return
                 except asyncio.TimeoutError:
-                    await ctx.channel.send("**Error: **Timed out. Setup process cancelled.")
+                    embed=discord.Embed(title=errorTimeoutTitle, description=errorTimeoutDesc, color=errorColor)
+                    await ctx.channel.send(embed=embed)
                     return
                 except ValueError:
-                    await ctx.channel.send("**Error: **Invalid value. Setup process cancelled.")
+                    embed=discord.Embed(title=errorDataTitle, description=errorDataDesc, color=errorColor)
+                    await ctx.channel.send(embed=embed)
                     return
                 except commands.ChannelNotFound:
-                    await ctx.channel.send("**Error: ** Unable to locate channel. Setup process cancelled.")
+                    embed=discord.Embed(title="❌ Error: Channel not found.", description="Unable to locate channel. Operation cancelled.", color=errorColor)
+                    await ctx.channel.send(embed=embed)
                     return
 
             elif str(payload.emoji) == ("❌"):
-                await ctx.channel.send("Please specify the channel where you want the message to be sent via mentioning the channel.")
+                embed=discord.Embed(title="🛠️ LFG role setup", description="Please specify the channel where you want the message to be sent via mentioning the channel.", color=embedBlue)
+                await ctx.channel.send(embed=embed)
                 try:
                     reactmsg = None
                     payload = await bot.wait_for('message', timeout =60.0, check=idcheck)
                     #We will attempt to convert this from a channel mention
                     reactchannel = await commands.TextChannelConverter().convert(ctx, payload.content)
                     createmsg = True
-                    await ctx.channel.send(f"Channel set to **{reactchannel.mention}**")
-
-                    await ctx.channel.send("What should the content of the message be?")
+                    embed=discord.Embed(title="🛠️ LFG role setup", description=f"Channel set to **{reactchannel.mention}**", color=embedBlue)
+                    await ctx.channel.send(embed=embed)
+                    embed=discord.Embed(title="🛠️ LFG role setup", description="What should the content of the message be?", color=embedBlue)
+                    await ctx.channel.send(embed=embed)
                     payload = await bot.wait_for('message', timeout = 60.0, check=idcheck)
                     msgcontent = payload.content
-                    await ctx.channel.send(f"Message content will be set to the following: \n*{msgcontent}*")
+                    embed=discord.Embed(title="🛠️ LFG role setup", description=f"Message content will be set to the following: \n*{msgcontent}*", color=embedBlue)
+                    await ctx.channel.send(embed=embed)
 
                     #Pass all collected values to continue
                     await continueprocess(reactchannel, msgcontent, reactmsg, createmsg)
@@ -1179,17 +1241,21 @@ async def setup (ctx, setuptype):
                     await ctx.channel.send("**Error: **Timed out. Setup process cancelled.")
                     return
                 except commands.ChannelNotFound:
-                    await ctx.channel.send("**Error: ** Unable to locate channel. Setup process cancelled.")
+                    embed=discord.Embed(title="❌ Error: Channel not found.", description="Unable to locate channel. Operation cancelled.", color=errorColor)
+                    await ctx.channel.send(embed=embed)
                     return
             else :
-                await ctx.channel.send("**Error:** Invalid reaction. Setup process cancelled.")
+                embed=discord.Embed(title=errorTimeoutTitle, description=errorTimeoutDesc, color=errorColor)
+                await ctx.channel.send(embed=embed)
                 return
         except asyncio.TimeoutError:
-            await ctx.channel.send("**Error: **Timed out. Setup process cancelled.")
+            embed=discord.Embed(title=errorTimeoutTitle, description=errorTimeoutDesc, color=errorColor)
+            await ctx.channel.send(embed=embed)
             return
     #This setup will set up the !matchmaking command to work properly.
     if setuptype.lower() == "matchmaking":
-        await ctx.channel.send("Initializing matchmaking setup...\nPlease mention a channel where users should send the command to start matchmaking! Type `disable` to disable this feature.")
+        embed=discord.Embed(title="🛠️ Matchmaking setup", description="Please mention a channel where users should send the command to start matchmaking! Type `disable` to disable this feature.", color=embedBlue)
+        await ctx.channel.send(embed=embed)
         try:
             #Gathering info
             def check(payload):
@@ -1197,15 +1263,19 @@ async def setup (ctx, setuptype):
             payload = await bot.wait_for('message', timeout =60.0, check=check)
             if payload.content == "disable":
                 cmdchannel = 0
-                await ctx.channel.send("Commands channel **disabled.**")
+                embed=discord.Embed(title="🛠️ Matchmaking setup", description="Commands channel **disabled.**", color=embedBlue)
+                await ctx.channel.send(embed=embed)
             else :
                 cmdchannel = await commands.TextChannelConverter().convert(ctx, payload.content)
-                await ctx.channel.send(f"Commands channel set to {cmdchannel.mention}")
+                embed=discord.Embed(title="🛠️ Matchmaking setup", description=f"Commands channel set to {cmdchannel.mention}", color=embedBlue)
+                await ctx.channel.send(embed=embed)
 
-            await ctx.channel.send("Now please mention the channel where the multiplayer listings should go. If you already have LFG reaction roles set up, they will also be pinged once a listing goes live.")
+            embed=discord.Embed(title="🛠️ Matchmaking setup", description="Now please mention the channel where the multiplayer listings should go. If you already have LFG reaction roles set up, they will also be pinged once a listing goes live.", color=embedBlue)
+            await ctx.channel.send(embed=embed)
             payload = await bot.wait_for('message', timeout=60.0, check=check)
             announcechannel = await commands.TextChannelConverter().convert(ctx, payload.content)
-            await ctx.channel.send(f"Multiplayer listings channel set to {announcechannel.mention}")
+            embed=discord.Embed(title="🛠️ Matchmaking setup", description=f"Multiplayer listings channel set to {announcechannel.mention}", color=embedBlue)
+            await ctx.channel.send(embed=embed)
 
             #Executing based on info
 
@@ -1214,14 +1284,18 @@ async def setup (ctx, setuptype):
             else :
                 await modifysettings("COMMANDSCHANNEL", cmdchannel.id, ctx.guild.id)
             await modifysettings("ANNOUNCECHANNEL", announcechannel.id, ctx.guild.id)
-            await ctx.channel.send("✅ Setup completed. Matchmaking set up!")
+            embed=discord.Embed(title="🛠️ Matchmaking setup", description="✅ Setup completed. Matchmaking set up!", color=embedGreen)
+            await ctx.channel.send(embed=embed)
+            print(f"[INFO]: Setup for {setuptype} concluded successfully.")
             return
 
         except commands.ChannelNotFound:
-            await ctx.channel.send("**Error:** Unable to locate channel. Setup process cancelled.")
+            embed=discord.Embed(title="❌ Error: Channel not found.", description="Unable to locate channel. Operation cancelled.", color=errorColor)
+            await ctx.channel.send(embed=embed)
             return
         except asyncio.TimeoutError:
-            await ctx.channel.send("**Error: **Timed out. Setup process cancelled.")
+            embed=discord.Embed(title=errorTimeoutTitle, description=errorTimeoutDesc, color=errorColor)
+            await ctx.channel.send(embed=embed)
             return
 
     elif setuptype.lower() == "keepontop" or setuptype.lower() == "keep-on-top" :
@@ -1244,6 +1318,7 @@ async def setup (ctx, setuptype):
             await modifysettings("KEEP_ON_TOP_MSG", firstTop.id, firstTop.guild.id)
             embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description=f"✅ Setup completed. This message will now be kept on top of {keepOnTopChannel.mention}!", color=embedGreen)
             await ctx.channel.send(embed=embed)
+            print(f"[INFO]: Setup for {setuptype} concluded successfully.")
 
         except commands.ChannelNotFound:
             embed=discord.Embed(title="❌ Error: Unable to locate channel.", description="The setup process has been cancelled.", color=errorColor)
@@ -1253,7 +1328,6 @@ async def setup (ctx, setuptype):
             embed=discord.Embed(title=errorTimeoutTitle, description=errorTimeoutDesc, color=errorColor)
             await ctx.channel.send(embed=embed)
             return
-
 
 
     else:
@@ -1272,7 +1346,8 @@ async def setup_error(ctx, error):
 @commands.check(hasPriviliged)
 @commands.guild_only()
 async def resetsettings(ctx):
-    msg = await ctx.channel.send("**Are you sure you want to reset all settings? This will also erase any created tags. This action is irreversible, and may break things!**")
+    embed = discord.Embed(title="Are you sure you want to reset all settings?", description="This will also erase any created tags.\n**This action is __irreversible__ and may break things!**", color=errorColor)
+    msg = await ctx.channel.send(embed=embed)
     await msg.add_reaction("✅")
     await msg.add_reaction("❌")
     def check(payload):
@@ -1280,14 +1355,27 @@ async def resetsettings(ctx):
     try:
         payload = await bot.wait_for('raw_reaction_add', timeout=10.0,check=check)
         if str(payload.emoji) == "✅":
-            await deletesettings(ctx.guild.id)
-            await ctx.channel.send("Settings reset. \n \n *Goodbye cruel world!* 😢")
+            def check2(payload):
+                return payload.channel.id == msg.channel.id and payload.author == ctx.author
+            embed=discord.Embed(title="Confirmation", description="Please type in the name of the server to confirm deletion.", color=errorColor)
+            await ctx.channel.send(embed=embed)
+            payload = await bot.wait_for('message', timeout=20.0, check=check2)
+            if payload.content == ctx.guild.name :
+                await deletesettings(ctx.guild.id)
+                embed=discord.Embed(title="✅ Settings reset.", description="Goodbye cruel world! 😢", color=errorColor)
+                await ctx.channel.send(embed=embed)
+            else :
+                embed=discord.Embed(title="❌ Error: Invalid name.", description="Settings deletion cancelled.", color=errorColor)
+                await ctx.channel.send(embed=embed)
         elif str(payload.emoji) == "❌" :
-            await ctx.channel.send("Settings reset cancelled by user.")
+            embed=discord.Embed(title="❌ Cancelled.", description="Settings reset cancelled by user.", color=errorColor)
+            await ctx.channel.send(embed=embed)
         else :
-            await ctx.channel.send("**Error:** Invalid reaction. Settings preserved.")
+            embed=discord.Embed(title=errorEmojiTitle, description="Settings deletion cancelled.", color=errorColor)
+            await ctx.channel.send(embed=embed)
     except asyncio.TimeoutError:
-        await ctx.channel.send("**Error:** Timed out. Settings preserved.")
+        embed=discord.Embed(title=errorTimeoutTitle, description="Settings deletion cancelled.")
+        await ctx.channel.send(embed=embed)
 
 
 #Display the current settings for this guild.
@@ -1300,7 +1388,8 @@ async def settings(ctx):
         await ctx.channel.send("**Error:** No settings for this guild.")
     else :
         formatteddata = "".join(settingsdata)
-        await ctx.channel.send(f"```Settings for guild {ctx.guild.id}: \n \n{formatteddata}```")
+        embed=discord.Embed(title=f"⚙️ Settings for this guild:    ({ctx.guild.id})", description=f"```{formatteddata}```", color=embedBlue)
+        await ctx.channel.send(embed=embed)
 
 
 #Modify a value in the settings, use with care or it will break things
@@ -1309,16 +1398,22 @@ async def settings(ctx):
 @commands.guild_only()
 async def modify(ctx, datatype, value) :
     if datatype not in datatypes :
-        await ctx.channel.send("**Error: ** Invalid datatype.")
+        embed=discord.Embed(title="❌ Error: Invalid datatype.", description="Please enter a valid datatype.", color=errorColor)
+        await ctx.channel.send(embed=embed)
         return
     try:
         int(value)
         await modifysettings(datatype, int(value), ctx.guild.id)
-        await ctx.channel.send(f"**{datatype}** is now set to **{value}** for guild **{ctx.guild.id}**!")
+        embed=discord.Embed(title="Data modified.", description=f"**{datatype}** is now set to **{value}** for guild **{ctx.guild.id}**.", color=embedBlue)
+        await ctx.channel.send(embed=embed)
     except ValueError:
-        await ctx.channel.send("**Error: **Invalid value.")
+        embed=discord.Embed(title="❌ Error: Invalid value.", description="Please enter a valid value.", color=errorColor)
+        await ctx.channel.send(embed=embed)
+        return
     except:
-        await ctx.channel.send("**Error: ** Unknown error encountered!")
+        embed=discord.Embed(title="❌ Error: Unknown error encountered.", description="Please check database settings.", color=errorColor)
+        await ctx.channel.send(embed=embed)
+        return
 
 
 #
