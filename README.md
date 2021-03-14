@@ -1,4 +1,4 @@
-# Anno Bot "Sned" v2.2.1
+# Anno Bot "Sned" v2.2.2
 
 ## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  for matchmaking and other purposes on the Annoverse discord guild.
 
@@ -17,6 +17,10 @@
 
 `!avatar <user>` Return the avatar of the specified user. Has a 30 second cooldown per user.
 
+`!tag <name>` Calls and displays the contents of a tag. Has a 60 second cooldown per user.
+
+`!tags` Lists all available tags. Has a 60 second cooldown per user.
+
 `!matchmaking` Starts the matchmaking system. Creates a multiplayer listing in desired channel upon completion. Has a 12 hour cooldown per user.
 
 ### Commands for server owners & admins:
@@ -26,11 +30,15 @@
 
 `!priviligedroles` Lists all priviliged roles. Can only be executed by a guild owner.
 
-`!setup <setuptype>` Initialize a setup, for configuring the server. Example: `!setup LFG` will start a setup helping you set up reaction roles. Requires priviliged access. Current setups: `LFG, matchmaking`
+`!setup <setuptype>` Initialize a setup, for configuring the server. Example: `!setup LFG` will start a setup helping you set up reaction roles. Requires priviliged access. Current setups: `LFG, matchmaking, keepontop`
 
 `!settings` Displays all settings for the current guild. Requires priviliged access.
 
-`!resetsettings` Resets all bot settings, irreversible. Requires priviliged access.
+`!resetsettings` Resets all bot settings, irreversible. Also erases all tags. Requires priviliged access.
+
+`!createtag <name> <messageID>` Creates a tag out of the specified message. Command **must be** executed in the same channel where the message resides.
+
+`!deltag <name>` Deletes a tag of the specified name.
 
 `!modify <datatype> <value>` Modifies a datatype in settings to a new value. Improper use will break things, use setups if you don't know what you're doing! Requires priviliged access.
 

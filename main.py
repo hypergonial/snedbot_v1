@@ -24,7 +24,7 @@ dbName = "database.db"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 dbPath = os.path.join(BASE_DIR, dbName)
 #Current version
-currentVersion = "2.2.1"
+currentVersion = "2.2.2"
 #Is this build experimental?
 experimentalBuild = False
 #Bot commands prefix
@@ -34,7 +34,7 @@ prefix = '!'
 #Determining the bot prefix & logging based on the build state.
 if experimentalBuild == True : 
     prefix = '?'
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 else :
     prefix = '!'
     logging.basicConfig(level=logging.INFO)
@@ -48,7 +48,9 @@ print("[INFO]: New Session Started.")
 
 #Contains all the valid datatypes in settings. If you add a new one here, it will be automatically generated
 #upon a new request to retrieve/modify that datatype.
-datatypes = ["COMMANDSCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI"]
+datatypes = ["COMMANDSCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI", "KEEP_ON_TOP_CHANNEL", "KEEP_ON_TOP_MSG"]
+#These text names are reserved and used for commands, other ones may get created by users for tags.
+reservedTextNames = ["KEEP_ON_TOP_CONTENT"]
 
 #Overriding the default help command
 #I actually have very little clue as to how this work, but it does, so it should be fine(tm)
@@ -89,6 +91,9 @@ warnEmojiTitle = "⚠️ Warning: Invalid reaction entered."
 warnEmojiDesc = "Please enter a valid reaction."
 warnFormatTitle = "⚠️ Warning: Invalid format entered."
 warnFormatDesc = "Please try entering valid data."
+#Misc:
+embedBlue = 0x009dff
+embedGreen = 0x00ff2a
 
 #
 #Normal commands
@@ -97,7 +102,7 @@ warnFormatDesc = "Please try entering valid data."
 
 #Custom help command, shows all commands a user can execute based on their priviliges.
 #Also has an alternate mode where it shows information about a specific command, if specified as an argument.
-@bot.command(brief="Displays this help message.", description="Displays all available commands you can execute, based on your permission level.", usage=f"{prefix}help [command]")
+@bot.command(brief="Displays this help message.", description="Displays all available commands you can execute, based on your permission level.", usage=f"{prefix}help [command]", aliases=['halp'])
 async def help(ctx, commandname : str=None):
     #Retrieve all commands except hidden, unless user is priviliged.
     
@@ -132,7 +137,7 @@ async def help(ctx, commandname : str=None):
                 formattedmsg.append(f"`{prefix}{cmds[i]}` \n")
 
         final = "".join(formattedmsg)
-        embed=discord.Embed(title="⚙️ __Available commands:__", description=final, color=0x009dff)
+        embed=discord.Embed(title="⚙️ __Available commands:__", description=final, color=embedBlue)
         embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
         return
@@ -155,13 +160,13 @@ async def help(ctx, commandname : str=None):
                 commandaliases = ["`" + prefix + alias + "`" for alias in command.aliases]
                 #Then join them together
                 commandaliases = ", ".join(commandaliases)
-                embed=discord.Embed(title=f"⚙️ Command: {prefix}{command.name}", description=f"{command.description} \n \n**Usage:** `{command.usage}` \n**Aliases:** {commandaliases}", color=0x009dff)
+                embed=discord.Embed(title=f"⚙️ Command: {prefix}{command.name}", description=f"{command.description} \n \n**Usage:** `{command.usage}` \n**Aliases:** {commandaliases}", color=embedBlue)
                 embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
                 await ctx.send(embed=embed)
                 return
             else :
                 command = bot.get_command(commandname)
-                embed=discord.Embed(title=f"⚙️ Command: {prefix}{command.name}", description=f"{command.description} \n \n**Usage:** `{command.usage}`", color=0x009dff)
+                embed=discord.Embed(title=f"⚙️ Command: {prefix}{command.name}", description=f"{command.description} \n \n**Usage:** `{command.usage}`", color=embedBlue)
                 embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
                 await ctx.send(embed=embed)
                 return
@@ -189,7 +194,7 @@ async def leroy(ctx):
 
 @bot.command(brief="Displays information about the bot.", description="Displays information about the bot. Takes no arguments.", usage=f"{prefix}about")
 async def about(ctx):
-    embed=discord.Embed(title=f"ℹ️ About {bot.user.name}", description=f"**Version:** {currentVersion} \n**Made by:** Hyper#0001 \n**GitHub:** https://github.com/HyperGH/AnnoSnedBot", color=0x009dff)
+    embed=discord.Embed(title=f"ℹ️ About {bot.user.name}", description=f"**Version:** {currentVersion} \n**Made by:** Hyper#0001 \n**GitHub:** https://github.com/HyperGH/AnnoSnedBot", color=embedBlue)
     embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
     embed.set_thumbnail(url=bot.user.avatar_url)
     await ctx.channel.send(embed=embed)
@@ -208,6 +213,37 @@ async def avatar_error(ctx, error):
         embed=discord.Embed(title="❌ Unable to find user.", description="Please check if you typed everything correctly, then try again.", color=errorColor)
         embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
+
+@bot.command(brief="Calls a tag!", description="Calls a tag that has been previously set.", usage=f"{prefix}tag <tagname>")
+@commands.cooldown(1, 60, type=commands.BucketType.member)
+@commands.guild_only()
+async def tag(ctx, name):
+    if name in reservedTextNames :
+        embed=discord.Embed(title="❌ Error: Reserved.", description="This name is reserved for internal functions. Try another name.", color=errorColor)
+        embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+        await ctx.channel.send(embed=embed)
+        tag.reset_cooldown(ctx)
+        return
+    else :
+        tagContent = await retrievetext(name, ctx.guild.id)
+        if tagContent == None :
+            embed=discord.Embed(title="❌ Error: Unknown tag.", description="Cannot find tag by that name.", color=errorColor)
+            embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+            await ctx.channel.send(embed=embed)
+            tag.reset_cooldown(ctx)
+            return
+        else :
+            await ctx.channel.send(tagContent)
+
+@bot.command(brief="Displays all tags.", description="Shows a list of all available tags.", usage=f"{prefix}tags")
+@commands.cooldown(1, 60, type=commands.BucketType.member)
+@commands.guild_only()
+async def tags(ctx):
+    tags = ", ".join(await getTags(ctx.guild.id))
+    embed = discord.Embed(title="💬 Available tags for this guild:", description=f"`{tags}`", color=embedBlue)
+    embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+    await ctx.channel.send(embed=embed)
+
 
 
 #Command to initalize matchmaking.
@@ -619,7 +655,7 @@ async def matchmaking(ctx):
                     if await createposting(mpsessiondata) == -1:
                         return -1
                     else :
-                        embed=discord.Embed(title="✅ Listing submitted!", description="Thanks for using the service! If you have found a bug or want to give feedback, please contact `Hyper#0001`!", color=0x00ff2a)
+                        embed=discord.Embed(title="✅ Listing submitted!", description="Thanks for using the service! If you have found a bug or want to give feedback, please contact `Hyper#0001`!", color=embedGreen)
                         await ctx.author.send(embed=embed)
                         return 1
                 elif str(payload.emoji) == "🖊️":
@@ -763,7 +799,7 @@ async def on_command_error(ctx, error):
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
-#Reaction roles for LFG
+#Reaction roles for LFG, and subscribing to listings
 @bot.event
 async def on_raw_reaction_add(payload):
     #Check if we are in a guild so we dont bombard the database with Null errors.
@@ -780,7 +816,7 @@ async def on_raw_reaction_add(payload):
                     await member.add_roles(role)
                     print(f"[INFO]: Role {role} added to {member}")
                     #Also DM the user about the change, and let them know that the action was performed successfully.
-                    embed=discord.Embed(title="💬 Notifications enabled.", description="You are now looking for games, and will be notified of any new multiplayer listing!", color=0x00ff2a)
+                    embed=discord.Embed(title="💬 Notifications enabled.", description="You are now looking for games, and will be notified of any new multiplayer listing!", color=embedGreen)
                     await member.send(embed=embed)
                     return
                 except:
@@ -822,12 +858,12 @@ async def on_raw_reaction_add(payload):
                     playerCount = 4
                 #Sending confirmation to user who signed up
                 if member != host :
-                    embed=discord.Embed(title=f"📝 You expressed intent to join {host.name}'s game!", description="They will receive a notification when their desired playercap has been reached.", color=0x00ff2a)
+                    embed=discord.Embed(title=f"📝 You expressed intent to join {host.name}'s game!", description="They will receive a notification when their desired playercap has been reached.", color=embedGreen)
                     await member.send(embed=embed)
                     print(f"[INFO]: {member.name}#{member.discriminator} expressed interest to join {host.name}#{host.discriminator}'s game.")
                 #If we have reached the desired playercount, we will message to the host. This message will get every time a new player reacts.
                 if len(interestedPlayers) >= playerCount :
-                    embed=discord.Embed(title="📝 Your listing reached your set playercap!", description=f"Hello! Just letting you know that your multiplayer listing on **{guild.name}** has reached {playerCount} or more interested players.\nPlayers who want to play with you in this match: {interestedMentions}", color=0x00ff2a)
+                    embed=discord.Embed(title="📝 Your listing reached your set playercap!", description=f"Hello! Just letting you know that your multiplayer listing on **{guild.name}** has reached {playerCount} or more interested players.\nPlayers who want to play with you in this match: {interestedMentions}", color=embedGreen)
                     embed.set_footer(text="If you believe that this feature was abused, contact a moderator immediately!")
                     await host.send(embed=embed)
                     print(f"[INFO]: {host.name}#{host.discriminator}'s listing reached cap. Host notified.")
@@ -854,6 +890,23 @@ async def on_raw_reaction_remove(payload):
                     embed=discord.Embed(title="❌ Error: Exception encountered.", description="Failed to remove role. Contact an administrator! Operation cancelled.", color=errorColor)
                     await member.send(embed=embed)
                     print(f"[ERROR]: Unable to modify roles for {member}. Possible permissions or hierarchy issue.")
+
+#Keep-On-Top message functionality
+@bot.event
+async def on_message(message):
+    if message.channel.id == await retrievesetting("KEEP_ON_TOP_CHANNEL", message.guild.id):
+        keepOnTopContent = await retrievetext("KEEP_ON_TOP_CONTENT", message.guild.id)
+        if keepOnTopContent != message.content :
+            #Get rid of previous message
+            previousTop = await message.channel.fetch_message(await retrievesetting("KEEP_ON_TOP_MSG", message.guild.id))
+            await previousTop.delete()
+            #Send new message
+            newTop = await message.channel.send(keepOnTopContent)
+            #Set the id to keep the ball rolling
+            await modifysettings("KEEP_ON_TOP_MSG", newTop.id, newTop.guild.id)
+
+    #This is necessary, otherwise bot commands will break because on_message would override them
+    await bot.process_commands(message)
 
 #
 #ADMIN/Config commands
@@ -948,7 +1001,7 @@ async def priviligedroles(ctx) :
 async def whois(ctx, member : discord.Member) :
     rolelist = [role.name for role in member.roles]
     roleformatted = ", ".join(rolelist)
-    embed=discord.Embed(title=f"User information: {member.name}", description=f"Username: `{member.name}` \nNickname: `{member.display_name}` \nUser ID: `{member.id}` \nStatus: `{member.raw_status}` \nBot: `{member.bot}` \nAccount creation date: `{member.created_at}` \nJoin date: `{member.joined_at}` \nRoles: `{roleformatted}`", color=0x009dff)
+    embed=discord.Embed(title=f"User information: {member.name}", description=f"Username: `{member.name}` \nNickname: `{member.display_name}` \nUser ID: `{member.id}` \nStatus: `{member.raw_status}` \nBot: `{member.bot}` \nAccount creation date: `{member.created_at}` \nJoin date: `{member.joined_at}` \nRoles: `{roleformatted}`", color=embedBlue)
     embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
     embed.set_thumbnail(url=member.avatar_url)
     await ctx.channel.send(embed=embed)
@@ -958,19 +1011,59 @@ async def whois_error(ctx, error):
         embed=discord.Embed(title="❌ Unable to find user.", description="Please check if you typed everything correctly, then try again.", color=errorColor)
         await ctx.send(embed=embed)
 
+@bot.command(hidden=True, brief="Creates a tag.", description=f"Creates a tag for all users to call via `{prefix}tag <tagname>`. \n**__Must be executed__** in the same channel as the message.", usage=f"{prefix}createtag <tagname> <messageID>", aliases=['addtag'])
+@commands.check(hasPriviliged)
+@commands.guild_only()
+async def createtag(ctx, name, messageID):
+    if name in reservedTextNames :
+        embed=discord.Embed(title="❌ Error: Reserved.", description="This name is reserved for internal functions. Try another name.", color=errorColor)
+        await ctx.channel.send(embed=embed)
+        return
+    else:
+        try:
+            #Store it
+            msgToTag = await ctx.channel.fetch_message(messageID)
+            await storetext(name, msgToTag.content, ctx.guild.id)
+            embed=discord.Embed(title="✅ Tag added.", description=f"Tag added! You can now call it via `{prefix}tag {name}`!", color=embedGreen)
+            await ctx.channel.send(embed=embed)
+            return
+        except discord.NotFound:
+            embed=discord.Embed(title="❌ Error: Message not found.", description="Please **__make sure__** you ran the command in the channel you want to get the message from!", color=errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+        
+@bot.command(hidden=True, brief="Deletes a tag.", description="Permanently erases a tag, removing it from the list of callable tags.", usage=f"{prefix}deltag <tagname>", aliases=['deletetag, removetag'])
+@commands.check(hasPriviliged)
+@commands.guild_only()
+async def deltag(ctx, name) :
+    if name in reservedTextNames :
+        embed=discord.Embed(title="❌ Error: Reserved.", description="This name is reserved for internal functions. Try another name.", color=errorColor)
+        await ctx.channel.send(embed=embed)
+        return
+    else:
+        if name in await getTags(ctx.guild.id) :
+            await deltext(name, ctx.guild.id)
+            embed=discord.Embed(title="✅ Tag deleted.", description=f"Tag {name} has been removed.", color=embedGreen)
+            await ctx.channel.send(embed=embed)
+            return
+        else :
+            embed=discord.Embed(title="❌ Error: Tag not found.", description=f"Unable to locate tag. Please run `{prefix}tags` for a list of tags!", color=errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+
 
 #Ahh yes, the setup command... *instant PTSD*
 #It basically just collects a bunch of values from the user, in this case an admin, and then changes the settings
 #based on that, instead of the admin having to use !modify for every single value
 #TL;DR: fancy setup thing
-@bot.command(hidden=True,brief="Starts bot configuration setups.", description = "Used to set up and configure different parts of the bot. Valid setup-types: `matchmaking, LFG` Only usable by priviliged users.", usage=f"{prefix}setup <setuptype>")
+@bot.command(hidden=True,brief="Starts bot configuration setups.", description = "Used to set up and configure different parts of the bot. Valid setup-types: `matchmaking, LFG, keepontop` Only usable by priviliged users.", usage=f"{prefix}setup <setuptype>")
 @commands.check(hasPriviliged)
 @commands.guild_only()
 @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
 async def setup (ctx, setuptype):
     #This is the LFG setup variant, it will set up role reactions on either an existing message or a new one.
     #More setup variants may be added in the future
-    if setuptype == "LFG":
+    if setuptype.lower() == "lfg":
         msg = await ctx.channel.send("Initializing LFG role setup... \n Do you already have an existing message for rolereact?")
         await msg.add_reaction("✅")
         await msg.add_reaction("❌")
@@ -1093,7 +1186,7 @@ async def setup (ctx, setuptype):
             await ctx.channel.send("**Error: **Timed out. Setup process cancelled.")
             return
     #This setup will set up the !matchmaking command to work properly.
-    if setuptype == "matchmaking" or "Matchmaking" or "MATCHMAKING":
+    if setuptype.lower() == "matchmaking":
         await ctx.channel.send("Initializing matchmaking setup...\nPlease mention a channel where users should send the command to start matchmaking! Type `disable` to disable this feature.")
         try:
             #Gathering info
@@ -1129,6 +1222,38 @@ async def setup (ctx, setuptype):
             await ctx.channel.send("**Error: **Timed out. Setup process cancelled.")
             return
 
+    elif setuptype.lower() == "keepontop" or setuptype.lower() == "keep-on-top" :
+        embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description="Specify the channel where you want to keep a message on the top by mentioning it!", color=embedBlue)
+        await ctx.channel.send(embed=embed)
+        try :
+            def check(payload):
+                return payload.author == ctx.author and payload.channel.id == ctx.channel.id
+            payload = await bot.wait_for('message', timeout=60.0, check=check)
+            keepOnTopChannel = await commands.TextChannelConverter().convert(ctx, payload.content)
+            embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description=f"Channel set to {keepOnTopChannel.mention}!", color=embedBlue)
+            await ctx.channel.send(embed=embed)
+            embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description="Now type in the message you want to be kept on top!", color=embedBlue)
+            await ctx.channel.send(embed=embed)
+            payload = await bot.wait_for('message', timeout=300.0, check=check)
+            keepOnTopMessage = payload.content
+            await modifysettings("KEEP_ON_TOP_CHANNEL", keepOnTopChannel.id, ctx.guild.id)
+            await storetext("KEEP_ON_TOP_CONTENT", keepOnTopMessage, ctx.guild.id)
+            firstTop = await keepOnTopChannel.send(keepOnTopMessage)
+            await modifysettings("KEEP_ON_TOP_MSG", firstTop.id, firstTop.guild.id)
+            embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description=f"✅ Setup completed. This message will now be kept on top of {keepOnTopChannel.mention}!", color=embedGreen)
+            await ctx.channel.send(embed=embed)
+
+        except commands.ChannelNotFound:
+            embed=discord.Embed(title="❌ Error: Unable to locate channel.", description="The setup process has been cancelled.", color=errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+        except asyncio.TimeoutError:
+            embed=discord.Embed(title=errorTimeoutTitle, description=errorTimeoutDesc, color=errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+
+
+
     else:
         await ctx.channel.send("**Error:** Unable to find requested setup process. Valid setups: `LFG, matchmaking`.")
         return
@@ -1141,11 +1266,11 @@ async def setup_error(ctx, error):
 
 
 #Command used for deleting a guild settings file
-@bot.command(hidden=True, brief="Resets all settings for this guild.", description = "Resets all settings for this guild. Irreversible.", usage=f"{prefix}resetsettings")
+@bot.command(hidden=True, brief="Resets all settings for this guild.", description = "Resets all settings for this guild. Will also erase all tags. Irreversible.", usage=f"{prefix}resetsettings")
 @commands.check(hasPriviliged)
 @commands.guild_only()
 async def resetsettings(ctx):
-    msg = await ctx.channel.send("**Are you sure you want to reset all settings? This action is irreversible, and may break things!**")
+    msg = await ctx.channel.send("**Are you sure you want to reset all settings? This will also erase any created tags. This action is irreversible, and may break things!**")
     await msg.add_reaction("✅")
     await msg.add_reaction("❌")
     def check(payload):
@@ -1197,7 +1322,6 @@ async def modify(ctx, datatype, value) :
 #
 #   SETTINGS HANDLER
 #
-# ALERT: Under major rewrite to support SQLite
 
 #Deletes a guild specific settings file.
 async def deletesettings(guildID):
@@ -1205,9 +1329,10 @@ async def deletesettings(guildID):
     async with aiosqlite.connect(dbPath) as db:
         await db.execute("DELETE FROM settings WHERE guild_id = ?", [guildID])
         await db.execute("DELETE FROM priviliged WHERE guild_id = ?", [guildID])
+        await db.exeucte("DELETE FROM stored_text WHERE guild_id = ?", [guildID])
         await db.commit()
         #os.remove(f"{guildID}_settings.cfg")
-        print(f"[WARN]: Settings have been reset for guild {guildID}.")
+        print(f"[WARN]: Settings have been reset and tags erased for guild {guildID}.")
 
 #Returns the priviliged roles for a specific guild as a list.
 async def checkprivs(guildID):
@@ -1218,25 +1343,21 @@ async def checkprivs(guildID):
 async def modifysettings(datatype, value, guildID):
     if datatype in datatypes :
         #Check if we have values for this guild
-        print("Check")
         async with aiosqlite.connect(dbPath) as db:
             cursor = await db.execute("SELECT guild_id FROM settings WHERE guild_id = ?", [guildID])
             result = await cursor.fetchone()
             if result != None :
-                print("Guild Exists")
                 #Looking for the datatype
                 cursor = await db.execute("SELECT datatype FROM settings WHERE guild_id = ? AND datatype = ?", [guildID, datatype])
                 result = await cursor.fetchone()
                 #If the datatype does exist, we return the value
                 if result != None :
-                    print("Data exists")
                     #We update the matching record with our new value
                     await db.execute("UPDATE settings SET guild_id = ?, datatype = ?, value = ? WHERE guild_id = ? AND datatype = ?", [guildID, datatype, value, guildID, datatype])
                     await db.commit()
                     return
                 #If it does not, for example if a new valid datatype is added to the code, we will create it, and assign it the value.
                 else :
-                    print("New data added")
                     await db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, ?)", [guildID, datatype, value])
                     await db.commit()
                     return
@@ -1244,7 +1365,6 @@ async def modifysettings(datatype, value, guildID):
             #Theoretically not necessary, but it outputs better into displaysettings()
             else :
                 for item in datatypes :
-                    print("Guild data missing... creating..")
                     #We insert every datatype into the table for this guild.
                     await db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, 0)", [guildID, item])
                 await db.commit()
@@ -1315,6 +1435,63 @@ async def displaysettings(guildID) :
         #If not, we return error code -1, corresponding to no settings.
         else:
             return -1
+
+async def retrievetext(textname, guildID) :
+    
+    #Check if we have values for this guild
+    async with aiosqlite.connect(dbPath) as db:
+        #Check for the desired text
+        cursor = await db.execute("SELECT text_name FROM stored_text WHERE guild_id = ? AND text_name = ?", [guildID, textname])
+        result = await cursor.fetchone()
+        #If the datatype does exist, we return the value
+        if result != None :
+            cursor = await db.execute("SELECT text_content FROM stored_text WHERE guild_id = ? AND text_name = ?", [guildID, textname])
+            result = await cursor.fetchone()
+            #This is necessary as fetchone() returns it as a tuple of one element.
+            return result[0]
+        #If it does not exist, return None
+        else :
+            return None
+
+async def storetext(textname, textcontent, guildID):
+    #Check if we have values for this guild
+    async with aiosqlite.connect(dbPath) as db:
+        #Check for the desired text
+        cursor = await db.execute("SELECT text_name FROM stored_text WHERE guild_id = ? AND text_name = ?", [guildID, textname])
+        result = await cursor.fetchone()
+        #Updating value if it exists
+        if result != None :
+            await db.execute("UPDATE stored_text SET guild_id = ?, text_name = ?, text_content = ? WHERE guild_id = ? AND text_name = ?", [guildID, textname, textcontent, guildID, textname])
+            await db.commit()
+        #If it does not exist, insert it
+        else :
+            await db.execute("INSERT INTO stored_text (guild_id, text_name, text_content) VALUES (?, ?, ?)", [guildID, textname, textcontent])
+            await db.commit()
+#Deletes a single text entry
+async def deltext(textname, guildID):
+    async with aiosqlite.connect(dbPath) as db:
+        await db.execute("DELETE FROM stored_text WHERE text_name = ? AND guild_id = ?", [textname, guildID])
+        await db.commit()
+        return
+#Get all tags for a guild
+async def getTags(guildID):
+    async with aiosqlite.connect(dbPath) as db:
+
+        cursor = await db.execute("SELECT text_name FROM stored_text WHERE guild_id = ?", [guildID])
+        results = await cursor.fetchall()
+        #Fix for tuples
+        results = [result[0] for result in results]
+        print("-----------------")
+        #results = results.flatten()
+        #Remove reserved stuff
+        for result in results :
+            if result in reservedTextNames :
+                results.remove(result)
+        print(results)
+        print("-----------------")
+        return results
+
+    
 
 #Run bot with token from .env
 bot.run(TOKEN)
