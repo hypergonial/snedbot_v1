@@ -38,9 +38,9 @@
 
 `!resetsettings` Resets all bot settings, irreversible. Also erases all tags. Requires priviliged access.
 
-`!createtag <name> <messageID>` Creates a tag out of the specified message. Command **must be** executed in the same channel where the message resides.
+`!createtag <name> <messageID>` Creates a tag out of the specified message. Command **must be** executed in the same channel where the message resides. Requires priviliged access.
 
-`!deltag <name>` Deletes a tag of the specified name.
+`!deltag <name>` Deletes a tag of the specified name. Requires priviliged access.
 
 `!modify <datatype> <value>` Modifies a datatype in settings to a new value. Improper use will break things, use setups if you don't know what you're doing! Requires priviliged access.
 
