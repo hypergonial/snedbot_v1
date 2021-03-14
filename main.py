@@ -24,12 +24,13 @@ dbName = "database.db"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 dbPath = os.path.join(BASE_DIR, dbName)
 #Current version
-currentVersion = "2.2.3"
+currentVersion = "2.2.4"
 #Is this build experimental?
 experimentalBuild = False
 #Bot commands prefix
 prefix = '!'
-
+#Activity (shows under username)
+activity = discord.Activity(name='you', type=discord.ActivityType.watching)
 
 #Determining the bot prefix & logging based on the build state.
 if experimentalBuild == True : 
@@ -42,26 +43,25 @@ else :
 #This is just my user ID, used for setting up who can & cant use priviliged commands along with a server owner.
 creatorID = 163979124820541440
 #Can modify command prefix & intents here (and probably a lot of other cool stuff I am not aware of)
-bot = commands.Bot(command_prefix=prefix, intents= discord.Intents.all(), owner_id=creatorID, case_insensitive=True, help_command=None)
+bot = commands.Bot(command_prefix=prefix, intents= discord.Intents.all(), owner_id=creatorID, case_insensitive=True, help_command=None, activity=activity)
 
 print("[INFO]: New Session Started.")
 
+#initial_extensions = ['cogs.TestModule']
 #Contains all the valid datatypes in settings. If you add a new one here, it will be automatically generated
 #upon a new request to retrieve/modify that datatype.
 datatypes = ["COMMANDSCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI", "KEEP_ON_TOP_CHANNEL", "KEEP_ON_TOP_MSG"]
-#These text names are reserved and used for commands, other ones may get created by users for tags.
+#These text names are reserved and used for internal internal functions, other ones may get created by users for tags.
 reservedTextNames = ["KEEP_ON_TOP_CONTENT"]
 
-#Overriding the default help command
-#I actually have very little clue as to how this work, but it does, so it should be fine(tm)
-
+#Loading modules from list modules
+#if __name__ == '__main__':
+#    for extension in initial_extensions:
+#        bot.load_extension(extension)
 
 #Executes when the bot starts & is ready.
 @bot.event
 async def on_ready():
-    #Presence setup
-    activity = discord.Activity(name='you', type=discord.ActivityType.watching)
-    await bot.change_presence(activity=activity)
     print("[INFO]: Initialized as {0.user}".format(bot))
     if experimentalBuild == True :
         print("[WARN]: Experimental mode is enabled.")
@@ -204,7 +204,7 @@ async def about(ctx):
 @bot.command(brief="Displays a user's avatar.", description="Displays a user's avatar for your viewing (or stealing) pleasure.", usage=f"{prefix}avatar <userID|userMention|userName>")
 @commands.cooldown(1, 30, type=commands.BucketType.member)
 async def avatar(ctx, member : discord.Member) :
-    embed=discord.Embed(title=f"{member.name}'s avatar:", color=miscColor)
+    embed=discord.Embed(title=f"{member.name}'s avatar:", color=member.colour)
     embed.set_image(url=member.avatar_url)
     embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
     await ctx.channel.send(embed=embed)
@@ -235,8 +235,8 @@ async def tag(ctx, name):
             tag.reset_cooldown(ctx)
             return
         else :
-            embed=discord.Embed(description=f"Tag requested by {ctx.author.name}#{ctx.author.discriminator}", color=miscColor)
-            await ctx.channel.send(embed=embed, content=tagContent)
+            
+            await ctx.channel.send(content=tagContent + f"\nTag requested by {ctx.author.name}#{ctx.author.discriminator}")
 
 @bot.command(brief="Displays all tags.", description="Shows a list of all available tags.", usage=f"{prefix}tags")
 @commands.cooldown(1, 60, type=commands.BucketType.member)
@@ -941,6 +941,23 @@ async def on_message(message):
         #This is necessary, otherwise bot commands will break because on_message would override them
     await bot.process_commands(message)
 
+#Triggered when bot joins a new guild
+@bot.event
+async def on_guild_join(guild):
+    #This forces settings to generate for this guild.
+    await retrievesetting("COMMANDSCHANNEL", guild.id)
+    if guild.system_channel != None :
+        embed=discord.Embed(title="Beep Boop!", description=f"I have been summoned to this server. Use `{prefix}help` to see what I can do!", color=0xfec01d)
+        embed.set_thumbnail(url=bot.user.avatar_url)
+        await guild.system_channel.send(embed=embed)
+    print(f"[INFO]: Bot has been added to new guild {guild.id}.")
+
+#Triggered when bot leaves guild, or gets kicked/banned, or guild gets deleted.
+@bot.event
+async def on_guild_remove(guild):
+    #Erase all settings for this guild on removal to keep the db tidy.
+    await deletesettings(guild.id)
+    print(f"[INFO]: Bot has been removed from guild {guild.id}, correlating data erased.")
 #
 #ADMIN/Config commands
 #
@@ -1048,7 +1065,7 @@ async def priviligedroles(ctx) :
 async def whois(ctx, member : discord.Member) :
     rolelist = [role.name for role in member.roles]
     roleformatted = ", ".join(rolelist)
-    embed=discord.Embed(title=f"User information: {member.name}", description=f"Username: `{member.name}` \nNickname: `{member.display_name}` \nUser ID: `{member.id}` \nStatus: `{member.raw_status}` \nBot: `{member.bot}` \nAccount creation date: `{member.created_at}` \nJoin date: `{member.joined_at}` \nRoles: `{roleformatted}`", color=embedBlue)
+    embed=discord.Embed(title=f"User information: {member.name}", description=f"Username: `{member.name}` \nNickname: `{member.display_name}` \nUser ID: `{member.id}` \nStatus: `{member.raw_status}` \nBot: `{member.bot}` \nAccount creation date: `{member.created_at}` \nJoin date: `{member.joined_at}` \nRoles: `{roleformatted}`", color=member.colour)
     embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
     embed.set_thumbnail(url=member.avatar_url)
     await ctx.channel.send(embed=embed)
@@ -1066,7 +1083,7 @@ async def createtag(ctx, name, messageID):
         embed=discord.Embed(title="❌ Error: Reserved.", description="This name is reserved for internal functions. Try another name.", color=errorColor)
         await ctx.channel.send(embed=embed)
         return
-    else:
+    elif len(name) >= 3:
         try:
             #Store it
             msgToTag = await ctx.channel.fetch_message(messageID)
@@ -1078,7 +1095,10 @@ async def createtag(ctx, name, messageID):
             embed=discord.Embed(title="❌ Error: Message not found.", description="Please **__make sure__** you ran the command in the channel you want to get the message from!", color=errorColor)
             await ctx.channel.send(embed=embed)
             return
-        
+    else :
+        embed=discord.Embed(title="❌ Error: Tag name too short.", description="Your tag name must be 3 characters long or more.", color=errorColor)
+        await ctx.channel.send(embed=embed)
+        return
 @bot.command(hidden=True, brief="Deletes a tag.", description="Permanently erases a tag, removing it from the list of callable tags.", usage=f"{prefix}deltag <tagname>", aliases=['deletetag, removetag'])
 @commands.check(hasPriviliged)
 @commands.guild_only()
@@ -1502,10 +1522,8 @@ async def retrievesetting(datatype, guildID) :
                     #We insert every datatype into the table for this guild.
                     await db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, 0)", [guildID, item])
                 await db.commit()
-                #And then we essentially return 0
-                cursor = await db.execute("SELECT value IN settings WHERE guild_id = ? AND datatype = ?", [guildID, datatype])
-                value = await cursor.fetchone()
-                return value[0]
+                #And then we return error -1 to signal that there are no settings
+                return -1
     else :
         print(f"[INTERNAL ERROR]: Invalid datatype called in retrievesetting() (Called datatype: {datatype})")
 
@@ -1579,14 +1597,10 @@ async def getTags(guildID):
         results = await cursor.fetchall()
         #Fix for tuples
         results = [result[0] for result in results]
-        print("-----------------")
-        #results = results.flatten()
         #Remove reserved stuff
         for result in results :
             if result in reservedTextNames :
                 results.remove(result)
-        print(results)
-        print("-----------------")
         return results
 
     
