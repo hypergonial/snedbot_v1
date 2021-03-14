@@ -24,7 +24,7 @@ dbName = "database.db"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 dbPath = os.path.join(BASE_DIR, dbName)
 #Current version
-currentVersion = "2.2.2"
+currentVersion = "2.2.2a"
 #Is this build experimental?
 experimentalBuild = False
 #Bot commands prefix
@@ -894,7 +894,8 @@ async def on_raw_reaction_remove(payload):
 #Keep-On-Top message functionality
 @bot.event
 async def on_message(message):
-    if message.channel.id == await retrievesetting("KEEP_ON_TOP_CHANNEL", message.guild.id):
+    topChannelID = await retrievesetting("KEEP_ON_TOP_CHANNEL", message.guild.id)
+    if message.channel.id == topChannelID:
         keepOnTopContent = await retrievetext("KEEP_ON_TOP_CONTENT", message.guild.id)
         if keepOnTopContent != message.content :
             #Get rid of previous message
@@ -904,7 +905,8 @@ async def on_message(message):
             newTop = await message.channel.send(keepOnTopContent)
             #Set the id to keep the ball rolling
             await modifysettings("KEEP_ON_TOP_MSG", newTop.id, newTop.guild.id)
-
+    elif topChannelID == None :
+        return
     #This is necessary, otherwise bot commands will break because on_message would override them
     await bot.process_commands(message)
 
@@ -1329,7 +1331,7 @@ async def deletesettings(guildID):
     async with aiosqlite.connect(dbPath) as db:
         await db.execute("DELETE FROM settings WHERE guild_id = ?", [guildID])
         await db.execute("DELETE FROM priviliged WHERE guild_id = ?", [guildID])
-        await db.exeucte("DELETE FROM stored_text WHERE guild_id = ?", [guildID])
+        await db.execute("DELETE FROM stored_text WHERE guild_id = ?", [guildID])
         await db.commit()
         #os.remove(f"{guildID}_settings.cfg")
         print(f"[WARN]: Settings have been reset and tags erased for guild {guildID}.")
@@ -1416,6 +1418,7 @@ async def displaysettings(guildID) :
     #Check if there are any values stored related to the guild.
     #If this is true, guild settings exist.
     async with aiosqlite.connect(dbPath) as db:
+        result = None
         cursor = await db.execute("SELECT guild_id FROM settings WHERE guild_id = ?", [guildID])
         result = await cursor.fetchone()
         #If we find something, we gather it, return it.
