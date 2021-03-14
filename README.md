@@ -2,7 +2,7 @@
 
 ## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  for matchmaking and other purposes on the Annoverse discord guild.
 
-##Note: This version uses a different database format compared to previous versions. Please check `database_template.db`.
+### Note: This version uses a different database format compared to previous versions. Please check `database_template.db`.
 
 ### Features:
  - Generate neatly formatted multiplayer listings based on a list of criteria
