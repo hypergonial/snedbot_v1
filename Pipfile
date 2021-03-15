@@ -7,8 +7,8 @@ name = "pypi"
 "discord.py" = {extras = ["voice"], version = "*"}
 aiosqlite = "*"
 cchardet = "*"  # This makes aiohttp, on which discord.py depends, much faster.
-# They also recommend installing aiodns, but that is years old and no longer works with python 3.9.
 python-dotenv = "*"
+jishaku = '*' #Debug cog for bot-owner
 
 [dev-packages]
 ipython = "*"  # Interactive shell for debugging etc. Basically the normal REPL but on steroids.
