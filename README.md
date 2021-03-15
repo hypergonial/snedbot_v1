@@ -1,13 +1,13 @@
-# Anno Matchmaking Bot v2.2.0b EXPERIMENTAL
 
-## Note: This build is experimental, expect bugs and missing features.
+# Anno Bot "Sned" v3.0.0a
 
-## Experimental builds use the `?` prefix for commands instead of `!`.
+### Note: This build is experimental, and may contain buggy or incomplete features. It also uses the prefix `?` instead of `!`.
 
-## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  for matchmaking on the Annoverse discord guild.
+## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  for matchmaking and other purposes on the Annoverse discord guild.
 
 ### Features:
  - Generate neatly formatted multiplayer listings based on a list of criteria
+ - Allow users to add themselves to these listings and express join intent
  - Easy to use commands
  - Setup commands to simplify configuration
 
@@ -16,9 +16,15 @@
 
 `!ping` Returns the ping of the bot in ms.
 
-`!version` Returns the current version of the bot.
+`!about` Displays information about the bot.
 
-`!matchmaking` Starts the matchmaking system. Creates a multiplayer listing in desired channel upon completion.
+`!avatar <user>` Return the avatar of the specified user. Has a 30 second cooldown per user.
+
+`!tag <name>` Calls and displays the contents of a tag. Has a 60 second cooldown per user.
+
+`!tags` Lists all available tags. Has a 60 second cooldown per user.
+
+`!matchmaking` Starts the matchmaking system. Creates a multiplayer listing in desired channel upon completion. Has a 12 hour cooldown per user.
 
 ### Commands for server owners & admins:
 `!addpriviligedrole <rolename>` Adds a role to priviliged roles. This will allow them to access bot admin commands. Can only be executed by a guild owner.
@@ -27,11 +33,15 @@
 
 `!priviligedroles` Lists all priviliged roles. Can only be executed by a guild owner.
 
-`!setup <setuptype>` Initialize a setup, for configuring the server. Example: `!setup LFG` will start a setup helping you set up reaction roles. Requires priviliged access. Current setups: `LFG, matchmaking`
+`!setup <setuptype>` Initialize a setup, for configuring the server. Example: `!setup LFG` will start a setup helping you set up reaction roles. Requires priviliged access. Current setups: `LFG, matchmaking, keepontop`
 
 `!settings` Displays all settings for the current guild. Requires priviliged access.
 
-`!resetsettings` Resets all bot settings, irreversible. Requires priviliged access.
+`!resetsettings` Resets all bot settings, irreversible. Also erases all tags. Requires priviliged access.
+
+`!createtag <name> <messageID>` Creates a tag out of the specified message. Command **must be** executed in the same channel where the message resides. Requires priviliged access.
+
+`!deltag <name>` Deletes a tag of the specified name. Requires priviliged access.
 
 `!modify <datatype> <value>` Modifies a datatype in settings to a new value. Improper use will break things, use setups if you don't know what you're doing! Requires priviliged access.
 
