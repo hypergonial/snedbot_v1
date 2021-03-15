@@ -49,5 +49,5 @@
 ### How to use:
 Install dependencies via pipenv, then create a .env in your project folder with your bot token in this format: `TOKEN=yourtokenhere`. The bot should then run correctly.
 
-Note: The bot is configured by default to look for a database with the name `database.db`, either modify the dbPath variable in code, or create a database with matching name in the same folder. You can use `database_template.db` for this purpose.
+Note: The bot is configured by default to look for a database with the name `database.db`, either modify the dbName/dbPath variable in code, or create a database with matching name in the same folder. You can use `database_template.db` for this purpose.
 
