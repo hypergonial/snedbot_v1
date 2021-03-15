@@ -1,7 +1,5 @@
 
-# Anno Bot "Sned" v3.0.0a
-
-### Note: This build is experimental, and may contain buggy or incomplete features. It also uses the prefix `?` instead of `!`.
+# Anno Bot "Sned" v3.0.0
 
 ## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  for matchmaking and other purposes on the Annoverse discord guild.
 
@@ -47,7 +45,7 @@
 
 `!quack` ???
 ### How to use:
-Install dependencies from requirements.txt (or with PipEnv), then create a .env in your project folder with your bot token in this format: `TOKEN=yourtokenhere`. The bot should then run correctly.
+Install dependencies via pipenv, then create a .env in your project folder with your bot token in this format: `TOKEN=yourtokenhere`. The bot should then run correctly.
 
-Note: The bot is configured by default to look for a database with the name `database.db`, either modify the dbPath variable in code, or create a database with matching name in the same folder. You can use `database_template.db` for this purpose.
+Note: The bot is configured by default to look for a database with the name `database.db`, either modify the dbName/dbPath variable in code, or create a database with matching name in the same folder. You can use `database_template.db` for this purpose.
 

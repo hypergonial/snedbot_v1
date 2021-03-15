@@ -10,7 +10,7 @@ async def hasPriviliged(ctx):
     #Gets a list of all the roles the user has, then gets the ID from that.
     userRoles = [x.id for x in ctx.author.roles]
     #Also get privliged roles, then compare
-    privroles = [role[0] for role in await ctx.bot.DBHandler.checkprivs(ctx.guild.id)]
+    privroles = await ctx.bot.DBHandler.checkprivs(ctx.guild.id)
     #Check if any of the roles in user's roles are contained in the priviliged roles.
     return any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id)
 
@@ -57,6 +57,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         embed.set_thumbnail(url=self.bot.user.avatar_url)
         await ctx.channel.send(embed=embed)
     #Fun command, because yes. (Needs mod privilege as it can be abused for spamming)
+    #This may or may not have been a test command for testing priviliges & permissions :P
     @commands.command(hidden = True, brief = "Deploys the duck army.", description="🦆 I am surprised you even need help for this...", usage=f"quack")
     @commands.check(hasPriviliged)
     @commands.guild_only()

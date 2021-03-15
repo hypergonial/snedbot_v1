@@ -349,7 +349,7 @@ class Matchmaking(commands.Cog):
                             #await channel.send(f"**__Looking for Players: Anno 1800__** \n \n **Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {DLC} \n **Mods:** {mpsessiondata[3]} \n **Timezone:** {mpsessiondata[4]} \n **Additional info:** {mpsessiondata[5]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested! \n \n {lfgrole.mention}")
                             print(f"[INFO]: {ctx.author} User created new multiplayer listing. Session: {mpsessiondata}") 
                     except:
-                    #    #If for whatever reason the message cannot be made, we message the user about it.
+                        #If for whatever reason the message cannot be made, we message the user about it.
                         print(f"[ERROR]: Could not create listing for {ctx.author}. Did you set up matchmaking?")
                         embed=discord.Embed(title="❌ Error: Exception encountered.", description="Failed to generated listing. Contact an administrator! Operation cancelled.", color=self.bot.errorColor)
                         await ctx.author.send(embed=embed)
