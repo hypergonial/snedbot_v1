@@ -16,9 +16,9 @@ import datetime
 
 
 #Is this build experimental?
-experimentalBuild = True
+experimentalBuild = False
 #Version of the bot
-currentVersion = "3.0.0a"
+currentVersion = "3.0.0"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 #Get token from .env
@@ -53,7 +53,8 @@ bot.experimentalBuild = experimentalBuild
 
 #All extensions that are loaded on boot-up, change these to alter what modules you want (Note: These refer to filenames NOT cognames)
 #Note: Without the extension admin_commands, most things will break, so I consider this a must-have. Remove at your own peril.
-initial_extensions = ['extensions.admin_commands', 'extensions.misc_commands', 'extensions.matchmaking', 'extensions.tags', 'extensions.setup']
+#Jishaku is a bot-owner only debug cog, requires 'pip install jishaku'.
+initial_extensions = ['extensions.admin_commands', 'extensions.misc_commands', 'extensions.matchmaking', 'extensions.tags', 'extensions.setup', 'jishaku']
 #Contains all the valid datatypes in settings. If you add a new one here, it will be automatically generated
 #upon a new request to retrieve/modify that datatype.
 bot.datatypes = ["COMMANDSCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI", "KEEP_ON_TOP_CHANNEL", "KEEP_ON_TOP_MSG"]
@@ -145,8 +146,21 @@ class DBhandler():
     async def checkprivs(self, guildID):
         async with aiosqlite.connect(bot.dbPath) as db:
             cursor = await db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ?", [guildID])
-            return await cursor.fetchall()
-
+            roleIDs = await cursor.fetchall()
+            #Abstracting away the conversion from tuples
+            roleIDs = [role[0] for role in roleIDs]
+            return roleIDs
+    #Inserts a priviliged role
+    async def setpriv(self, roleID, guildID):
+        async with aiosqlite.connect(bot.dbPath) as db:
+            await db.execute("INSERT INTO priviliged (guild_id, priviliged_role_id) VALUES (?, ?)", [guildID, roleID])
+            await db.commit()
+    #Deletes a priviliged role
+    async def delpriv(self, roleID, guildID):
+        async with aiosqlite.connect(bot.dbPath) as db:
+            await db.execute("DELETE FROM priviliged WHERE guild_id = ? AND priviliged_role_id = ? ", [guildID, roleID])
+            await db.commit()
+    #Modifies a value in settings relating to a guild
     async def modifysettings(self, datatype, value, guildID):
         if datatype in bot.datatypes :
             #Check if we have values for this guild
@@ -168,7 +182,7 @@ class DBhandler():
                         await db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, ?)", [guildID, datatype, value])
                         await db.commit()
                         return
-                #If no data relating to the guild can be found, we will create every datatype for the guild, and return their value.
+                #If no data relating to the guild can be found, we will create every datatype for the guild
                 #Theoretically not necessary, but it outputs better into displaysettings()
                 else :
                     for item in bot.datatypes :
@@ -179,7 +193,6 @@ class DBhandler():
                     await db.execute("UPDATE settings SET guild_id = ?, datatype = ?, value = ? WHERE guild_id = ? AND datatype = ?", [guildID, datatype, value, guildID, datatype])
                     await db.commit()
                     return
-
 
     #Retrieves a setting for a specified guild.
     async def retrievesetting(self, datatype, guildID) :
@@ -217,6 +230,7 @@ class DBhandler():
         else :
             print(f"[INTERNAL ERROR]: Invalid datatype called in retrievesetting() (Called datatype: {datatype})")
 
+    #Should really be retrieveallsettings() but it is only used in !settings to display them to the users
     async def displaysettings(self, guildID) :
         #Check if there are any values stored related to the guild.
         #If this is true, guild settings exist.
@@ -241,7 +255,7 @@ class DBhandler():
             #If not, we return error code -1, corresponding to no settings.
             else:
                 return -1
-
+    #Retrieves a piece of stored text inside table stored_text (Mostly used for tags)
     async def retrievetext(self, textname, guildID) :
         
         #Check if we have values for this guild
@@ -258,7 +272,7 @@ class DBhandler():
             #If it does not exist, return None
             else :
                 return None
-
+    #Stores a piece of text inside table stored_text for later use
     async def storetext(self, textname, textcontent, guildID):
         #Check if we have values for this guild
         async with aiosqlite.connect(bot.dbPath) as db:
@@ -279,7 +293,7 @@ class DBhandler():
             await db.execute("DELETE FROM stored_text WHERE text_name = ? AND guild_id = ?", [textname, guildID])
             await db.commit()
             return
-    #Get all tags for a guild
+    #Get all tags for a guild (Get all text that is not reserved)
     async def getTags(self, guildID):
         async with aiosqlite.connect(bot.dbPath) as db:
 
@@ -301,8 +315,8 @@ bot.DBHandler = DBhandler()
 #Also has an alternate mode where it shows information about a specific command, if specified as an argument.
 @bot.command(brief="Displays this help message.", description="Displays all available commands you can execute, based on your permission level.", usage=f"{prefix}help [command]", aliases=['halp'])
 async def help(ctx, commandname : str=None):
+    #This uses a custom instance of dbHandler
     dbHandler = DBhandler()
-    print(f"[INFO]: Gathering commands across cogs: {bot.cogs}")
     #Retrieve all commands except hidden, unless user is priviliged.
     
     #Direct copy of hasPriviliged()
@@ -310,10 +324,10 @@ async def help(ctx, commandname : str=None):
 
     #Note: checkprivs() returns a list of tuples as roleIDs
     userRoles = [role.id for role in ctx.author.roles]
-    privroles = [role[0] for role in await dbHandler.checkprivs(ctx.guild.id)]
+    privroles = await dbHandler.checkprivs(ctx.guild.id)
     
     #Determine how many commands and associated details we need to retrieve, then retrieve them.
-    if any(roleID in userRoles for roleID in privroles) or (ctx.author.id == creatorID or ctx.author.id == ctx.guild.owner_id) :
+    if any(roleID in userRoles for roleID in privroles) or (ctx.author.id == bot.owner_id or ctx.author.id == ctx.guild.owner_id) :
         cmds = [cmd.name for cmd in bot.commands]
         briefs = [cmd.brief for cmd in bot.commands]
         allAliases = [cmd.aliases for cmd in bot.commands]
@@ -469,100 +483,9 @@ async def on_message(message):
         #This is necessary, otherwise bot commands will break because on_message would override them
     await bot.process_commands(message)
 
-'''
-#
-#ADMIN/Config commands
-#
-#Note: These commands are intended to be only used by people authorized by the server owner.
-
-
-#Check performed to see if the person is either the guild owner or the bot owner.
-async def hasOwner(ctx):
-    return ctx.author.id == creatorID or ctx.author.id == ctx.guild.owner_id
-
-#Check performed to see if the user has priviliged access.
-async def hasPriviliged(ctx):
-    #Gets a list of all the roles the user has, then gets the ID from that.
-    userRoles = [x.id for x in ctx.author.roles]
-    #Also get privliged roles, then compare
-    privroles = [role[0] for role in await checkprivs(ctx.guild.id)]
-    #Check if any of the roles in user's roles are contained in the priviliged roles.
-    return any(role in userRoles for role in privroles) or (ctx.author.id == creatorID or ctx.author.id == ctx.guild.owner_id)
-
-#Commands used to add and/or remove other roles from executing potentially unwanted things
-@bot.command(hidden=True, aliases=['addprivrole', 'addbotadminrole'], brief="Add role to priviliged roles", description="Adds a role to the list of priviliged roles, allowing them to execute admin commands.", usage=f"{prefix}addpriviligedrole <rolename>")
-@commands.check(hasOwner)
-@commands.guild_only()
-async def addpriviligedrole(ctx, rolename):
-    role = discord.utils.get(ctx.guild.roles, name=rolename)
-    if role == None:
-        embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.", color=errorColor)
-        await ctx.channel.send(embed=embed)
-        return
-    async with aiosqlite.connect(dbPath) as db:
-
-        cursor = await db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ? AND priviliged_role_id = ?", [ctx.guild.id, role.id])
-        reply = await cursor.fetchone()
-        if reply != None :
-            embed=discord.Embed(title="❌ Error: Role already added.", description=f"This role already has priviliged access.", color=errorColor)
-            await ctx.channel.send(embed=embed)
-            return
-        else :
-            await db.execute("INSERT INTO priviliged (guild_id, priviliged_role_id) VALUES (?, ?)", [ctx.guild.id, role.id])
-            await db.commit()
-            embed=discord.Embed(title="✅ Priviliged access granted.", description=f"**{role.name}** has been granted bot admin priviliges.", color=embedGreen)
-            await ctx.channel.send(embed=embed)
-            return
-
-
-@bot.command(hidden=True, aliases=['remprivrole', 'removeprivrole', 'removebotadminrole', 'rembotadminrole'], brief="Remove role from priviliged roles.", description="Removes a role to the list of priviliged roles, revoking their permission to execute admin commands.", usage=f"{prefix}removepriviligedrole <rolename>")
-@commands.check(hasOwner)
-@commands.guild_only()
-async def removepriviligedrole(ctx,rolename):
-
-    role = discord.utils.get(ctx.guild.roles, name=rolename)
-    if role == None:
-        embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.", color=errorColor)
-        await ctx.channel.send(embed=embed)
-        return
-    async with aiosqlite.connect(dbPath) as db:
-        cursor = await db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ? AND priviliged_role_id = ?", [ctx.guild.id, role.id])
-        reply = await cursor.fetchone()
-        if reply == None :
-            embed=discord.Embed(title="❌ Error: Role not priviliged.", description=f"This role is not priviliged.", color=errorColor)
-            await ctx.channel.send(embed=embed)
-            return
-        else :
-            await db.execute("DELETE FROM priviliged WHERE guild_id = ? AND priviliged_role_id = ?", [ctx.guild.id, role.id])
-            await db.commit()
-            embed=discord.Embed(title="✅ Priviliged access revoked.", description=f"**{role}** has had it's bot admin priviliges revoked.", color=embedGreen)
-            await ctx.channel.send(embed=embed)
-            return
-
-
-@bot.command(hidden=True, aliases=['privroles', 'botadminroles'],brief="List all priviliged roles.", description="Returns all priviliged roles on this server.", usage=f"{prefix}priviligedroles")
-@commands.check(hasOwner)
-@commands.guild_only()
-async def priviligedroles(ctx) :
-    async with aiosqlite.connect(dbPath) as db :
-        cursor = await db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ?", [ctx.guild.id])
-        roleIDs = await cursor.fetchall()
-        if len(roleIDs) == 0 :
-            embed=discord.Embed(title="❌ Error: No priviliged roles set.", description=f"You can add a priviliged role via `{prefix}addpriviligedrole <rolename>`.", color=errorColor)
-            await ctx.channel.send(embed=embed)
-            return
-        else :
-            roles = []
-            roleNames = []
-            for item in roleIDs :
-                roles.append(ctx.guild.get_role(item[0]))
-            for item in roles :
-                roleNames.append(item.name)
-            roleNames = ", ".join(roleNames)
-            embed=discord.Embed(title="Priviliged roles for this guild:", description=f"`{roleNames}`", color=embedBlue)
-            await ctx.channel.send(embed=embed)
-
- '''   
 
 #Run bot with token from .env
-bot.run(TOKEN)
+try :
+    bot.run(TOKEN)
+except KeyboardInterrupt :
+    pass
