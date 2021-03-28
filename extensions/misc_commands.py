@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import logging
 
 
 async def hasOwner(ctx):
@@ -66,5 +67,5 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         await ctx.message.delete()
 
 def setup(bot):
-    print("[INFO] Adding cog: MiscCommands...")
+    logging.info("Adding cog: MiscCommands...")
     bot.add_cog(MiscCommands(bot))

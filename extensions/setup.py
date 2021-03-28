@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import asyncio
+import logging
 
 async def hasOwner(ctx):
     return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id
@@ -24,7 +25,7 @@ class Setup(commands.Cog):
     #It basically just collects a bunch of values from the user, in this case an admin, and then changes the settings
     #based on that, instead of the admin having to use !modify for every single value
     #TL;DR: fancy setup thing
-    @commands.command(hidden=True,brief="Starts bot configuration setups.", description = "Used to set up and configure different parts of the bot. Valid setup-types: `matchmaking, LFG, keepontop` Only usable by priviliged users.", usage="setup <setuptype>")
+    @commands.command(hidden=True,brief="Starts bot configuration setups.", description = "Used to set up and configure different parts of the bot. Valid setup-types: `matchmaking, LFG, keepontop, logging` Only usable by priviliged users.", usage="setup <setuptype>")
     @commands.check(hasPriviliged)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
@@ -73,7 +74,7 @@ class Setup(commands.Cog):
                 await self.bot.DBHandler.modifysettings("ROLEREACTMSG", msg.id, ctx.guild.id)
                 embed=discord.Embed(title="🛠️ LFG role setup", description="✅ Setup completed. Role reactions set up!", color=self.bot.embedGreen)
                 await ctx.channel.send(embed=embed)
-                print(f"[INFO]: Setup for {setuptype} concluded successfully.")
+                logging.info(f"Setup for {setuptype} concluded successfully on guild {ctx.guild.id}.")
 
             #The common part of the LFG setup
             async def continueprocess(reactchannel, msgcontent, reactmsg, createmsg):
@@ -217,7 +218,7 @@ class Setup(commands.Cog):
                 await self.bot.DBHandler.modifysettings("ANNOUNCECHANNEL", announcechannel.id, ctx.guild.id)
                 embed=discord.Embed(title="🛠️ Matchmaking setup", description="✅ Setup completed. Matchmaking set up!", color=self.bot.embedGreen)
                 await ctx.channel.send(embed=embed)
-                print(f"[INFO]: Setup for {setuptype} concluded successfully.")
+                logging.info(f"Setup for {setuptype} concluded successfully on guild {ctx.guild.id}.")
                 return
 
             except commands.ChannelNotFound:
@@ -249,7 +250,7 @@ class Setup(commands.Cog):
                 await self.bot.DBHandler.modifysettings("KEEP_ON_TOP_MSG", firstTop.id, firstTop.guild.id)
                 embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description=f"✅ Setup completed. This message will now be kept on top of {keepOnTopChannel.mention}!", color=self.bot.embedGreen)
                 await ctx.channel.send(embed=embed)
-                print(f"[INFO]: Setup for {setuptype} concluded successfully.")
+                logging.info(f"Setup for {setuptype} concluded successfully on guild {ctx.guild.id}.")
 
             except commands.ChannelNotFound:
                 embed=discord.Embed(title="❌ Error: Unable to locate channel.", description="The setup process has been cancelled.", color=self.bot.errorColor)
@@ -259,8 +260,29 @@ class Setup(commands.Cog):
                 embed=discord.Embed(title=self.bot.errorTimeoutTitle, description=self.bot.errorTimeoutDesc, color=self.bot.errorColor)
                 await ctx.channel.send(embed=embed)
                 return
-
-
+        
+        elif setuptype.lower() == "logging" or setuptype.lower() == "logs" :
+            embed=discord.Embed(title="🛠️ Logging Setup", description="Specify the channel where you want to send logs to by mentioning it!\n**Note:**This channel may contain sensitive information, do not let everyone access it!", color=self.bot.embedBlue)
+            await ctx.channel.send(embed=embed)
+            try :
+                def check(payload):
+                    return payload.author == ctx.author and payload.channel.id == ctx.channel.id
+                payload = await self.bot.wait_for('message', timeout=60.0, check=check)
+                loggingChannel = await commands.TextChannelConverter().convert(ctx, payload.content)
+                embed=discord.Embed(title="🛠️ Logging Setup", description=f"Channel set to {loggingChannel.mention}!", color=self.bot.embedBlue)
+                await ctx.channel.send(embed=embed)
+                await self.bot.DBHandler.modifysettings("LOGCHANNEL", loggingChannel.id, ctx.guild.id)
+                embed=discord.Embed(title="🛠️ Logging Setup", description=f"✅ Setup completed. Logs will now be recorded!", color=self.bot.embedGreen)
+                await ctx.channel.send(embed=embed)
+                return
+            except commands.ChannelNotFound:
+                embed=discord.Embed(title="❌ Error: Unable to locate channel.", description="The setup process has been cancelled.", color=self.bot.errorColor)
+                await ctx.channel.send(embed=embed)
+                return
+            except asyncio.TimeoutError:
+                embed=discord.Embed(title=self.bot.errorTimeoutTitle, description=self.bot.errorTimeoutDesc, color=self.bot.errorColor)
+                await ctx.channel.send(embed=embed)
+                return
         else:
             await ctx.channel.send("**Error:** Unable to find requested setup process. Valid setups: `LFG, matchmaking`.")
             return
@@ -272,5 +294,5 @@ class Setup(commands.Cog):
             await ctx.channel.send(embed=embed)
 
 def setup(bot):
-    print("[INFO] Adding cog: Setup...")
+    logging.info("Adding cog: Setup...")
     bot.add_cog(Setup(bot))

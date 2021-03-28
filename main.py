@@ -18,13 +18,13 @@ import datetime
 #Is this build experimental?
 experimentalBuild = False
 #Version of the bot
-currentVersion = "3.0.0"
+currentVersion = "3.1.0"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 #Get token from .env
 TOKEN = os.getenv("TOKEN")
 #Activity
-activity = discord.Activity(name='you', type=discord.ActivityType.watching)
+activity = discord.Activity(name='Anno 9', type=discord.ActivityType.playing)
 #Determines bot prefix & logging based on build state.
 prefix = '!'
 if experimentalBuild == True : 
@@ -46,19 +46,21 @@ dbName = "database.db"
 #Database filepath
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 bot.dbPath = os.path.join(BASE_DIR, dbName)
-#No touch
+#No touch, handled in runtime by extensions
 bot.currentVersion = currentVersion
 bot.prefix = prefix
 bot.experimentalBuild = experimentalBuild
+bot.recentlyDeleted = []
+bot.recentlyEdited = []
 
 #All extensions that are loaded on boot-up, change these to alter what modules you want (Note: These refer to filenames NOT cognames)
 #Note: Without the extension admin_commands, most things will break, so I consider this a must-have. Remove at your own peril.
-#Jishaku is a bot-owner only debug cog, requires 'pip install jishaku'.
-initial_extensions = ['extensions.admin_commands', 'extensions.misc_commands', 'extensions.matchmaking', 'extensions.tags', 'extensions.setup', 'jishaku']
+#Jishaku is a bot-owner only debug extension, requires 'pip install jishaku'.
+initial_extensions = ['extensions.admin_commands', 'extensions.misc_commands', 'extensions.matchmaking', 'extensions.tags', 'extensions.setup', 'extensions.userlog', 'jishaku']
 #Contains all the valid datatypes in settings. If you add a new one here, it will be automatically generated
 #upon a new request to retrieve/modify that datatype.
-bot.datatypes = ["COMMANDSCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI", "KEEP_ON_TOP_CHANNEL", "KEEP_ON_TOP_MSG"]
-#These text names are reserved and used for internal internal functions, other ones may get created by users for tags.
+bot.datatypes = ["COMMANDSCHANNEL", "LOGCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI", "KEEP_ON_TOP_CHANNEL", "KEEP_ON_TOP_MSG"]
+#These text names are reserved and used for internal functions, other ones may get created by users for tags.
 bot.reservedTextNames = ["KEEP_ON_TOP_CONTENT"]
 #
 #Error/warn messages
@@ -94,7 +96,7 @@ bot.embedGreen = 0x00ff2a
 bot.unknownColor = 0xbe1931
 bot.miscColor = 0xc2c2c2
 
-print("[INFO]: New Session Started.")
+logging.info("New Session Started.")
 
 
 #Loading extensions from the list of extensions defined above
@@ -103,7 +105,7 @@ if __name__ == '__main__':
         try:
             bot.load_extension(extension)
         except Exception as e:
-            print(f'[ERROR] Failed to load extension {extension}.', file=sys.stderr)
+            logging.error(f'Failed to load extension {extension}.', file=sys.stderr)
             traceback.print_exc()
 
 #Simple function that just gets all currently loaded cog/extension names
@@ -118,10 +120,10 @@ bot.checkExtensions = checkExtensions()
 #Executes when the bot starts & is ready.
 @bot.event
 async def on_ready():
-    print("[INFO]: Initialized as {0.user}".format(bot))
+    logging.info("Initialized as {0.user}".format(bot))
     if bot.experimentalBuild == True :
-        print("[WARN]: Experimental mode is enabled.")
-        print(f"Extensions loaded: {bot.checkExtensions}")
+        logging.warning("Experimental mode is enabled.")
+        logging.info(f"Extensions loaded: {bot.checkExtensions}")
 
 
 
@@ -140,7 +142,7 @@ class DBhandler():
             await db.execute("DELETE FROM stored_text WHERE guild_id = ?", [guildID])
             await db.commit()
             #os.remove(f"{guildID}_settings.cfg")
-            print(f"[WARN]: Settings have been reset and tags erased for guild {guildID}.")
+            logging.warning(f"Settings have been reset and tags erased for guild {guildID}.")
 
     #Returns the priviliged roles for a specific guild as a list.
     async def checkprivs(self, guildID):
@@ -193,6 +195,10 @@ class DBhandler():
                     await db.execute("UPDATE settings SET guild_id = ?, datatype = ?, value = ? WHERE guild_id = ? AND datatype = ?", [guildID, datatype, value, guildID, datatype])
                     await db.commit()
                     return
+        else :
+            #This is an internal error and indicates a coding error
+            logging.critical(f"Invalid datatype called in DBHandler.modifysetting() (Called datatype: {datatype})")
+
 
     #Retrieves a setting for a specified guild.
     async def retrievesetting(self, datatype, guildID) :
@@ -212,12 +218,11 @@ class DBhandler():
                         #This is necessary as fetchone() returns it as a tuple of one element.
                         value = await cursor.fetchone()
                         return value[0]
-                    #If it does not, for example if a new valid datatype is added to the code, we will create it, then return it's value.
+                    #If it does not, for example if a new valid datatype is added to the code, we will create it, then return 0.
                     else :
-                        await db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES ?, ?, 0", [guildID, datatype])
-                        cursor = await db.execute("SELECT value FROM settings WHERE guild_id = ? AND datatype = ?", [guildID, datatype])
-                        value = await cursor.fetchone()
-                        return value[0]
+                        await db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, 0)", [guildID, datatype])
+                        await db.commit()
+                        return 0
                 #If no data relating to the guild can be found, we will create every datatype for the guild, and return their value.
                 #Theoretically not necessary, but it outputs better into displaysettings()
                 else :
@@ -228,7 +233,8 @@ class DBhandler():
                     #And then we return error -1 to signal that there are no settings
                     return -1
         else :
-            print(f"[INTERNAL ERROR]: Invalid datatype called in retrievesetting() (Called datatype: {datatype})")
+            #This is an internal error and indicates a coding error
+            logging.critical(f"Invalid datatype called in DBHandler.retrievesetting() (Called datatype: {datatype})")
 
     #Should really be retrieveallsettings() but it is only used in !settings to display them to the users
     async def displaysettings(self, guildID) :
@@ -398,10 +404,12 @@ async def help(ctx, commandname : str=None):
 async def on_command_error(ctx, error):
     #This gets sent whenever a user has insufficient permissions to execute a command.
     if isinstance(error, commands.CheckFailure):
+        logging.info(f"{ctx.author} tried calling a command but did not meet checks.")
         embed=discord.Embed(title=bot.errorCheckFailTitle, description=bot.errorCheckFailDesc, color=bot.errorColor)
         embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
     elif isinstance(error, commands.CommandNotFound):
+        logging.info(f"{ctx.author} tried calling a command but the command was not found. ({ctx.message.content})")
         #This is a fancy suggestion thing that will suggest commands that are similar in case of typos.
         #Get original cmd, and convert it into lowercase as to make it case-insensitive
         cmd = ctx.invoked_with.lower()
@@ -425,14 +433,17 @@ async def on_command_error(ctx, error):
             embed=discord.Embed(title="❓ Unknown command!", description=f"Use `{prefix}help` for a list of available commands.", color=bot.unknownColor)
             embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
+    #Cooldown error
     elif isinstance(error, commands.CommandOnCooldown):
         embed=discord.Embed(title=bot.errorCooldownTitle, description=f"Please retry in: `{datetime.timedelta(seconds=round(error.retry_after))}`", color=bot.errorColor)
         embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
+    #MissingArg error
     elif isinstance(error, commands.MissingRequiredArgument):
         embed=discord.Embed(title="❌ Missing argument.", description=f"One or more arguments are missing. \n__Hint:__ You can use `{prefix}help {ctx.command.name}` to view command usage.", color=bot.errorColor)
         embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
+        logging.info(f"{ctx.author} tried calling a command ({ctx.message.content}) but did not supply sufficient arguments.")
 
 
     else :
@@ -441,6 +452,10 @@ async def on_command_error(ctx, error):
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
+#Executed on any command attempt
+@bot.event
+async def on_command(ctx):
+    logging.info(f"{ctx.author} called command {ctx.message.content}")
 #
 # Guild Join/Leave behaviours
 #
@@ -453,14 +468,14 @@ async def on_guild_join(guild):
         embed=discord.Embed(title="Beep Boop!", description=f"I have been summoned to this server. Use `{prefix}help` to see what I can do!", color=0xfec01d)
         embed.set_thumbnail(url=bot.user.avatar_url)
         await guild.system_channel.send(embed=embed)
-    print(f"[INFO]: Bot has been added to new guild {guild.id}.")
+    logging.info(f"Bot has been added to new guild {guild.id}.")
 
 #Triggered when bot leaves guild, or gets kicked/banned, or guild gets deleted.
 @bot.event
 async def on_guild_remove(guild):
     #Erase all settings for this guild on removal to keep the db tidy.
     await bot.DBHandler.deletesettings(guild.id)
-    print(f"[INFO]: Bot has been removed from guild {guild.id}, correlating data erased.")
+    logging.info(f"Bot has been removed from guild {guild.id}, correlating data erased.")
 
 #Keep-On-Top message functionality (Requires setup extension to be properly set up)
 @bot.event
@@ -479,7 +494,7 @@ async def on_message(message):
                 #Set the id to keep the ball rolling
                 await bot.DBHandler.modifysettings("KEEP_ON_TOP_MSG", newTop.id, newTop.guild.id)
         elif topChannelID == None :
-            print("Settings not found.")
+            logging.warning("Settings not found.")
         #This is necessary, otherwise bot commands will break because on_message would override them
     await bot.process_commands(message)
 
