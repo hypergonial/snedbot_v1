@@ -30,7 +30,7 @@
 
 `!priviligedroles` Lists all priviliged roles. Can only be executed by a guild owner.
 
-`!setup <setuptype>` Initialize a setup, for configuring the server. Example: `!setup LFG` will start a setup helping you set up reaction roles. Requires priviliged access. Current setups: `LFG, matchmaking, keepontop`
+`!setup <setuptype>` Initialize a setup, for configuring the server. Example: `!setup LFG` will start a setup helping you set up reaction roles. Requires priviliged access. Current setups: `LFG, matchmaking, keepontop, logging`
 
 `!settings` Displays all settings for the current guild. Requires priviliged access.
 
@@ -41,6 +41,8 @@
 `!deltag <name>` Deletes a tag of the specified name. Requires priviliged access.
 
 `!modify <datatype> <value>` Modifies a datatype in settings to a new value. Improper use will break things, use setups if you don't know what you're doing! Requires priviliged access.
+
+`!warn <user> [reason]` Warns a user, and sends warn to logging channel if set up. Will not function if `LOGCHANNEL` is not set.
 
 `!quack` ???
 ### How to use:
