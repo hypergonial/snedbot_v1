@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import asyncio
+import logging
 
 
 async def hasOwner(ctx):
@@ -154,6 +155,27 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             await ctx.channel.send(embed=embed)
             return
 
+    #Warn a user & print it to logs, needs logs to be set up
+    @commands.command(hidden=True, brief="Warns a user.", description="Warns the user and logs it.", usage="warn <user> [reason]")
+    @commands.check(hasPriviliged)
+    async def warn(self, ctx, offender:discord.Member, *, reason:str=None):
+        loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", ctx.guild.id)
+        if loggingchannelID == 0:
+            embed=discord.Embed(title="❌ Warning failed.", description=f"Logging channel is not set up.")
+            await ctx.send(embed=embed)
+            await asyncio.sleep(20)
+            return
+        loggingchannel = ctx.guild.get_channel(loggingchannelID)
+        if reason == None :
+            embed=discord.Embed(title="⚠️ Warning issued.", description=f"{offender.mention} has been warned.", color=self.bot.warnColor)
+            await ctx.send(embed=embed)
+            embed=discord.Embed(title="⚠️ Warning issued.", description=f"{offender.mention} has been warned by {ctx.author.mention}.\n[Jump!]({ctx.message.jump_url})", color=self.bot.warnColor)
+            await loggingchannel.send(embed=embed)
+        else :
+            embed=discord.Embed(title="⚠️ Warning issued.", description=f"{offender.mention} has been warned.\n**Reason:** {reason}", color=self.bot.warnColor)
+            await ctx.send(embed=embed)
+            embed=discord.Embed(title="⚠️ Warning issued.", description=f"{offender.mention} has been warned by {ctx.author.mention}.\n**Reason:** ```{reason}```\n[Jump!]({ctx.message.jump_url})", color=self.bot.warnColor)
+            await loggingchannel.send(embed=embed)
 
     @commands.command(hidden=True, aliases=['privroles', 'botadminroles'],brief="List all priviliged roles.", description="Returns all priviliged roles on this server.", usage=f"priviligedroles")
     @commands.check(hasOwner)
@@ -182,8 +204,8 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         await ctx.send("https://media.tenor.com/images/529aed02dae515a28de82141cfd0b019/tenor.gif")
         await ctx.send(embed=embed)
         await self.bot.logout()
-        print("[INFO]: Bot shut down successfully!")
+        logging.info("Bot shut down successfully!")
 
 def setup(bot):
-    print("[INFO] Adding cog: AdminCommands...")
+    logging.info("Adding cog: AdminCommands...")
     bot.add_cog(AdminCommands(bot))

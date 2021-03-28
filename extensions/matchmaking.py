@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import asyncio
 import datetime
+import logging
 
 #Disclaimer: This extension is proprietary to Annoverse, and should not be used elsewhere without heavy modifications
 
@@ -18,14 +19,14 @@ class Matchmaking(commands.Cog):
     @commands.command(brief="Start setting up a new multiplayer listing.", description="Start matchmaking! After command execution, you will receive a direct message to help you set up a multiplayer listing! Takes no arguments.", aliases=['multiplayer', 'init', 'match','multi','mp'], usage=f"matchmaking")
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
-    @commands.cooldown(1, 43200, type=commands.BucketType.member)
+    @commands.cooldown(1, 72000, type=commands.BucketType.member)
     async def matchmaking(self, ctx):
         cmdchannel = await self.bot.DBHandler.retrievesetting("COMMANDSCHANNEL", ctx.guild.id)
         #Performs check if the command is executed in the right channel, if this is 0, this feature is disabled.
         if cmdchannel != 0 :
             if cmdchannel != ctx.channel.id :
-                print("[WARN]: Matchmaking initiated in disabled channel.")
-                return
+                logging.info(f"User {ctx.author} tried to initialize matchmaking in disabled channel.")
+                return -1
         mpsessiondata = []
         mpEmbedColor = 0xd76b00
         #This should be a list of all the names of the functions below
@@ -118,6 +119,7 @@ class Matchmaking(commands.Cog):
                     return -1
             if qType == "PlayerCount" :
                 embed=discord.Embed(title="How many players you want to play with?", description="2️⃣ - 2 players \n 3️⃣ - 3 players \n 4️⃣ - 4 players \n ♾️ - 5 or more players", color=mpEmbedColor)
+                embed.set_footer(text="This should be the minimum amount of players you are willing to play with!")
                 msg = await ctx.author.send(embed=embed)
                 #Saving the ID of this message we just sent
                 msgid = msg.id
@@ -133,7 +135,7 @@ class Matchmaking(commands.Cog):
                 try:
                     payload = await self.bot.wait_for('raw_reaction_add', timeout=300.0, check=playercountcheck)
                     i = 0
-                    playernum = "[DefaultCount] If you see this, something is very wrong..."
+                    playernum = "[DefaultCount] If you see this, something is very wrong..." #kek
                     #Check if emoj is invalid, otherwise check for match & break on match
                     while i != len(playersOptions):
                         if str(payload.emoji) not in playersEmoji :
@@ -316,9 +318,9 @@ class Matchmaking(commands.Cog):
             
             if qType == "ConfirmListing" :
                 #Send listing preview
-                embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {mpsessiondata[3]} \n **Mods:** {mpsessiondata[4]} \n **Timezone:** {mpsessiondata[5]} \n **Additional info:** {mpsessiondata[6]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested, or react with ⏫! This will notify the host when {mpsessiondata[2]} players have expressed interest! (including the host)", color=mpEmbedColor)
+                embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {mpsessiondata[3]} \n **Mods:** {mpsessiondata[4]} \n **Timezone:** {mpsessiondata[5]} \n **Additional info:** {mpsessiondata[6]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested, or subscribe by reacting with ⏫! This will notify the host when {mpsessiondata[2]} players have subscribed! (including the host)", color=mpEmbedColor)
                 embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/203158031511453696/446da0b60a670b6866cd463fb5e87195.png?size=1024")
-                embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more join interests can be submitted.")
+                embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted.")
                 await ctx.author.send(embed=embed)
                 embed=discord.Embed(title="Please review your listing!", description="If everything looks good, hit ✅ to submit! If you want to edit any information, hit 🖊️. If you want to cancel your submission, hit ❌.", color=mpEmbedColor)
                 msg = await ctx.author.send(embed=embed)
@@ -333,24 +335,24 @@ class Matchmaking(commands.Cog):
                         #If LFG role is not set up, we will not include a mention to it at the end.
                         if await self.bot.DBHandler.retrievesetting("LFGROLE", ctx.guild.id) == 0 :
                             #yeah this is long lol
-                            embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {mpsessiondata[3]} \n **Mods:** {mpsessiondata[4]} \n **Timezone:** {mpsessiondata[5]} \n **Additional info:** {mpsessiondata[6]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested, or react with ⏫! This will notify the host when {mpsessiondata[2]} players have expressed interest! (including the host)")
+                            embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {mpsessiondata[3]} \n **Mods:** {mpsessiondata[4]} \n **Timezone:** {mpsessiondata[5]} \n **Additional info:** {mpsessiondata[6]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested, subscribe by reacting with ⏫! This will notify the host when {mpsessiondata[2]} players have subscribed! (including the host)", color=mpEmbedColor)
                             embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/203158031511453696/446da0b60a670b6866cd463fb5e87195.png?size=1024")
-                            embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more join interests can be submitted.")
+                            embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted.")
                             posting = await channel.send(embed=embed)
                             await posting.add_reaction("⏫")
                             #await channel.send(f"**__Looking for Players: Anno 1800__** \n \n **Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {DLC} \n **Mods:** {mpsessiondata[3]} \n **Timezone:** {mpsessiondata[4]} \n **Additional info:** {mpsessiondata[5]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested!")
-                            print(f"[INFO]: {ctx.author} User created new multiplayer listing. Session: {mpsessiondata}")   
+                            logging.info(f"{ctx.author} User created new multiplayer listing. Session data dump: {mpsessiondata}")   
                         else :
-                            embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {mpsessiondata[3]} \n **Mods:** {mpsessiondata[4]} \n **Timezone:** {mpsessiondata[5]} \n **Additional info:** {mpsessiondata[6]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested, or react with ⏫! This will notify the host when {mpsessiondata[2]} players have expressed interest! (including the host)")
+                            embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {mpsessiondata[3]} \n **Mods:** {mpsessiondata[4]} \n **Timezone:** {mpsessiondata[5]} \n **Additional info:** {mpsessiondata[6]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested, or subscribe by reacting with ⏫! This will notify the host when {mpsessiondata[2]} players have subscribed! (including the host)", color=mpEmbedColor)
                             embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/203158031511453696/446da0b60a670b6866cd463fb5e87195.png?size=1024")
-                            embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more join interests can be submitted.")
+                            embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted.")
                             posting = await channel.send(embed=embed,content=lfgrole.mention)
                             await posting.add_reaction("⏫")
                             #await channel.send(f"**__Looking for Players: Anno 1800__** \n \n **Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {DLC} \n **Mods:** {mpsessiondata[3]} \n **Timezone:** {mpsessiondata[4]} \n **Additional info:** {mpsessiondata[5]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested! \n \n {lfgrole.mention}")
-                            print(f"[INFO]: {ctx.author} User created new multiplayer listing. Session: {mpsessiondata}") 
+                            logging.info(f"{ctx.author} User created new multiplayer listing. Session data dump: {mpsessiondata}") 
                     except:
                         #If for whatever reason the message cannot be made, we message the user about it.
-                        print(f"[ERROR]: Could not create listing for {ctx.author}. Did you set up matchmaking?")
+                        logging.error(f"Could not create listing for {ctx.author} due to unhandled exception. Did you set up matchmaking?")
                         embed=discord.Embed(title="❌ Error: Exception encountered.", description="Failed to generated listing. Contact an administrator! Operation cancelled.", color=self.bot.errorColor)
                         await ctx.author.send(embed=embed)
                         return -1
@@ -427,14 +429,14 @@ class Matchmaking(commands.Cog):
                         else :
                             embed=discord.Embed(title="❌ Modification failed.", description="If you have found a bug or want to give feedback, please contact `Hyper#0001`!", color=self.bot.errorColor)
                             await ctx.author.send(embed=embed)
-                            print(f"[INFO]: {ctx.author} User failed modification.")
+                            logging.info(f"{ctx.author} User failed modification.")
                             return -1
 
 
                     elif str(payload.emoji) == "❌":
                         embed=discord.Embed(title="❌ Submission cancelled.", description="If you have found a bug or want to give feedback, please contact `Hyper#0001`!", color=self.bot.errorColor)
                         await ctx.author.send(embed=embed)
-                        print(f"[INFO]: {ctx.author} User cancelled matchmaking.")
+                        logging.info(f"{ctx.author} User cancelled matchmaking.")
                         return -1
                     else :
                         await msg.delete()
@@ -482,6 +484,7 @@ class Matchmaking(commands.Cog):
                 if edits == 6:
                     embed=discord.Embed(title="❌ Exceeded edit limit.", description="You cannot make more edits to your submission. Please try executing the command again.",color=self.bot.errorColor)
                     await ctx.author.send(embed=embed)
+                    logging.info(f"{ctx.author} exceeded listing edit limit in matchmaking.")
                     self.matchmaking.reset_cooldown(ctx)
                     return
                 else :
@@ -491,11 +494,12 @@ class Matchmaking(commands.Cog):
                 if warns == 4:
                     embed=discord.Embed(title="❌ Exceeded error limit.", description="You have made too many errors. Please retry your submission.", color=self.bot.errorColor)
                     await ctx.author.send(embed=embed)
+                    logging.info(f"{ctx.author} exceeded listing error limit in matchmaking.")
                     self.matchmaking.reset_cooldown(ctx)
                     return
                 else:
                     warns += 1
-        print("[INFO]matchmaking command exited successfully.")
+        logging.info(f"Matchmaking command executed successfully. Generated listing for {ctx.author}!")
 
 
     @matchmaking.error
@@ -505,6 +509,7 @@ class Matchmaking(commands.Cog):
             embed = discord.Embed(title="❌ Error: Max concurrency reached!", description="You already have a matchmaking request in progress.", color=self.bot.errorColor)
             embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
             await ctx.channel.send(embed=embed)
+            logging.info(f"{ctx.author} exceeded max concurrency for matchmaking command.")
 
     
 
@@ -524,7 +529,7 @@ class Matchmaking(commands.Cog):
                         #Then set the role for the user
                         role = guild.get_role(await self.bot.DBHandler.retrievesetting("LFGROLE", guild.id))
                         await member.add_roles(role)
-                        print(f"[INFO]: Role {role} added to {member}")
+                        logging.info(f"Role {role} added to {member}")
                         #Also DM the user about the change, and let them know that the action was performed successfully.
                         embed=discord.Embed(title="💬 Notifications enabled.", description="You are now looking for games, and will be notified of any new multiplayer listing!", color=self.bot.embedGreen)
                         await member.send(embed=embed)
@@ -533,7 +538,7 @@ class Matchmaking(commands.Cog):
                         #In case anything goes wrong, we will tell the user to bully admins who can then bully me :) /s
                         embed=discord.Embed(title="❌ Error: Exception encountered.", description="Failed to add role. Contact an administrator! Operation cancelled.", color=self.bot.errorColor)
                         await member.send(embed=embed)
-                        print(f"[ERROR]: Unable to modify roles for {member}. Possible permissions issue.")
+                        logging.error(f"Unable to modify roles for {member}. Possible permissions issue.")
                         return
             elif await self.bot.DBHandler.retrievesetting("ANNOUNCECHANNEL", guild.id) == payload.channel_id:
                 #I put a fair number of logging in here to track abuse of this feature
@@ -544,7 +549,7 @@ class Matchmaking(commands.Cog):
                     member = guild.get_member(payload.user_id)
                     #If the message is older than a week, we ignore this request
                     if (datetime.datetime.utcnow() - listing.created_at).days >= 7 :
-                        print(f"[INFO]: {member.name}#{member.discriminator} tried to join an expired listing.")
+                        logging.info(f"{member.name}#{member.discriminator} tried to join an expired listing.")
                         return
                     #Get context for this message
                     ctx = await self.bot.get_context(listing)
@@ -570,15 +575,18 @@ class Matchmaking(commands.Cog):
                         playerCount = 4
                     #Sending confirmation to user who signed up
                     if member != host :
-                        embed=discord.Embed(title=f"📝 You subscribed to {host.name}'s game!", description="They will receive a notification when their desired playercap has been reached.", color=self.bot.embedGreen)
+                        embed=discord.Embed(title=f"📝 You have subscribed to {host.name}'s game!", description="They will receive a notification when their desired playercap has been reached.", color=self.bot.embedGreen)
                         await member.send(embed=embed)
-                        print(f"[INFO]: {member.name}#{member.discriminator} expressed interest to join {host.name}#{host.discriminator}'s game.")
+                        logging.info(f"{member.name}#{member.discriminator} expressed interest to join {host.name}#{host.discriminator}'s game.")
                     #If we have reached the desired playercount, we will message to the host. This message will get every time a new player reacts.
                     if len(interestedPlayers) >= playerCount :
                         embed=discord.Embed(title="📝 Your listing reached your set playercap!", description=f"Hello! Just letting you know that your multiplayer listing on **{guild.name}** has reached {playerCount} or more interested players.\nPlayers who want to play with you in this match: {interestedMentions}", color=self.bot.embedGreen)
                         embed.set_footer(text="If you believe that this feature was abused, contact a moderator immediately!")
                         await host.send(embed=embed)
-                        print(f"[INFO]: {host.name}#{host.discriminator}'s listing reached cap. Host notified.")
+                        #Add a little emoji as feedback that the listing has reached max subscriber cap
+                        if "🎉" not in str(listing.reactions):
+                            await listing.add_reaction("🎉")
+                        logging.info(f"{host.name}#{host.discriminator}'s listing reached cap. Host notified.")
                     return
 
 
@@ -595,13 +603,13 @@ class Matchmaking(commands.Cog):
                     try:
                         role = guild.get_role(await self.bot.DBHandler.retrievesetting("LFGROLE", guild.id))
                         await member.remove_roles(role)
-                        print(f"[INFO]: Role {role} removed from {member}")
+                        logging.info(f"Role {role} removed from {member}")
                         embed=discord.Embed(title="💬 Notifications disabled.", description="You will no longer get notifications on multiplayer game listings.", color=self.bot.errorColor)
                         await member.send(embed=embed)
                     except:
                         embed=discord.Embed(title="❌ Error: Exception encountered.", description="Failed to remove role. Contact an administrator! Operation cancelled.", color=self.bot.errorColor)
                         await member.send(embed=embed)
-                        print(f"[ERROR]: Unable to modify roles for {member}. Possible permissions or hierarchy issue.")
+                        logging.error(f"Unable to modify roles for {member}. Possible permissions or hierarchy issue.")
 
             elif await self.bot.DBHandler.retrievesetting("ANNOUNCECHANNEL", guild.id) == payload.channel_id:
                 #I put a fair number of logging in here to track abuse of this feature
@@ -618,14 +626,14 @@ class Matchmaking(commands.Cog):
                     host = await converter.convert(ctx, listingLines[len(listingLines)-1].split("Contact ")[1].split(" in")[0])
                     #If the message is older than a week, we ignore this request
                     if (datetime.datetime.utcnow() - listing.created_at).days >= 7 :
-                        print(f"[INFO]: {member.name}#{member.discriminator} tried to join an expired listing.")
+                        logging.info(f"{member.name}#{member.discriminator} tried to join an expired listing.")
                         return
                     if member != host :
-                        print(f"[INFO]: {member.name}#{member.discriminator} removed themselves from a listing.")
+                        logging.info(f"{member.name}#{member.discriminator} removed themselves from a listing.")
                         embed=discord.Embed(title=f"📝 You have unsubscribed from {host.name}'s listing.", description="The host will no longer see you signed up to this listing.", color=self.bot.errorColor)
                         await member.send(embed=embed)
                         return
 
 def setup(bot):
-    print("[INFO] Adding cog: Matchmaking...")
+    logging.info("Adding cog: Matchmaking...")
     bot.add_cog(Matchmaking(bot))

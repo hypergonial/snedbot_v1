@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import logging
 
 async def hasOwner(ctx):
     return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id
@@ -96,5 +97,5 @@ class Tags(commands.Cog):
                 return
 
 def setup(bot):
-    print("[INFO] Adding cog: Tags...")
+    logging.info("Adding cog: Tags...")
     bot.add_cog(Tags(bot))
