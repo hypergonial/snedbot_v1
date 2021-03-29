@@ -1,4 +1,5 @@
-# Anno Bot "Sned" v3.1.0
+# Anno Bot "Sned" v3.2.0 EXPERIMENTAL
+#### Note: Experimental builds use the `?` prefix instead of `!`.
 
 ## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  for matchmaking and other purposes on the Annoverse discord guild.
 
@@ -7,6 +8,7 @@
  - Allow users to add themselves to these listings and express join intent
  - Easy to use commands
  - Setup commands to simplify configuration
+ - Customizable localization
 
 ### Commands:
 `!help` Displays all commands a user has permission to execute. Alternatively, use `!help <command>` to get more information about a specific command.
