@@ -1,0 +1,391 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2021-03-29 04:21+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=cp1252\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+#: matchmaking.py:49
+msgid "**Starting matchmaking...**"
+msgstr ""
+
+#: matchmaking.py:49
+msgid "Started matchmaking for **{name}#{discrim}**. Please check your DMs!"
+msgstr ""
+
+#: matchmaking.py:50
+msgid "If you didn't receive a DM, make sure you have direct messages enabled from server members."
+msgstr ""
+
+#: matchmaking.py:52
+msgid "**Hello!**"
+msgstr ""
+
+#: matchmaking.py:52
+msgid "I will help you set up a new multiplayer listing!  Follow the steps below! Note: You can edit your submission at the end in case you made any errors!"
+msgstr ""
+
+#: matchmaking.py:69
+msgid "Please type in your Ubisoft Connect username!"
+msgstr ""
+
+#: matchmaking.py:69
+msgid "Ubisoft Connect username"
+msgstr ""
+
+#: matchmaking.py:79
+msgid "Username too long. Maximum 32 characters"
+msgstr ""
+
+#: matchmaking.py:84
+msgid "Username set."
+msgstr ""
+
+#: matchmaking.py:84
+msgid "Your Ubisoft Connect username is: **{name}**"
+msgstr ""
+
+#: matchmaking.py:93
+msgid "Should this match be a PvP or Co-Op match?"
+msgstr ""
+
+#: matchmaking.py:94
+msgid "React below with your choice!"
+msgstr ""
+
+#: matchmaking.py:124
+msgid "Gamemode set."
+msgstr ""
+
+#: matchmaking.py:124
+msgid "Your gamemode is set to:  **{gamemode}**."
+msgstr ""
+
+#: matchmaking.py:132
+msgid "5 or more"
+msgstr ""
+
+#: matchmaking.py:132
+msgid "How many players you want to play with?"
+msgstr ""
+
+#: matchmaking.py:133
+msgid "This should be the minimum amount of players you are willing to play with!"
+msgstr ""
+
+#: matchmaking.py:164
+msgid "Number of players set."
+msgstr ""
+
+#: matchmaking.py:164
+msgid "Number of players: **{playernum}**"
+msgstr ""
+
+#: matchmaking.py:172
+msgid ""
+" {DLC0} - The Anarchist \n"
+" {DLC1} - Sunken Treasures \n"
+" {DLC2} - Botanica \n"
+" {DCL3} - The Passage \n"
+" {DLC4} - Seat of Power \n"
+" {DLC5} - Bright Harvest \n"
+" {DLC6} - Land of Lions \n"
+" {DLC7} - Docklands"
+msgstr ""
+
+#: matchmaking.py:172
+msgid "Now react with the symbol of **all** the DLCs you want to use! Click the green checkmark ({checkmark}) once done!"
+msgstr ""
+
+#: matchmaking.py:173
+msgid "Note: If you do not own any DLC, just simply press {check} to continue."
+msgstr ""
+
+#: matchmaking.py:177
+msgid "Botanica"
+msgstr ""
+
+#: matchmaking.py:177
+msgid "Bright Harvest"
+msgstr ""
+
+#: matchmaking.py:177
+msgid "Docklands"
+msgstr ""
+
+#: matchmaking.py:177
+msgid "Land of Lions"
+msgstr ""
+
+#: matchmaking.py:177
+msgid "Seat of Power"
+msgstr ""
+
+#: matchmaking.py:177
+msgid "Sunken Treasures"
+msgstr ""
+
+#: matchmaking.py:177
+msgid "The Anarchist"
+msgstr ""
+
+#: matchmaking.py:177
+msgid "The Passage"
+msgstr ""
+
+#: matchmaking.py:211
+msgid "DLC set."
+msgstr ""
+
+#: matchmaking.py:211
+msgid "Your DLC for this match: {DLC}"
+msgstr ""
+
+#: matchmaking.py:222
+msgid "Are you going to use mods in this match?"
+msgstr ""
+
+#: matchmaking.py:222
+msgid "React below with your response!"
+msgstr ""
+
+#: matchmaking.py:223
+msgid "Note: Mods are not officially supported. All participants must share the same mods to play together. Please share the mods you want to use at the end of the form."
+msgstr ""
+
+#: matchmaking.py:248
+msgid "Modded: **{is_modded}**"
+msgstr ""
+
+#: matchmaking.py:248
+msgid "Mods set."
+msgstr ""
+
+#: matchmaking.py:258
+msgid "For example: If your timezone is UTC+1, **type in 1!**"
+msgstr ""
+
+#: matchmaking.py:258
+msgid "Specify your timezone as an UTC offset!"
+msgstr ""
+
+#: matchmaking.py:259
+msgid "If you are unsure what timezone you are in, you can check here: https://www.timeanddate.com/time/map"
+msgstr ""
+
+#: matchmaking.py:271 matchmaking.py:292
+msgid "Invalid timezone!"
+msgstr ""
+
+#: matchmaking.py:271 matchmaking.py:292
+msgid "Please enter a valid timezone."
+msgstr ""
+
+#: matchmaking.py:279
+msgid "Your timezone: UTC{timezone}"
+msgstr ""
+
+#: matchmaking.py:279 matchmaking.py:287
+msgid "Timezone set."
+msgstr ""
+
+#: matchmaking.py:287
+msgid "Your timezone: UTC+{timezone}"
+msgstr ""
+
+#: matchmaking.py:300
+msgid "Examples of what to include (not mandatory): When you want to start, Duration of a match, Mods (if any)"
+msgstr ""
+
+#: matchmaking.py:300
+msgid "If you want to add additional notes to your listing, type it in now!"
+msgstr ""
+
+#: matchmaking.py:301
+msgid "Type in 'skip' to skip this step! Max length: 256 characters"
+msgstr ""
+
+#: matchmaking.py:309
+msgid "Additional info exceeded character limit! Maximum length: 256 characters"
+msgstr ""
+
+#: matchmaking.py:316
+msgid "Additional info skipped."
+msgstr ""
+
+#: matchmaking.py:316
+msgid "You skipped this step."
+msgstr ""
+
+#: matchmaking.py:322
+msgid "Additional info set."
+msgstr ""
+
+#: matchmaking.py:322
+msgid "You typed: ```{content}```"
+msgstr ""
+
+#: matchmaking.py:332 matchmaking.py:349 matchmaking.py:356
+msgid ""
+"**Ubisoft Connect Username: ** {name} \n"
+" **Gamemode: ** {gamemode} \n"
+" **Players: ** {playercount} \n"
+" **DLC: ** {DLC} \n"
+" **Mods:** {mods} \n"
+" **Timezone:** {timezone} \n"
+" **Additional info:** {additional_info} \n"
+" \n"
+" Contact {author} in DMs if you are interested, or subscribe by reacting with {arrow}! This will notify the host when {subcap} players have subscribed! (including the host)"
+msgstr ""
+
+#: matchmaking.py:332 matchmaking.py:349 matchmaking.py:356
+msgid "**__Looking for Players: Anno 1800__**"
+msgstr ""
+
+#: matchmaking.py:334
+msgid "Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted."
+msgstr ""
+
+#: matchmaking.py:336
+msgid "If everything looks good, hit {check} to submit! If you want to edit any information, hit {pen}. If you want to cancel your submission, hit {cross}."
+msgstr ""
+
+#: matchmaking.py:336
+msgid "Please review your listing!"
+msgstr ""
+
+#: matchmaking.py:365
+msgid "Failed to generated listing. Contact an administrator! Operation cancelled."
+msgstr ""
+
+#: matchmaking.py:365 matchmaking.py:548 matchmaking.py:619
+msgid "Error: Exception encountered."
+msgstr ""
+
+#: matchmaking.py:371
+msgid "What do you want to change in your listing?"
+msgstr ""
+
+#: matchmaking.py:371
+msgid ""
+"{em} - Ubisoft Username \n"
+"{em0} - Gamemode \n"
+"{em1} - Player count \n"
+"{em2} - DLC \n"
+"{em3} - Mods\n"
+"{em4} - Timezone \n"
+"{em5} - Additional details"
+msgstr ""
+
+#: matchmaking.py:399 matchmaking.py:504
+msgid "Exceeded error limit."
+msgstr ""
+
+#: matchmaking.py:399 matchmaking.py:504
+msgid "You have made too many errors. Please retry your submission."
+msgstr ""
+
+#: matchmaking.py:408
+msgid "Cancelled matchmaking."
+msgstr ""
+
+#: matchmaking.py:431
+msgid "Listing submitted!"
+msgstr ""
+
+#: matchmaking.py:431
+msgid "Thanks for using the service! If you have found a bug or want to give feedback, please contact `Hyper#0001`!"
+msgstr ""
+
+#: matchmaking.py:439
+msgid "Modification failed."
+msgstr ""
+
+#: matchmaking.py:439 matchmaking.py:446
+msgid "If you have found a bug or want to give feedback, please contact `Hyper#0001`!"
+msgstr ""
+
+#: matchmaking.py:446
+msgid "Submission cancelled."
+msgstr ""
+
+#: matchmaking.py:494
+msgid "Exceeded edit limit."
+msgstr ""
+
+#: matchmaking.py:494
+msgid "You cannot make more edits to your submission. Please try executing the command again."
+msgstr ""
+
+#: matchmaking.py:518
+msgid "Error: Max concurrency reached!"
+msgstr ""
+
+#: matchmaking.py:518
+msgid "You already have a matchmaking request in progress."
+msgstr ""
+
+#: matchmaking.py:543
+msgid "Notifications enabled."
+msgstr ""
+
+#: matchmaking.py:543
+msgid "You are now looking for games, and will be notified of any new multiplayer listing!"
+msgstr ""
+
+#: matchmaking.py:548
+msgid "Failed to add role. Contact an administrator! Operation cancelled."
+msgstr ""
+
+#: matchmaking.py:587
+msgid "They will receive a notification when their desired playercap has been reached."
+msgstr ""
+
+#: matchmaking.py:587
+msgid "You have subscribed to {hostname}'s game!"
+msgstr ""
+
+#: matchmaking.py:592
+msgid ""
+"Hello! Just letting you know that your multiplayer listing on **{guild_name}** has reached {player_count} or more interested players.\n"
+"Players who want to play with you in this match: {interested_mentions}"
+msgstr ""
+
+#: matchmaking.py:592
+msgid "Your listing reached your set playercap!"
+msgstr ""
+
+#: matchmaking.py:593
+msgid "If you believe that this feature was abused, contact a moderator immediately!"
+msgstr ""
+
+#: matchmaking.py:616
+msgid "Notifications disabled."
+msgstr ""
+
+#: matchmaking.py:616
+msgid "You will no longer get notifications on multiplayer game listings."
+msgstr ""
+
+#: matchmaking.py:619
+msgid "Failed to remove role. Contact an administrator! Operation cancelled."
+msgstr ""
+
+#: matchmaking.py:642
+msgid "The host will no longer see you signed up to this listing."
+msgstr ""
+
+#: matchmaking.py:642
+msgid "You have unsubscribed from {hostname}'s listing."
+msgstr ""
+

@@ -54,6 +54,9 @@ class Logging(commands.Cog):
     #First, if the message was cached, provide detailed info
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
+        #Do this check to avoid embed edits triggering log
+        if before.content == after.content:
+            return
         #Add it to the recently deleted so on_raw_message_edit will ignore this
         self.bot.recentlyEdited.append(after.id)
         #Then do info collection & dump
@@ -75,7 +78,7 @@ class Logging(commands.Cog):
         if payload.message_id in self.bot.recentlyDeleted :
             self.bot.recentlyEdited.remove(payload.message_id)
             return
-    #Currently removed due to this implementation needing discord.py 1.7
+    #Currently removed due to this implementation needing discord.py 1.7.0
     '''
         #Else it is not cached, so we run the logic related to producing a generic edit message.
         else :

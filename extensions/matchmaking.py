@@ -3,12 +3,23 @@ from discord.ext import commands
 import asyncio
 import datetime
 import logging
+import gettext
 
 #Disclaimer: This extension is proprietary to Annoverse, and should not be used elsewhere without heavy modifications
 
 class Matchmaking(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        if self.bot.lang == "de":
+            de = gettext.translation('matchmaking', localedir=self.bot.localePath, languages=['de'])
+            de.install()
+            self._ = de.gettext
+        elif self.bot.lang == "en":
+            self._ = gettext.gettext
+        #Fallback to english
+        else :
+            logging.error("Invalid language, fallback to English.")
+            self._ = gettext.gettext
 
     #Command to initalize matchmaking.
     #This is the main command of the bot, and is by far the most complicated one.
@@ -35,10 +46,10 @@ class Matchmaking(commands.Cog):
         qtypes = ["UbiName", "GameMode", "PlayerCount", "DLC", "Mods", "TimeZone", "Additional", "ConfirmListing"]
         #Messaging the channel to provide feedback
         #It sends these seperately to ideally grab the user's attention, but can be merged.
-        embed=discord.Embed(title="**Starting matchmaking...**", description=f"Started matchmaking for **{ctx.author.name}#{ctx.author.discriminator}**. Please check your DMs!", color=mpEmbedColor)
-        embed.set_footer(text="If you didn't receive a DM, make sure you have direct messages enabled from server members.")
+        embed=discord.Embed(title=self._("**Starting matchmaking...**"), description=self._("Started matchmaking for **{name}#{discrim}**. Please check your DMs!").format(name=ctx.author.name, discrim=ctx.author.discriminator), color=mpEmbedColor)
+        embed.set_footer(text=self._("If you didn't receive a DM, make sure you have direct messages enabled from server members."))
         await ctx.channel.send(embed=embed)
-        embed=discord.Embed(title="**Hello!**", description="I will help you set up a new multiplayer listing!  Follow the steps below! Note: You can edit your submission in case you made any errors!", color=mpEmbedColor)
+        embed=discord.Embed(title=self._("**Hello!**"), description=self._("I will help you set up a new multiplayer listing!  Follow the steps below! Note: You can edit your submission at the end in case you made any errors!"), color=mpEmbedColor)
         embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/203158031511453696/446da0b60a670b6866cd463fb5e87195.png?size=1024")
         await ctx.author.send(embed=embed)
 
@@ -55,7 +66,7 @@ class Matchmaking(commands.Cog):
         #The question function, specify a questionType, and if you are modifying or not.
         async def ask(qType, isModifying):
             if qType == "UbiName" :
-                embed=discord.Embed(title="Ubisoft Connect username", description="Please type in your Ubisoft Connect username!", color=mpEmbedColor)
+                embed=discord.Embed(title=self._("Ubisoft Connect username"), description=self._("Please type in your Ubisoft Connect username!"), color=mpEmbedColor)
                 embed.set_footer(text="Note: Maximum length is 32 characters")
                 msg = await ctx.author.send(embed=embed)
                 def usernamecheck(payload):
@@ -65,12 +76,12 @@ class Matchmaking(commands.Cog):
                     #32char username limit
                     if len(payload.content) > 32 :
                         await msg.delete()
-                        embed=discord.Embed(title=self.bot.warnDataTitle, description="Username too long. Maximum 32 characters", color=self.bot.warnColor)
+                        embed=discord.Embed(title=self.bot.warnDataTitle, description=self._("Username too long. Maximum 32 characters"), color=self.bot.warnColor)
                         await ctx.author.send(embed=embed)
                         return -2
                     else :
                         await modifymatchmaking(qType, payload.content, isModifying)
-                        embed=discord.Embed(title="✅ Username set.", description=f"Your Ubisoft Connect username is: **{payload.content}**", color=mpEmbedColor)
+                        embed=discord.Embed(title="✅ " + self._("Username set."), description=self._("Your Ubisoft Connect username is: **{name}**").format(name=payload.content), color=mpEmbedColor)
                         await ctx.author.send(embed=embed)
                         return 0
 
@@ -79,8 +90,8 @@ class Matchmaking(commands.Cog):
                     await ctx.author.send(embed=embed)
                     return -1
             if qType == "GameMode" :
-                embed=discord.Embed(title="Should this match be a PvP or Co-Op match?", description="⚔️ - PvP (Player versus Player) \n 🛡️ - Co-Op (Cooperative)", color=mpEmbedColor)
-                embed.set_footer(text="React below with your choice!")
+                embed=discord.Embed(title=self._("Should this match be a PvP or Co-Op match?"), description="⚔️ - PvP (Player versus Player) \n 🛡️ - Co-Op (Cooperative)", color=mpEmbedColor)
+                embed.set_footer(text=self._("React below with your choice!"))
                 msg = await ctx.author.send(embed=embed)
                 #Add two reactions to this message
                 await msg.add_reaction("⚔️")
@@ -110,7 +121,7 @@ class Matchmaking(commands.Cog):
                     #Save it to list
                     await modifymatchmaking(qType, gamemode, isModifying)
                     
-                    embed=discord.Embed(title="✅ Gamemode set.", description=f"Your gamemode is set to:  **{gamemode}**.", color=mpEmbedColor)
+                    embed=discord.Embed(title="✅ " + self._("Gamemode set."), description=self._("Your gamemode is set to:  **{gamemode}**.").format(gamemode=gamemode), color=mpEmbedColor)
                     await ctx.author.send(embed=embed)
                     return 0
                 except asyncio.TimeoutError:
@@ -118,8 +129,8 @@ class Matchmaking(commands.Cog):
                     await ctx.author.send(embed=embed)
                     return -1
             if qType == "PlayerCount" :
-                embed=discord.Embed(title="How many players you want to play with?", description="2️⃣ - 2 players \n 3️⃣ - 3 players \n 4️⃣ - 4 players \n ♾️ - 5 or more players", color=mpEmbedColor)
-                embed.set_footer(text="This should be the minimum amount of players you are willing to play with!")
+                embed=discord.Embed(title=self._("How many players you want to play with?"), description="2️⃣ - 2 \n 3️⃣ - 3 \n 4️⃣ - 4 \n ♾️ -" + self._("5 or more"), color=mpEmbedColor)
+                embed.set_footer(text=self._("This should be the minimum amount of players you are willing to play with!"))
                 msg = await ctx.author.send(embed=embed)
                 #Saving the ID of this message we just sent
                 msgid = msg.id
@@ -150,7 +161,7 @@ class Matchmaking(commands.Cog):
                         i += 1
                     
                     await modifymatchmaking(qType, playernum, isModifying)
-                    embed=discord.Embed(title="✅ Number of players set.", description=f"Number of players: **{playernum}**", color=mpEmbedColor)
+                    embed=discord.Embed(title="✅ " + self._("Number of players set."), description=self._("Number of players: **{playernum}**").format(playernum=playernum), color=mpEmbedColor)
                     await ctx.author.send(embed=embed)
                     return 0
                 except asyncio.TimeoutError:
@@ -158,12 +169,12 @@ class Matchmaking(commands.Cog):
                     await ctx.author.send(embed=embed)
                     return -1
             if qType == "DLC" :
-                embed=discord.Embed(title="Now react with the symbol of **all** the DLCs you want to use! Click the green checkmark (✅) once done!", description=" 🔥 - The Anarchist \n 🤿 - Sunken Treasures \n 🌹 - Botanica \n ❄️ - The Passage \n 🏛️ - Seat of Power \n 🚜 - Bright Harvest \n 🦁 - Land of Lions \n ⚓ - Docklands", color=mpEmbedColor)
-                embed.set_footer(text="Note: If you do not own any DLC, just simply press ✅ to continue.")
+                embed=discord.Embed(title=self._("Now react with the symbol of **all** the DLCs you want to use! Click the green checkmark ({checkmark}) once done!").format(checkmark= "✅"), description=self._(" {DLC0} - The Anarchist \n {DLC1} - Sunken Treasures \n {DLC2} - Botanica \n {DLC3} - The Passage \n {DLC4} - Seat of Power \n {DLC5} - Bright Harvest \n {DLC6} - Land of Lions \n {DLC7} - Docklands").format(DLC0="🔥", DLC1="🤿", DLC2="🌹", DLC3="❄️", DLC4="🏛️", DLC5="🚜", DLC6="🦁", DLC7="⚓"), color=mpEmbedColor)
+                embed.set_footer(text=self._("Note: If you do not own any DLC, just simply press {check} to continue.").format(check="✅"))
                 msg = await ctx.author.send(embed=embed)
                 #Add to the list of DLC here. Note: the emojies & DLC must be in the same order, & a green tick must be at the end of emojies. 
                 DLCemojies = ["🔥", "🤿", "🌹", "❄️", "🏛️", "🚜", "🦁", "⚓", "✅"]
-                allDLCs = ["The Anarchist", "Sunken Treasures", "Botanica", "The Passage", "Seat of Power", "Bright Harvest", "Land of Lions", "Docklands" ]
+                allDLCs = [self._("The Anarchist"), self._("Sunken Treasures"), self._("Botanica"), self._("The Passage"), self._("Seat of Power"), self._("Bright Harvest"), self._("Land of Lions"), self._("Docklands") ]
                 for emoji in DLCemojies :
                     await msg.add_reaction(emoji)
                 DLC = []
@@ -197,7 +208,7 @@ class Matchmaking(commands.Cog):
                         DLC = ", ".join(DLC)
                     await modifymatchmaking(qType, DLC, isModifying)
                     await msg.delete()
-                    embed=discord.Embed(title="✅ DLC set.", description=f"Your DLC for this match: {DLC}", color=mpEmbedColor)
+                    embed=discord.Embed(title="✅ " + self._("DLC set."), description=self._("Your DLC for this match: {DLC}").format(DLC=DLC), color=mpEmbedColor)
                     await ctx.author.send(embed=embed)
                     return 0
 
@@ -208,8 +219,8 @@ class Matchmaking(commands.Cog):
 
             if qType == "Mods" :
                 #Add msg
-                embed=discord.Embed(title="Are you going to use mods in this match?", description="React below with your response!", color=mpEmbedColor)
-                embed.set_footer(text="Note: Mods are not officially supported. All participants must share the same mods to play together. Please share the mods you use at the end of the form. ")
+                embed=discord.Embed(title=self._("Are you going to use mods in this match?"), description=self._("React below with your response!"), color=mpEmbedColor)
+                embed.set_footer(text=self._("Note: Mods are not officially supported. All participants must share the same mods to play together. Please share the mods you want to use at the end of the form."))
                 msg = await ctx.author.send(embed=embed)
                 #Add emoji
                 await msg.add_reaction("✅")
@@ -234,7 +245,7 @@ class Matchmaking(commands.Cog):
                     
                     await modifymatchmaking(qType, modded, isModifying)
                     await msg.delete()
-                    embed=discord.Embed(title="✅ Mods set.", description=f"Modded: **{modded}**", color=mpEmbedColor)
+                    embed=discord.Embed(title="✅ " +  self._("Mods set."), description=self._("Modded: **{is_modded}**").format(is_modded=modded), color=mpEmbedColor)
                     await ctx.author.send(embed=embed)
                     return 0
 
@@ -244,8 +255,8 @@ class Matchmaking(commands.Cog):
                     return -1
             
             if qType == "TimeZone" :
-                embed=discord.Embed(title="Specify your timezone as an UTC offset!", description="For example: If your timezone is UTC+1, **type in 1!**", color=mpEmbedColor)
-                embed.set_footer(text="If you are unsure what timezone you are in, check here: https://www.timeanddate.com/time/map")
+                embed=discord.Embed(title=self._("Specify your timezone as an UTC offset!"), description=self._("For example: If your timezone is UTC+1, **type in 1!**"), color=mpEmbedColor)
+                embed.set_footer(text=self._("If you are unsure what timezone you are in, you can check here: https://www.timeanddate.com/time/map"))
                 msg = await ctx.author.send(embed=embed)
                 def timezonecheck(payload):
                     return payload.author == ctx.author and payload.guild is None
@@ -257,7 +268,7 @@ class Matchmaking(commands.Cog):
                         #Check if it is a valid value for a timezone
                         if int(payload.content) not in range(-12, 14) :
                             await msg.delete()
-                            embed=discord.Embed(title="⚠️ Invalid timezone!", description="Please enter a valid timezone.", color=self.bot.warnColor)
+                            embed=discord.Embed(title="⚠️ " + self._("Invalid timezone!"), description=self._("Please enter a valid timezone."), color=self.bot.warnColor)
                             await ctx.author.send(embed=embed)
                             return -2
                         #If it is smaller than 0, we will make it UTC-
@@ -265,7 +276,7 @@ class Matchmaking(commands.Cog):
                             timezone = int(payload.content)
                             await modifymatchmaking(qType, f"UTC{timezone}", isModifying)
                             await msg.delete()
-                            embed=discord.Embed(title="✅ Timezone set.", description=f"Your timezone: UTC{timezone}", color=mpEmbedColor)
+                            embed=discord.Embed(title="✅ " + self._("Timezone set."), description=self._("Your timezone: UTC{timezone}").format(timezone=timezone), color=mpEmbedColor)
                             await ctx.author.send(embed=embed)
                             return 0
                         #Otherwise UTC+
@@ -273,12 +284,12 @@ class Matchmaking(commands.Cog):
                             timezone = int(payload.content)
                             await modifymatchmaking(qType, f"UTC+{timezone}", isModifying)
                             await msg.delete()
-                            embed=discord.Embed(title="✅ Timezone set.", description=f"Your timezone: UTC+{timezone}", color=mpEmbedColor)
+                            embed=discord.Embed(title="✅ " + self._("Timezone set."), description=self._("Your timezone: UTC+{timezone}").format(timezone=timezone), color=mpEmbedColor)
                             await ctx.author.send(embed=embed)
                             return 0
                     except ValueError:
                         await msg.delete()
-                        embed=discord.Embed(title="⚠️ Invalid timezone!", description="Please enter a valid timezone.", color=self.bot.warnColor)
+                        embed=discord.Embed(title="⚠️ " + self._("Invalid timezone!"), description=self._("Please enter a valid timezone."), color=self.bot.warnColor)
                         await ctx.author.send(embed=embed)
                         return -2
                 except asyncio.TimeoutError:
@@ -286,8 +297,8 @@ class Matchmaking(commands.Cog):
                     await ctx.author.send(embed=embed)
                     return -1
             if qType == "Additional" :
-                embed=discord.Embed(title="If you want to add additional notes to your listing, type it in now!", description="Examples of what to include (not mandatory): When you want to start, Duration of a match, Mods (if any)", color=mpEmbedColor)
-                embed.set_footer(text="Type in 'skip' to skip this step! Max length: 256 characters")
+                embed=discord.Embed(title=self._("If you want to add additional notes to your listing, type it in now!"), description=self._("Examples of what to include (not mandatory): When you want to start, Duration of a match, Mods (if any)"), color=mpEmbedColor)
+                embed.set_footer(text=self._("Type in 'skip' to skip this step! Max length: 256 characters"))
                 msg = await ctx.author.send(embed=embed)
                 def additionalinfocheck(payload):
                     return payload.author == ctx.author and payload.guild is None
@@ -295,20 +306,20 @@ class Matchmaking(commands.Cog):
                     payload = await self.bot.wait_for('message', timeout=300.0, check=additionalinfocheck)
                     if len(payload.content) > 256 :
                         await msg.delete()
-                        embed = discord.Embed(title=self.bot.warnDataTitle, description="Additional info exceeded character limit! Maximum length: 256 characters", color=self.bot.warnColor)
+                        embed = discord.Embed(title=self.bot.warnDataTitle, description=self._("Additional info exceeded character limit! Maximum length: 256 characters"), color=self.bot.warnColor)
                         await ctx.author.send(embed=embed)
                         return -2
                     else :
                         if payload.content.lower() == "skip" :
                             await modifymatchmaking(qType, "-", isModifying)
                             await msg.delete()
-                            embed=discord.Embed(title="✅ Additional info skipped.", description="You skipped this step.", color=mpEmbedColor)
+                            embed=discord.Embed(title="✅ " + self._("Additional info skipped."), description=self._("You skipped this step."), color=mpEmbedColor)
                             await ctx.author.send(embed=embed)
                             return 0
                         else :
                             await modifymatchmaking(qType, payload.content, isModifying)
                             await msg.delete()
-                            embed=discord.Embed(title="✅ Additional info set.", description=f"You typed: {payload.content} ", color=mpEmbedColor)
+                            embed=discord.Embed(title="✅ " + self._("Additional info set."), description=self._("You typed: ```{content}```").format(content=payload.content), color=mpEmbedColor)
                             await ctx.author.send(embed=embed)
                             return 0
                 except:
@@ -318,11 +329,11 @@ class Matchmaking(commands.Cog):
             
             if qType == "ConfirmListing" :
                 #Send listing preview
-                embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {mpsessiondata[3]} \n **Mods:** {mpsessiondata[4]} \n **Timezone:** {mpsessiondata[5]} \n **Additional info:** {mpsessiondata[6]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested, or subscribe by reacting with ⏫! This will notify the host when {mpsessiondata[2]} players have subscribed! (including the host)", color=mpEmbedColor)
+                embed=discord.Embed(title=self._("**__Looking for Players: Anno 1800__**"), description=self._("**Ubisoft Connect Username: ** {name} \n **Gamemode: ** {gamemode} \n **Players: ** {playercount} \n **DLC: ** {DLC} \n **Mods:** {mods} \n **Timezone:** {timezone} \n **Additional info:** {additional_info} \n \n Contact {author} in DMs if you are interested, or subscribe by reacting with {arrow}! This will notify the host when {subcap} players have subscribed! (including the host)").format(name=mpsessiondata[0], gamemode=mpsessiondata[1], playercount=mpsessiondata[2], DLC=mpsessiondata[3], mods=mpsessiondata[4], timezone=mpsessiondata[5], additional_info=mpsessiondata[6], author=ctx.author.mention, arrow="⏫", subcap=mpsessiondata[2]), color=mpEmbedColor)
                 embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/203158031511453696/446da0b60a670b6866cd463fb5e87195.png?size=1024")
-                embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted.")
+                embed.set_footer(text=self._("Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted."))
                 await ctx.author.send(embed=embed)
-                embed=discord.Embed(title="Please review your listing!", description="If everything looks good, hit ✅ to submit! If you want to edit any information, hit 🖊️. If you want to cancel your submission, hit ❌.", color=mpEmbedColor)
+                embed=discord.Embed(title=self._("Please review your listing!"), description=self._("If everything looks good, hit {check} to submit! If you want to edit any information, hit {pen}. If you want to cancel your submission, hit {cross}.").format(check="✅", pen="🖊️", cross="❌"), color=mpEmbedColor)
                 msg = await ctx.author.send(embed=embed)
                 await msg.add_reaction("✅")
                 await msg.add_reaction("🖊️")
@@ -335,31 +346,29 @@ class Matchmaking(commands.Cog):
                         #If LFG role is not set up, we will not include a mention to it at the end.
                         if await self.bot.DBHandler.retrievesetting("LFGROLE", ctx.guild.id) == 0 :
                             #yeah this is long lol
-                            embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {mpsessiondata[3]} \n **Mods:** {mpsessiondata[4]} \n **Timezone:** {mpsessiondata[5]} \n **Additional info:** {mpsessiondata[6]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested, subscribe by reacting with ⏫! This will notify the host when {mpsessiondata[2]} players have subscribed! (including the host)", color=mpEmbedColor)
+                            embed=discord.Embed(title=self._("**__Looking for Players: Anno 1800__**"), description=self._("**Ubisoft Connect Username: ** {name} \n **Gamemode: ** {gamemode} \n **Players: ** {playercount} \n **DLC: ** {DLC} \n **Mods:** {mods} \n **Timezone:** {timezone} \n **Additional info:** {additional_info} \n \n Contact {author} in DMs if you are interested, or subscribe by reacting with {arrow}! This will notify the host when {subcap} players have subscribed! (including the host)").format(name=mpsessiondata[0], gamemode=mpsessiondata[1], playercount=mpsessiondata[2], DLC=mpsessiondata[3], mods=mpsessiondata[4], timezone=mpsessiondata[5], additional_info=mpsessiondata[6], author=ctx.author.mention, arrow="⏫", subcap=mpsessiondata[2]), color=mpEmbedColor)
                             embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/203158031511453696/446da0b60a670b6866cd463fb5e87195.png?size=1024")
                             embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted.")
                             posting = await channel.send(embed=embed)
                             await posting.add_reaction("⏫")
-                            #await channel.send(f"**__Looking for Players: Anno 1800__** \n \n **Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {DLC} \n **Mods:** {mpsessiondata[3]} \n **Timezone:** {mpsessiondata[4]} \n **Additional info:** {mpsessiondata[5]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested!")
-                            logging.info(f"{ctx.author} User created new multiplayer listing. Session data dump: {mpsessiondata}")   
+                            logging.info(f"{ctx.author} User created new multiplayer listing. Session data dump: {mpsessiondata}")
                         else :
-                            embed=discord.Embed(title="**__Looking for Players: Anno 1800__**", description=f"**Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {mpsessiondata[3]} \n **Mods:** {mpsessiondata[4]} \n **Timezone:** {mpsessiondata[5]} \n **Additional info:** {mpsessiondata[6]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested, or subscribe by reacting with ⏫! This will notify the host when {mpsessiondata[2]} players have subscribed! (including the host)", color=mpEmbedColor)
+                            embed=discord.Embed(title=self._("**__Looking for Players: Anno 1800__**"), description=self._("**Ubisoft Connect Username: ** {name} \n **Gamemode: ** {gamemode} \n **Players: ** {playercount} \n **DLC: ** {DLC} \n **Mods:** {mods} \n **Timezone:** {timezone} \n **Additional info:** {additional_info} \n \n Contact {author} in DMs if you are interested, or subscribe by reacting with {arrow}! This will notify the host when {subcap} players have subscribed! (including the host)").format(name=mpsessiondata[0], gamemode=mpsessiondata[1], playercount=mpsessiondata[2], DLC=mpsessiondata[3], mods=mpsessiondata[4], timezone=mpsessiondata[5], additional_info=mpsessiondata[6], author=ctx.author.mention, arrow="⏫", subcap=mpsessiondata[2]), color=mpEmbedColor)
                             embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/203158031511453696/446da0b60a670b6866cd463fb5e87195.png?size=1024")
                             embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted.")
                             posting = await channel.send(embed=embed,content=lfgrole.mention)
                             await posting.add_reaction("⏫")
-                            #await channel.send(f"**__Looking for Players: Anno 1800__** \n \n **Ubisoft Connect Username: ** {mpsessiondata[0]} \n **Gamemode: ** {mpsessiondata[1]} \n **Players: ** {mpsessiondata[2]} \n **DLC: ** {DLC} \n **Mods:** {mpsessiondata[3]} \n **Timezone:** {mpsessiondata[4]} \n **Additional info:** {mpsessiondata[5]} \n \n Contact {ctx.message.author.mention} in DMs if you are interested! \n \n {lfgrole.mention}")
                             logging.info(f"{ctx.author} User created new multiplayer listing. Session data dump: {mpsessiondata}") 
                     except:
                         #If for whatever reason the message cannot be made, we message the user about it.
                         logging.error(f"Could not create listing for {ctx.author} due to unhandled exception. Did you set up matchmaking?")
-                        embed=discord.Embed(title="❌ Error: Exception encountered.", description="Failed to generated listing. Contact an administrator! Operation cancelled.", color=self.bot.errorColor)
+                        embed=discord.Embed(title="❌ " + self._("Error: Exception encountered."), description=self._("Failed to generated listing. Contact an administrator! Operation cancelled."), color=self.bot.errorColor)
                         await ctx.author.send(embed=embed)
                         return -1
 
                 #Returns -1 for fail, 0 for successful modification
                 async def modifylisting():
-                    embed=discord.Embed(title="What do you want to change in your listing?", description="👤 - Ubisoft Username \n🕹️ - Gamemode \n🧮 - Player count \n💿 - DLC \n🏗️ - Mods\n🕘 - Timezone \n✉️ - Additional details", color=mpEmbedColor)
+                    embed=discord.Embed(title=self._("What do you want to change in your listing?"), description=self._("{em} - Ubisoft Username \n{em0} - Gamemode \n{em1} - Player count \n{em2} - DLC \n{em3} - Mods\n{em4} - Timezone \n{em5} - Additional details").format(em="👤",em0="🕹️", em1="🧮",em2="💿",em3="🏗️", em4="🕘",em5="✉️"), color=mpEmbedColor)
                     msg = await ctx.author.send(embed=embed)
                     #Questions you can modify
                     #These should be in the SAME order as modifyquestions, otherwise it WILL break!!
@@ -387,7 +396,7 @@ class Matchmaking(commands.Cog):
                                 #Otherwise it is an invalid value, so we check if we reached warn limit
                                 else :
                                     if warns == 2:
-                                        embed=discord.Embed(title="❌ Exceeded error limit.", description="You have made too many errors. Please retry your submission.", color=self.bot.errorColor)
+                                        embed=discord.Embed(title="❌ " + self._("Exceeded error limit."), description=self._("You have made too many errors. Please retry your submission."), color=self.bot.errorColor)
                                         await ctx.author.send(embed=embed)
                                         return -1
                                     else:
@@ -396,7 +405,7 @@ class Matchmaking(commands.Cog):
                             
                         else :
                             #We have to cancel the entire command here, as it would be way too difficult to implement looping here as well
-                            embed = discord.Embed(title=self.bot.errorEmojiTitle, description="Cancelled matchmaking.", color=self.bot.errorColor)
+                            embed = discord.Embed(title=self.bot.errorEmojiTitle, description=self._("Cancelled matchmaking."), color=self.bot.errorColor)
                             await ctx.author.send(embed=embed)
                             return -1
 
@@ -419,7 +428,7 @@ class Matchmaking(commands.Cog):
                         if await createposting(mpsessiondata) == -1:
                             return -1
                         else :
-                            embed=discord.Embed(title="✅ Listing submitted!", description="Thanks for using the service! If you have found a bug or want to give feedback, please contact `Hyper#0001`!", color=self.bot.embedGreen)
+                            embed=discord.Embed(title="✅ " + self._("Listing submitted!"), description=self._("Thanks for using the service! If you have found a bug or want to give feedback, please contact `Hyper#0001`!"), color=self.bot.embedGreen)
                             await ctx.author.send(embed=embed)
                             return 1
                     elif str(payload.emoji) == "🖊️":
@@ -427,14 +436,14 @@ class Matchmaking(commands.Cog):
                             #If modification is successful, repeat this step (confirmcheck)
                             return -3
                         else :
-                            embed=discord.Embed(title="❌ Modification failed.", description="If you have found a bug or want to give feedback, please contact `Hyper#0001`!", color=self.bot.errorColor)
+                            embed=discord.Embed(title="❌ " + self._("Modification failed."), description=self._("If you have found a bug or want to give feedback, please contact `Hyper#0001`!"), color=self.bot.errorColor)
                             await ctx.author.send(embed=embed)
                             logging.info(f"{ctx.author} User failed modification.")
                             return -1
 
 
                     elif str(payload.emoji) == "❌":
-                        embed=discord.Embed(title="❌ Submission cancelled.", description="If you have found a bug or want to give feedback, please contact `Hyper#0001`!", color=self.bot.errorColor)
+                        embed=discord.Embed(title="❌ " + self._("Submission cancelled."), description=self._("If you have found a bug or want to give feedback, please contact `Hyper#0001`!"), color=self.bot.errorColor)
                         await ctx.author.send(embed=embed)
                         logging.info(f"{ctx.author} User cancelled matchmaking.")
                         return -1
@@ -482,7 +491,7 @@ class Matchmaking(commands.Cog):
             #If editing, we will add one to the edits variable.
             elif errcode == -3:
                 if edits == 6:
-                    embed=discord.Embed(title="❌ Exceeded edit limit.", description="You cannot make more edits to your submission. Please try executing the command again.",color=self.bot.errorColor)
+                    embed=discord.Embed(title="❌ " + self._("Exceeded edit limit."), description=self._("You cannot make more edits to your submission. Please try executing the command again."),color=self.bot.errorColor)
                     await ctx.author.send(embed=embed)
                     logging.info(f"{ctx.author} exceeded listing edit limit in matchmaking.")
                     self.matchmaking.reset_cooldown(ctx)
@@ -492,7 +501,7 @@ class Matchmaking(commands.Cog):
             #If it is an invalid value, add a warn
             elif errcode == -2 :
                 if warns == 4:
-                    embed=discord.Embed(title="❌ Exceeded error limit.", description="You have made too many errors. Please retry your submission.", color=self.bot.errorColor)
+                    embed=discord.Embed(title="❌ " + self._("Exceeded error limit."), description=self._("You have made too many errors. Please retry your submission."), color=self.bot.errorColor)
                     await ctx.author.send(embed=embed)
                     logging.info(f"{ctx.author} exceeded listing error limit in matchmaking.")
                     self.matchmaking.reset_cooldown(ctx)
@@ -506,8 +515,8 @@ class Matchmaking(commands.Cog):
     async def matchmaking_error(self, ctx, error):
         #Due to it's performance requirements and complexity, this command is limited to 1 per user
         if isinstance(error, commands.MaxConcurrencyReached):
-            embed = discord.Embed(title="❌ Error: Max concurrency reached!", description="You already have a matchmaking request in progress.", color=self.bot.errorColor)
-            embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+            embed = discord.Embed(title="❌ " + self._("Error: Max concurrency reached!"), description=self._("You already have a matchmaking request in progress."), color=self.bot.errorColor)
+            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.channel.send(embed=embed)
             logging.info(f"{ctx.author} exceeded max concurrency for matchmaking command.")
 
@@ -531,12 +540,12 @@ class Matchmaking(commands.Cog):
                         await member.add_roles(role)
                         logging.info(f"Role {role} added to {member}")
                         #Also DM the user about the change, and let them know that the action was performed successfully.
-                        embed=discord.Embed(title="💬 Notifications enabled.", description="You are now looking for games, and will be notified of any new multiplayer listing!", color=self.bot.embedGreen)
+                        embed=discord.Embed(title="💬 " + self._("Notifications enabled."), description=self._("You are now looking for games, and will be notified of any new multiplayer listing!"), color=self.bot.embedGreen)
                         await member.send(embed=embed)
                         return
                     except:
                         #In case anything goes wrong, we will tell the user to bully admins who can then bully me :) /s
-                        embed=discord.Embed(title="❌ Error: Exception encountered.", description="Failed to add role. Contact an administrator! Operation cancelled.", color=self.bot.errorColor)
+                        embed=discord.Embed(title="❌ " + self._("Error: Exception encountered."), description=self._("Failed to add role. Contact an administrator! Operation cancelled."), color=self.bot.errorColor)
                         await member.send(embed=embed)
                         logging.error(f"Unable to modify roles for {member}. Possible permissions issue.")
                         return
@@ -575,13 +584,13 @@ class Matchmaking(commands.Cog):
                         playerCount = 4
                     #Sending confirmation to user who signed up
                     if member != host :
-                        embed=discord.Embed(title=f"📝 You have subscribed to {host.name}'s game!", description="They will receive a notification when their desired playercap has been reached.", color=self.bot.embedGreen)
+                        embed=discord.Embed(title="📝 " + self._("You have subscribed to {hostname}'s game!").format(hostname=host.name), description=self._("They will receive a notification when their desired playercap has been reached."), color=self.bot.embedGreen)
                         await member.send(embed=embed)
                         logging.info(f"{member.name}#{member.discriminator} expressed interest to join {host.name}#{host.discriminator}'s game.")
                     #If we have reached the desired playercount, we will message to the host. This message will get every time a new player reacts.
                     if len(interestedPlayers) >= playerCount :
-                        embed=discord.Embed(title="📝 Your listing reached your set playercap!", description=f"Hello! Just letting you know that your multiplayer listing on **{guild.name}** has reached {playerCount} or more interested players.\nPlayers who want to play with you in this match: {interestedMentions}", color=self.bot.embedGreen)
-                        embed.set_footer(text="If you believe that this feature was abused, contact a moderator immediately!")
+                        embed=discord.Embed(title="📝 " + self._("Your listing reached your set playercap!"), description=self._("Hello! Just letting you know that your multiplayer listing on **{guild_name}** has reached {player_count} or more interested players.\nPlayers who want to play with you in this match: {interested_mentions}").format(guild_name=guild.name, player_count=playerCount, interested_mentions=interestedMentions), color=self.bot.embedGreen)
+                        embed.set_footer(text=self._("If you believe that this feature was abused, contact a moderator immediately!"))
                         await host.send(embed=embed)
                         #Add a little emoji as feedback that the listing has reached max subscriber cap
                         if "🎉" not in str(listing.reactions):
@@ -604,10 +613,10 @@ class Matchmaking(commands.Cog):
                         role = guild.get_role(await self.bot.DBHandler.retrievesetting("LFGROLE", guild.id))
                         await member.remove_roles(role)
                         logging.info(f"Role {role} removed from {member}")
-                        embed=discord.Embed(title="💬 Notifications disabled.", description="You will no longer get notifications on multiplayer game listings.", color=self.bot.errorColor)
+                        embed=discord.Embed(title="💬 " + self._("Notifications disabled."), description=self._("You will no longer get notifications on multiplayer game listings."), color=self.bot.errorColor)
                         await member.send(embed=embed)
                     except:
-                        embed=discord.Embed(title="❌ Error: Exception encountered.", description="Failed to remove role. Contact an administrator! Operation cancelled.", color=self.bot.errorColor)
+                        embed=discord.Embed(title="❌ " + self._("Error: Exception encountered."), description=self._("Failed to remove role. Contact an administrator! Operation cancelled."), color=self.bot.errorColor)
                         await member.send(embed=embed)
                         logging.error(f"Unable to modify roles for {member}. Possible permissions or hierarchy issue.")
 
@@ -630,7 +639,7 @@ class Matchmaking(commands.Cog):
                         return
                     if member != host :
                         logging.info(f"{member.name}#{member.discriminator} removed themselves from a listing.")
-                        embed=discord.Embed(title=f"📝 You have unsubscribed from {host.name}'s listing.", description="The host will no longer see you signed up to this listing.", color=self.bot.errorColor)
+                        embed=discord.Embed(title=f"📝 " + self._("You have unsubscribed from {hostname}'s listing.").format(hostname=host.name), description=self._("The host will no longer see you signed up to this listing."), color=self.bot.errorColor)
                         await member.send(embed=embed)
                         return
 

@@ -1,24 +1,28 @@
-import discord
-import time
-import threading
-from discord.ext import commands
-import logging
 import asyncio
-import os
-import shutil
-from dotenv import load_dotenv
-import aiosqlite
-from difflib import get_close_matches
-import sys
-import traceback
-from itertools import chain
 import datetime
+import json
+import logging
+import os
+import sys
+import threading
+import time
+import traceback
+import gettext
+from difflib import get_close_matches
+from itertools import chain
+from pathlib import Path
 
+import aiosqlite
+import discord
+from discord.ext import commands
+from dotenv import load_dotenv
 
+#Language
+lang = "en"
 #Is this build experimental?
-experimentalBuild = False
+experimentalBuild = True
 #Version of the bot
-currentVersion = "3.1.0"
+currentVersion = "3.2.0"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 #Get token from .env
@@ -45,13 +49,28 @@ bot = commands.Bot(command_prefix=prefix, intents= discord.Intents.all(), owner_
 dbName = "database.db"
 #Database filepath
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-bot.dbPath = os.path.join(BASE_DIR, dbName)
+bot.dbPath = Path(BASE_DIR, dbName)
+bot.localePath = Path(BASE_DIR, 'locale')
+if lang == "de":
+    de = gettext.translation('main', localedir=bot.localePath, languages=['de'])
+    de.install()
+    _ = de.gettext
+elif lang == "en":
+    _ = gettext.gettext
+#Fallback to english
+else :
+    logging.error("Invalid language, fallback to English.")
+    _ = gettext.gettext
+
+
 #No touch, handled in runtime by extensions
 bot.currentVersion = currentVersion
 bot.prefix = prefix
+bot.lang = lang
 bot.experimentalBuild = experimentalBuild
 bot.recentlyDeleted = []
 bot.recentlyEdited = []
+
 
 #All extensions that are loaded on boot-up, change these to alter what modules you want (Note: These refer to filenames NOT cognames)
 #Note: Without the extension admin_commands, most things will break, so I consider this a must-have. Remove at your own peril.
@@ -69,27 +88,29 @@ bot.reservedTextNames = ["KEEP_ON_TOP_CONTENT"]
 
 #Errors:
 bot.errorColor = 0xff0000
-bot.errorTimeoutTitle = "🕘 Error: Timed out."
-bot.errorTimeoutDesc = "Your request has expired. Execute the command again!"
-bot.errorDataTitle = "❌ Error: Invalid data entered."
-bot.errorDataDesc = "Operation cancelled."
-bot.errorEmojiTitle = "❌ Error: Invalid reaction entered."
-bot.errorEmojiDesc = "Operation cancelled."
-bot.errorFormatTitle = "❌ Error: Invalid format entered."
-bot.errorFormatDesc = "Operation cancelled."
-bot.errorCheckFailTitle = "❌ Error: Insufficient permissions."
-bot.errorCheckFailDesc = f"Type `{bot.prefix}help` for a list of available commands."
-bot.errorCooldownTitle = "🕘 Error: This command is on cooldown."
-bot.errorMissingModuleTitle = "❌ Error: Missing module."
-bot.errorMissingModuleDesc = "This operation is missing a module."
+bot.errorTimeoutTitle = "🕘 " + _("Error: Timed out.")
+bot.errorTimeoutDesc = _("Your request has expired. Execute the command again!")
+bot.errorDataTitle = "❌ " + _("Error: Invalid data entered.")
+bot.errorDataDesc = _("Operation cancelled.")
+bot.errorEmojiTitle = "❌ " + _("Error: Invalid reaction entered.")
+bot.errorEmojiDesc = _("Operation cancelled.")
+bot.errorFormatTitle = "❌ " + _("Error: Invalid format entered.")
+bot.errorFormatDesc = _("Operation cancelled.")
+bot.errorCheckFailTitle = "❌ " + _("Error: Insufficient permissions.")
+bot.errorCheckFailDesc = _("Type `{prefix}help` for a list of available commands.").format(prefix=bot.prefix)
+bot.errorCooldownTitle = "🕘 " + _("Error: This command is on cooldown.")
+bot.errorMissingModuleTitle = "❌ " + _("Error: Missing module.")
+bot.errorMissingModuleDesc = _("This operation is missing a module.")
 #Warns:
 bot.warnColor = 0xffcc4d
-bot.warnDataTitle = "⚠️ Warning: Invalid data entered."
-bot.warnDataDesc = "Please check command usage."
-bot.warnEmojiTitle = "⚠️ Warning: Invalid reaction entered."
-bot.warnEmojiDesc = "Please enter a valid reaction."
-bot.warnFormatTitle = "⚠️ Warning: Invalid format entered."
-bot.warnFormatDesc = "Please try entering valid data."
+bot.warnDataTitle = "⚠️ " + _("Warning: Invalid data entered.")
+bot.warnDataDesc = _("Please check command usage.")
+bot.warnEmojiTitle = "⚠️ " + _("Warning: Invalid reaction entered.")
+bot.warnEmojiDesc = _("Please enter a valid reaction.")
+bot.warnFormatTitle = "⚠️ " + _("Warning: Invalid format entered.")
+bot.warnFormatDesc = _("Please try entering valid data.")
+bot.requestFooter = _("Requested by {user_name}#{discrim}")
+bot.unknownCMDstr = "❓ " + _("Unknown command!")
 #Misc:
 bot.embedBlue = 0x009dff
 bot.embedGreen = 0x00ff2a
@@ -97,6 +118,7 @@ bot.unknownColor = 0xbe1931
 bot.miscColor = 0xc2c2c2
 
 logging.info("New Session Started.")
+logging.info(f"Language: {lang}")
 
 
 #Loading extensions from the list of extensions defined above
@@ -124,8 +146,6 @@ async def on_ready():
     if bot.experimentalBuild == True :
         logging.warning("Experimental mode is enabled.")
         logging.info(f"Extensions loaded: {bot.checkExtensions}")
-
-
 
 
 #
@@ -319,7 +339,7 @@ bot.DBHandler = DBhandler()
     
 #Custom help command, shows all commands a user can execute based on their priviliges.
 #Also has an alternate mode where it shows information about a specific command, if specified as an argument.
-@bot.command(brief="Displays this help message.", description="Displays all available commands you can execute, based on your permission level.", usage=f"{prefix}help [command]", aliases=['halp'])
+@bot.command(brief=_("Displays this help message."), description=_("Displays all available commands you can execute, based on your permission level."), usage=f"{prefix}help [command]")
 async def help(ctx, commandname : str=None):
     #This uses a custom instance of dbHandler
     dbHandler = DBhandler()
@@ -344,11 +364,13 @@ async def help(ctx, commandname : str=None):
     i = 0
     #Note: allAliases is a matrix of multiple lists, this will convert it into a singular list
     aliases = list(chain(*allAliases))
-    helpFooter=f"Requested by {ctx.author.name}#{ctx.author.discriminator}"
+    #helpFooter=f"Requested by {ctx.author.name}#{ctx.author.discriminator}"
+    helpFooter=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator)
     if commandname == None :
         formattedmsg = []
         i = 0
-        formattedmsg.append(f"You can also use `{prefix}help <command>` to get more information about a specific command. \n \n")
+        detailtip=_("You can also use `{prefix}help <command>` to get more information about a specific command.").format(prefix=prefix)
+        formattedmsg.append(detailtip + "\n\n")
         for i in range(len(cmds)) :
             if briefs[i] != None :
                 formattedmsg.append(f"`{prefix}{cmds[i]}` - {briefs[i]} \n")
@@ -356,7 +378,7 @@ async def help(ctx, commandname : str=None):
                 formattedmsg.append(f"`{prefix}{cmds[i]}` \n")
 
         final = "".join(formattedmsg)
-        embed=discord.Embed(title="⚙️ __Available commands:__", description=final, color=bot.embedBlue)
+        embed=discord.Embed(title="⚙️" + _("__Available commands:__"), description=final, color=bot.embedBlue)
         embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
         return
@@ -379,18 +401,18 @@ async def help(ctx, commandname : str=None):
                 commandaliases = ["`" + prefix + alias + "`" for alias in command.aliases]
                 #Then join them together
                 commandaliases = ", ".join(commandaliases)
-                embed=discord.Embed(title=f"⚙️ Command: {prefix}{command.name}", description=f"{command.description} \n \n**Usage:** `{prefix}{command.usage}` \n**Aliases:** {commandaliases}", color=bot.embedBlue)
+                embed=discord.Embed(title="⚙️" + _("Command: {prefix}{command_name}").format(prefix=prefix, command_name=command.name), description=_("{command_desc} \n \n**Usage:** `{prefix}{command_usage}` \n**Aliases:** {command_aliases}").format(command_desc=command.description, prefix=prefix, command_usage=command.usage, command_aliases=commandaliases), color=bot.embedBlue)
                 embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
                 await ctx.send(embed=embed)
                 return
             else :
                 command = bot.get_command(commandname)
-                embed=discord.Embed(title=f"⚙️ Command: {prefix}{command.name}", description=f"{command.description} \n \n**Usage:** `{prefix}{command.usage}`", color=bot.embedBlue)
+                embed=discord.Embed(title="⚙️" + _("Command: {prefix}{command_name}").format(prefix=prefix, command_name=command.name), description=_("{command_desc} \n \n**Usage:** `{prefix}{command_usage}`").format(command_desc=command.description, prefix=prefix, command_usage=command.usage), color=bot.embedBlue)
                 embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
                 await ctx.send(embed=embed)
                 return
         else :
-            embed=discord.Embed(title="❓ Unknown command!", description=f"Use `{prefix}help` for a list of available commands.", color=bot.unknownColor)
+            embed=discord.Embed(title="❓" + bot.unknownCMDstr, description=_("Use `{prefix}help` for a list of available commands.").format(prefix=prefix), color=bot.unknownColor)
             embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
             return
@@ -422,26 +444,26 @@ async def on_command_error(ctx, error):
         aliasmatches = get_close_matches(cmd, aliases)
         #Check if there are any matches, then suggest if yes.
         if len(matches) > 0:
-            embed=discord.Embed(title="❓ Unknown command!", description=f"Did you mean `{prefix}{matches[0]}`?", color=bot.unknownColor)
-            embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+            embed=discord.Embed(title=bot.unknownCMDstr, description=_("Did you mean `{prefix}{match}`?").format(prefix=prefix, match=matches[0]), color=bot.unknownColor)
+            embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
         elif len(aliasmatches) > 0:
-            embed=discord.Embed(title="❓ Unknown command!", description=f"Did you mean `{prefix}{aliasmatches[0]}`?", color=bot.unknownColor)
-            embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+            embed=discord.Embed(title=bot.unknownCMDstr, description=_("Did you mean `{prefix}{match}`?").format(prefix=prefix, match=aliasmatches[0]), color=bot.unknownColor)
+            embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
         else:
-            embed=discord.Embed(title="❓ Unknown command!", description=f"Use `{prefix}help` for a list of available commands.", color=bot.unknownColor)
-            embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+            embed=discord.Embed(title=bot.unknownCMDstr, description=_("Use `{prefix}help` for a list of available commands.").format(prefix=prefix), color=bot.unknownColor)
+            embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
     #Cooldown error
     elif isinstance(error, commands.CommandOnCooldown):
-        embed=discord.Embed(title=bot.errorCooldownTitle, description=f"Please retry in: `{datetime.timedelta(seconds=round(error.retry_after))}`", color=bot.errorColor)
-        embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+        embed=discord.Embed(title=bot.errorCooldownTitle, description=_("Please retry in: `{cooldown}`").format(cooldown=datetime.timedelta(seconds=round(error.retry_after))), color=bot.errorColor)
+        embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
     #MissingArg error
     elif isinstance(error, commands.MissingRequiredArgument):
-        embed=discord.Embed(title="❌ Missing argument.", description=f"One or more arguments are missing. \n__Hint:__ You can use `{prefix}help {ctx.command.name}` to view command usage.", color=bot.errorColor)
-        embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+        embed=discord.Embed(title="❌" + _("Missing argument."), description=_("One or more arguments are missing. \n__Hint:__ You can use `{prefix}help {command_name}` to view command usage.").format(prefix=prefix, command_name=ctx.command.name), color=bot.errorColor)
+        embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
         logging.info(f"{ctx.author} tried calling a command ({ctx.message.content}) but did not supply sufficient arguments.")
 
@@ -465,7 +487,7 @@ async def on_guild_join(guild):
     #This forces settings to generate for this guild.
     await bot.DBHandler.retrievesetting("COMMANDSCHANNEL", guild.id)
     if guild.system_channel != None :
-        embed=discord.Embed(title="Beep Boop!", description=f"I have been summoned to this server. Use `{prefix}help` to see what I can do!", color=0xfec01d)
+        embed=discord.Embed(title=_("Beep Boop!"), description=_("I have been summoned to this server. Use `{prefix}help` to see what I can do!").format(prefix=prefix), color=0xfec01d)
         embed.set_thumbnail(url=bot.user.avatar_url)
         await guild.system_channel.send(embed=embed)
     logging.info(f"Bot has been added to new guild {guild.id}.")
