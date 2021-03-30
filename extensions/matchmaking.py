@@ -45,7 +45,8 @@ class Matchmaking(commands.Cog):
         if cmdchannel != 0 :
             if cmdchannel != ctx.channel.id :
                 logging.info(f"User {ctx.author} tried to initialize matchmaking in disabled channel.")
-                return -1
+                self.matchmaking.reset_cooldown(ctx)
+                return
         mpsessiondata = []
         mpEmbedColor = 0xd76b00
         #This should be a list of all the names of the functions below

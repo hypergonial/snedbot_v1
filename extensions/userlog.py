@@ -14,7 +14,12 @@ class Logging(commands.Cog):
     #First, if the message was cached, provide detailed info
     @commands.Cog.listener()
     async def on_message_delete(self, message):
+        #Guild-only
         if message.guild == None :
+            return
+        #This will make it effectively ignore the message if it is the bot
+        if message.author == self.bot.user :
+            self.bot.recentlyDeleted.append(message.id)
             return
         #Add it to the recently deleted so on_raw_message_delete will ignore this
         self.bot.recentlyDeleted.append(message.id)

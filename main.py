@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 #Language
 lang = "en"
 #Is this build experimental?
-experimentalBuild = True
+experimentalBuild = False
 #Version of the bot
 currentVersion = "3.2.0"
 #Loading token from .env file. If this file does not exist, nothing will work.
