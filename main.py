@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import gettext
 import json
 import logging
 import os
@@ -7,7 +8,6 @@ import sys
 import threading
 import time
 import traceback
-import gettext
 from difflib import get_close_matches
 from itertools import chain
 from pathlib import Path
@@ -332,6 +332,71 @@ class DBhandler():
                 if result in bot.reservedTextNames :
                     results.remove(result)
             return results
+    #Handling the match_listings table - specific to matchmaking extension
+    async def addListing(self, ID, ubiname, hostID, gamemode, playercount, DLC, mods, timezone, additional_info, timestamp, guildID):
+        async with aiosqlite.connect(bot.dbPath) as db:
+            await db.execute("INSERT INTO match_listings (ID, ubiname, hostID, gamemode, playercount, DLC, mods, timezone, additional_info, timestamp, guild_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [ID, ubiname, hostID, gamemode, playercount, DLC, mods, timezone, additional_info, timestamp, guildID])
+            await db.commit()
+            return
+    async def delListing(self, ID, guildID):
+        async with aiosqlite.connect(bot.dbPath) as db:
+            await db.execute("DELETE FROM match_listings WHERE ID = ? AND guild_id = ?", [ID, guildID])
+            await db.commit()
+            return
+    #Retrieve every information about a single listing
+    async def retrieveListing(self, ID, guildID):
+        async with aiosqlite.connect(bot.dbPath) as db:
+            cursor = await db.execute("SELECT * FROM match_listings WHERE ID = ? AND guild_id = ?", [ID, guildID])
+            listing = await cursor.fetchone()
+            if listing == None :
+                return
+            listingDict = {
+                "ID": listing[0],
+                "ubiname": listing[1],
+                "hostID": listing[2],
+                "gamemode": listing[3],
+                "playercount": listing[4],
+                "DLC": listing[5],
+                "mods": listing[6],
+                "timezone": listing[7],
+                "additional_info": listing[8],
+                "timestamp": listing[9],
+                "guild_id": listing[10]
+            }
+            return listingDict
+    #Retrieve every information about every listing stored
+    async def retrieveAllListings(self):
+        async with aiosqlite.connect(bot.dbPath) as db:
+            cursor = await db.execute("SELECT * FROM match_listings")
+            results = await cursor.fetchall()
+            ID, ubiname, hostID, gamemode, playercount, DLC, mods, timezone, additional_info, timestamp, guild_id = ([] for i in range(11))
+            for listing in results :
+                ID.append(listing[0])
+                ubiname.append(listing[1])
+                hostID.append(listing[2])
+                gamemode.append(listing[3])
+                playercount.append(listing[4])
+                DLC.append(listing[5])
+                mods.append(listing[6])
+                timezone.append(listing[7])
+                additional_info.append(listing[8])
+                timestamp.append(listing[9])
+                guild_id.append(listing[10])
+            listings = {
+                "ID": ID,
+                "ubiname": ubiname,
+                "hostID": hostID,
+                "gamemode": gamemode,
+                "playercount": playercount,
+                "DLC": DLC,
+                "mods": mods,
+                "timezone": timezone,
+                "additional_info": additional_info,
+                "timestamp": timestamp,
+                "guild_id": guild_id
+            }
+            return listings
+
 
 #The main instance of DBHandler
 bot.DBHandler = DBhandler()

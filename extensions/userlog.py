@@ -14,6 +14,8 @@ class Logging(commands.Cog):
     #First, if the message was cached, provide detailed info
     @commands.Cog.listener()
     async def on_message_delete(self, message):
+        if message.guild == None :
+            return
         #Add it to the recently deleted so on_raw_message_delete will ignore this
         self.bot.recentlyDeleted.append(message.id)
         #Then do info collection & dump
@@ -29,6 +31,8 @@ class Logging(commands.Cog):
     #This will get called on every message removal regardless of cached state
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload):
+        if payload.guild_id == None :
+            return
         #Wait for on_message_delete to complete
         await asyncio.sleep(1)
         #If it is in the list, we remove it and stop
@@ -54,6 +58,8 @@ class Logging(commands.Cog):
     #First, if the message was cached, provide detailed info
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
+        if after.guild == None :
+            return
         #Do this check to avoid embed edits triggering log
         if before.content == after.content:
             return
@@ -72,6 +78,8 @@ class Logging(commands.Cog):
     #This will get called on every message edit regardless of cached state
     @commands.Cog.listener()
     async def on_raw_message_edit(self, payload):
+        #if payload.guild_id == None :
+        #    return
         #Wait for on_message_edit to complete
         await asyncio.sleep(1)
         #If it is in the list, we remove it and stop
@@ -99,6 +107,8 @@ class Logging(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_bulk_message_delete(self, payload):
+        if payload.guild_id == None:
+            return
     #Produce bulk msg generic log
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", payload.guild_id)
         if payload.channel_id != loggingchannelID :
@@ -242,40 +252,32 @@ class Logging(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
-        print("Left, but why?")
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", member.guild.id)
         if loggingchannelID == 0:
             logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
             return
         else :
-            print("Finding evidence")
             loggingchannel = member.guild.get_channel(loggingchannelID)
             moderator = "Undefined"
             reason = "Not specified"
             async for entry in member.guild.audit_logs():
                 if entry.action == discord.AuditLogAction.kick:
                     if entry.target == member :
-                        print("Found in loop")
                         moderator = entry.user
                         reason = entry.reason
                         break
                 else :
-                    print("Loop broke without evidence")
                     break
             #If we have not found a kick auditlog
             if moderator == "Undefined":
-                print("None found")
                 embed = discord.Embed(title=f"🚪 Member left", description=f"**User:** `{member} ({member.id})`", color=self.bot.errorColor)
                 await loggingchannel.send(embed=embed)
             #If we did
             else :
-                print("Found")
                 if entry.reason != None :
-                    print("Reason found")
                     embed = discord.Embed(title=f"🚪👈 Member kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
                     await loggingchannel.send(embed=embed)
                 else :
-                    print("No reason")
                     embed = discord.Embed(title=f"🚪👈 Member kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```Not specified```", color=self.bot.errorColor)
                     await loggingchannel.send(embed=embed)
                 
@@ -293,6 +295,8 @@ class Logging(commands.Cog):
     
     @commands.Cog.listener()
     async def on_command(self, ctx):
+        if ctx.guild == None:
+            return
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", ctx.guild.id)
         if loggingchannelID == 0:
             logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
