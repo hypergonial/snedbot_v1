@@ -22,7 +22,7 @@ lang = "en"
 #Is this build experimental?
 experimentalBuild = False
 #Version of the bot
-currentVersion = "3.2.0"
+currentVersion = "3.2.1"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 #Get token from .env
@@ -41,7 +41,7 @@ else :
 #This is just my user ID, used for setting up who can & cant use priviliged commands along with a server owner.
 creatorID = 163979124820541440
 #Can modify command prefix & intents here (and probably a lot of other cool stuff I am not aware of)
-bot = commands.Bot(command_prefix=prefix, intents= discord.Intents.all(), owner_id=creatorID, case_insensitive=True, help_command=None, activity=activity)
+bot = commands.Bot(command_prefix=prefix, intents= discord.Intents.all(), owner_id=creatorID, case_insensitive=True, help_command=None, activity=activity, max_messages=20000)
 
 #General global bot settings
 

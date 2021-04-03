@@ -14,12 +14,8 @@ class Logging(commands.Cog):
     #First, if the message was cached, provide detailed info
     @commands.Cog.listener()
     async def on_message_delete(self, message):
-        #Guild-only
-        if message.guild == None :
-            return
-        #This will make it effectively ignore the message if it is the bot
-        if message.author == self.bot.user :
-            self.bot.recentlyDeleted.append(message.id)
+        #Guild-only, self ignored
+        if message.guild == None or message.author == self.bot.user :
             return
         #Add it to the recently deleted so on_raw_message_delete will ignore this
         self.bot.recentlyDeleted.append(message.id)
@@ -32,31 +28,6 @@ class Logging(commands.Cog):
             loggingchannel = message.guild.get_channel(loggingchannelID)
             embed = discord.Embed(title=f"🗑️ Message deleted", description=f"**Message author:** {message.author} ({message.author.id})\n**Channel:** {message.channel.mention}\n**Message content:** ```{message.content}```", color=self.bot.errorColor)
             await loggingchannel.send(embed=embed)
-
-    #This will get called on every message removal regardless of cached state
-    @commands.Cog.listener()
-    async def on_raw_message_delete(self, payload):
-        if payload.guild_id == None :
-            return
-        #Wait for on_message_delete to complete
-        await asyncio.sleep(1)
-        #If it is in the list, we remove it and stop
-        if payload.message_id in self.bot.recentlyDeleted :
-            self.bot.recentlyDeleted.remove(payload.message_id)
-            return
-        #Else it is not cached, so we run the logic related to producing a generic deletion message.
-        else :
-            loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", payload.guild_id)
-            if payload.channel_id != loggingchannelID :
-                if loggingchannelID == 0:
-                    logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
-                    return
-                else :
-                    guild = self.bot.get_guild(payload.guild_id)
-                    channel = guild.get_channel(payload.channel_id)
-                    loggingchannel = guild.get_channel(loggingchannelID)
-                    embed = discord.Embed(title=f"🗑️ Message deleted", description=f"**Channel:** {channel.mention}\n**Message content and author was not cached.**", color=self.bot.errorColor)
-                    await loggingchannel.send(embed=embed)
 
     #Message editing logging
 
