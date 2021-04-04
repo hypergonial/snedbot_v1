@@ -22,7 +22,7 @@ lang = "en"
 #Is this build experimental?
 experimentalBuild = False
 #Version of the bot
-currentVersion = "3.2.2"
+currentVersion = "3.3.0"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 #Get token from .env
@@ -78,7 +78,9 @@ bot.recentlyEdited = []
 initial_extensions = ['extensions.admin_commands', 'extensions.misc_commands', 'extensions.matchmaking', 'extensions.tags', 'extensions.setup', 'extensions.userlog', 'jishaku']
 #Contains all the valid datatypes in settings. If you add a new one here, it will be automatically generated
 #upon a new request to retrieve/modify that datatype.
-bot.datatypes = ["COMMANDSCHANNEL", "LOGCHANNEL", "ELEVATED_LOGSCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI", "KEEP_ON_TOP_CHANNEL", "KEEP_ON_TOP_MSG"]
+bot.datatypes = ["LOGCHANNEL", "ELEVATED_LOGCHANNEL",   #Used in module userlog
+"COMMANDSCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI",   #Used in module matchmaking
+"KEEP_ON_TOP_CHANNEL", "KEEP_ON_TOP_MSG"]   #Used in module matchmaking & in main
 #These text names are reserved and used for internal functions, other ones may get created by users for tags.
 bot.reservedTextNames = ["KEEP_ON_TOP_CONTENT"]
 #
@@ -402,86 +404,68 @@ class DBhandler():
 #The main instance of DBHandler
 bot.DBHandler = DBhandler()
 
+#The custom help command subclassing the dpy one. See the docs or this guide (https://gist.github.com/InterStella0/b78488fb28cadf279dfd3164b9f0cf96) on how this was made.
+class SnedHelp(commands.HelpCommand):
+    #Method to get information about a command to display in send_bot_help
+    def get_command_signature(self, command):
+        return '`{prefix}{command}` - {commandbrief}'.format(prefix=self.clean_prefix, command=command.name, commandbrief=command.short_doc) #short_doc goes to brief first, otherwise gets first line of help
     
-#Custom help command, shows all commands a user can execute based on their priviliges.
-#Also has an alternate mode where it shows information about a specific command, if specified as an argument.
-@bot.command(brief=_("Displays this help message."), description=_("Displays all available commands you can execute, based on your permission level."), usage=f"{prefix}help [command]")
-async def help(ctx, commandname : str=None):
-    #This uses a custom instance of dbHandler
-    dbHandler = DBhandler()
-    #Retrieve all commands except hidden, unless user is priviliged.
-    
-    #Direct copy of hasPriviliged()
-    #If user is priviliged, get all commands, including hidden ones, otherwise just the not hidden ones.
+    #Send generic help message with all commands included
+    async def send_bot_help(self, mapping):
+        ctx = self.context   #Obtaining ctx
+        help_embed = discord.Embed(title="⚙️ " + _("__Available commands:__"), description=_("You can also use `{prefix}help <command>` to get more information about a specific command.").format(prefix=self.clean_prefix), color=bot.embedBlue)
+        #We retrieve all the commands from the mapping of cog,commands
+        for cog, commands in mapping.items(): 
+            filtered = await self.filter_commands(commands, sort=True)   #This will filter commands to those the user can actually execute
+            command_signatures = [self.get_command_signature(command) for command in filtered]   #Get command signature in format as specified above
+            #If we have any, put them in categories according to cogs, fallback is "Other"
+            if command_signatures:
+                cog_name = getattr(cog, "qualified_name", "Other")
+                help_embed.add_field(name=cog_name, value="\n".join(command_signatures), inline=False)
+            #Put fancy footer on it
+            help_embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        channel=self.get_destination() #Print it out
+        await channel.send(embed=help_embed)
 
-    #Note: checkprivs() returns a list of tuples as roleIDs
-    userRoles = [role.id for role in ctx.author.roles]
-    privroles = await dbHandler.checkprivs(ctx.guild.id)
-    
-    #Determine how many commands and associated details we need to retrieve, then retrieve them.
-    if any(roleID in userRoles for roleID in privroles) or (ctx.author.id == bot.owner_id or ctx.author.id == ctx.guild.owner_id) :
-        cmds = [cmd.name for cmd in bot.commands]
-        briefs = [cmd.brief for cmd in bot.commands]
-        allAliases = [cmd.aliases for cmd in bot.commands]
-    else :
-        cmds = [cmd.name for cmd in bot.commands if not cmd.hidden]
-        briefs = [cmd.brief for cmd in bot.commands if not cmd.hidden]
-        allAliases = [cmd.aliases for cmd in bot.commands if not cmd.hidden]
-    i = 0
-    #Note: allAliases is a matrix of multiple lists, this will convert it into a singular list
-    aliases = list(chain(*allAliases))
-    #helpFooter=f"Requested by {ctx.author.name}#{ctx.author.discriminator}"
-    helpFooter=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator)
-    if commandname == None :
-        formattedmsg = []
-        i = 0
-        detailtip=_("You can also use `{prefix}help <command>` to get more information about a specific command.").format(prefix=prefix)
-        formattedmsg.append(detailtip + "\n\n")
-        for i in range(len(cmds)) :
-            if briefs[i] != None :
-                formattedmsg.append(f"`{prefix}{cmds[i]}` - {briefs[i]} \n")
-            else :
-                formattedmsg.append(f"`{prefix}{cmds[i]}` \n")
+    async def send_command_help(self, command):
+        ctx = self.context   #Obtaining ctx
+        detail_embed=discord.Embed(title="⚙️ " + _("Command: {prefix}{command}").format(prefix=self.clean_prefix, command=command.name), color=bot.embedBlue)
+        if command.description:
+            detail_embed.add_field(name=_("Description:"), value=command.description)  #Getting command description
+        elif command.help:
+            detail_embed.add_field(name=_("Description:"), value=command.help)  #Fallback to help attribute if description does not exist
+        if command.usage:
+            detail_embed.add_field(name=_("Usage:"), value=f"`{self.clean_prefix}{command.usage}`", inline=False) #Getting command usage & formatting it
+        aliases = []
+        for alias in command.aliases:
+            aliases.append(f"`{self.clean_prefix}{alias}`")  #Adding some custom formatting to each alias
+        if aliases:
+            detail_embed.add_field(name=_("Aliases:"), value=", ".join(aliases), inline=False)   #If any aliases exist, we add those to the embed in new field
+        detail_embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        channel = self.get_destination()   #Send it to destination
+        await channel.send(embed=detail_embed)
 
-        final = "".join(formattedmsg)
-        embed=discord.Embed(title="⚙️" + _("__Available commands:__"), description=final, color=bot.embedBlue)
-        embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
-        await ctx.send(embed=embed)
-        return
-    else :
-        #Oh no, you found me o_o
-        if commandname == "Hyper" :
-            embed=discord.Embed(title="❓ I can't...", description=f"I am sorry, but he can't be helped. He is beyond redemption.", color=bot.unknownColor)
-            embed.set_footer(text="Requested by a stinky person.", icon_url=ctx.author.avatar_url)
-            await ctx.send(embed=embed)
-            return
-        #If our user is a dumbass and types ?help ?command instead of ?help command, we will remove the prefix from it first
-        if commandname.startswith(prefix) :
-            #Remove first character
-            commandname = commandname[0 : 0 : ] + commandname[0 + 1 : :]
-        #If found, we will try to retrieve detailed command information about it, and provide it to the user.
-        if commandname in cmds or commandname in aliases :
-            command = bot.get_command(commandname)
-            if len(command.aliases) > 0 :
-                #Add the prefix to the aliases before displaying
-                commandaliases = ["`" + prefix + alias + "`" for alias in command.aliases]
-                #Then join them together
-                commandaliases = ", ".join(commandaliases)
-                embed=discord.Embed(title="⚙️" + _("Command: {prefix}{command_name}").format(prefix=prefix, command_name=command.name), description=_("{command_desc} \n \n**Usage:** `{prefix}{command_usage}` \n**Aliases:** {command_aliases}").format(command_desc=command.description, prefix=prefix, command_usage=command.usage, command_aliases=commandaliases), color=bot.embedBlue)
-                embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
-                await ctx.send(embed=embed)
-                return
-            else :
-                command = bot.get_command(commandname)
-                embed=discord.Embed(title="⚙️" + _("Command: {prefix}{command_name}").format(prefix=prefix, command_name=command.name), description=_("{command_desc} \n \n**Usage:** `{prefix}{command_usage}`").format(command_desc=command.description, prefix=prefix, command_usage=command.usage), color=bot.embedBlue)
-                embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
-                await ctx.send(embed=embed)
-                return
-        else :
-            embed=discord.Embed(title="❓" + bot.unknownCMDstr, description=_("Use `{prefix}help` for a list of available commands.").format(prefix=prefix), color=bot.unknownColor)
-            embed.set_footer(text=helpFooter, icon_url=ctx.author.avatar_url)
-            await ctx.send(embed=embed)
-            return
+    async def send_cog_help(self, cog):
+        #I chose not to implement help for cogs, but if you want to do something, do it here
+        ctx = self.context
+        embed=discord.Embed(title=bot.unknownCMDstr, description=_("Use `{prefix}help` for a list of available commands.").format(prefix=prefix), color=bot.unknownColor)
+        embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        channel = self.get_destination()
+        await channel.send(embed=embed)
+
+    async def send_group_help(self, group):
+        await self.send_command_help(group) #I chose not to implement any custom features for groups, they just get command help retrieved
+
+    async def send_error_message(self, error):   #Overriding the default help error message
+        ctx = self.context
+        embed=discord.Embed(title=bot.unknownCMDstr, description=_("Use `{prefix}help` for a list of available commands.").format(prefix=prefix), color=bot.unknownColor)
+        embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        channel = self.get_destination()
+        await channel.send(embed=embed)
+
+#Assign custom help command to bot
+bot.help_command = SnedHelp()
+
 #
 #
 #Error handler

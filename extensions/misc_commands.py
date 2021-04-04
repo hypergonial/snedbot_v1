@@ -32,7 +32,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
             self._ = gettext.gettext
 
 
-    @commands.command(brief="Displays a user's avatar.", description="Displays a user's avatar for your viewing (or stealing) pleasure.", usage=f"avatar <userID|userMention|userName>")
+    @commands.command(help="Displays a user's avatar.", description="Displays a user's avatar for your viewing (or stealing) pleasure.", usage=f"avatar <userID|userMention|userName>")
     @commands.cooldown(1, 30, type=commands.BucketType.member)
     async def avatar(self, ctx, member : discord.Member) :
         embed=discord.Embed(title=self._("{member_name}'s avatar:").format(member_name=member.name), color=member.colour)
@@ -48,20 +48,20 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
             await ctx.send(embed=embed)
 
         #Gets the ping of the bot.
-    @commands.command(brief="Displays bot ping.", description="Displays the current ping of the bot in miliseconds. Takes no arguments.", usage="ping")
+    @commands.command(help="Displays bot ping.", description="Displays the current ping of the bot in miliseconds. Takes no arguments.", usage="ping")
     async def ping(self, ctx):
         embed=discord.Embed(title="🏓 Pong!", description=self._("Latency: `{latency}ms`").format(latency=round(self.bot.latency * 1000)), color=self.bot.miscColor)
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.channel.send(embed=embed)
 
     #A more fun way to get the ping.
-    @commands.command(hidden = True, brief="A better way to get the ping.", description="Why? because yes. Displays the current ping of the bot in miliseconds. Takes no arguments.", usage=f"LEROY")
+    @commands.command(hidden = True, help="A better way to get the ping.", description="Why? because yes. Displays the current ping of the bot in miliseconds. Takes no arguments.", usage=f"LEROY")
     async def leroy(self, ctx):
         embed=discord.Embed(title="JEEEEENKINS!", description=f"... Oh my god he just ran in. 👀 `{round(self.bot.latency * 1000)}ms`", color =self.bot.miscColor)
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.channel.send(embed=embed)
 
-    @commands.command(brief="Displays information about the bot.", description="Displays information about the bot. Takes no arguments.", usage="about")
+    @commands.command(help="Displays information about the bot.", description="Displays information about the bot. Takes no arguments.", usage="about")
     async def about(self, ctx):
         embed=discord.Embed(title=f"ℹ️ About {self.bot.user.name}", description=f"**Version:** {self.bot.currentVersion} \n**Language:** {self.bot.lang} \n**Made by:** Hyper#0001 \n**GitHub:** https://github.com/HyperGH/AnnoSnedBot", color=self.bot.embedBlue)
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
@@ -69,7 +69,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         await ctx.channel.send(embed=embed)
     #Fun command, because yes. (Needs mod privilege as it can be abused for spamming)
     #This may or may not have been a test command for testing priviliges & permissions :P
-    @commands.command(hidden = True, brief = "Deploys the duck army.", description="🦆 I am surprised you even need help for this...", usage=f"quack")
+    @commands.command(brief = "Deploys the duck army.", description="🦆 I am surprised you even need help for this...", usage=f"quack")
     @commands.check(hasPriviliged)
     @commands.guild_only()
     async def quack(self, ctx):

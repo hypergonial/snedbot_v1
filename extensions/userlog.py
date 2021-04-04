@@ -38,6 +38,7 @@ class Logging(commands.Cog):
             return
         #Do this check to avoid embed edits triggering log
         if before.content == after.content:
+            self.bot.recentlyEdited.append(after.id)
             return
         #Add it to the recently deleted so on_raw_message_edit will ignore this
         self.bot.recentlyEdited.append(after.id)
@@ -54,16 +55,14 @@ class Logging(commands.Cog):
     #This will get called on every message edit regardless of cached state
     @commands.Cog.listener()
     async def on_raw_message_edit(self, payload):
-        #if payload.guild_id == None :
-        #    return
+        if payload.guild_id == None :
+            return
         #Wait for on_message_edit to complete
         await asyncio.sleep(1)
         #If it is in the list, we remove it and stop
         if payload.message_id in self.bot.recentlyDeleted :
             self.bot.recentlyEdited.remove(payload.message_id)
             return
-    #Currently removed due to this implementation needing discord.py 1.7.0
-    '''
         #Else it is not cached, so we run the logic related to producing a generic edit message.
         else :
             loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", payload.guild_id)
@@ -75,9 +74,8 @@ class Logging(commands.Cog):
                     channel = guild.get_channel(payload.channel_id)
                     message = await channel.fetch_message(payload.message_id)
                     loggingchannel = guild.get_channel(loggingchannelID)
-                    embed = discord.Embed(title=f"🖊️ Message edited", description=f"**Channel:** {channel.mention}\n**Message author:** {message.author} ({message.author.id})\n\n**Message contents were not cached.**\n\n**Current content**: {message.content}", color=self.bot.embedBlue)
+                    embed = discord.Embed(title=f"🖊️ Message edited", description=f"**Channel:** {channel.mention}\n**Message author:** {message.author} ({message.author.id})\n\n**Message contents were not cached.**\n\n**Current content**: ```{message.content}```\n[Jump!]({message.jump_url})", color=self.bot.embedBlue)
                     await loggingchannel.send(embed=embed)
-    '''
 
 
     @commands.Cog.listener()

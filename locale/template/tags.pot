@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-04 03:32+0200\n"
+"POT-Creation-Date: 2021-04-04 20:44+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,11 +15,11 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: tags.py:37 tags.py:72 tags.py:96
+#: tags.py:37 tags.py:71 tags.py:95
 msgid "Error: Reserved."
 msgstr ""
 
-#: tags.py:37 tags.py:72 tags.py:96
+#: tags.py:37 tags.py:71 tags.py:95
 msgid "This name is reserved for internal functions. Try another name."
 msgstr ""
 
@@ -31,47 +31,47 @@ msgstr ""
 msgid "Error: Unknown tag."
 msgstr ""
 
-#: tags.py:59
+#: tags.py:58
 msgid "Available tags for this guild:"
 msgstr ""
 
-#: tags.py:80
+#: tags.py:79
 msgid "Tag added! You can now call it via `{prefix}tag {tag_name}`!"
 msgstr ""
 
-#: tags.py:80
+#: tags.py:79
 msgid "Tag added."
 msgstr ""
 
-#: tags.py:84
+#: tags.py:83
 msgid "Error: Message not found."
 msgstr ""
 
-#: tags.py:84
+#: tags.py:83
 msgid "Please **__make sure__** you ran the command in the channel you want to get the message from!"
 msgstr ""
 
-#: tags.py:88
+#: tags.py:87
 msgid "Error: Tag name too short."
 msgstr ""
 
-#: tags.py:88
+#: tags.py:87
 msgid "Your tag name must be 3 characters long or more."
 msgstr ""
 
-#: tags.py:102
+#: tags.py:101
 msgid "Tag deleted."
 msgstr ""
 
-#: tags.py:102
+#: tags.py:101
 msgid "Tag {tag_name} has been removed."
 msgstr ""
 
-#: tags.py:106
+#: tags.py:105
 msgid "Error: Tag not found."
 msgstr ""
 
-#: tags.py:106
+#: tags.py:105
 msgid "Unable to locate tag. Please run `{prefix}tags` for a list of tags!"
 msgstr ""
 
