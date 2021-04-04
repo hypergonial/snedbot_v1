@@ -22,7 +22,7 @@ lang = "en"
 #Is this build experimental?
 experimentalBuild = False
 #Version of the bot
-currentVersion = "3.2.1"
+currentVersion = "3.2.2"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 #Get token from .env
@@ -78,7 +78,7 @@ bot.recentlyEdited = []
 initial_extensions = ['extensions.admin_commands', 'extensions.misc_commands', 'extensions.matchmaking', 'extensions.tags', 'extensions.setup', 'extensions.userlog', 'jishaku']
 #Contains all the valid datatypes in settings. If you add a new one here, it will be automatically generated
 #upon a new request to retrieve/modify that datatype.
-bot.datatypes = ["COMMANDSCHANNEL", "LOGCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI", "KEEP_ON_TOP_CHANNEL", "KEEP_ON_TOP_MSG"]
+bot.datatypes = ["COMMANDSCHANNEL", "LOGCHANNEL", "ELEVATED_LOGSCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI", "KEEP_ON_TOP_CHANNEL", "KEEP_ON_TOP_MSG"]
 #These text names are reserved and used for internal functions, other ones may get created by users for tags.
 bot.reservedTextNames = ["KEEP_ON_TOP_CONTENT"]
 #
@@ -113,7 +113,7 @@ bot.requestFooter = _("Requested by {user_name}#{discrim}")
 bot.unknownCMDstr = "❓ " + _("Unknown command!")
 #Misc:
 bot.embedBlue = 0x009dff
-bot.embedGreen = 0x00ff2a
+bot.embedGreen = 0x77b255
 bot.unknownColor = 0xbe1931
 bot.miscColor = 0xc2c2c2
 
@@ -153,13 +153,14 @@ async def on_ready():
 #
 #All functions relating to adding, updating, inserting, or removing from any table in the database
 class DBhandler():
-    #Deletes a guild specific settings file.
-    async def deletesettings(self, guildID):
-        #Delete all data relating to this guild.
+    #Deletes all data related to a specific guild, including but not limited to: all settings, priviliged roles, stored tags, stored multiplayer listings
+    async def deletedata(self, guildID):
+        #The nuclear option
         async with aiosqlite.connect(bot.dbPath) as db:
             await db.execute("DELETE FROM settings WHERE guild_id = ?", [guildID])
             await db.execute("DELETE FROM priviliged WHERE guild_id = ?", [guildID])
             await db.execute("DELETE FROM stored_text WHERE guild_id = ?", [guildID])
+            await db.execute("DELETE FROM match_listings WHERE guild_id = ?", [guildID])
             await db.commit()
             #os.remove(f"{guildID}_settings.cfg")
             logging.warning(f"Settings have been reset and tags erased for guild {guildID}.")
@@ -561,7 +562,7 @@ async def on_guild_join(guild):
 @bot.event
 async def on_guild_remove(guild):
     #Erase all settings for this guild on removal to keep the db tidy.
-    await bot.DBHandler.deletesettings(guild.id)
+    await bot.DBHandler.deletedata(guild.id)
     logging.info(f"Bot has been removed from guild {guild.id}, correlating data erased.")
 
 #Keep-On-Top message functionality (Requires setup extension to be properly set up)

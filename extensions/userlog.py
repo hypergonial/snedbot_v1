@@ -69,7 +69,6 @@ class Logging(commands.Cog):
             loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", payload.guild_id)
             if payload.channel_id != loggingchannelID :
                 if loggingchannelID == 0:
-                    logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
                     return
                 else :
                     guild = self.bot.get_guild(payload.guild_id)
@@ -89,7 +88,7 @@ class Logging(commands.Cog):
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", payload.guild_id)
         if payload.channel_id != loggingchannelID :
             if loggingchannelID == 0:
-                logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
+
                 return
             else :
                 guild = self.bot.get_guild(payload.guild_id)
@@ -100,10 +99,8 @@ class Logging(commands.Cog):
     #Does not work, idk why but this event is never called
     @commands.Cog.listener()
     async def on_invite_delete(self, invite):
-        print("Boop")
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", invite.guild.id)
         if loggingchannelID == 0:
-            logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
             return
         else :
             loggingchannel = invite.guild.get_channel(loggingchannelID)
@@ -114,23 +111,31 @@ class Logging(commands.Cog):
     async def on_guild_role_delete(self, role):
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", role.guild.id)
         if loggingchannelID == 0:
-            logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
             return
         else :
-            loggingchannel = role.guild.get_channel(loggingchannelID)
             embed = discord.Embed(title=f"🗑️ Role deleted", description=f"**Role:** `{role}`", color=self.bot.errorColor)
-            await loggingchannel.send(embed=embed)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", role.guild.id)
+            if elevated_loggingchannelID != 0:
+                elevated_loggingchannel = role.guild.get_channel(elevated_loggingchannelID)
+                await elevated_loggingchannel.send(embed=embed)
+            else :
+                loggingchannel = role.guild.get_channel(loggingchannelID)
+                await loggingchannel.send(embed=embed)
     
     @commands.Cog.listener()
     async def on_guild_channel_delete(self, channel):
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", channel.guild.id)
         if loggingchannelID == 0:
-            logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
             return
         else :
-            loggingchannel = channel.guild.get_channel(loggingchannelID)
-            embed = discord.Embed(title=f"🗑️ Channel deleted", description=f"**Channel:** `{channel}`", color=self.bot.errorColor)
-            await loggingchannel.send(embed=embed)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", channel.guild.id)
+            embed = discord.Embed(title=f"#️⃣ Channel deleted", description=f"**Channel:** `{channel.name}`", color=self.bot.errorColor)
+            if elevated_loggingchannelID != 0:
+                elevated_loggingchannel = channel.guild.get_channel(elevated_loggingchannelID)
+                await elevated_loggingchannel.send(embed=embed)
+            else :
+                loggingchannel = channel.guild.get_channel(loggingchannelID)
+                await loggingchannel.send(embed=embed)
     
     #Creation
 
@@ -138,64 +143,86 @@ class Logging(commands.Cog):
     async def on_guild_channel_create(self, channel):
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", channel.guild.id)
         if loggingchannelID == 0:
-            logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
             return
         else :
-            loggingchannel = channel.guild.get_channel(loggingchannelID)
-            embed = discord.Embed(title=f"❇️ Channel created", description=f"**Channel:** `{channel}`", color=self.bot.embedGreen)
-            await loggingchannel.send(embed=embed)
+            if isinstance(channel, discord.TextChannel):
+                embed = discord.Embed(title=f"#️⃣ Channel created", description=f"Channel: {channel.mention}", color=self.bot.embedGreen)
+            else :
+                embed = discord.Embed(title=f"#️⃣ Channel created", description=f"Channel: `{channel.name}`", color=self.bot.embedGreen)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", channel.guild.id)
+            if elevated_loggingchannelID != 0:
+                elevated_loggingchannel = channel.guild.get_channel(elevated_loggingchannelID)
+                await elevated_loggingchannel.send(embed=embed)
+            else :
+                loggingchannel = channel.guild.get_channel(loggingchannelID)
+                await loggingchannel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_role_create(self, role):
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", role.guild.id)
         if loggingchannelID == 0:
-            logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
             return
         else :
-            loggingchannel = role.guild.get_channel(loggingchannelID)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", role.guild.id)
             embed = discord.Embed(title=f"❇️ Role created", description=f"**Role:** `{role}`", color=self.bot.embedGreen)
-            await loggingchannel.send(embed=embed)
+            if elevated_loggingchannelID != 0:
+                elevated_loggingchannel = role.guild.get_channel(elevated_loggingchannelID)
+                await elevated_loggingchannel.send(embed=embed)
+            else :
+                loggingchannel = role.guild.get_channel(loggingchannelID)
+                await loggingchannel.send(embed=embed)
     
     @commands.Cog.listener()
     async def on_guild_role_update(self, before, after):
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", after.guild.id)
         if loggingchannelID == 0:
-            logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
             return
         else :
-            loggingchannel = after.guild.get_channel(loggingchannelID)
             embed = discord.Embed(title=f"🖊️ Role updated", description=f"**Role:** `{after.name}` \n**Before:**```Name: {before.name}\nColor: {before.color}\nManaged: {before.managed}\nMentionable: {before.mentionable}\nPosition: {before.position}\nPermissions: {before.permissions}```\n**After:**\n```Name: {after.name}\nColor: {after.color}\nManaged: {after.managed}\nMentionable: {after.mentionable}\nPosition:{after.position}\nPermissions: {after.permissions}```", color=self.bot.embedBlue)
-            await loggingchannel.send(embed=embed)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", after.guild.id)
+            if elevated_loggingchannelID != 0:
+                elevated_loggingchannel = after.guild.get_channel(elevated_loggingchannelID)
+                await elevated_loggingchannel.send(embed=embed)
+            else :
+                loggingchannel = after.guild.get_channel(loggingchannelID)
+                await loggingchannel.send(embed=embed)
+
     @commands.Cog.listener()
     async def on_guild_update(self, before, after):
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", after.id)
         if loggingchannelID == 0:
-            logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
             return
         else :
-            loggingchannel = after.get_channel(loggingchannelID)
             embed = discord.Embed(title=f"🖊️ Guild updated", description=f"Guild settings have been updated.", color=self.bot.embedBlue)
-            await loggingchannel.send(embed=embed)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", after.id)
+            if elevated_loggingchannelID != 0:
+                elevated_loggingchannel = after.get_channel(elevated_loggingchannelID)
+                await elevated_loggingchannel.send(embed=embed)
+            else:
+                loggingchannel = after.get_channel(loggingchannelID)
+                await loggingchannel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_integrations_update(self, guild):
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", guild.id)
         if loggingchannelID == 0:
-            logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
             return
         else :
-            loggingchannel = guild.get_channel(loggingchannelID)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", guild.id)
             embed = discord.Embed(title=f"🖊️ Guild integrations updated", description=f"Guild integrations have been updated.", color=self.bot.embedBlue)
-            await loggingchannel.send(embed=embed)
+            if elevated_loggingchannelID != 0:
+                elevated_loggingchannel = guild.get_channel(elevated_loggingchannelID)
+                await elevated_loggingchannel.send(embed=embed)
+            else :
+                loggingchannel = guild.get_channel(loggingchannelID)
+                await loggingchannel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild, user):
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", guild.id)
         if loggingchannelID == 0:
-            logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
             return
         else :
-            loggingchannel = guild.get_channel(loggingchannelID)
             moderator = "Undefined"
             reason = "Not specified"
             async for entry in guild.audit_logs(action=discord.AuditLogAction.ban):
@@ -204,17 +231,22 @@ class Logging(commands.Cog):
                     reason = entry.reason
                     break
             if entry.reason != None:
-                embed = discord.Embed(title=f"🔨 Member banned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
-                await loggingchannel.send(embed=embed)
+                embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
             else :
-                embed = discord.Embed(title=f"🔨 Member banned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:**```Not specified```", color=self.bot.errorColor)
+                embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:**```Not specified```", color=self.bot.errorColor)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", guild.id)
+            if elevated_loggingchannelID != 0:
+                elevated_loggingchannel = guild.get_channel(elevated_loggingchannelID)
+                await elevated_loggingchannel.send(embed=embed)
+            else :
+                loggingchannel = guild.get_channel(loggingchannelID)
                 await loggingchannel.send(embed=embed)
+
     
     @commands.Cog.listener()
     async def on_member_unban(self, guild, user):
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", guild.id)
         if loggingchannelID == 0:
-            logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
             return
         else :
             loggingchannel = guild.get_channel(loggingchannelID)
@@ -223,14 +255,19 @@ class Logging(commands.Cog):
                 if entry.target == user :
                     moderator = entry.user
                     break
-            embed = discord.Embed(title=f"🔨 Member unbanned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`", color=self.bot.embedGreen)
-            await loggingchannel.send(embed=embed)
+            embed = discord.Embed(title=f"🔨 User unbanned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`", color=self.bot.embedGreen)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", guild.id)
+            if elevated_loggingchannelID != 0:
+                elevated_loggingchannel = guild.get_channel(elevated_loggingchannelID)
+                await elevated_loggingchannel.send(embed=embed)
+            else :
+                loggingchannel = guild.get_channel(loggingchannelID)
+                await loggingchannel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", member.guild.id)
         if loggingchannelID == 0:
-            logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
             return
         else :
             loggingchannel = member.guild.get_channel(loggingchannelID)
@@ -246,15 +283,20 @@ class Logging(commands.Cog):
                     break
             #If we have not found a kick auditlog
             if moderator == "Undefined":
-                embed = discord.Embed(title=f"🚪 Member left", description=f"**User:** `{member} ({member.id})`", color=self.bot.errorColor)
+                embed = discord.Embed(title=f"🚪 User left", description=f"**User:** `{member} ({member.id})`", color=self.bot.errorColor)
                 await loggingchannel.send(embed=embed)
             #If we did
             else :
                 if entry.reason != None :
-                    embed = discord.Embed(title=f"🚪👈 Member kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
-                    await loggingchannel.send(embed=embed)
+                    embed = discord.Embed(title=f"🚪👈 User was kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
                 else :
-                    embed = discord.Embed(title=f"🚪👈 Member kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```Not specified```", color=self.bot.errorColor)
+                    embed = discord.Embed(title=f"🚪👈 User was kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```Not specified```", color=self.bot.errorColor)
+                elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", member.guild.id)
+                if elevated_loggingchannelID != 0:
+                    elevated_loggingchannel = member.guild.get_channel(elevated_loggingchannelID)
+                    await elevated_loggingchannel.send(embed=embed)
+                else :
+                    loggingchannel = member.guild.get_channel(loggingchannelID)
                     await loggingchannel.send(embed=embed)
                 
 
@@ -262,11 +304,10 @@ class Logging(commands.Cog):
     async def on_member_join(self, member):
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", member.guild.id)
         if loggingchannelID == 0:
-            logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
             return
         else :
             loggingchannel = member.guild.get_channel(loggingchannelID)
-            embed = discord.Embed(title=f"🚪 Member joined", description=f"**User:** `{member} ({member.id})`", color=self.bot.embedGreen)
+            embed = discord.Embed(title=f"🚪 User joined", description=f"**User:** `{member} ({member.id})`", color=self.bot.embedGreen)
             await loggingchannel.send(embed=embed)
     
     @commands.Cog.listener()
@@ -275,12 +316,44 @@ class Logging(commands.Cog):
             return
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", ctx.guild.id)
         if loggingchannelID == 0:
-            logging.warn("Logging extension is loaded but not set up. Unable to log user events!")
             return
         else :
             loggingchannel = ctx.author.guild.get_channel(loggingchannelID)
             embed = discord.Embed(title=f"☎️ Command called", description=f"**User:** `{ctx.author} ({ctx.author.id})`\n**Channel:** {ctx.channel.mention}\n**Command:** `{ctx.message.content}`\n\n[Jump!]({ctx.message.jump_url})", color=self.bot.embedBlue)
             await loggingchannel.send(embed=embed)
+    
+    @commands.Cog.listener()
+    async def on_member_update(self, before, after):
+        #Check this before we go on & do a db call as this listener will get spammed A LOT
+        if before.nick != after.nick or before.roles != after.roles or before.pending != after.pending:
+            loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", after.guild.id)
+            if loggingchannelID == 0:
+                return
+            else :
+                loggingchannel = after.guild.get_channel(loggingchannelID)
+                if before.nick != after.nick:
+                    embed = discord.Embed(title=f"🖊️ Nickname changed", description=f"**User:** `{after.name} ({after.id})`\nNickname before: `{before.nick}`\nNickname after: `{after.nick}`", color=self.bot.embedBlue)
+                    await loggingchannel.send(embed=embed)
+                if before.roles != after.roles:
+                    #Contains role that was added to user if any
+                    add_diff = list(set(after.roles)-set(before.roles))
+                    #Contains role that was removed from user if any
+                    rem_diff = list(set(before.roles)-set(after.roles))
+                    if len(add_diff) != 0 :
+                        embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name} ({after.id})`\nRole added: `{add_diff[0]}`", color=self.bot.embedBlue)
+                    elif len(rem_diff) != 0 :
+                        embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name} ({after.id})`\nRole removed: `{rem_diff[0]}`", color=self.bot.embedBlue)
+                    #Role updates are considered elevated due to importance
+                    elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", after.guild.id)
+                    if elevated_loggingchannelID != 0:
+                        elevated_loggingchannel = after.guild.get_channel(elevated_loggingchannelID)
+                        await elevated_loggingchannel.send(embed=embed)
+                    else :
+                        loggingchannel = after.guild.get_channel(loggingchannelID)
+                        await loggingchannel.send(embed=embed)
+                if before.pending != after.pending:
+                    embed = discord.Embed(title=f"🖊️ Member state changed", description=f"**User:** `{after.name} ({after.id})`\n`Pending: {before.pending}` ---> `Pending: {after.pending}`", color=self.bot.embedBlue)
+
 def setup(bot):
     logging.info("Adding cog: Logging...")
     bot.add_cog(Logging(bot))

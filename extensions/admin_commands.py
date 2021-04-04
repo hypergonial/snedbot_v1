@@ -68,11 +68,11 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
                 await ctx.channel.send(embed=embed)
                 payload = await self.bot.wait_for('message', timeout=20.0, check=check2)
                 if payload.content == ctx.guild.name :
-                    await self.bot.DBHandler.deletesettings(ctx.guild.id)
+                    await self.bot.DBHandler.deletedata(ctx.guild.id)
                     embed=discord.Embed(title="✅ Settings reset.", description="Goodbye cruel world! 😢", color=self.bot.errorColor)
                     await ctx.channel.send(embed=embed)
                 else :
-                    embed=discord.Embed(title="❌ Error: Invalid name.", description="Settings deletion cancelled.", color=self.bot.errorColor)
+                    embed=discord.Embed(title="❌ Error: Incorrect name.", description="Settings deletion cancelled.", color=self.bot.errorColor)
                     await ctx.channel.send(embed=embed)
             elif str(payload.emoji) == "❌" :
                 embed=discord.Embed(title="❌ Cancelled.", description="Settings reset cancelled by user.", color=self.bot.errorColor)

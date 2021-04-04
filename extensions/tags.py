@@ -32,12 +32,12 @@ class Tags(commands.Cog):
     @commands.command(brief="Calls a tag!", description="Calls a tag that has been previously set.", usage=f"tag <tagname>")
     @commands.cooldown(1, 60, type=commands.BucketType.member)
     @commands.guild_only()
-    async def tag(self, ctx, name):
+    async def tag(self, ctx, *, name):
         if name in self.bot.reservedTextNames :
             embed=discord.Embed(title="❌ " + self._("Error: Reserved."), description=self._("This name is reserved for internal functions. Try another name."), color=self.bot.errorColor)
             embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.channel.send(embed=embed)
-            #self.tag.reset_cooldown(ctx)
+            self.tag.reset_cooldown(ctx)
             return
         else :
             tagContent = await self.bot.DBHandler.retrievetext(name, ctx.guild.id)

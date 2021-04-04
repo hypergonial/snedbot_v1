@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-03 22:04+0200\n"
+"POT-Creation-Date: 2021-04-04 03:32+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -91,23 +91,23 @@ msgstr ""
 msgid "Unknown command!"
 msgstr ""
 
-#: main.py:407
+#: main.py:408
 msgid "Displays all available commands you can execute, based on your permission level."
 msgstr ""
 
-#: main.py:407
+#: main.py:408
 msgid "Displays this help message."
 msgstr ""
 
-#: main.py:437
+#: main.py:438
 msgid "You can also use `{prefix}help <command>` to get more information about a specific command."
 msgstr ""
 
-#: main.py:446
+#: main.py:447
 msgid "__Available commands:__"
 msgstr ""
 
-#: main.py:469
+#: main.py:470
 msgid ""
 "{command_desc} \n"
 " \n"
@@ -115,44 +115,44 @@ msgid ""
 "**Aliases:** {command_aliases}"
 msgstr ""
 
-#: main.py:469 main.py:475
+#: main.py:470 main.py:476
 msgid "Command: {prefix}{command_name}"
 msgstr ""
 
-#: main.py:475
+#: main.py:476
 msgid ""
 "{command_desc} \n"
 " \n"
 "**Usage:** `{prefix}{command_usage}`"
 msgstr ""
 
-#: main.py:480 main.py:520
+#: main.py:481 main.py:521
 msgid "Use `{prefix}help` for a list of available commands."
 msgstr ""
 
-#: main.py:512 main.py:516
+#: main.py:513 main.py:517
 msgid "Did you mean `{prefix}{match}`?"
 msgstr ""
 
-#: main.py:525
+#: main.py:526
 msgid "Please retry in: `{cooldown}`"
 msgstr ""
 
-#: main.py:530
+#: main.py:531
 msgid "Missing argument."
 msgstr ""
 
-#: main.py:530
+#: main.py:531
 msgid ""
 "One or more arguments are missing. \n"
 "__Hint:__ You can use `{prefix}help {command_name}` to view command usage."
 msgstr ""
 
-#: main.py:555
+#: main.py:556
 msgid "Beep Boop!"
 msgstr ""
 
-#: main.py:555
+#: main.py:556
 msgid "I have been summoned to this server. Use `{prefix}help` to see what I can do!"
 msgstr ""
 
