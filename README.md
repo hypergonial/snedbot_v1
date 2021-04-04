@@ -22,7 +22,7 @@
 
 `!tags` Lists all available tags. Has a 60 second cooldown per user.
 
-`!matchmaking` Starts the matchmaking system. Creates a multiplayer listing in desired channel upon completion. Has a 12 hour cooldown per user.
+`!matchmaking` Starts the matchmaking system. Creates a multiplayer listing in desired channel upon completion. Has a 20 hour cooldown per user.
 
 ### Commands for server owners & admins:
 `!addpriviligedrole <rolename>` Adds a role to priviliged roles. This will allow them to access bot admin commands. Can only be executed by a guild owner.
