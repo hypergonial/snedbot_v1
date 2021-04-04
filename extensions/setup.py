@@ -25,7 +25,7 @@ class Setup(commands.Cog):
     #It basically just collects a bunch of values from the user, in this case an admin, and then changes the settings
     #based on that, instead of the admin having to use !modify for every single value
     #TL;DR: fancy setup thing
-    @commands.command(hidden=True,brief="Starts bot configuration setups.", description = "Used to set up and configure different parts of the bot. Valid setup-types: `matchmaking, LFG, keepontop, logging` Only usable by priviliged users.", usage="setup <setuptype>")
+    @commands.command(help="Starts bot configuration setups.", description = "Used to set up and configure different parts of the bot. \nValid setup-types: `matchmaking, LFG, keepontop, logging`", usage="setup <setuptype>")
     @commands.check(hasPriviliged)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)

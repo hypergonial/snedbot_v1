@@ -35,7 +35,7 @@ class Matchmaking(commands.Cog):
     #evaluates the answers based on some criteria, then use those answers to construct a formatted
     #multiplayer listing, which will then in turn go into a preconfigured channel. It will also ping a
     #designated role if set. Can be limited as to which channels it can be run from via the COMMANDSCHANNEL setting.
-    @commands.command(brief="Start setting up a new multiplayer listing.", description="Start matchmaking! After command execution, you will receive a direct message to help you set up a multiplayer listing! Takes no arguments.", aliases=['multiplayer', 'init', 'match','multi','mp'], usage=f"matchmaking")
+    @commands.command(help="Start setting up a new multiplayer listing.", description="Start matchmaking! After command execution, you will receive a direct message to help you set up a multiplayer listing! Takes no arguments.", aliases=['multiplayer', 'init', 'match','multi','mp'], usage=f"matchmaking")
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
     @commands.cooldown(1, 72000, type=commands.BucketType.member)
