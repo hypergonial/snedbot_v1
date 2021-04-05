@@ -1,7 +1,13 @@
-import discord
-from discord.ext import commands
-import logging
+import aiohttp
+import asyncio
 import gettext
+import logging
+import random
+
+import discord
+import cat
+from discord.ext import commands
+
 
 async def hasOwner(ctx):
     return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id
@@ -61,12 +67,60 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.channel.send(embed=embed)
 
-    @commands.command(help="Displays information about the bot.", description="Displays information about the bot. Takes no arguments.", usage="about")
+    #Another fun command
+    @commands.command(help="Flips a coin.", description="Flips a coin, not much to it really..", usage="flipcoin", aliases=["flip"])
+    @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
+    @commands.cooldown(1, 5, type=commands.BucketType.member)
+    async def flipcoin(self, ctx):
+        options=["heads", "tails"]
+        flip=random.choice(options)
+        embed=discord.Embed(title="🪙 " + self._("Flipping coin..."), description=self._("Hold on...").format(result=flip), color=self.bot.embedBlue)
+        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        msg = await ctx.send(embed=embed)
+        await asyncio.sleep(2)
+        embed=discord.Embed(title="🪙 " + self._("Coin flipped"), description=self._("It's **{result}**!").format(result=flip), color=self.bot.embedGreen)
+        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        await msg.edit(embed=embed)
+
+    #Does about what you would expect it to do. Uses thecatapi
+    @commands.command(help="Shows a random cat.", description="Searches the interwebz™️ for a random cat picture.", usage="randomcat", aliases=["cat"])
+    @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
+    @commands.cooldown(1, 30, type=commands.BucketType.member)
+    async def randomcat(self, ctx):
+        embed=discord.Embed(title="🐱 " + self._("Random kitten"), description=self._("Looking for kitty..."), color=self.bot.embedBlue)
+        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        msg=await ctx.send(embed=embed)
+        #Get a json file from thecatapi as response, then take url from dict
+        async with aiohttp.ClientSession() as session:
+            async with session.get('https://api.thecatapi.com/v1/images/search') as response:
+                catjson = await response.json()
+        #Print kitten to user
+        embed=discord.Embed(title="🐱 " + self._("Random kitten"), description=self._("Found one!"), color=self.bot.embedBlue)
+        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        embed.set_image(url=catjson[0]["url"])
+        await msg.edit(embed=embed)
+
+    #Shows bot version, creator, etc..
+    @commands.command(help="Displays information about the bot.", description="Displays information about the bot. Takes no arguments.", usage="about", aliases=["info"])
     async def about(self, ctx):
         embed=discord.Embed(title=f"ℹ️ About {self.bot.user.name}", description=f"**Version:** {self.bot.currentVersion} \n**Language:** {self.bot.lang} \n**Made by:** Hyper#0001 \n**GitHub:** https://github.com/HyperGH/AnnoSnedBot", color=self.bot.embedBlue)
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         embed.set_thumbnail(url=self.bot.user.avatar_url)
         await ctx.channel.send(embed=embed)
+
+    #Retrieves info about the current guild for the end-user
+    @commands.command(help="Get information about the server.", description="Provides detailed information about this server.", usage="serverinfo")
+    @commands.guild_only()
+    @commands.cooldown(1, 60, type=commands.BucketType.member)
+    async def serverinfo(self, ctx):
+        guild = ctx.guild
+        embed=discord.Embed(title="ℹ️ " + self._("Server information"), description=self._("**Name:** `{guild_name}`\n**ID:** `{guild_id}`\n**Owner:** `{owner}`\n**Created at:** `{creation_date}`\n**Member count:** `{member_count}`\n**Region:** `{region}`\n**Filesize limit:** `{filecap}`\n**Nitro Boost count:** `{premium_sub_count}`\n**Nitro Boost level:** `{premium_tier}`").format(guild_name=guild.name, guild_id=guild.id, owner=guild.owner, creation_date=guild.created_at, member_count=guild.member_count, region=guild.region, filecap=f"{guild.filesize_limit/1048576}MB", premium_sub_count=guild.premium_subscription_count, premium_tier=guild.premium_tier), color=self.bot.embedBlue)
+        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        embed.set_thumbnail(url=guild.icon_url)
+        if guild.discovery_splash_url: #If the server has a discovery splash/invite background, we put it as an embed image for extra fancyTM
+            embed.set_image(url=guild.discovery_splash_url)
+        await ctx.send(embed=embed)
+
     #Fun command, because yes. (Needs mod privilege as it can be abused for spamming)
     #This may or may not have been a test command for testing priviliges & permissions :P
     @commands.command(brief = "Deploys the duck army.", description="🦆 I am surprised you even need help for this...", usage=f"quack")

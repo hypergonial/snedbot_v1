@@ -22,7 +22,7 @@ lang = "en"
 #Is this build experimental?
 experimentalBuild = False
 #Version of the bot
-currentVersion = "3.3.0"
+currentVersion = "3.3.1"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 #Get token from .env
@@ -60,6 +60,7 @@ elif lang == "en":
 #Fallback to english
 else :
     logging.error("Invalid language, fallback to English.")
+    lang = "en"
     _ = gettext.gettext
 
 
@@ -103,6 +104,8 @@ bot.errorCheckFailDesc = _("Type `{prefix}help` for a list of available commands
 bot.errorCooldownTitle = "🕘 " + _("Error: This command is on cooldown.")
 bot.errorMissingModuleTitle = "❌ " + _("Error: Missing module.")
 bot.errorMissingModuleDesc = _("This operation is missing a module.")
+bot.errorMaxConcurrencyReachedTitle = "❌ " + _("Error: Max concurrency reached!")
+bot.errorMaxConcurrencyReachedDesc= _("You have reached the maximum amount of instances for this command.")
 #Warns:
 bot.warnColor = 0xffcc4d
 bot.warnDataTitle = "⚠️ " + _("Warning: Invalid data entered.")
@@ -516,7 +519,11 @@ async def on_command_error(ctx, error):
         embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
         logging.info(f"{ctx.author} tried calling a command ({ctx.message.content}) but did not supply sufficient arguments.")
-
+    #MaxConcurrencyReached error
+    elif isinstance(error, commands.MaxConcurrencyReached):
+            embed = discord.Embed(title=bot.errorMaxConcurrencyReachedTitle, description=bot.errorMaxConcurrencyReachedDesc, color=bot.errorColor)
+            embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+            await ctx.channel.send(embed=embed)
 
     else :
         #If no known error has been passed, we will print the exception to console as usual

@@ -1,8 +1,10 @@
-import discord
-from discord.ext import commands
-import logging
 import asyncio
 import datetime
+import logging
+
+import discord
+from discord.ext import commands
+
 
 #Main user-facing logging
 class Logging(commands.Cog):
@@ -60,7 +62,7 @@ class Logging(commands.Cog):
         #Wait for on_message_edit to complete
         await asyncio.sleep(1)
         #If it is in the list, we remove it and stop
-        if payload.message_id in self.bot.recentlyDeleted :
+        if payload.message_id in self.bot.recentlyEdited :
             self.bot.recentlyEdited.remove(payload.message_id)
             return
         #Else it is not cached, so we run the logic related to producing a generic edit message.
@@ -281,7 +283,7 @@ class Logging(commands.Cog):
                     break
             #If we have not found a kick auditlog
             if moderator == "Undefined":
-                embed = discord.Embed(title=f"🚪 User left", description=f"**User:** `{member} ({member.id})`", color=self.bot.errorColor)
+                embed = discord.Embed(title=f"🚪 User left", description=f"**User:** `{member} ({member.id})`\n**User count:** `{member.guild.member_count}`", color=self.bot.errorColor)
                 await loggingchannel.send(embed=embed)
             #If we did
             else :
@@ -305,7 +307,7 @@ class Logging(commands.Cog):
             return
         else :
             loggingchannel = member.guild.get_channel(loggingchannelID)
-            embed = discord.Embed(title=f"🚪 User joined", description=f"**User:** `{member} ({member.id})`", color=self.bot.embedGreen)
+            embed = discord.Embed(title=f"🚪 User joined", description=f"**User:** `{member} ({member.id})`\n**User count:** `{member.guild.member_count}`", color=self.bot.embedGreen)
             await loggingchannel.send(embed=embed)
     
     @commands.Cog.listener()
