@@ -5,7 +5,6 @@ import logging
 import random
 
 import discord
-import cat
 from discord.ext import commands
 
 
