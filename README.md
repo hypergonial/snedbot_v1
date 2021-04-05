@@ -22,6 +22,10 @@
 
 `!tags` Lists all available tags. Has a 60 second cooldown per user.
 
+`!flipcoin` Flips a coin. Has a 30 second cooldown per user.
+
+`!randomcat` Shows a random cat. Has a 60 second cooldown per user.
+
 `!matchmaking` Starts the matchmaking system. Creates a multiplayer listing in desired channel upon completion. Has a 20 hour cooldown per user.
 
 ### Commands for server owners & admins:
@@ -32,6 +36,8 @@
 `!priviligedroles` Lists all priviliged roles. Can only be executed by a guild owner.
 
 `!setup <setuptype>` Initialize a setup, for configuring the server. Example: `!setup LFG` will start a setup helping you set up reaction roles. Requires priviliged access. Current setups: `LFG, matchmaking, keepontop, logging`
+
+`!setnick <nickname>` Sets the bot nickname
 
 `!settings` Displays all settings for the current guild. Requires priviliged access.
 
