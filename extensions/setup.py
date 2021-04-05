@@ -1,7 +1,9 @@
-import discord
-from discord.ext import commands
 import asyncio
 import logging
+
+import discord
+from discord.ext import commands
+
 
 async def hasOwner(ctx):
     return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id

@@ -1,7 +1,9 @@
+import gettext
+import logging
+
 import discord
 from discord.ext import commands
-import logging
-import gettext
+
 
 async def hasOwner(ctx):
     return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id
@@ -48,7 +50,14 @@ class Tags(commands.Cog):
                 self.tag.reset_cooldown(ctx)
                 return
             else :
-                await ctx.channel.send(content=tagContent)
+                if ctx.message.reference != None: #If the original command was invoked as a reply to someone
+                    try:
+                        replytomsg = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+                        await replytomsg.reply(content=tagContent, mention_author=True) #Then the invoked tag will also reply to that message
+                    except discord.HTTPException:
+                        await ctx.channel.send(content=tagContent)
+                else :
+                    await ctx.channel.send(content=tagContent)
 
     @commands.command(help="Displays all the tags you can call.", description="Shows a list of all available tags.", usage="tags")
     @commands.cooldown(1, 60, type=commands.BucketType.member)

@@ -1,8 +1,9 @@
+import asyncio
+import gettext
+import logging
+
 import discord
 from discord.ext import commands
-import asyncio
-import logging
-import gettext
 
 
 async def hasOwner(ctx):
@@ -211,6 +212,20 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             roleNames = ", ".join(roleNames)
             embed=discord.Embed(title="Priviliged roles for this guild:", description=f"`{roleNames}`", color=self.bot.embedBlue)
             await ctx.channel.send(embed=embed)
+
+    @commands.command(help="Sets the bot's nickname.", description="Sets the bot's nickname for this server. Provide `Null` or `None` to reset nickname.", usage="setnick <nickname>")
+    @commands.check(hasPriviliged)
+    @commands.guild_only()
+    async def setnick(self, ctx, *, nick):
+        try:
+            if nick.lower() == "none" or nick.lower() == "null":  #Simple way to clear nick
+                nick=None
+            await ctx.guild.me.edit(nick=nick)
+            embed = discord.Embed(title="✅ Nickname changed", description=f"Bot nickname has been changed to `{nick}`.", color=self.bot.embedGreen)
+            await ctx.send(embed=embed)
+        except:
+            embed = discord.Embed(title="❌ Error: Unable to change nickname.", description=f"This could be due to a permissions issue.", color=self.bot.errorColor)
+            await ctx.send(embed=embed)
 
     @commands.command(help="Shut down the bot.", description="Shuts the bot down properly and closes all pending connections.", usage="shutdown")
     @commands.is_owner()
