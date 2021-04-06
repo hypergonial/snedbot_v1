@@ -33,9 +33,14 @@ class Logging(commands.Cog):
                     break
             else :
                 break
+        contentfield = message.content
+        if message.attachments:
+            contentfield = f"{message.content}\n//The message contained a file."
+        if message.embeds:
+            contentfield = contentfield + "\n//The message contained an embed."
         if message.channel.id != loggingchannelID :
             if moderator != None: #If this was deleted by a mod
-                embed = discord.Embed(title=f"🗑️ Message deleted by Moderator", description=f"**Message author:** `{message.author} ({message.author.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{message.content}```", color=self.bot.errorColor)
+                embed = discord.Embed(title=f"🗑️ Message deleted by Moderator", description=f"**Message author:** `{message.author} ({message.author.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{contentfield}```", color=self.bot.errorColor)
                 elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGCHANNEL", message.guild.id)
                 if elevated_loggingchannelID != 0: #Considering it as elevated since a mod took action
                     elevated_loggingchannel = message.guild.get_channel(elevated_loggingchannelID)
@@ -46,7 +51,7 @@ class Logging(commands.Cog):
             else:
                 #Logging channel
                 loggingchannel = message.guild.get_channel(loggingchannelID)
-                embed = discord.Embed(title=f"🗑️ Message deleted", description=f"**Message author:** `{message.author} ({message.author.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{message.content}```", color=self.bot.errorColor)
+                embed = discord.Embed(title=f"🗑️ Message deleted", description=f"**Message author:** `{message.author} ({message.author.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{contentfield}```", color=self.bot.errorColor)
                 await loggingchannel.send(embed=embed)        
 
     #Message editing logging
