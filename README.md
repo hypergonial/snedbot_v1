@@ -1,4 +1,4 @@
-# Anno Bot "Sned" v3.3.2
+# Anno Bot "Sned" v3.3.3
 
 ## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  for matchmaking and other purposes on the Annoverse discord guild.
 
