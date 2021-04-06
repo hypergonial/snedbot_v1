@@ -291,7 +291,7 @@ class Setup(commands.Cog):
                     embed=discord.Embed(title="🛠️ Logging Setup", description=f"No elevated logging channel set.", color=self.bot.embedBlue)
                     await ctx.send(embed=embed)
                 await self.bot.DBHandler.modifysettings("LOGCHANNEL", loggingChannel.id, ctx.guild.id)
-                await self.bot.DBHandler.modifysettings("ELEVATED_LOGSCHANNEL", elevated_loggingChannelID, ctx.guild.id)
+                await self.bot.DBHandler.modifysettings("ELEVATED_LOGCHANNEL", elevated_loggingChannelID, ctx.guild.id)
                 embed=discord.Embed(title="🛠️ Logging Setup", description=f"✅ Setup completed. Logs will now be recorded!", color=self.bot.embedGreen)
                 await ctx.channel.send(embed=embed)
                 return
