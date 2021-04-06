@@ -25,11 +25,29 @@ class Logging(commands.Cog):
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", message.guild.id)
         if loggingchannelID == 0:
             return
+        moderator = None
+        async for entry in message.guild.audit_logs():
+            if entry.action == discord.AuditLogAction.message_delete:
+                if entry.target == message.author :
+                    moderator = entry.user
+                    break
+            else :
+                break
         if message.channel.id != loggingchannelID :
-            #Logging channel
-            loggingchannel = message.guild.get_channel(loggingchannelID)
-            embed = discord.Embed(title=f"🗑️ Message deleted", description=f"**Message author:** {message.author} ({message.author.id})\n**Channel:** {message.channel.mention}\n**Message content:** ```{message.content}```", color=self.bot.errorColor)
-            await loggingchannel.send(embed=embed)
+            if moderator != None: #If this was deleted by a mod
+                embed = discord.Embed(title=f"🗑️ Message deleted by Moderator", description=f"**Message author:** `{message.author} ({message.author.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{message.content}```", color=self.bot.errorColor)
+                elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGCHANNEL", message.guild.id)
+                if elevated_loggingchannelID != 0: #Considering it as elevated since a mod took action
+                    elevated_loggingchannel = message.guild.get_channel(elevated_loggingchannelID)
+                    await elevated_loggingchannel.send(embed=embed)
+                else:
+                    loggingchannel = message.guild.get_channel(loggingchannelID)
+                    await loggingchannel.send(embed=embed)
+            else:
+                #Logging channel
+                loggingchannel = message.guild.get_channel(loggingchannelID)
+                embed = discord.Embed(title=f"🗑️ Message deleted", description=f"**Message author:** `{message.author} ({message.author.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{message.content}```", color=self.bot.errorColor)
+                await loggingchannel.send(embed=embed)        
 
     #Message editing logging
 
@@ -88,14 +106,26 @@ class Logging(commands.Cog):
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", payload.guild_id)
         if payload.channel_id != loggingchannelID :
             if loggingchannelID == 0:
-
                 return
             else :
+                moderator = "Undefined" 
+                guild = self.bot.get_guild(payload.guild_id)
+                async for entry in guild.audit_logs(): #Get the bot that did it
+                    if entry.action == discord.AuditLogAction.message_bulk_delete:
+                        moderator = entry.user
+                        break
+                    else :
+                        break
                 guild = self.bot.get_guild(payload.guild_id)
                 channel = guild.get_channel(payload.channel_id)
-                loggingchannel = guild.get_channel(loggingchannelID)
-                embed = discord.Embed(title=f"🗑️ Bulk message deletion", description=f"**Channel:** {channel.mention}\n**Multiple messages have been purged.**", color=self.bot.errorColor)
-                await loggingchannel.send(embed=embed)
+                embed = discord.Embed(title=f"🗑️ Bulk message deletion", description=f"**Channel:** {channel.mention}\n**Mod-Bot:** {moderator.mention}\n**Multiple messages have been purged.**", color=self.bot.errorColor)
+                elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGCHANNEL", payload.guild_id)
+                if elevated_loggingchannelID != 0:
+                    elevated_loggingchannel = guild.get_channel(elevated_loggingchannelID)
+                    await elevated_loggingchannel.send(embed=embed)
+                else:
+                    loggingchannel = guild.get_channel(loggingchannelID)
+                    await loggingchannel.send(embed=embed)
     #Does not work, idk why but this event is never called
     @commands.Cog.listener()
     async def on_invite_delete(self, invite):
@@ -113,8 +143,16 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            embed = discord.Embed(title=f"🗑️ Role deleted", description=f"**Role:** `{role}`", color=self.bot.errorColor)
-            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", role.guild.id)
+            moderator = "Undefined"
+            async for entry in role.guild.audit_logs():
+                if entry.action == discord.AuditLogAction.role_delete:
+                    if entry.target == role or entry.target.id == role.id :
+                        moderator = entry.user
+                        break
+                else :
+                    break
+            embed = discord.Embed(title=f"🗑️ Role deleted", description=f"**Role:** `{role}`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.errorColor)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGCHANNEL", role.guild.id)
             if elevated_loggingchannelID != 0:
                 elevated_loggingchannel = role.guild.get_channel(elevated_loggingchannelID)
                 await elevated_loggingchannel.send(embed=embed)
@@ -128,8 +166,16 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", channel.guild.id)
-            embed = discord.Embed(title=f"#️⃣ Channel deleted", description=f"**Channel:** `{channel.name}`", color=self.bot.errorColor)
+            moderator = "Undefined"
+            async for entry in channel.guild.audit_logs():
+                if entry.action == discord.AuditLogAction.channel_delete:
+                    if entry.target == channel or entry.target.id == channel.id :
+                        moderator = entry.user
+                        break
+                else :
+                    break
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGCHANNEL", channel.guild.id)
+            embed = discord.Embed(title=f"#️⃣ Channel deleted", description=f"**Channel:** `{channel.name}`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.errorColor)
             if elevated_loggingchannelID != 0:
                 elevated_loggingchannel = channel.guild.get_channel(elevated_loggingchannelID)
                 await elevated_loggingchannel.send(embed=embed)
@@ -145,11 +191,19 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
+            moderator = "Undefined"
+            async for entry in channel.guild.audit_logs():
+                if entry.action == discord.AuditLogAction.channel_create:
+                    if entry.target == channel or entry.target.id == channel.id :
+                        moderator = entry.user
+                        break
+                else :
+                    break
             if isinstance(channel, discord.TextChannel):
-                embed = discord.Embed(title=f"#️⃣ Channel created", description=f"Channel: {channel.mention}", color=self.bot.embedGreen)
+                embed = discord.Embed(title=f"#️⃣ Channel created", description=f"**Channel:** {channel.mention}\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.embedGreen)
             else :
-                embed = discord.Embed(title=f"#️⃣ Channel created", description=f"Channel: `{channel.name}`", color=self.bot.embedGreen)
-            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", channel.guild.id)
+                embed = discord.Embed(title=f"#️⃣ Channel created", description=f"**Channel:** `{channel.name}`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.embedGreen)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGCHANNEL", channel.guild.id)
             if elevated_loggingchannelID != 0:
                 elevated_loggingchannel = channel.guild.get_channel(elevated_loggingchannelID)
                 await elevated_loggingchannel.send(embed=embed)
@@ -163,8 +217,16 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", role.guild.id)
-            embed = discord.Embed(title=f"❇️ Role created", description=f"**Role:** `{role}`", color=self.bot.embedGreen)
+            moderator = "Undefined"
+            async for entry in role.guild.audit_logs():
+                if entry.action == discord.AuditLogAction.role_create:
+                    if entry.target == role or entry.target.id == role.id :
+                        moderator = entry.user
+                        break
+                else :
+                    break
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGCHANNEL", role.guild.id)
+            embed = discord.Embed(title=f"❇️ Role created", description=f"**Role:** `{role}`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.embedGreen)
             if elevated_loggingchannelID != 0:
                 elevated_loggingchannel = role.guild.get_channel(elevated_loggingchannelID)
                 await elevated_loggingchannel.send(embed=embed)
@@ -178,8 +240,16 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            embed = discord.Embed(title=f"🖊️ Role updated", description=f"**Role:** `{after.name}` \n**Before:**```Name: {before.name}\nColor: {before.color}\nManaged: {before.managed}\nMentionable: {before.mentionable}\nPosition: {before.position}\nPermissions: {before.permissions}```\n**After:**\n```Name: {after.name}\nColor: {after.color}\nManaged: {after.managed}\nMentionable: {after.mentionable}\nPosition:{after.position}\nPermissions: {after.permissions}```", color=self.bot.embedBlue)
-            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", after.guild.id)
+            moderator = "Undefined"
+            async for entry in after.guild.audit_logs():
+                if entry.action == discord.AuditLogAction.role_update:
+                    if entry.target == after or entry.target.id == after.id :
+                        moderator = entry.user
+                        break
+                else :
+                    break
+            embed = discord.Embed(title=f"🖊️ Role updated", description=f"**Role:** `{after.name}` \n**Moderator:** `{moderator} ({moderator.id})`\n**Before:**```Name: {before.name}\nColor: {before.color}\nHoisted: {before.hoist}\nManaged: {before.managed}\nMentionable: {before.mentionable}\nPosition: {before.position}\nPermissions: {before.permissions}```\n**After:**\n```Name: {after.name}\nColor: {after.color}\nHoisted: {after.hoist}\nManaged: {after.managed}\nMentionable: {after.mentionable}\nPosition:{after.position}\nPermissions: {after.permissions}```", color=self.bot.embedBlue)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGCHANNEL", after.guild.id)
             if elevated_loggingchannelID != 0:
                 elevated_loggingchannel = after.guild.get_channel(elevated_loggingchannelID)
                 await elevated_loggingchannel.send(embed=embed)
@@ -193,8 +263,15 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            embed = discord.Embed(title=f"🖊️ Guild updated", description=f"Guild settings have been updated.", color=self.bot.embedBlue)
-            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", after.id)
+            moderator = "Undefined"
+            async for entry in after.audit_logs():
+                if entry.action == discord.AuditLogAction.guild_update:
+                    moderator = entry.user
+                    break
+                else :
+                    break
+            embed = discord.Embed(title=f"🖊️ Guild updated", description=f"Guild settings have been updated by {moderator} `({moderator.id})`.", color=self.bot.embedBlue)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGCHANNEL", after.id)
             if elevated_loggingchannelID != 0:
                 elevated_loggingchannel = after.get_channel(elevated_loggingchannelID)
                 await elevated_loggingchannel.send(embed=embed)
@@ -208,7 +285,7 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", guild.id)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGCHANNEL", guild.id)
             embed = discord.Embed(title=f"🖊️ Guild integrations updated", description=f"Guild integrations have been updated.", color=self.bot.embedBlue)
             if elevated_loggingchannelID != 0:
                 elevated_loggingchannel = guild.get_channel(elevated_loggingchannelID)
@@ -234,7 +311,7 @@ class Logging(commands.Cog):
                 embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
             else :
                 embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:**```Not specified```", color=self.bot.errorColor)
-            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", guild.id)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGCHANNEL", guild.id)
             if elevated_loggingchannelID != 0:
                 elevated_loggingchannel = guild.get_channel(elevated_loggingchannelID)
                 await elevated_loggingchannel.send(embed=embed)
@@ -256,7 +333,7 @@ class Logging(commands.Cog):
                     moderator = entry.user
                     break
             embed = discord.Embed(title=f"🔨 User unbanned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`", color=self.bot.embedGreen)
-            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", guild.id)
+            elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGCHANNEL", guild.id)
             if elevated_loggingchannelID != 0:
                 elevated_loggingchannel = guild.get_channel(elevated_loggingchannelID)
                 await elevated_loggingchannel.send(embed=embed)
@@ -291,7 +368,7 @@ class Logging(commands.Cog):
                     embed = discord.Embed(title=f"🚪👈 User was kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
                 else :
                     embed = discord.Embed(title=f"🚪👈 User was kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```Not specified```", color=self.bot.errorColor)
-                elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", member.guild.id)
+                elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGCHANNEL", member.guild.id)
                 if elevated_loggingchannelID != 0:
                     elevated_loggingchannel = member.guild.get_channel(elevated_loggingchannelID)
                     await elevated_loggingchannel.send(embed=embed)
@@ -339,12 +416,21 @@ class Logging(commands.Cog):
                     add_diff = list(set(after.roles)-set(before.roles))
                     #Contains role that was removed from user if any
                     rem_diff = list(set(before.roles)-set(after.roles))
+                    #Checking Auditlog for moderator who did it, if applicable
+                    moderator = "Undefined"
+                    async for entry in after.guild.audit_logs():
+                        if entry.action == discord.AuditLogAction.member_role_update:
+                            if entry.target == after :
+                                moderator = entry.user
+                                break
+                        else :
+                            break
                     if len(add_diff) != 0 :
-                        embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name} ({after.id})`\nRole added: `{add_diff[0]}`", color=self.bot.embedBlue)
+                        embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name}#{after.discriminator} ({after.id})`\n**Moderator:** `{moderator.name}#{moderator.discriminator} ({moderator.id})`\n**Role added:** `{add_diff[0]}`", color=self.bot.embedBlue)
                     elif len(rem_diff) != 0 :
-                        embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name} ({after.id})`\nRole removed: `{rem_diff[0]}`", color=self.bot.embedBlue)
+                        embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name}#{after.discriminator} ({after.id})`\n**Moderator:** `{moderator.name}#{moderator.discriminator} ({moderator.id})`\n**Role removed:** `{rem_diff[0]}`", color=self.bot.embedBlue)
                     #Role updates are considered elevated due to importance
-                    elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", after.guild.id)
+                    elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGCHANNEL", after.guild.id)
                     if elevated_loggingchannelID != 0:
                         elevated_loggingchannel = after.guild.get_channel(elevated_loggingchannelID)
                         await elevated_loggingchannel.send(embed=embed)

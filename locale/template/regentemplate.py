@@ -34,4 +34,6 @@ else :
     print(f"misc_commands.pot @ {BASE_DIR}")
     print(f"matchmaking.pot @ {BASE_DIR}")
     print(f"tags.pot @ {BASE_DIR}")
+    print()
+    print("Finished! Press enter to close...")
     input()
