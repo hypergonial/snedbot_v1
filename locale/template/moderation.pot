@@ -15,3 +15,25 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
+#: moderation.py:44
+msgid "{offender} has been warned."
+msgstr ""
+
+#: moderation.py:44 moderation.py:47
+msgid "Warning issued."
+msgstr ""
+
+#: moderation.py:47
+msgid ""
+"{offender} has been warned.\n"
+"**Reason:** {reason}"
+msgstr ""
+
+#: moderation.py:53
+msgid "Logging is not set up properly."
+msgstr ""
+
+#: moderation.py:53
+msgid "Warning failed."
+msgstr ""
+

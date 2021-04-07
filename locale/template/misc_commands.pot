@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-06 17:37+0200\n"
+"POT-Creation-Date: 2021-04-07 23:03+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,51 +15,51 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: misc_commands.py:43
+#: misc_commands.py:45
 msgid "{member_name}'s avatar:"
 msgstr ""
 
-#: misc_commands.py:51
+#: misc_commands.py:53
 msgid "Please check if you typed everything correctly, then try again."
 msgstr ""
 
-#: misc_commands.py:51
+#: misc_commands.py:53
 msgid "Unable to find user."
 msgstr ""
 
-#: misc_commands.py:58
+#: misc_commands.py:60
 msgid "Latency: `{latency}ms`"
 msgstr ""
 
-#: misc_commands.py:76
+#: misc_commands.py:78
 msgid "Flipping coin..."
 msgstr ""
 
-#: misc_commands.py:76
+#: misc_commands.py:78
 msgid "Hold on..."
 msgstr ""
 
-#: misc_commands.py:80
+#: misc_commands.py:82
 msgid "Coin flipped"
 msgstr ""
 
-#: misc_commands.py:80
+#: misc_commands.py:82
 msgid "It's **{result}**!"
 msgstr ""
 
-#: misc_commands.py:89
+#: misc_commands.py:91
 msgid "Looking for kitty..."
 msgstr ""
 
-#: misc_commands.py:89 misc_commands.py:97
+#: misc_commands.py:91 misc_commands.py:99
 msgid "Random kitten"
 msgstr ""
 
-#: misc_commands.py:97
+#: misc_commands.py:99
 msgid "Found one!"
 msgstr ""
 
-#: misc_commands.py:116
+#: misc_commands.py:127
 msgid ""
 "**Name:** `{guild_name}`\n"
 "**ID:** `{guild_id}`\n"
@@ -72,7 +72,7 @@ msgid ""
 "**Nitro Boost level:** `{premium_tier}`"
 msgstr ""
 
-#: misc_commands.py:116
+#: misc_commands.py:127
 msgid "Server information"
 msgstr ""
 

@@ -20,9 +20,9 @@ from dotenv import load_dotenv
 #Language
 lang = "en"
 #Is this build experimental?
-experimentalBuild = False
+experimentalBuild = True
 #Version of the bot
-currentVersion = "3.3.3"
+currentVersion = "3.4.0a"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 #Get token from .env
@@ -65,6 +65,7 @@ else :
 
 
 #No touch, handled in runtime by extensions
+bot.BASE_DIR = BASE_DIR
 bot.currentVersion = currentVersion
 bot.prefix = prefix
 bot.lang = lang
@@ -76,7 +77,7 @@ bot.recentlyEdited = []
 #All extensions that are loaded on boot-up, change these to alter what modules you want (Note: These refer to filenames NOT cognames)
 #Note: Without the extension admin_commands, most things will break, so I consider this a must-have. Remove at your own peril.
 #Jishaku is a bot-owner only debug extension, requires 'pip install jishaku'.
-initial_extensions = ['extensions.admin_commands', 'extensions.misc_commands', 'extensions.matchmaking', 'extensions.tags', 'extensions.setup', 'extensions.userlog', 'jishaku']
+initial_extensions = ['extensions.admin_commands', 'extensions.misc_commands', 'extensions.matchmaking', 'extensions.tags', 'extensions.setup', 'extensions.userlog', 'extensions.moderation', 'jishaku']
 #Contains all the valid datatypes in settings. If you add a new one here, it will be automatically generated
 #upon a new request to retrieve/modify that datatype.
 bot.datatypes = ["LOGCHANNEL", "ELEVATED_LOGCHANNEL",   #Used in module userlog
@@ -156,9 +157,10 @@ async def on_ready():
 #
 #DBHandler
 #
-#All functions relating to adding, updating, inserting, or removing from any table in the database
+#All helper functions relating to adding, updating, inserting, or removing from any table in the database
 class DBhandler():
-    #Deletes all data related to a specific guild, including but not limited to: all settings, priviliged roles, stored tags, stored multiplayer listings
+    #Deletes all data related to a specific guild, including but not limited to: all settings, priviliged roles, stored tags, stored multiplayer listings etc...
+    #Warning! This also erases any stored warnings & other moderation actions for the guild
     async def deletedata(self, guildID):
         #The nuclear option
         async with aiosqlite.connect(bot.dbPath) as db:
@@ -166,8 +168,8 @@ class DBhandler():
             await db.execute("DELETE FROM priviliged WHERE guild_id = ?", [guildID])
             await db.execute("DELETE FROM stored_text WHERE guild_id = ?", [guildID])
             await db.execute("DELETE FROM match_listings WHERE guild_id = ?", [guildID])
+            await db.execute("DELETE FROM users WHERE guild_id = ?", [guildID])
             await db.commit()
-            #os.remove(f"{guildID}_settings.cfg")
             logging.warning(f"Settings have been reset and tags erased for guild {guildID}.")
 
     #Returns the priviliged roles for a specific guild as a list.
@@ -275,7 +277,6 @@ class DBhandler():
                 #This gets datapairs in a tuple, print it below if you want to see how it looks
                 cursor = await db.execute("SELECT datatype, value FROM settings WHERE guild_id = ?", [guildID])
                 dbSettings = await cursor.fetchall()
-                #print(dbSettings)
                 #The array we will return to send in the message
                 settings = []
                 #Now we just combine them.
@@ -402,6 +403,68 @@ class DBhandler():
                 "guild_id": guild_id
             }
             return listings
+    
+    async def createUser(self, userID, guildID, flags=None, warns=0, is_muted=0, notes=None): #Creates an empty user, or you can specify attributes (but you should not)
+        async with aiosqlite.connect(bot.dbPath) as db:
+            await db.execute("INSERT INTO users (user_id, flags, warns, is_muted, notes, guild_id) VALUES (?, ?, ?, ?, ?, ?)", [userID, flags, warns, is_muted, notes, guildID])
+            await db.commit()
+
+
+    async def getUser(self, userID, guildID): #Gets a single user from the db
+        async with aiosqlite.connect(bot.dbPath) as db:
+            cursor = await db.execute("SELECT * FROM users WHERE user_id = ? AND guild_id = ?", [userID, guildID])
+            result = await cursor.fetchone()
+            if result:
+                user = {
+                    "user_id": result[0],
+                    "flags": result[1],
+                    "warns": result[2],
+                    "is_muted": result[3],
+                    "notes": result[4],
+                    "guild_id": result[5]
+                }
+                return user
+            else:
+                await self.createUser(userID, guildID) #If the user does not exist, we create an empty entry for them, then repeat the get request
+                await self.getUser(userID, guildID) #Recursion yay (I am immature)
+    
+    async def getAllGuildUsers(self, guildID):
+        async with aiosqlite.connect(bot.dbPath) as db:
+            cursor = await db.execute("SELECT * FROM users WHERE guild_id = ?", [guildID])
+            results = await cursor.fetchall()
+            if results:
+                userID, flags, warns, is_muted, notes, guild_id = ([] for i in range(6))
+                for result in results:
+                    userID.append(result[0])
+                    flags.append(result[1])
+                    warns.append(result[2])
+                    is_muted.append(result[3])
+                    notes.append(result[4])
+                    guild_id.append(result[5])
+                users = {
+                    "user_id": userID,
+                    "flags": flags,
+                    "warns": warns,
+                    "is_muted": is_muted,
+                    "notes": notes,
+                    "guild_id": guild_id
+                }
+                return users
+    
+    async def updateUser(self, userID, field, value, guildID): #Update a user's specific attribute
+        async with aiosqlite.connect(bot.dbPath) as db:
+            valid_fields=["flags", "warns", "is_muted", "notes"] #This should prevent SQL Injection, and accidental data writes/errors
+            if field not in valid_fields:
+                logging.critical(f"DBHandler.updateUser referenced invalid field: {field}")
+                return
+            if await self.getUser(userID, guildID):
+                await db.execute(f"UPDATE users SET {field} = ? WHERE user_id = ? AND guild_id = ?", [value, userID, guildID])
+                await db.commit()
+            else:
+                self.createUser(userID, guildID) #Create the user
+                await db.execute(f"UPDATE users SET {field} = ? WHERE user_id = ? AND guild_id = ?", [value, userID, guildID])
+                await db.commit()
+
 
 
 #The main instance of DBHandler

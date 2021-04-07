@@ -167,32 +167,6 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             await ctx.channel.send(embed=embed)
             return
 
-    #Warn a user & print it to logs, needs logs to be set up
-    @commands.command(help="Warns a user.", description="Warns the user and logs it.", usage="warn <user> [reason]")
-    @commands.check(hasPriviliged)
-    async def warn(self, ctx, offender:discord.Member, *, reason:str=None):
-        loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", ctx.guild.id)
-        if loggingchannelID == 0:
-            embed=discord.Embed(title="❌ Warning failed.", description=f"Logging is not set up.")
-            await ctx.send(embed=embed)
-            await asyncio.sleep(20)
-            return
-        if reason == None :
-            embed=discord.Embed(title="⚠️" + self._("Warning issued."), description=self._("{offender} has been warned.").format(offender=offender.mention), color=self.bot.warnColor)
-            await ctx.send(embed=embed)
-            warnembed=discord.Embed(title="⚠️ Warning issued.", description=f"{offender.mention} has been warned by {ctx.author.mention}.\n[Jump!]({ctx.message.jump_url})", color=self.bot.warnColor)
-        else :
-            embed=discord.Embed(title="⚠️" + self._("Warning issued."), description=self._("{offender} has been warned.\n**Reason:** {reason}").format(offender=offender.mention, reason=reason), color=self.bot.warnColor)
-            await ctx.send(embed=embed)
-            warnembed=discord.Embed(title="⚠️ Warning issued.", description=f"{offender.mention} has been warned by {ctx.author.mention}.\n**Reason:** ```{reason}```\n[Jump!]({ctx.message.jump_url})", color=self.bot.warnColor)
-        elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGSCHANNEL", ctx.guild.id)
-        if elevated_loggingchannelID != 0:
-            elevated_loggingchannel = ctx.guild.get_channel(elevated_loggingchannelID)
-            await elevated_loggingchannel.send(embed=warnembed)
-        else:
-            loggingchannel = ctx.guild.get_channel(loggingchannelID)
-            await loggingchannel.send(embed=warnembed)
-
     @commands.command(aliases=['privroles', 'botadminroles'],help="List all priviliged roles.", description="Returns all priviliged roles on this server.", usage=f"priviligedroles")
     @commands.check(hasOwner)
     @commands.guild_only()

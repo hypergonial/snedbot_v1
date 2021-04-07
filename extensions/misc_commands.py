@@ -3,6 +3,8 @@ import asyncio
 import gettext
 import logging
 import random
+from pathlib import Path
+import os
 
 import discord
 from discord.ext import commands
@@ -98,6 +100,15 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         embed.set_image(url=catjson[0]["url"])
         await msg.edit(embed=embed)
+
+    @commands.command(help="Shows a fact about penguins.", description="Shows a random fact about penguins. Why? Why not?", usage="penguinfact")
+    @commands.cooldown(1, 10, type=commands.BucketType.member)
+    async def penguinfact(self, ctx):
+        penguin_path = Path(self.bot.BASE_DIR, 'etc', 'penguinfacts.txt')
+        penguin_facts = open(penguin_path, "r").readlines()
+        embed = discord.Embed(title="🐧 Penguin Fact", description=f"{random.choice(penguin_facts)}", color=self.bot.embedBlue)
+        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=embed)
 
     #Shows bot version, creator, etc..
     @commands.command(help="Displays information about the bot.", description="Displays information about the bot. Takes no arguments.", usage="about", aliases=["info"])
