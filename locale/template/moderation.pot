@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-07 23:03+0200\n"
+"POT-Creation-Date: 2021-04-09 00:09+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,25 +15,69 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: moderation.py:44
+#: moderation.py:45
 msgid "{offender} has been warned."
 msgstr ""
 
-#: moderation.py:44 moderation.py:47
+#: moderation.py:45 moderation.py:48
 msgid "Warning issued."
 msgstr ""
 
-#: moderation.py:47
+#: moderation.py:48
 msgid ""
 "{offender} has been warned.\n"
 "**Reason:** {reason}"
 msgstr ""
 
-#: moderation.py:53
+#: moderation.py:54
 msgid "Logging is not set up properly."
 msgstr ""
 
-#: moderation.py:53
+#: moderation.py:54
 msgid "Warning failed."
+msgstr ""
+
+#: moderation.py:65
+msgid "Already muted."
+msgstr ""
+
+#: moderation.py:65
+msgid "{offender} is already muted."
+msgstr ""
+
+#: moderation.py:74
+msgid "Unable to mute user."
+msgstr ""
+
+#: moderation.py:74 moderation.py:97
+msgid "Mute role not set."
+msgstr ""
+
+#: moderation.py:78
+msgid "User muted."
+msgstr ""
+
+#: moderation.py:78
+msgid "{offender} has been muted."
+msgstr ""
+
+#: moderation.py:88
+msgid "Not muted."
+msgstr ""
+
+#: moderation.py:88
+msgid "{offender} is not muted."
+msgstr ""
+
+#: moderation.py:97
+msgid "Unable to unmute user."
+msgstr ""
+
+#: moderation.py:101
+msgid "User unmuted."
+msgstr ""
+
+#: moderation.py:101
+msgid "{offender} has been unmuted."
 msgstr ""
 

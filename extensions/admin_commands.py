@@ -37,9 +37,17 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
     @commands.check(hasPriviliged)
     @commands.guild_only()
     async def whois(self, ctx, member : discord.Member) :
+        db_user = await self.bot.DBHandler.getUser(member.id, ctx.guild.id)
         rolelist = [role.name for role in member.roles]
         roleformatted = ", ".join(rolelist)
-        embed=discord.Embed(title=f"User information: {member.name}", description=f"Username: `{member.name}` \nNickname: `{member.display_name}` \nUser ID: `{member.id}` \nStatus: `{member.raw_status}` \nBot: `{member.bot}` \nAccount creation date: `{member.created_at}` \nJoin date: `{member.joined_at}` \nRoles: `{roleformatted}`", color=member.colour)
+        warns = db_user["warns"]
+        flags = db_user["flags"] #I have to do this because f-string bad
+        if db_user["is_muted"] == 0:
+            is_muted = False
+        else :
+            is_muted = True 
+        notes = db_user["notes"]
+        embed=discord.Embed(title=f"User information: {member.name}", description=f"Username: `{member.name}` \nNickname: `{member.display_name}` \nUser ID: `{member.id}` \nStatus: `{member.raw_status}` \nBot: `{member.bot}` \nAccount creation date: `{member.created_at}` \nJoin date: `{member.joined_at}`\nWarns: `{warns}`\nMuted: `{is_muted}`\nFlags: `{flags}`\nNotes: `{notes}` \nRoles: `{roleformatted}`", color=member.colour)
         embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
         embed.set_thumbnail(url=member.avatar_url)
         await ctx.channel.send(embed=embed)

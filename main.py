@@ -22,7 +22,7 @@ lang = "en"
 #Is this build experimental?
 experimentalBuild = True
 #Version of the bot
-currentVersion = "3.4.0a"
+currentVersion = "3.4.0b"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 #Get token from .env
@@ -82,7 +82,8 @@ initial_extensions = ['extensions.admin_commands', 'extensions.misc_commands', '
 #upon a new request to retrieve/modify that datatype.
 bot.datatypes = ["LOGCHANNEL", "ELEVATED_LOGCHANNEL",   #Used in module userlog
 "COMMANDSCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI",   #Used in module matchmaking
-"KEEP_ON_TOP_CHANNEL", "KEEP_ON_TOP_MSG"]   #Used in module matchmaking & in main
+"KEEP_ON_TOP_CHANNEL", "KEEP_ON_TOP_MSG", #Used in module matchmaking & in main
+"MOD_MUTEROLE"]  #Moderation & automod
 #These text names are reserved and used for internal functions, other ones may get created by users for tags.
 bot.reservedTextNames = ["KEEP_ON_TOP_CONTENT"]
 #
@@ -426,7 +427,7 @@ class DBhandler():
                 return user
             else:
                 await self.createUser(userID, guildID) #If the user does not exist, we create an empty entry for them, then repeat the get request
-                await self.getUser(userID, guildID) #Recursion yay (I am immature)
+                return await self.getUser(userID, guildID) #Recursion yay (I am immature)
     
     async def getAllGuildUsers(self, guildID):
         async with aiosqlite.connect(bot.dbPath) as db:
@@ -459,8 +460,10 @@ class DBhandler():
                 return
             if await self.getUser(userID, guildID):
                 await db.execute(f"UPDATE users SET {field} = ? WHERE user_id = ? AND guild_id = ?", [value, userID, guildID])
+                #Printing the same thing in console
                 await db.commit()
             else:
+                print("User not found, creating")
                 self.createUser(userID, guildID) #Create the user
                 await db.execute(f"UPDATE users SET {field} = ? WHERE user_id = ? AND guild_id = ?", [value, userID, guildID])
                 await db.commit()

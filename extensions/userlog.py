@@ -189,7 +189,7 @@ class Logging(commands.Cog):
                         break
                 else :
                     break
-            embed = discord.Embed(title=f"#️⃣ Channel deleted", description=f"**Channel:** `{channel.name}`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.errorColor)
+            embed = discord.Embed(title=f"#️⃣ Channel deleted", description=f"**Channel:** `{channel.name}` ({channel.type})\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.errorColor)
             await self.log_elevated(embed, channel.guild.id)
     
     #Creation
@@ -209,9 +209,9 @@ class Logging(commands.Cog):
                 else :
                     break
             if isinstance(channel, discord.TextChannel):
-                embed = discord.Embed(title=f"#️⃣ Channel created", description=f"**Channel:** {channel.mention}\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.embedGreen)
+                embed = discord.Embed(title=f"#️⃣ Channel created", description=f"**Channel:** {channel.mention} `({channel.type})`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.embedGreen)
             else :
-                embed = discord.Embed(title=f"#️⃣ Channel created", description=f"**Channel:** `{channel.name}`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.embedGreen)
+                embed = discord.Embed(title=f"#️⃣ Channel created", description=f"**Channel:** `{channel.name}` `({channel.type})`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.embedGreen)
             await self.log_elevated(embed, channel.guild.id)
 
     @commands.Cog.listener()

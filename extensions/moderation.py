@@ -35,11 +35,12 @@ class Moderation(commands.Cog):
     #Warn a user & print it to logs, needs logs to be set up
     @commands.command(help="Warns a user.", description="Warns the user and logs it.", usage="warn <user> [reason]")
     @commands.check(hasPriviliged)
+    @commands.guild_only()
     async def warn(self, ctx, offender:discord.Member, *, reason:str=None):
-        db_user = await self.bot.DBHandler.getUser(ctx.author.id, ctx.guild.id)
+        db_user = await self.bot.DBHandler.getUser(offender.id, ctx.guild.id)
         warns = db_user["warns"]
         warns +=1
-        await self.bot.DBHandler.updateUser(ctx.author.id, "warns", warns, ctx.guild.id) #Update warns for user by incrementing it
+        await self.bot.DBHandler.updateUser(offender.id, "warns", warns, ctx.guild.id) #Update warns for user by incrementing it
         if reason == None :
             embed=discord.Embed(title="⚠️" + self._("Warning issued."), description=self._("{offender} has been warned.").format(offender=offender.mention), color=self.bot.warnColor)
             warnembed=discord.Embed(title="⚠️ Warning issued.", description=f"{offender.mention} has been warned by {ctx.author.mention}.\n**Warns:** {warns}\n\n[Jump!]({ctx.message.jump_url})", color=self.bot.warnColor)
@@ -54,6 +55,51 @@ class Moderation(commands.Cog):
             await ctx.send(embed=embed, delete_after=20)
             await ctx.message.delete()
         
+    @commands.command(help="Mutes a user.", description="Mutes a user for a specified duration, if specified. Logs the event if logging is set up.", usage="mute <user> [duration] [reason]")
+    @commands.check(hasPriviliged)
+    @commands.guild_only()
+    async def mute(self, ctx, offender:discord.Member, duration=None, *, reason:str=None):
+        db_user = await self.bot.DBHandler.getUser(offender.id, ctx.guild.id)
+        is_muted = db_user["is_muted"]
+        if is_muted == 1:
+            embed=discord.Embed(title="❌ " + self._("Already muted."), description=self._("{offender} is already muted.").format(offender=offender.mention), color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+            return
+        else:
+            mute_role_id = await self.bot.DBHandler.retrievesetting("MOD_MUTEROLE", ctx.guild.id)
+            mute_role = ctx.guild.get_role(mute_role_id)
+            try:
+                await offender.add_roles(mute_role)
+            except AttributeError:
+                embed=discord.Embed(title="❌ " + self._("Mute role not set."), description=self._("Unable to mute user.").format(offender=offender.mention), color=self.bot.errorColor)
+                await ctx.send(embed=embed)
+                return
+            await self.bot.DBHandler.updateUser(offender.id, "is_muted", 1, ctx.guild.id)
+            embed=discord.Embed(title="✅ " + self._("User muted."), description=self._("{offender} has been muted.").format(offender=offender.mention), color=self.bot.embedGreen)
+            await ctx.send(embed=embed)
+    
+    @commands.command(help="Unmutes a user.", description="Unmutes a user. Logs the event if logging is set up.", usage="unmute <user> [reason]")
+    @commands.check(hasPriviliged)
+    @commands.guild_only()
+    async def unmute(self, ctx, offender:discord.Member, *, reason:str=None):
+        db_user = await self.bot.DBHandler.getUser(offender.id, ctx.guild.id)
+        is_muted = db_user["is_muted"]
+        if is_muted == 0:
+            embed=discord.Embed(title="❌ " + self._("Not muted."), description=self._("{offender} is not muted.").format(offender=offender.mention), color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+            return
+        else:
+            mute_role_id = await self.bot.DBHandler.retrievesetting("MOD_MUTEROLE", ctx.guild.id)
+            mute_role = ctx.guild.get_role(mute_role_id)
+            try:
+                await offender.remove_roles(mute_role)
+            except AttributeError:
+                embed=discord.Embed(title="❌ " + self._("Mute role not set."), description=self._("Unable to unmute user.").format(offender=offender.mention), color=self.bot.errorColor)
+                await ctx.send(embed=embed)
+                return
+            await self.bot.DBHandler.updateUser(offender.id, "is_muted", 0, ctx.guild.id)
+            embed=discord.Embed(title="✅ " + self._("User unmuted."), description=self._("{offender} has been unmuted.").format(offender=offender.mention), color=self.bot.embedGreen)
+            await ctx.send(embed=embed)
     
 
 
