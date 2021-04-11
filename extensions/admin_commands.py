@@ -51,11 +51,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
         embed.set_thumbnail(url=member.avatar_url)
         await ctx.channel.send(embed=embed)
-    @whois.error
-    async def whois_error(self, ctx, error):
-        if isinstance(error, discord.ext.commands.errors.MemberNotFound) :
-            embed=discord.Embed(title="❌ Unable to find user.", description="Please check if you typed everything correctly, then try again.", color=self.bot.errorColor)
-            await ctx.send(embed=embed)
+
 
     #Command used for deleting a guild settings file
     @commands.command(help="Resets all settings for this guild.", description = "Resets all settings for this guild. Will also erase all tags. Irreversible.", usage="resetsettings")
@@ -105,6 +101,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         else :
             formatteddata = "".join(settingsdata)
             embed=discord.Embed(title=f"⚙️ Settings for this guild:    ({ctx.guild.id})", description=f"```{formatteddata}```", color=self.bot.embedBlue)
+            embed.set_footer(text="Do not change these values directly, unless you know what you're doing!")
             await ctx.channel.send(embed=embed)
 
 
@@ -136,7 +133,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
     @commands.command(aliases=['addprivrole', 'addbotadminrole'], help="Add role to priviliged roles", description="Adds a role to the list of priviliged roles, allowing them to execute admin commands.", usage="addpriviligedrole <rolename>")
     @commands.check(hasOwner)
     @commands.guild_only()
-    async def addpriviligedrole(self, ctx, rolename):
+    async def addpriviligedrole(self, ctx, *, rolename):
         role = discord.utils.get(ctx.guild.roles, name=rolename)
         if role == None:
             embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.", color=self.bot.errorColor)
@@ -157,7 +154,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
     @commands.command(aliases=['remprivrole', 'removeprivrole', 'removebotadminrole', 'rembotadminrole'], help="Remove role from priviliged roles.", description="Removes a role to the list of priviliged roles, revoking their permission to execute admin commands.", usage=f"removepriviligedrole <rolename>")
     @commands.check(hasOwner)
     @commands.guild_only()
-    async def removepriviligedrole(self, ctx, rolename):
+    async def removepriviligedrole(self, ctx, *, rolename):
 
         role = discord.utils.get(ctx.guild.roles, name=rolename)
         if role == None:

@@ -146,7 +146,7 @@ class Logging(commands.Cog):
                         break
                 guild = self.bot.get_guild(payload.guild_id)
                 channel = guild.get_channel(payload.channel_id)
-                embed = discord.Embed(title=f"🗑️ Bulk message deletion", description=f"**Channel:** {channel.mention}\n**Mod-Bot:** {moderator.mention}\n**Multiple messages have been purged.**", color=self.bot.errorColor)
+                embed = discord.Embed(title=f"🗑️ Bulk message deletion", description=f"**Channel:** {channel.mention}\n**Mod-Bot:** {moderator} ({moderator.id})\n**Multiple messages have been purged.**", color=self.bot.errorColor)
                 await self.log_elevated(embed, payload.guild_id)
     #Does not work, idk why but this event is never called
     @commands.Cog.listener()
@@ -234,7 +234,7 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            moderator = "Undefined"
+            moderator = None
             async for entry in after.guild.audit_logs():
                 if entry.action == discord.AuditLogAction.role_update:
                     if entry.target == after or entry.target.id == after.id :
@@ -242,8 +242,9 @@ class Logging(commands.Cog):
                         break
                 else :
                     break
-            embed = discord.Embed(title=f"🖊️ Role updated", description=f"**Role:** `{after.name}` \n**Moderator:** `{moderator} ({moderator.id})`\n**Before:**```Name: {before.name}\nColor: {before.color}\nHoisted: {before.hoist}\nManaged: {before.managed}\nMentionable: {before.mentionable}\nPosition: {before.position}\nPermissions: {before.permissions}```\n**After:**\n```Name: {after.name}\nColor: {after.color}\nHoisted: {after.hoist}\nManaged: {after.managed}\nMentionable: {after.mentionable}\nPosition:{after.position}\nPermissions: {after.permissions}```", color=self.bot.embedBlue)
-            await self.log_elevated(embed, after.guild.id)
+            if moderator:
+                embed = discord.Embed(title=f"🖊️ Role updated", description=f"**Role:** `{after.name}` \n**Moderator:** `{moderator} ({moderator.id})`\n**Before:**```Name: {before.name}\nColor: {before.color}\nHoisted: {before.hoist}\nManaged: {before.managed}\nMentionable: {before.mentionable}\nPosition: {before.position}\nPermissions: {before.permissions}```\n**After:**\n```Name: {after.name}\nColor: {after.color}\nHoisted: {after.hoist}\nManaged: {after.managed}\nMentionable: {after.mentionable}\nPosition:{after.position}\nPermissions: {after.permissions}```", color=self.bot.embedBlue)
+                await self.log_elevated(embed, after.guild.id)
 
     @commands.Cog.listener()
     async def on_guild_update(self, before, after):
@@ -300,8 +301,9 @@ class Logging(commands.Cog):
             async for entry in guild.audit_logs(action=discord.AuditLogAction.unban):
                 if entry.target == user :
                     moderator = entry.user
+                    reason = entry.reason
                     break
-            embed = discord.Embed(title=f"🔨 User unbanned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`", color=self.bot.embedGreen)
+            embed = discord.Embed(title=f"🔨 User unbanned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:** ```{reason}```", color=self.bot.embedGreen)
             await self.log_elevated(embed, guild.id)
 
     @commands.Cog.listener()
@@ -387,7 +389,10 @@ class Logging(commands.Cog):
                     elif len(rem_diff) != 0 :
                         embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name}#{after.discriminator} ({after.id})`\n**Moderator:** `{moderator.name}#{moderator.discriminator} ({moderator.id})`\n**Role removed:** `{rem_diff[0]}`", color=self.bot.embedBlue)
                     #Role updates are considered elevated due to importance
-                    await self.log_elevated(embed, after.guild.id)
+                    if moderator.id == self.bot.user.id:
+                        await self.log_standard(embed, after.guild.id)
+                    else:
+                        await self.log_elevated(embed, after.guild.id)
                 
                 if before.pending != after.pending:
                     embed = discord.Embed(title=f"🖊️ Member state changed", description=f"**User:** `{after.name} ({after.id})`\n`Pending: {before.pending}` ---> `Pending: {after.pending}`", color=self.bot.embedBlue)

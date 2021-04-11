@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-11 06:08+0200\n"
+"POT-Creation-Date: 2021-04-12 01:27+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -145,11 +145,21 @@ msgid ""
 "__Hint:__ You can use `{prefix}help {command_name}` to view command usage."
 msgstr ""
 
-#: main.py:596
+#: main.py:577
+msgid "Cannot find user by that name"
+msgstr ""
+
+#: main.py:577
+msgid ""
+"Please check if you typed everything correctly, then try again.\n"
+"**Error:**```{error}```"
+msgstr ""
+
+#: main.py:600
 msgid "Beep Boop!"
 msgstr ""
 
-#: main.py:596
+#: main.py:600
 msgid "I have been summoned to this server. Use `{prefix}help` to see what I can do!"
 msgstr ""
 

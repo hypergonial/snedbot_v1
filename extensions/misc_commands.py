@@ -50,13 +50,6 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.channel.send(embed=embed)
 
-    @avatar.error
-    async def avatar_error(self, ctx, error):
-        if isinstance(error, discord.ext.commands.errors.MemberNotFound) :
-            embed=discord.Embed(title="❌ " + self._("Unable to find user."), description=self._("Please check if you typed everything correctly, then try again."), color=self.bot.errorColor)
-            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-            await ctx.send(embed=embed)
-
         #Gets the ping of the bot.
     @commands.command(help="Displays bot ping.", description="Displays the current ping of the bot in miliseconds. Takes no arguments.", usage="ping")
     @commands.guild_only()
@@ -202,6 +195,22 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     async def quack(self, ctx):
         await ctx.channel.send("🦆")
         await ctx.message.delete()
+    
+    @commands.command(help = "Displays the amount of warnings for a user.", description="Displays the amount of warnings issued to a user. If user is not specified, it will default to self.", usage="warns [user]")
+    @commands.guild_only()
+    async def warns(self, ctx, user:discord.Member=None):
+        if user is None:
+            user = ctx.author
+        extensions = self.bot.checkExtensions
+        if "Moderation" not in extensions :
+            embed=discord.Embed(title=self.bot.errorMissingModuleTitle, description="This command requires the extension `moderation` to be active.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+        db_user = await self.bot.DBHandler.getUser(user.id, ctx.guild.id)
+        warns = db_user["warns"]
+        embed = discord.Embed(title=self._("{user}'s warnings").format(user=user), description=self._("**Warnings:** `{warns}`").format(warns=warns), color=self.bot.warnColor)
+        embed.set_thumbnail(url=user.avatar_url)
+        await ctx.send(embed=embed)
 
 def setup(bot):
     logging.info("Adding cog: MiscCommands...")

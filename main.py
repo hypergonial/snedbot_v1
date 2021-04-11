@@ -22,7 +22,7 @@ lang = "en"
 #Is this build experimental?
 experimentalBuild = True
 #Version of the bot
-currentVersion = "3.4.0c"
+currentVersion = "3.4.0d"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 #Get token from .env
@@ -573,6 +573,10 @@ async def on_command_error(ctx, error):
             embed = discord.Embed(title=bot.errorMaxConcurrencyReachedTitle, description=bot.errorMaxConcurrencyReachedDesc, color=bot.errorColor)
             embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.channel.send(embed=embed)
+    elif isinstance(error, commands.MemberNotFound):
+        embed=discord.Embed(title="❌ " + _("Cannot find user by that name"), description=_("Please check if you typed everything correctly, then try again.\n**Error:**```{error}```").format(error=str(error)), color=bot.errorColor)
+        await ctx.send(embed=embed)
+
 
     else :
         #If no known error has been passed, we will print the exception to console as usual
