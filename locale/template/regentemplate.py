@@ -27,15 +27,17 @@ else :
     os.system(f'cmd /c "py -{py_ver} "{pygettextpy_path}" -d "{Path(BASE_DIR, "matchmaking")}" matchmaking.py"')
     os.system(f'cmd /c "py -{py_ver} "{pygettextpy_path}" -d "{Path(BASE_DIR, "tags")}" tags.py"')
     os.system(f'cmd /c "py -{py_ver} "{pygettextpy_path}" -d "{Path(BASE_DIR, "moderation")}" moderation.py"')
+    os.system(f'cmd /c "py -{py_ver} "{pygettextpy_path}" -d "{Path(BASE_DIR, "timers")}" timers.py"')
 
     #User feedback
-    print("Generated .pot template files in the following locations:")
+    print("Generated .pot template files in the following location(s):")
     print(f"main.pot @ {BASE_DIR}")
     print(f"admin_commands.pot @ {BASE_DIR}")
     print(f"misc_commands.pot @ {BASE_DIR}")
     print(f"matchmaking.pot @ {BASE_DIR}")
     print(f"tags.pot @ {BASE_DIR}")
     print(f"moderation.pot @ {BASE_DIR}")
+    print(f"timers.pot @ {BASE_DIR}")
     print()
     print("Finished! Press enter to close...")
     input()

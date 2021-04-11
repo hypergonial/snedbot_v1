@@ -123,15 +123,18 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         try: 
             args = parser.parse_args(shlex.split(str(args)))
         except Exception as e:
-            embed = discord.Embed(title="❌ " + self._("Failed parsing arguments."), description=self._("**Exception:** ```{exception}```".format(exception=str(e))), color=self.bot.errorColor)
+            embed = discord.Embed(title="❌ " + self._("Failed parsing arguments"), description=self._("**Exception:** ```{exception}```").format(exception=str(e)), color=self.bot.errorColor)
+            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
             return
         except SystemExit as s:
-            embed = discord.Embed(title="❌ " + self._("Failed parsing arguments."), description=self._("**Exception:** ```SystemExit: {exception}```\n**Note:** If you are trying to pass multiple words as an argument, wrap them in quotation marks.".format(exception=str(s))), color=self.bot.errorColor)
+            embed = discord.Embed(title="❌ " + self._("Failed parsing arguments"), description=self._("**Exception:** ```SystemExit: {exception}```\n**Note:** If you are trying to pass multiple words as an argument, wrap them in quotation marks.").format(exception=str(s)), color=self.bot.errorColor)
+            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
             return
         if args.title == None or args.desc == None:
-            embed = discord.Embed(title="❌ " + self._("Missing required argument."), description=self._("You are missing a required argument. Please check `{prefix}help embed` for command usage.").format(prefix=self.bot.prefix), color=self.bot.errorColor)
+            embed = discord.Embed(title="❌ " + self._("Missing required argument"), description=self._("You are missing a required argument. Please check `{prefix}help embed` for command usage.").format(prefix=self.bot.prefix), color=self.bot.errorColor)
+            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
             return
         if args.color:
@@ -140,6 +143,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
                 genEmbed = discord.Embed(title=f"{args.title}", description=f"{args.desc}", color=color)
             except commands.BadArgument:
                 embed = discord.Embed(title="❌ " + self._("Invalid color"), description=self._("For valid colors, see the [discord.py API reference](https://discordpy.readthedocs.io/en/latest/api.html#discord.Colour)"), color=self.bot.errorColor)
+                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
                 await ctx.send(embed=embed)
                 return
         else:
@@ -153,7 +157,8 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         try:
             await ctx.send(embed=genEmbed)
         except discord.HTTPException as e:
-            embed = discord.Embed(title="❌ " + self._("Failed parsing arguments."), description=self._("**Exception:** ```{exception}```".format(exception=str(e))), color=self.bot.errorColor)
+            embed = discord.Embed(title="❌ " + self._("Failed parsing arguments."), description=self._("**Exception:** ```{exception}```").format(exception=str(e)), color=self.bot.errorColor)
+            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
             return
 

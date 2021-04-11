@@ -208,10 +208,7 @@ class Logging(commands.Cog):
                         break
                 else :
                     break
-            if isinstance(channel, discord.TextChannel):
-                embed = discord.Embed(title=f"#️⃣ Channel created", description=f"**Channel:** {channel.mention} `({channel.type})`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.embedGreen)
-            else :
-                embed = discord.Embed(title=f"#️⃣ Channel created", description=f"**Channel:** `{channel.name}` `({channel.type})`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.embedGreen)
+            embed = discord.Embed(title=f"#️⃣ Channel created", description=f"**Channel:** {channel.mention} `({channel.type})`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.embedGreen)
             await self.log_elevated(embed, channel.guild.id)
 
     @commands.Cog.listener()
@@ -353,7 +350,11 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            embed = discord.Embed(title=f"☎️ Command called", description=f"**User:** `{ctx.author} ({ctx.author.id})`\n**Channel:** {ctx.channel.mention}\n**Command:** `{ctx.message.content}`\n\n[Jump!]({ctx.message.jump_url})", color=self.bot.embedBlue)
+            if len(ctx.message.content) >= 1000: #Slicing for sanity lol
+                cmdmsg = ctx.message.content[slice(1000)] + "..."
+            else:
+                cmdmsg = ctx.message.content
+            embed = discord.Embed(title=f"☎️ Command called", description=f"**User:** `{ctx.author} ({ctx.author.id})`\n**Channel:** {ctx.channel.mention}\n**Command:** `{cmdmsg}`\n\n[Jump!]({ctx.message.jump_url})", color=self.bot.embedBlue)
             await self.log_standard(embed, ctx.guild.id)
     
     @commands.Cog.listener()

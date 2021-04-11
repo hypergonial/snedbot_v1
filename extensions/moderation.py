@@ -1,5 +1,6 @@
 import gettext
 import logging
+import datetime
 
 import aiosqlite
 import discord
@@ -55,10 +56,10 @@ class Moderation(commands.Cog):
             await ctx.send(embed=embed, delete_after=20)
             await ctx.message.delete()
         
-    @commands.command(help="Mutes a user.", description="Mutes a user for a specified duration, if specified. Logs the event if logging is set up.", usage="mute <user> [duration] [reason]")
+    @commands.command(help="Mutes a user.", description="Mutes a user permanently (until unmuted). Logs the event if logging is set up.", usage="mute <user>[reason]")
     @commands.check(hasPriviliged)
     @commands.guild_only()
-    async def mute(self, ctx, offender:discord.Member, duration=None, *, reason:str=None):
+    async def mute(self, ctx, offender:discord.Member, *, reason:str=None):
         db_user = await self.bot.DBHandler.getUser(offender.id, ctx.guild.id)
         is_muted = db_user["is_muted"]
         if is_muted == 1:
@@ -101,9 +102,12 @@ class Moderation(commands.Cog):
             embed=discord.Embed(title="✅ " + self._("User unmuted."), description=self._("{offender} has been unmuted.").format(offender=offender.mention), color=self.bot.embedGreen)
             await ctx.send(embed=embed)
     
-
-
-
+    @commands.command(help="Temporarily mutes a user.", description="Mutes a user for a specified duration. Logs the event if logging is set up.", usage="tempmute <user> <duration> [reason]")
+    @commands.check(hasPriviliged)
+    @commands.guild_only()
+    async def tempmute(self, ctx, offender:discord.Member, *, reason:str=None):
+        pass
+    
 
 def setup(bot):
     logging.info("Adding cog: Moderation...")
