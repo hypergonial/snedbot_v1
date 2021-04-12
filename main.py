@@ -20,12 +20,11 @@ from dotenv import load_dotenv
 #Language
 lang = "en"
 #Is this build experimental?
-experimentalBuild = True
+experimentalBuild = False
 #Version of the bot
-currentVersion = "3.4.0d"
+currentVersion = "3.4.0"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
-#Get token from .env
 TOKEN = os.getenv("TOKEN")
 #Activity
 activity = discord.Activity(name='Anno 9', type=discord.ActivityType.playing)
@@ -38,10 +37,12 @@ else :
     prefix = '!'
     logging.basicConfig(level=logging.INFO)
 
+#Block bot from ever pinging @everyone
+allowed_mentions = discord.AllowedMentions(everyone=False, users=True, roles=True, replied_user=True)
 #This is just my user ID, used for setting up who can & cant use priviliged commands along with a server owner.
 creatorID = 163979124820541440
-#Can modify command prefix & intents here (and probably a lot of other cool stuff I am not aware of)
-bot = commands.Bot(command_prefix=prefix, intents= discord.Intents.all(), owner_id=creatorID, case_insensitive=True, help_command=None, activity=activity, max_messages=20000)
+
+bot = commands.Bot(command_prefix=prefix, intents= discord.Intents.all(), owner_id=creatorID, case_insensitive=True, help_command=None, activity=activity, max_messages=20000, allowed_mentions=allowed_mentions)
 
 #General global bot settings
 
@@ -53,7 +54,6 @@ bot.dbPath = Path(BASE_DIR, dbName)
 bot.localePath = Path(BASE_DIR, 'locale')
 loop = asyncio.get_event_loop()
 bot.db = loop.run_until_complete(aiosqlite.connect(bot.dbPath))
-#bot.db = await aiosqlite.connect(bot.dbPath)
 if lang == "de":
     de = gettext.translation('main', localedir=bot.localePath, languages=['de'])
     de.install()
@@ -65,7 +65,6 @@ else :
     logging.error("Invalid language, fallback to English.")
     lang = "en"
     _ = gettext.gettext
-
 
 #No touch, handled in runtime by extensions
 bot.BASE_DIR = BASE_DIR
@@ -149,6 +148,8 @@ def checkExtensions():
         
 bot.checkExtensions = checkExtensions()
 
+
+
 #Executes when the bot starts & is ready.
 @bot.event
 async def on_ready():
@@ -175,21 +176,7 @@ class DBhandler():
         await bot.db.commit()
         logging.warning(f"Settings have been reset and tags erased for guild {guildID}.")
 
-    #Returns the priviliged roles for a specific guild as a list.
-    async def checkprivs(self, guildID):
-        cursor = await bot.db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ?", [guildID])
-        roleIDs = await cursor.fetchall()
-        #Abstracting away the conversion from tuples
-        roleIDs = [role[0] for role in roleIDs]
-        return roleIDs
-    #Inserts a priviliged role
-    async def setpriv(self, roleID, guildID):
-        await bot.db.execute("INSERT INTO priviliged (guild_id, priviliged_role_id) VALUES (?, ?)", [guildID, roleID])
-        await bot.db.commit()
-    #Deletes a priviliged role
-    async def delpriv(self, roleID, guildID):
-        await bot.db.execute("DELETE FROM priviliged WHERE guild_id = ? AND priviliged_role_id = ? ", [guildID, roleID])
-        await bot.db.commit()
+
     #Modifies a value in settings relating to a guild
     async def modifysettings(self, datatype, value, guildID):
         if datatype in bot.datatypes :
@@ -287,23 +274,13 @@ class DBhandler():
             return -1
     #Retrieves a piece of stored text inside table stored_text (Mostly used for tags)
     async def retrievetext(self, textname, guildID) :
-        
-        #Check if we have values for this guild
-        #Check for the desired text
-        cursor = await bot.db.execute("SELECT text_name FROM stored_text WHERE guild_id = ? AND text_name = ?", [guildID, textname])
+        cursor = await bot.db.execute("SELECT text_content FROM stored_text WHERE guild_id = ? AND text_name = ?", [guildID, textname])
         result = await cursor.fetchone()
-        #If the datatype does exist, we return the value
-        if result != None :
-            cursor = await bot.db.execute("SELECT text_content FROM stored_text WHERE guild_id = ? AND text_name = ?", [guildID, textname])
-            result = await cursor.fetchone()
-            #This is necessary as fetchone() returns it as a tuple of one element.
+        #This is necessary as fetchone() returns it as a tuple of one element.
+        if result:
             return result[0]
-        #If it does not exist, return None
-        else :
-            return None
     #Stores a piece of text inside table stored_text for later use
     async def storetext(self, textname, textcontent, guildID):
-        #Check if we have values for this guild
         #Check for the desired text
         cursor = await bot.db.execute("SELECT text_name FROM stored_text WHERE guild_id = ? AND text_name = ?", [guildID, textname])
         result = await cursor.fetchone()
@@ -452,9 +429,31 @@ class DBhandler():
             await bot.db.commit()
 
 
-
-#The main instance of DBHandler
 bot.DBHandler = DBhandler()
+
+
+class CommandChecks():
+    
+    '''
+    Checks for commands across the bot
+    '''
+    #Has bot or guild owner
+    async def hasOwner(self, ctx):
+        return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id
+
+    #Check performed to see if the user has priviliged access.
+    async def hasPriviliged(self, ctx):
+        userRoles = [x.id for x in ctx.author.roles]
+        cursor = await ctx.bot.db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ?", [ctx.guild.id])
+        roleIDs = await cursor.fetchall()
+        privroles = [role[0] for role in roleIDs]
+        #Check if any of the roles in user's roles are contained in the priviliged roles.
+        print(any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id))
+        return any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id)
+
+
+bot.CommandChecks = CommandChecks()
+
 
 #The custom help command subclassing the dpy one. See the docs or this guide (https://gist.github.com/InterStella0/b78488fb28cadf279dfd3164b9f0cf96) on how this was made.
 class SnedHelp(commands.HelpCommand):
@@ -597,9 +596,12 @@ async def on_guild_join(guild):
     #This forces settings to generate for this guild.
     await bot.DBHandler.retrievesetting("COMMANDSCHANNEL", guild.id)
     if guild.system_channel != None :
-        embed=discord.Embed(title=_("Beep Boop!"), description=_("I have been summoned to this server. Use `{prefix}help` to see what I can do!").format(prefix=prefix), color=0xfec01d)
-        embed.set_thumbnail(url=bot.user.avatar_url)
-        await guild.system_channel.send(embed=embed)
+        try:
+            embed=discord.Embed(title=_("Beep Boop!"), description=_("I have been summoned to this server. Use `{prefix}help` to see what I can do!").format(prefix=prefix), color=0xfec01d)
+            embed.set_thumbnail(url=bot.user.avatar_url)
+            await guild.system_channel.send(embed=embed)
+        except discord.Forbidden:
+            pass
     logging.info(f"Bot has been added to new guild {guild.id}.")
 
 #Triggered when bot leaves guild, or gets kicked/banned, or guild gets deleted.
@@ -625,8 +627,6 @@ async def on_message(message):
                 newTop = await message.channel.send(keepOnTopContent)
                 #Set the id to keep the ball rolling
                 await bot.DBHandler.modifysettings("KEEP_ON_TOP_MSG", newTop.id, newTop.guild.id)
-        elif topChannelID == None :
-            logging.warning("Settings not found.")
         #This is necessary, otherwise bot commands will break because on_message would override them
     await bot.process_commands(message)
 
@@ -635,4 +635,4 @@ async def on_message(message):
 try :
     bot.run(TOKEN)
 except KeyboardInterrupt :
-    pass
+    bot.close()

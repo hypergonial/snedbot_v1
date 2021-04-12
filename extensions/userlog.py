@@ -59,13 +59,16 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         moderator = None
-        async for entry in message.guild.audit_logs():
-            if entry.action == discord.AuditLogAction.message_delete:
-                if entry.target == message.author :
-                    moderator = entry.user
+        try:
+            async for entry in message.guild.audit_logs():
+                if entry.action == discord.AuditLogAction.message_delete:
+                    if entry.target == message.author :
+                        moderator = entry.user
+                        break
+                else :
                     break
-            else :
-                break
+        except discord.Forbidden:
+            pass
         contentfield = message.content
         if message.attachments:
             contentfield = f"{message.content}\n//The message contained a file."
@@ -136,17 +139,21 @@ class Logging(commands.Cog):
             if loggingchannelID == 0:
                 return
             else :
-                moderator = "Undefined" 
-                guild = self.bot.get_guild(payload.guild_id)
-                async for entry in guild.audit_logs(): #Get the bot that did it
-                    if entry.action == discord.AuditLogAction.message_bulk_delete:
-                        moderator = entry.user
-                        break
-                    else :
-                        break
+                try:
+                    moderator = "Undefined" 
+                    guild = self.bot.get_guild(payload.guild_id)
+                    async for entry in guild.audit_logs(): #Get the bot that did it
+                        if entry.action == discord.AuditLogAction.message_bulk_delete:
+                            moderator = entry.user
+                            mod_id = moderator.id
+                            break
+                        else :
+                            break
+                except discord.Forbidden:
+                    mod_id = None
                 guild = self.bot.get_guild(payload.guild_id)
                 channel = guild.get_channel(payload.channel_id)
-                embed = discord.Embed(title=f"🗑️ Bulk message deletion", description=f"**Channel:** {channel.mention}\n**Mod-Bot:** {moderator} ({moderator.id})\n**Multiple messages have been purged.**", color=self.bot.errorColor)
+                embed = discord.Embed(title=f"🗑️ Bulk message deletion", description=f"**Channel:** {channel.mention}\n**Mod-Bot:** {moderator} ({mod_id})\n**Multiple messages have been purged.**", color=self.bot.errorColor)
                 await self.log_elevated(embed, payload.guild_id)
     #Does not work, idk why but this event is never called
     @commands.Cog.listener()
@@ -164,14 +171,17 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            moderator = "Undefined"
-            async for entry in role.guild.audit_logs():
-                if entry.action == discord.AuditLogAction.role_delete:
-                    if entry.target == role or entry.target.id == role.id :
-                        moderator = entry.user
+            try:
+                moderator = "Undefined"
+                async for entry in role.guild.audit_logs():
+                    if entry.action == discord.AuditLogAction.role_delete:
+                        if entry.target == role or entry.target.id == role.id :
+                            moderator = entry.user
+                            break
+                    else :
                         break
-                else :
-                    break
+            except discord.Forbidden:
+                return
             embed = discord.Embed(title=f"🗑️ Role deleted", description=f"**Role:** `{role}`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.errorColor)
             await self.log_elevated(embed, role.guild.id)
     
@@ -181,14 +191,17 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            moderator = "Undefined"
-            async for entry in channel.guild.audit_logs():
-                if entry.action == discord.AuditLogAction.channel_delete:
-                    if entry.target == channel or entry.target.id == channel.id :
-                        moderator = entry.user
+            try:
+                moderator = "Undefined"
+                async for entry in channel.guild.audit_logs():
+                    if entry.action == discord.AuditLogAction.channel_delete:
+                        if entry.target == channel or entry.target.id == channel.id :
+                            moderator = entry.user
+                            break
+                    else :
                         break
-                else :
-                    break
+            except discord.Forbidden:
+                return
             embed = discord.Embed(title=f"#️⃣ Channel deleted", description=f"**Channel:** `{channel.name}` ({channel.type})\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.errorColor)
             await self.log_elevated(embed, channel.guild.id)
     
@@ -200,14 +213,17 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            moderator = "Undefined"
-            async for entry in channel.guild.audit_logs():
-                if entry.action == discord.AuditLogAction.channel_create:
-                    if entry.target == channel or entry.target.id == channel.id :
-                        moderator = entry.user
+            try:
+                moderator = "Undefined"
+                async for entry in channel.guild.audit_logs():
+                    if entry.action == discord.AuditLogAction.channel_create:
+                        if entry.target == channel or entry.target.id == channel.id :
+                            moderator = entry.user
+                            break
+                    else :
                         break
-                else :
-                    break
+            except discord.Forbidden:
+                return
             embed = discord.Embed(title=f"#️⃣ Channel created", description=f"**Channel:** {channel.mention} `({channel.type})`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.embedGreen)
             await self.log_elevated(embed, channel.guild.id)
 
@@ -217,14 +233,17 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            moderator = "Undefined"
-            async for entry in role.guild.audit_logs():
-                if entry.action == discord.AuditLogAction.role_create:
-                    if entry.target == role or entry.target.id == role.id :
-                        moderator = entry.user
+            try:
+                moderator = "Undefined"
+                async for entry in role.guild.audit_logs():
+                    if entry.action == discord.AuditLogAction.role_create:
+                        if entry.target == role or entry.target.id == role.id :
+                            moderator = entry.user
+                            break
+                    else :
                         break
-                else :
-                    break
+            except discord.Forbidden:
+                return
             embed = discord.Embed(title=f"❇️ Role created", description=f"**Role:** `{role}`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.embedGreen)
             await self.log_elevated(embed, role.guild.id)
     
@@ -234,14 +253,17 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            moderator = None
-            async for entry in after.guild.audit_logs():
-                if entry.action == discord.AuditLogAction.role_update:
-                    if entry.target == after or entry.target.id == after.id :
-                        moderator = entry.user
+            try:
+                moderator = None
+                async for entry in after.guild.audit_logs():
+                    if entry.action == discord.AuditLogAction.role_update:
+                        if entry.target == after or entry.target.id == after.id :
+                            moderator = entry.user
+                            break
+                    else :
                         break
-                else :
-                    break
+            except discord.Forbidden:
+                return
             if moderator:
                 embed = discord.Embed(title=f"🖊️ Role updated", description=f"**Role:** `{after.name}` \n**Moderator:** `{moderator} ({moderator.id})`\n**Before:**```Name: {before.name}\nColor: {before.color}\nHoisted: {before.hoist}\nManaged: {before.managed}\nMentionable: {before.mentionable}\nPosition: {before.position}\nPermissions: {before.permissions}```\n**After:**\n```Name: {after.name}\nColor: {after.color}\nHoisted: {after.hoist}\nManaged: {after.managed}\nMentionable: {after.mentionable}\nPosition:{after.position}\nPermissions: {after.permissions}```", color=self.bot.embedBlue)
                 await self.log_elevated(embed, after.guild.id)
@@ -252,13 +274,16 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            moderator = "Undefined"
-            async for entry in after.audit_logs():
-                if entry.action == discord.AuditLogAction.guild_update:
-                    moderator = entry.user
-                    break
-                else :
-                    break
+            try:
+                moderator = "Undefined"
+                async for entry in after.audit_logs():
+                    if entry.action == discord.AuditLogAction.guild_update:
+                        moderator = entry.user
+                        break
+                    else :
+                        break
+            except discord.Forbidden:
+                return
             embed = discord.Embed(title=f"🖊️ Guild updated", description=f"Guild settings have been updated by {moderator} `({moderator.id})`.", color=self.bot.embedBlue)
             await self.log_elevated(embed, after.id)
 
@@ -277,13 +302,16 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            moderator = "Undefined"
-            reason = "Not specified"
-            async for entry in guild.audit_logs(action=discord.AuditLogAction.ban):
-                if entry.target == user :
-                    moderator = entry.user
-                    reason = entry.reason
-                    break
+            try:
+                moderator = "Undefined"
+                reason = "Not specified"
+                async for entry in guild.audit_logs(action=discord.AuditLogAction.ban):
+                    if entry.target == user :
+                        moderator = entry.user
+                        reason = entry.reason
+                        break
+            except discord.Forbidden:
+                return
             if entry.reason != None:
                 embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
             else :
@@ -297,12 +325,15 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            moderator = "Undefined"
-            async for entry in guild.audit_logs(action=discord.AuditLogAction.unban):
-                if entry.target == user :
-                    moderator = entry.user
-                    reason = entry.reason
-                    break
+            try:
+                moderator = "Undefined"
+                async for entry in guild.audit_logs(action=discord.AuditLogAction.unban):
+                    if entry.target == user :
+                        moderator = entry.user
+                        reason = entry.reason
+                        break
+            except discord.Forbidden:
+                return
             embed = discord.Embed(title=f"🔨 User unbanned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:** ```{reason}```", color=self.bot.embedGreen)
             await self.log_elevated(embed, guild.id)
 
@@ -312,16 +343,19 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         else :
-            moderator = "Undefined"
-            reason = "Not specified"
-            async for entry in member.guild.audit_logs():
-                if entry.action == discord.AuditLogAction.kick:
-                    if entry.target == member :
-                        moderator = entry.user
-                        reason = entry.reason
+            try:
+                moderator = "Undefined"
+                reason = "Not specified"
+                async for entry in member.guild.audit_logs():
+                    if entry.action == discord.AuditLogAction.kick:
+                        if entry.target == member :
+                            moderator = entry.user
+                            reason = entry.reason
+                            break
+                    else :
                         break
-                else :
-                    break
+            except discord.Forbidden:
+                pass
             #If we have not found a kick auditlog
             if moderator == "Undefined":
                 embed = discord.Embed(title=f"🚪 User left", description=f"**User:** `{member} ({member.id})`\n**User count:** `{member.guild.member_count}`", color=self.bot.errorColor)
@@ -376,14 +410,17 @@ class Logging(commands.Cog):
                     #Contains role that was removed from user if any
                     rem_diff = list(set(before.roles)-set(after.roles))
                     #Checking Auditlog for moderator who did it, if applicable
-                    moderator = "Undefined"
-                    async for entry in after.guild.audit_logs():
-                        if entry.action == discord.AuditLogAction.member_role_update:
-                            if entry.target == after :
-                                moderator = entry.user
+                    try:
+                        moderator = "Undefined"
+                        async for entry in after.guild.audit_logs():
+                            if entry.action == discord.AuditLogAction.member_role_update:
+                                if entry.target == after :
+                                    moderator = entry.user
+                                    break
+                            else :
                                 break
-                        else :
-                            break
+                    except discord.Forbidden:
+                        return
                     if len(add_diff) != 0 :
                         embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name}#{after.discriminator} ({after.id})`\n**Moderator:** `{moderator.name}#{moderator.discriminator} ({moderator.id})`\n**Role added:** `{add_diff[0]}`", color=self.bot.embedBlue)
                     elif len(rem_diff) != 0 :

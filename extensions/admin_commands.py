@@ -7,20 +7,14 @@ from discord.ext import commands
 
 
 async def hasOwner(ctx):
-    return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id
-
-#Check performed to see if the user has priviliged access.
+    return await ctx.bot.CommandChecks.hasOwner(ctx)
 async def hasPriviliged(ctx):
-    #Gets a list of all the roles the user has, then gets the ID from that.
-    userRoles = [x.id for x in ctx.author.roles]
-    #Also get privliged roles, then compare
-    privroles = await ctx.bot.DBHandler.checkprivs(ctx.guild.id)
-    #Check if any of the roles in user's roles are contained in the priviliged roles.
-    return any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id)
+    return await ctx.bot.CommandChecks.hasPriviliged(ctx)
 
 class AdminCommands(commands.Cog, name="Admin Commands"):
     def __init__(self, bot):
         self.bot = bot
+        self.db = bot.db
         if self.bot.lang == "de":
             de = gettext.translation('admin_commands', localedir=self.bot.localePath, languages=['de'])
             de.install()
@@ -128,55 +122,18 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             await ctx.channel.send(embed=embed)
             return
     
-
-        #Commands used to add and/or remove other roles from executing potentially unwanted things
-    @commands.command(aliases=['addprivrole', 'addbotadminrole'], help="Add role to priviliged roles", description="Adds a role to the list of priviliged roles, allowing them to execute admin commands.", usage="addpriviligedrole <rolename>")
+    '''
+    This is where bot-admin (AKA priviliged) roles are added.
+    Members with these roles can execute commands to set up and
+    configure the bot. Note: Some commands may require additional permissions
+    '''
+    @commands.group(aliases=['privrole', 'botadmin', 'privroles', 'priviligedroles'],help="List all priviliged roles. Subcommands may add or remove priviliged roles.", description="Returns all priviliged roles on this server. You can optionally set or remove new roles as priviliged roles.", usage=f"priviligedrole [set/remove] [role]", invoke_without_command=True, case_insensitive=True)
     @commands.check(hasOwner)
     @commands.guild_only()
-    async def addpriviligedrole(self, ctx, *, rolename):
-        role = discord.utils.get(ctx.guild.roles, name=rolename)
-        if role == None:
-            embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.", color=self.bot.errorColor)
-            await ctx.channel.send(embed=embed)
-            return
-        privs = await self.bot.DBHandler.checkprivs(ctx.guild.id)
-        if role.id in privs :
-            embed=discord.Embed(title="❌ Error: Role already added.", description=f"This role already has priviliged access.", color=self.bot.errorColor)
-            await ctx.channel.send(embed=embed)
-            return
-        else :
-            await self.bot.DBHandler.setpriv(role.id, ctx.guild.id)
-            embed=discord.Embed(title="✅ Priviliged access granted.", description=f"**{role.name}** has been granted bot admin priviliges.", color=self.bot.embedGreen)
-            await ctx.channel.send(embed=embed)
-            return
-
-
-    @commands.command(aliases=['remprivrole', 'removeprivrole', 'removebotadminrole', 'rembotadminrole'], help="Remove role from priviliged roles.", description="Removes a role to the list of priviliged roles, revoking their permission to execute admin commands.", usage=f"removepriviligedrole <rolename>")
-    @commands.check(hasOwner)
-    @commands.guild_only()
-    async def removepriviligedrole(self, ctx, *, rolename):
-
-        role = discord.utils.get(ctx.guild.roles, name=rolename)
-        if role == None:
-            embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.", color=self.bot.errorColor)
-            await ctx.channel.send(embed=embed)
-            return
-        privroles = await self.bot.DBHandler.checkprivs(ctx.guild.id)
-        if role.id not in privroles :
-            embed=discord.Embed(title="❌ Error: Role not priviliged.", description=f"This role is not priviliged.", color=self.bot.errorColor)
-            await ctx.channel.send(embed=embed)
-            return
-        else :
-            await self.bot.DBHandler.delpriv(role.id, ctx.guild.id)
-            embed=discord.Embed(title="✅ Priviliged access revoked.", description=f"**{role}** has had it's bot admin priviliges revoked.", color=self.bot.embedGreen)
-            await ctx.channel.send(embed=embed)
-            return
-
-    @commands.command(aliases=['privroles', 'botadminroles'],help="List all priviliged roles.", description="Returns all priviliged roles on this server.", usage=f"priviligedroles")
-    @commands.check(hasOwner)
-    @commands.guild_only()
-    async def priviligedroles(self, ctx) :
-        roleIDs = await self.bot.DBHandler.checkprivs(ctx.guild.id)
+    async def priviligedrole(self, ctx) :
+        cursor = await self.db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ?", [ctx.guild.id])
+        roleIDs = await cursor.fetchall()
+        roleIDs = [role[0] for role in roleIDs]
         if len(roleIDs) == 0 :
             embed=discord.Embed(title="❌ Error: No priviliged roles set.", description=f"You can add a priviliged role via `{self.bot.prefix}addpriviligedrole <rolename>`.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
@@ -191,6 +148,57 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             roleNames = ", ".join(roleNames)
             embed=discord.Embed(title="Priviliged roles for this guild:", description=f"`{roleNames}`", color=self.bot.embedBlue)
             await ctx.channel.send(embed=embed)
+
+        #Commands used to add and/or remove other roles from executing potentially unwanted things
+    @priviligedrole.command(aliases=['set'], help="Add role to priviliged roles", description="Adds a role to the list of priviliged roles, allowing them to execute admin commands.", usage="addpriviligedrole <rolename>")
+    @commands.check(hasOwner)
+    @commands.guild_only()
+    async def add(self, ctx, *, rolename):
+        role = discord.utils.get(ctx.guild.roles, name=rolename)
+        if role == None:
+            embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+        cursor = await self.db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ?", [ctx.guild.id])
+        roleIDs = await cursor.fetchall()
+        privroles = [role[0] for role in roleIDs]
+        if role.id in privroles :
+            embed=discord.Embed(title="❌ Error: Role already added.", description=f"This role already has priviliged access.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+        else :
+            await self.db.execute("INSERT INTO priviliged (guild_id, priviliged_role_id) VALUES (?, ?)", [ctx.guild.id, role.id])
+            await self.db.commit()
+            embed=discord.Embed(title="✅ Priviliged access granted.", description=f"**{role.name}** has been granted bot admin priviliges.", color=self.bot.embedGreen)
+            await ctx.channel.send(embed=embed)
+            return
+
+
+    @priviligedrole.command(aliases=['rem', 'del', 'delete'], help="Remove role from priviliged roles.", description="Removes a role to the list of priviliged roles, revoking their permission to execute admin commands.", usage=f"removepriviligedrole <rolename>")
+    @commands.check(hasOwner)
+    @commands.guild_only()
+    async def remove(self, ctx, *, rolename):
+
+        role = discord.utils.get(ctx.guild.roles, name=rolename)
+        if role == None:
+            embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+        cursor = await self.db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ?", [ctx.guild.id])
+        roleIDs = await cursor.fetchall()
+        privroles = [role[0] for role in roleIDs]
+        if role.id not in privroles :
+            embed=discord.Embed(title="❌ Error: Role not priviliged.", description=f"This role is not priviliged.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+        else :
+            await self.db.execute("DELETE FROM priviliged WHERE guild_id = ? AND priviliged_role_id = ? ", [ctx.guild.id, role.id])
+            await self.db.commit()
+            embed=discord.Embed(title="✅ Priviliged access revoked.", description=f"**{role}** has had it's bot admin priviliges revoked.", color=self.bot.embedGreen)
+            await ctx.channel.send(embed=embed)
+            return
+
+
 
     @commands.command(help="Sets the bot's nickname.", description="Sets the bot's nickname for this server. Provide `Null` or `None` to reset nickname.", usage="setnick <nickname>")
     @commands.check(hasPriviliged)

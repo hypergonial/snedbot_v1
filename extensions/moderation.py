@@ -8,18 +8,10 @@ import aiosqlite
 import discord
 from discord.ext import commands
 
-
 async def hasOwner(ctx):
-    return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id
-
-#Check performed to see if the user has priviliged access.
+    return await ctx.bot.CommandChecks.hasOwner(ctx)
 async def hasPriviliged(ctx):
-    #Gets a list of all the roles the user has, then gets the ID from that.
-    userRoles = [x.id for x in ctx.author.roles]
-    #Also get privliged roles, then compare
-    privroles = await ctx.bot.DBHandler.checkprivs(ctx.guild.id)
-    #Check if any of the roles in user's roles are contained in the priviliged roles.
-    return any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id)
+    return await ctx.bot.CommandChecks.hasPriviliged(ctx)
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
@@ -70,6 +62,10 @@ class Moderation(commands.Cog):
         Mutes a member, by assigning the Mute role defined in settings.
         Muter must be priviliged.
         '''
+        if offender.id == ctx.author.id:
+            embed=discord.Embed(title="❌ " + self._("You cannot mute yourself."), description=self._("You cannot mute your own account."), color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+            return
         db_user = await self.bot.DBHandler.getUser(offender.id, ctx.guild.id)
         is_muted = db_user["is_muted"]
         if is_muted == 1:
@@ -94,6 +90,22 @@ class Moderation(commands.Cog):
             except AttributeError:
                 pass
     
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        '''
+        If the user was muted previously, we apply
+        the mute again.
+        TL;DR: Mute-persistence
+        '''
+        db_user = await self.bot.DBHandler.getUser(member.id, member.guild.id)
+        if db_user["is_muted"] == 1:
+            try:
+                mute_role_id = await self.bot.DBHandler.retrievesetting("MOD_MUTEROLE", member.guild.id)
+                mute_role = member.guild.get_role(mute_role_id)
+                await member.add_roles(mute_role)
+            except AttributeError:
+                return
+
     @commands.command(help="Unmutes a user.", description="Unmutes a user. Logs the event if logging is set up.", usage="unmute <user> [reason]")
     @commands.check(hasPriviliged)
     @commands.guild_only()
@@ -127,6 +139,10 @@ class Moderation(commands.Cog):
         Temporarily mutes a memeber, assigning them a Muted role defined in the settings
         Uses userlog extension to log the event and timers to count the time & unmute on schedule.
         '''
+        if offender.id == ctx.author.id:
+            embed=discord.Embed(title="❌ " + self._("You cannot mute yourself."), description=self._("You cannot mute your own account."), color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+            return
         parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
         parser.add_argument('--duration', '-d')
         parser.add_argument('--reason', '-r')
@@ -134,10 +150,7 @@ class Moderation(commands.Cog):
             args = parser.parse_args(shlex.split(str(args)))
             dur = args.duration
             reason = args.reason
-        except Exception:
-            dur = args
-            reason = "No reason provided"
-        except SystemExit:
+        except:
             dur = args
             reason = "No reason provided"
         try:
@@ -182,7 +195,8 @@ class Moderation(commands.Cog):
         is_muted = db_user["is_muted"]
         if is_muted == 0:
             return
-        elif guild.get_member(timer.user_id) != None: #Check if the user is still in the guild
+        await self.bot.DBHandler.updateUser(timer.user_id, "is_muted", 0, timer.guild_id) #Update this here so if the user comes back, they are not perma-muted :pepeLaugh:
+        if guild.get_member(timer.user_id) != None: #Check if the user is still in the guild
             mute_role_id = await self.bot.DBHandler.retrievesetting("MOD_MUTEROLE", timer.guild_id)
             mute_role = guild.get_role(mute_role_id)
             try:
@@ -190,7 +204,6 @@ class Moderation(commands.Cog):
                 await offender.remove_roles(mute_role)
             except AttributeError:
                 return
-            await self.bot.DBHandler.updateUser(offender.id, "is_muted", 0, timer.guild_id)
             embed=discord.Embed(title="🔉 User unmuted.", description=f"**{offender}** `({offender.id})` has been unmuted because their temporary mute expired.".format(offender=offender.mention), color=self.bot.embedGreen)
             await self.bot.get_cog("Logging").log_elevated(embed, timer.guild_id)
     
@@ -203,6 +216,10 @@ class Moderation(commands.Cog):
         Bans a member from the server.
         Banner must be priviliged and have ban_members perms.
         '''
+        if offender.id == ctx.author.id:
+            embed=discord.Embed(title="❌ " + self._("You cannot ban yourself."), description=self._("You cannot ban your own account."), color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+            return
         if reason:
             raw_reason = reason #Shown to the public
             reason = f"Reason: {reason}\n\nExecuted by {ctx.author} ({ctx.author.id})"
@@ -211,7 +228,7 @@ class Moderation(commands.Cog):
         try:
             await ctx.guild.ban(offender, reason=reason, delete_message_days=7)
             if raw_reason:
-                embed = discord.Embed(title="✅ " + self._("User banned"), description=self._("User has been banned.\n**Reason:** {raw_reason}").format(raw_reason=raw_reason),color=self.bot.errorColor)
+                embed = discord.Embed(title="✅ " + self._("User banned"), description=self._("User has been banned.\n**Reason:** ```{raw_reason}```").format(raw_reason=raw_reason),color=self.bot.errorColor)
                 await ctx.send(embed=embed)
             else:
                 embed = discord.Embed(title="✅ " + self._("User banned"), description=self._("User has been banned."),color=self.bot.errorColor)
@@ -242,7 +259,7 @@ class Moderation(commands.Cog):
         try:
             await ctx.guild.unban(offender, reason=reason)
             if raw_reason:
-                embed = discord.Embed(title="✅ " + self._("User unbanned"), description=self._("User has been unbanned.\n**Reason:** {raw_reason}").format(raw_reason=raw_reason),color=self.bot.embedGreen)
+                embed = discord.Embed(title="✅ " + self._("User unbanned"), description=self._("User has been unbanned.\n**Reason:** ```{raw_reason}```").format(raw_reason=raw_reason),color=self.bot.embedGreen)
                 await ctx.send(embed=embed)
             else:
                 embed = discord.Embed(title="✅ " + self._("User unbanned"), description=self._("User has been unbanned."),color=self.bot.embedGreen)
@@ -266,17 +283,18 @@ class Moderation(commands.Cog):
         Requires timers extension to work.
         Banner must be priviliged and have ban_members perms.
         '''
+        if offender.id == ctx.author.id:
+            embed=discord.Embed(title="❌ " + self._("You cannot ban yourself."), description=self._("You cannot ban your own account."), color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+            return
         parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
         parser.add_argument('--duration', '-d')
         parser.add_argument('--reason', '-r')
-        try: 
+        try: #If args are provided, we use those, otherwise whole arg is converted to time
             args = parser.parse_args(shlex.split(str(args)))
             dur = args.duration
             reason = args.reason
-        except Exception:
-            dur = args
-            reason = "No reason provided"
-        except SystemExit:
+        except:
             dur = args
             reason = "No reason provided"
         try:
@@ -300,7 +318,7 @@ class Moderation(commands.Cog):
             await self.bot.get_cog("Timers").create_timer(expiry=dur, event="tempban", guild_id=ctx.guild.id, user_id=offender.id, channel_id=ctx.channel.id)
             await ctx.guild.ban(offender, reason=reason, delete_message_days=7)
             if raw_reason:
-                embed = discord.Embed(title="✅ " + self._("User banned"), description=self._("User has been banned.\n**Reason:** {raw_reason}").format(raw_reason=raw_reason),color=self.bot.errorColor)
+                embed = discord.Embed(title="✅ " + self._("User banned"), description=self._("User has been banned.\n**Reason:** ```{raw_reason}```").format(raw_reason=raw_reason),color=self.bot.errorColor)
                 await ctx.send(embed=embed)
             else:
                 embed = discord.Embed(title="✅ " + self._("User banned"), description=self._("User has been banned."),color=self.bot.errorColor)
@@ -326,7 +344,6 @@ class Moderation(commands.Cog):
             return
         await self.bot.DBHandler.updateUser(offender.id, "is_muted", 0, timer.guild_id)
 
-
     @commands.command(help="Softbans a user.", description="Bans a user then immediately unbans them, which means it will erase all messages from the user in the specified range.", usage="softban <user> [days-to-delete] [reason]")
     @commands.check(hasPriviliged)
     @commands.has_permissions(kick_members=True)
@@ -338,6 +355,10 @@ class Moderation(commands.Cog):
         Banner must be priviliged and have kick_members permissions.
         Bot must have ban_members permissions.
         '''
+        if offender.id == ctx.author.id:
+            embed=discord.Embed(title="❌ " + self._("You cannot soft-ban yourself."), description=self._("You cannot soft-ban your own account."), color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+            return
         if reason:
             raw_reason = reason #Shown to the public
             reason = f"[SOFTBAN] {reason}\n\nExecuted by {ctx.author} ({ctx.author.id})"
@@ -371,6 +392,10 @@ class Moderation(commands.Cog):
     @commands.has_permissions(kick_members=True)
     @commands.guild_only()
     async def kick(self, ctx, offender:discord.Member, *, reason:str=None):
+        if offender.id == ctx.author.id:
+            embed=discord.Embed(title="❌ " + self._("You cannot kick yourself."), description=self._("You cannot kick your own account."), color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+            return
         if reason != None:
             raw_reason = reason #Shown to the public
             reason = f"Reason: {reason}\n\nExecuted by {ctx.author} ({ctx.author.id})"

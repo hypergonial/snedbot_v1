@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-12 01:27+0200\n"
+"POT-Creation-Date: 2021-04-13 00:35+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,77 +15,77 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: misc_commands.py:48
+#: misc_commands.py:39
 msgid "{member_name}'s avatar:"
 msgstr ""
 
-#: misc_commands.py:57
+#: misc_commands.py:48
 msgid "Latency: `{latency}ms`"
 msgstr ""
 
-#: misc_commands.py:77
+#: misc_commands.py:68
 msgid "Flipping coin..."
 msgstr ""
 
-#: misc_commands.py:77
+#: misc_commands.py:68
 msgid "Hold on..."
 msgstr ""
 
-#: misc_commands.py:81
+#: misc_commands.py:72
 msgid "Coin flipped"
 msgstr ""
 
-#: misc_commands.py:81
+#: misc_commands.py:72
 msgid "It's **{result}**!"
 msgstr ""
 
-#: misc_commands.py:91
+#: misc_commands.py:82
 msgid "Looking for kitty..."
 msgstr ""
 
-#: misc_commands.py:91 misc_commands.py:99
+#: misc_commands.py:82 misc_commands.py:90
 msgid "Random kitten"
 msgstr ""
 
-#: misc_commands.py:99
+#: misc_commands.py:90
 msgid "Found one!"
 msgstr ""
 
-#: misc_commands.py:119 misc_commands.py:124
+#: misc_commands.py:110 misc_commands.py:115
 msgid "Failed parsing arguments"
 msgstr ""
 
-#: misc_commands.py:119 misc_commands.py:153
+#: misc_commands.py:110 misc_commands.py:144
 msgid "**Exception:** ```{exception}```"
 msgstr ""
 
-#: misc_commands.py:124
+#: misc_commands.py:115
 msgid ""
 "**Exception:** ```SystemExit: {exception}```\n"
 "**Note:** If you are trying to pass multiple words as an argument, wrap them in quotation marks."
 msgstr ""
 
-#: misc_commands.py:129
+#: misc_commands.py:120
 msgid "Missing required argument"
 msgstr ""
 
-#: misc_commands.py:129
+#: misc_commands.py:120
 msgid "You are missing a required argument. Please check `{prefix}help embed` for command usage."
 msgstr ""
 
-#: misc_commands.py:138
+#: misc_commands.py:129
 msgid "For valid colors, see the [discord.py API reference](https://discordpy.readthedocs.io/en/latest/api.html#discord.Colour)"
 msgstr ""
 
-#: misc_commands.py:138
+#: misc_commands.py:129
 msgid "Invalid color"
 msgstr ""
 
-#: misc_commands.py:153
+#: misc_commands.py:144
 msgid "Failed parsing arguments."
 msgstr ""
 
-#: misc_commands.py:183
+#: misc_commands.py:174
 msgid ""
 "**Name:** `{guild_name}`\n"
 "**ID:** `{guild_id}`\n"
@@ -98,15 +98,15 @@ msgid ""
 "**Nitro Boost level:** `{premium_tier}`"
 msgstr ""
 
-#: misc_commands.py:183
+#: misc_commands.py:174
 msgid "Server information"
 msgstr ""
 
-#: misc_commands.py:211
+#: misc_commands.py:202
 msgid "**Warnings:** `{warns}`"
 msgstr ""
 
-#: misc_commands.py:211
+#: misc_commands.py:202
 msgid "{user}'s warnings"
 msgstr ""
 

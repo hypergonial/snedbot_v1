@@ -11,19 +11,14 @@ import gettext
 '''
 The repo https://github.com/Rapptz/RoboDanny was massive help when writing this code,
 and I used the same general structure as seen in /cogs/reminder.py there.
+Also thanks to Vex#3110 from the discord.py discord for the original regex code, which
+I tweaked to to be a bit more generally applicable (and possibly more shit) :verycool:
 '''
 
 async def hasOwner(ctx):
-    return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id
-
-#Check performed to see if the user has priviliged access.
+    return await ctx.bot.CommandChecks.hasOwner(ctx)
 async def hasPriviliged(ctx):
-    #Gets a list of all the roles the user has, then gets the ID from that.
-    userRoles = [x.id for x in ctx.author.roles]
-    #Also get privliged roles, then compare
-    privroles = await ctx.bot.DBHandler.checkprivs(ctx.guild.id)
-    #Check if any of the roles in user's roles are contained in the priviliged roles.
-    return any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id)
+    return await ctx.bot.CommandChecks.hasPriviliged(ctx)
 
 class Timer():
     def __init__(self, id, guild_id, user_id,event, channel_id=None, expires=None, notes=None):
@@ -259,15 +254,18 @@ class Timers(commands.Cog):
         for result in results :
             if result[4] == "reminder":
                 note_stripped = result[6].replace("\n", " ") #Avoid the reminder dialog breaking
+                note_stripped = note_stripped.split("[Jump to original message!]")[0] #Remove jump url
+                if len(note_stripped) > 50:
+                    note_stripped = f"{note_stripped[slice(47)]}..."
                 timers.append(Timer(id=result[0],guild_id=result[1],user_id=result[2],channel_id=result[3],event=result[4],expires=result[5],notes=note_stripped))      
         i = 0
         if len(timers) != 0:
             for timer in timers:
                 time = datetime.datetime.fromtimestamp(timer.expires)
                 if timer.notes:
-                    reminderstr = reminderstr + f"ID: **{timer.id}** - `{time.year}-{time.month}-{time.day} {time.hour}:{time.minute} (UTC)` - `{timer.notes[slice(15)]}...`\n"
+                    reminderstr = reminderstr + f"**ID: {timer.id}** - **{time.year}-{time.month}-{time.day} {time.hour}:{time.minute} (UTC)**\n{timer.notes}\n"
                 else:
-                    reminderstr = reminderstr + f"ID: **{timer.id}** - `{time.year}-{time.month}-{time.day} {time.hour}:{time.minute} (UTC)`\n"
+                    reminderstr = reminderstr + f"**ID: {timer.id}** - **{time.year}-{time.month}-{time.day} {time.hour}:{time.minute} (UTC)**\n"
                 if i == 10:
                     break
                 i +=1
@@ -308,7 +306,13 @@ class Timers(commands.Cog):
         if guild.get_member(timer.user_id) != None: #Check if user did not leave guild
             user = guild.get_member(timer.user_id)
             embed=discord.Embed(title="✉️ " + self._("{user}, your reminder:").format(user=user.name), description="{note}".format(user=user.mention, note=timer.notes), color=self.bot.embedBlue)
-            await channel.send(embed=embed, content=user.mention)
+            try:
+                await channel.send(embed=embed, content=user.mention)
+            except (discord.Forbidden, discord.HTTPException, discord.errors.NotFound) :
+                try: #Fallback to DM if cannot send in channel
+                    await user.send(embed=embed, content="I lost access to the channel this reminder was sent from, so here it is!")
+                except discord.Forbidden:
+                    return
 
 def setup(bot):
     logging.info("Adding cog: Timers...")

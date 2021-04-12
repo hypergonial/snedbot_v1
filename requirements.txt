@@ -1,0 +1,4 @@
+discord
+Levenshtein
+aiosqlite
+dotenv

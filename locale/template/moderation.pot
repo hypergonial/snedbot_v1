@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-12 01:27+0200\n"
+"POT-Creation-Date: 2021-04-13 00:35+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,204 +15,236 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: moderation.py:52
+#: moderation.py:44
 msgid "{offender} has been warned."
 msgstr ""
 
-#: moderation.py:52 moderation.py:55
+#: moderation.py:44 moderation.py:47
 msgid "Warning issued."
 msgstr ""
 
-#: moderation.py:55
+#: moderation.py:47
 msgid ""
 "{offender} has been warned.\n"
 "**Reason:** {reason}"
 msgstr ""
 
-#: moderation.py:61
+#: moderation.py:53
 msgid "Logging is not set up properly."
 msgstr ""
 
-#: moderation.py:61
+#: moderation.py:53
 msgid "Warning failed."
 msgstr ""
 
-#: moderation.py:76 moderation.py:149
+#: moderation.py:66 moderation.py:143
+msgid "You cannot mute your own account."
+msgstr ""
+
+#: moderation.py:66 moderation.py:143
+msgid "You cannot mute yourself."
+msgstr ""
+
+#: moderation.py:72 moderation.py:162
 msgid "Already muted."
 msgstr ""
 
-#: moderation.py:76 moderation.py:149
+#: moderation.py:72 moderation.py:162
 msgid "{offender} is already muted."
 msgstr ""
 
-#: moderation.py:85 moderation.py:113 moderation.py:159
+#: moderation.py:81 moderation.py:125 moderation.py:172
 msgid "Mute role not set."
 msgstr ""
 
-#: moderation.py:85 moderation.py:159
+#: moderation.py:81 moderation.py:172
 msgid "Unable to mute user."
 msgstr ""
 
-#: moderation.py:89
+#: moderation.py:85
 msgid "**{offender}** has been muted."
 msgstr ""
 
-#: moderation.py:89 moderation.py:163
+#: moderation.py:85 moderation.py:176
 msgid "User muted."
 msgstr ""
 
-#: moderation.py:104
+#: moderation.py:116
 msgid "Not muted."
 msgstr ""
 
-#: moderation.py:104
+#: moderation.py:116
 msgid "{offender} is not muted."
 msgstr ""
 
-#: moderation.py:113
+#: moderation.py:125
 msgid "Unable to unmute user."
 msgstr ""
 
-#: moderation.py:117
+#: moderation.py:129
 msgid "**{offender}** has been unmuted."
 msgstr ""
 
-#: moderation.py:117
+#: moderation.py:129
 msgid "User unmuted."
 msgstr ""
 
-#: moderation.py:163
+#: moderation.py:176
 msgid "**{offender}** has been muted until `{time}`."
 msgstr ""
 
-#: moderation.py:168
+#: moderation.py:181
 msgid "Your entered timeformat is invalid. Type `{prefix}help tempmute` for more information."
 msgstr ""
 
-#: moderation.py:172
+#: moderation.py:185
 msgid "Muting failed."
 msgstr ""
 
-#: moderation.py:172 moderation.py:291
+#: moderation.py:185 moderation.py:309
 msgid ""
 "This function requires an extension that is not enabled.\n"
 "**Error:** ```{error}```"
 msgstr ""
 
-#: moderation.py:214 moderation.py:217 moderation.py:303 moderation.py:306
+#: moderation.py:220 moderation.py:287
+msgid "You cannot ban your own account."
+msgstr ""
+
+#: moderation.py:220 moderation.py:287
+msgid "You cannot ban yourself."
+msgstr ""
+
+#: moderation.py:231 moderation.py:234 moderation.py:321 moderation.py:324
 msgid "User banned"
 msgstr ""
 
-#: moderation.py:214 moderation.py:303
+#: moderation.py:231 moderation.py:321
 msgid ""
 "User has been banned.\n"
-"**Reason:** {raw_reason}"
+"**Reason:** ```{raw_reason}```"
 msgstr ""
 
-#: moderation.py:217 moderation.py:306
+#: moderation.py:234 moderation.py:324
 msgid "User has been banned."
 msgstr ""
 
-#: moderation.py:220 moderation.py:251 moderation.py:309 moderation.py:361
-#: moderation.py:388
+#: moderation.py:237 moderation.py:268 moderation.py:327 moderation.py:382
+#: moderation.py:413
 msgid "Bot has insufficient permissions"
 msgstr ""
 
-#: moderation.py:220 moderation.py:309 moderation.py:361
+#: moderation.py:237 moderation.py:327 moderation.py:382
 msgid "The bot has insufficient permissions to perform the ban, or this user cannot be banned."
 msgstr ""
 
-#: moderation.py:224 moderation.py:365
+#: moderation.py:241 moderation.py:386
 msgid "Ban failed"
 msgstr ""
 
-#: moderation.py:224 moderation.py:365
+#: moderation.py:241 moderation.py:386
 msgid "Ban failed, please try again later."
 msgstr ""
 
-#: moderation.py:245
+#: moderation.py:262
 msgid ""
 "User has been unbanned.\n"
-"**Reason:** {raw_reason}"
+"**Reason:** ```{raw_reason}```"
 msgstr ""
 
-#: moderation.py:245 moderation.py:248
+#: moderation.py:262 moderation.py:265
 msgid "User unbanned"
 msgstr ""
 
-#: moderation.py:248
+#: moderation.py:265
 msgid "User has been unbanned."
 msgstr ""
 
-#: moderation.py:251
+#: moderation.py:268
 msgid "The bot has insufficient permissions to perform the unban, or this user cannot be unbanned."
 msgstr ""
 
-#: moderation.py:255
+#: moderation.py:272
 msgid "Unban failed"
 msgstr ""
 
-#: moderation.py:255
+#: moderation.py:272
 msgid "Unban failed, please try again later."
 msgstr ""
 
-#: moderation.py:287
+#: moderation.py:305
 msgid "Your entered timeformat is invalid. Type `{prefix}help tempban` for more information."
 msgstr ""
 
-#: moderation.py:291
+#: moderation.py:309
 msgid "Tempbanning failed."
 msgstr ""
 
-#: moderation.py:313
+#: moderation.py:331
 msgid "Tempban failed"
 msgstr ""
 
-#: moderation.py:313
+#: moderation.py:331
 msgid "Tempban failed, please try again later."
 msgstr ""
 
-#: moderation.py:351
+#: moderation.py:359
+msgid "You cannot soft-ban your own account."
+msgstr ""
+
+#: moderation.py:359
+msgid "You cannot soft-ban yourself."
+msgstr ""
+
+#: moderation.py:372
 msgid ""
 "User has been soft-banned.\n"
 "**Reason:** {raw_reason}"
 msgstr ""
 
-#: moderation.py:351 moderation.py:354
+#: moderation.py:372 moderation.py:375
 msgid "User soft-banned"
 msgstr ""
 
-#: moderation.py:354
+#: moderation.py:375
 msgid "User has been soft-banned."
 msgstr ""
 
-#: moderation.py:357
+#: moderation.py:378
 msgid "Invalid format for argument `days-to-delete` See `{prefix}help softban` for command usage."
 msgstr ""
 
-#: moderation.py:382
+#: moderation.py:396
+msgid "You cannot kick your own account."
+msgstr ""
+
+#: moderation.py:396
+msgid "You cannot kick yourself."
+msgstr ""
+
+#: moderation.py:407
 msgid ""
 "User has been kicked.\n"
 "**Reason:** ```{raw_reason}```"
 msgstr ""
 
-#: moderation.py:382 moderation.py:385
+#: moderation.py:407 moderation.py:410
 msgid "User kicked"
 msgstr ""
 
-#: moderation.py:385
+#: moderation.py:410
 msgid "User has been kicked."
 msgstr ""
 
-#: moderation.py:388
+#: moderation.py:413
 msgid "The bot has insufficient permissions to perform the kick, or this user cannot be kicked."
 msgstr ""
 
-#: moderation.py:392
+#: moderation.py:417
 msgid "Kick failed"
 msgstr ""
 
-#: moderation.py:392
+#: moderation.py:417
 msgid "Kick failed, please try again later."
 msgstr ""
 

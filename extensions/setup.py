@@ -6,16 +6,9 @@ from discord.ext import commands
 
 
 async def hasOwner(ctx):
-    return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id
-
-#Check performed to see if the user has priviliged access.
+    return await ctx.bot.CommandChecks.hasOwner(ctx)
 async def hasPriviliged(ctx):
-    #Gets a list of all the roles the user has, then gets the ID from that.
-    userRoles = [x.id for x in ctx.author.roles]
-    #Also get privliged roles, then compare
-    privroles = await ctx.bot.DBHandler.checkprivs(ctx.guild.id)
-    #Check if any of the roles in user's roles are contained in the priviliged roles.
-    return any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id)
+    return await ctx.bot.CommandChecks.hasPriviliged(ctx)
 
 #This is an entirely optional extension, but you are masochistic if you are not using it :D
 
@@ -27,7 +20,7 @@ class Setup(commands.Cog):
     #It basically just collects a bunch of values from the user, in this case an admin, and then changes the settings
     #based on that, instead of the admin having to use !modify for every single value
     #TL;DR: fancy setup thing
-    @commands.group(help="Starts bot configuration setups.", description = "Used to set up and configure different parts of the bot. \nValid setup-types: `matchmaking, LFG, keepontop, logging`", usage="setup <setuptype>", invoke_without_command=True)
+    @commands.group(help="Starts bot configuration setups.", description = "Used to set up and configure different parts of the bot. \nValid setup-types: `matchmaking, LFG, keepontop, logging`", usage="setup <setuptype>", invoke_without_command=True, case_insensitive=True)
     @commands.check(hasPriviliged)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
@@ -38,7 +31,10 @@ class Setup(commands.Cog):
         await ctx.send(embed=embed)
 
     @setup.command(help="Sets up the LFG role.")
-    async def lfg(self, ctx):
+    @commands.check(hasPriviliged)
+    @commands.guild_only()
+    @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
+    async def LFG(self, ctx):
         extensions = self.bot.checkExtensions
         if "Matchmaking" not in extensions :
             embed=discord.Embed(title=self.bot.errorMissingModuleTitle, description="This setup requires the extension `matchmaking` to be active.", color=self.bot.errorColor)
@@ -57,8 +53,30 @@ class Setup(commands.Cog):
         def idcheck(payload):
             return payload.author == ctx.author and payload.channel.id == ctx.channel.id
 
-        #Where the values actually get changed
-        async def configurevalues(createmsg, reactmsg, msgcontent, reactchannel, reactemoji, rolename):
+        #The common part of the LFG setup
+        async def continueprocess(reactchannel, msgcontent, reactmsg, createmsg):
+            try:
+                def confirmemoji(payload):
+                    return payload.message_id == msg.id and payload.user_id == ctx.author.id
+                #Get emoji
+                embed=discord.Embed(title="🛠️ LFG role setup", description="React **to this message** with the emoji you want to use!\nNote: Use a __custom__ emoji from __this server__, I have no way of accessing emojies outside this server!", color=self.bot.embedBlue)
+                msg = await ctx.channel.send(embed=embed)
+                payload = await self.bot.wait_for('raw_reaction_add', timeout=60.0,check=confirmemoji)
+                reactemoji = payload.emoji
+                embed=discord.Embed(title="🛠️ LFG role setup", description=f"Emoji to be used will be {reactemoji}", color=self.bot.embedBlue)
+                msg = await ctx.channel.send(embed=embed)
+                #Get the name of the role, then pass it on
+                embed=discord.Embed(title="🛠️ LFG role setup", description="Name the role that will be handed out!", color=self.bot.embedBlue)
+                await ctx.channel.send(embed=embed)
+                payload = await self.bot.wait_for('message', timeout=60.0, check=idcheck)
+                rolename = payload.content
+                embed=discord.Embed(title="🛠️ LFG role setup", description=f"Role set to **{rolename}**", color=self.bot.embedBlue)
+                await ctx.channel.send(embed=embed)
+                #Pass all values to configurator
+            except asyncio.TimeoutError:
+                embed=discord.Embed(title=self.bot.errorTimeoutTitle, description=self.bot.errorTimeoutDesc, color=self.bot.errorColor)
+                await ctx.channel.send(embed=embed)
+                return
             if createmsg == True :
                 #Create message
                 msg = await reactchannel.send(str(msgcontent))
@@ -82,31 +100,7 @@ class Setup(commands.Cog):
             await ctx.channel.send(embed=embed)
             logging.info(f"Setup for LFG concluded successfully on guild {ctx.guild.id}.")
 
-        #The common part of the LFG setup
-        async def continueprocess(reactchannel, msgcontent, reactmsg, createmsg):
-            try:
-                def confirmemoji(payload):
-                    return payload.message_id == msg.id and payload.user_id == ctx.author.id
-                #Get emoji
-                embed=discord.Embed(title="🛠️ LFG role setup", description="React **to this message** with the emoji you want to use!\nNote: Use a __custom__ emoji from __this server__, I have no way of accessing emojies outside this server!", color=self.bot.embedBlue)
-                msg = await ctx.channel.send(embed=embed)
-                payload = await self.bot.wait_for('raw_reaction_add', timeout=60.0,check=confirmemoji)
-                reactemoji = payload.emoji
-                embed=discord.Embed(title="🛠️ LFG role setup", description=f"Emoji to be used will be {reactemoji}", color=self.bot.embedBlue)
-                msg = await ctx.channel.send(embed=embed)
-                #Get the name of the role, then pass it on
-                embed=discord.Embed(title="🛠️ LFG role setup", description="Name the role that will be handed out!", color=self.bot.embedBlue)
-                await ctx.channel.send(embed=embed)
-                payload = await self.bot.wait_for('message', timeout=60.0, check=idcheck)
-                rolename = payload.content
-                embed=discord.Embed(title="🛠️ LFG role setup", description=f"Role set to **{rolename}**", color=self.bot.embedBlue)
-                await ctx.channel.send(embed=embed)
-                #Pass all values to configurator
-                await configurevalues(createmsg, reactmsg, msgcontent, reactchannel, reactemoji, rolename)
-            except asyncio.TimeoutError:
-                embed=discord.Embed(title=self.bot.errorTimeoutTitle, description=self.bot.errorTimeoutDesc, color=self.bot.errorColor)
-                await ctx.channel.send(embed=embed)
-                return
+
         try:
             payload = await self.bot.wait_for('raw_reaction_add', timeout=60.0, check=confirmcheck)
             if str(payload.emoji) == ("✅") :
@@ -178,7 +172,7 @@ class Setup(commands.Cog):
                     await ctx.channel.send(embed=embed)
                     return
             else :
-                embed=discord.Embed(title=self.bot.errorTimeoutTitle, description=self.bot.errorTimeoutDesc, color=self.bot.errorColor)
+                embed=discord.Embed(title=self.bot.errorDataTitle, description="Invalid reaction provided.", color=self.bot.errorColor)
                 await ctx.channel.send(embed=embed)
                 return
         except asyncio.TimeoutError:
@@ -186,6 +180,9 @@ class Setup(commands.Cog):
             await ctx.channel.send(embed=embed)
             return
     @setup.command(help="Helps set up matchmaking")
+    @commands.check(hasPriviliged)
+    @commands.guild_only()
+    @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def matchmaking(self, ctx):
     #This setup will set up the !matchmaking command to work properly.
         extensions = self.bot.checkExtensions
@@ -238,6 +235,9 @@ class Setup(commands.Cog):
             return
 
     @setup.command(help="Helps set up a keep-on-top message, that will sticky a message on top of a channel at all times.", aliases=["keep-on-top"])
+    @commands.check(hasPriviliged)
+    @commands.guild_only()
+    @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def keepontop(self, ctx):
         embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description="Specify the channel where you want to keep a message on the top by mentioning it!", color=self.bot.embedBlue)
         await ctx.channel.send(embed=embed)
@@ -270,6 +270,9 @@ class Setup(commands.Cog):
             return
         
     @setup.command(help="Helps you set up logging, and different logging levels.", aliases=["logs"])
+    @commands.check(hasPriviliged)
+    @commands.guild_only()
+    @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def logging(self, ctx):
         extensions = self.bot.checkExtensions
         if "Logging" not in extensions:
@@ -307,6 +310,54 @@ class Setup(commands.Cog):
             await ctx.channel.send(embed=embed)
             return
         except asyncio.TimeoutError:
+            embed=discord.Embed(title=self.bot.errorTimeoutTitle, description=self.bot.errorTimeoutDesc, color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+
+    @setup.command(help="Helps you set up different parts of moderation.", aliases=["mod"])
+    @commands.check(hasPriviliged)
+    @commands.guild_only()
+    @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
+    async def moderation(self, ctx):
+        extensions = self.bot.checkExtensions
+        if "Moderation" not in extensions:
+            embed=discord.Embed(title=self.bot.errorMissingModuleTitle, description="This setup requires the extension `moderation` to be active.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+        
+        def check(payload):
+            return payload.author == ctx.author and payload.channel.id == ctx.channel.id
+        
+        async def setupmuting(self, ctx):
+            embed=discord.Embed(title="🛠️ Moderation Setup", description="Please specify the role you want to be used for muting!\n**__Note:__** This role should have `Send Messages` permissions disabled in every channel. It also must be below the bot's role in the hierarchy.", color=self.bot.embedBlue)
+            await ctx.channel.send(embed=embed)
+            message = await self.bot.wait_for('message', timeout=60.0, check=check)
+            try:
+                muterole = await commands.RoleConverter().convert(ctx, message.content)
+                await self.bot.DBHandler.modifysettings("MOD_MUTEROLE", muterole.id, ctx.guild.id)
+            except commands.RoleNotFound:
+                embed=discord.Embed(title="❌ Error: Unable to locate role.", description="The setup process has been cancelled.", color=self.bot.errorColor)
+                await ctx.channel.send(embed=embed)
+                return
+            embed=discord.Embed(title="🛠️ Moderation Setup", description="✅ Muting is now set up! You can now utilize the `{prefix}mute`, `{prefix}tempmute` and `{prefix}unmute` commands.".format(prefix=self.bot.prefix), color=self.bot.embedGreen)
+            await ctx.channel.send(embed=embed)
+        
+        embed=discord.Embed(title="🛠️ Moderation Setup", description="Which setup do you want to enter?\n**🔇 - Muting**", color=self.bot.embedBlue)
+        msg = await ctx.channel.send(embed=embed)
+        await msg.add_reaction("🔇")
+        def reactioncheck(payload):
+            return payload.message_id == msg.id and payload.user_id == ctx.author.id
+        payload = await self.bot.wait_for('raw_reaction_add', timeout=60.0, check=reactioncheck)
+        if str(payload.emoji) == "🔇":
+            await setupmuting(self, ctx)
+        else:
+            embed=discord.Embed(title=self.bot.errorDataTitle, description="Invalid reaction provided.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+    
+    @moderation.error
+    async def setup_mod_error(self, ctx, error):
+        if isinstance(error, asyncio.exceptions.TimeoutError):
             embed=discord.Embed(title=self.bot.errorTimeoutTitle, description=self.bot.errorTimeoutDesc, color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
