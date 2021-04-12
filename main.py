@@ -448,7 +448,6 @@ class CommandChecks():
         roleIDs = await cursor.fetchall()
         privroles = [role[0] for role in roleIDs]
         #Check if any of the roles in user's roles are contained in the priviliged roles.
-        print(any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id))
         return any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id)
 
 

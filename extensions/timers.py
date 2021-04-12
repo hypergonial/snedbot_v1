@@ -1,12 +1,13 @@
-import discord
-from discord.ext import commands, tasks
-import logging
-import datetime
-import aiosqlite
 import asyncio
-import re
-import Levenshtein as lev
+import datetime
 import gettext
+import logging
+import re
+
+import aiosqlite
+import discord
+import Levenshtein as lev
+from discord.ext import commands, tasks
 
 '''
 The repo https://github.com/Rapptz/RoboDanny was massive help when writing this code,
