@@ -22,10 +22,9 @@ lang = "en"
 #Is this build experimental?
 experimentalBuild = False
 #Version of the bot
-currentVersion = "3.3.3"
+currentVersion = "3.4.0"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
-#Get token from .env
 TOKEN = os.getenv("TOKEN")
 #Activity
 activity = discord.Activity(name='Anno 9', type=discord.ActivityType.playing)
@@ -38,10 +37,12 @@ else :
     prefix = '!'
     logging.basicConfig(level=logging.INFO)
 
+#Block bot from ever pinging @everyone
+allowed_mentions = discord.AllowedMentions(everyone=False, users=True, roles=True, replied_user=True)
 #This is just my user ID, used for setting up who can & cant use priviliged commands along with a server owner.
 creatorID = 163979124820541440
-#Can modify command prefix & intents here (and probably a lot of other cool stuff I am not aware of)
-bot = commands.Bot(command_prefix=prefix, intents= discord.Intents.all(), owner_id=creatorID, case_insensitive=True, help_command=None, activity=activity, max_messages=20000)
+
+bot = commands.Bot(command_prefix=prefix, intents= discord.Intents.all(), owner_id=creatorID, case_insensitive=True, help_command=None, activity=activity, max_messages=20000, allowed_mentions=allowed_mentions)
 
 #General global bot settings
 
@@ -51,6 +52,8 @@ dbName = "database.db"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 bot.dbPath = Path(BASE_DIR, dbName)
 bot.localePath = Path(BASE_DIR, 'locale')
+loop = asyncio.get_event_loop()
+bot.db = loop.run_until_complete(aiosqlite.connect(bot.dbPath))
 if lang == "de":
     de = gettext.translation('main', localedir=bot.localePath, languages=['de'])
     de.install()
@@ -63,8 +66,8 @@ else :
     lang = "en"
     _ = gettext.gettext
 
-
 #No touch, handled in runtime by extensions
+bot.BASE_DIR = BASE_DIR
 bot.currentVersion = currentVersion
 bot.prefix = prefix
 bot.lang = lang
@@ -76,12 +79,13 @@ bot.recentlyEdited = []
 #All extensions that are loaded on boot-up, change these to alter what modules you want (Note: These refer to filenames NOT cognames)
 #Note: Without the extension admin_commands, most things will break, so I consider this a must-have. Remove at your own peril.
 #Jishaku is a bot-owner only debug extension, requires 'pip install jishaku'.
-initial_extensions = ['extensions.admin_commands', 'extensions.misc_commands', 'extensions.matchmaking', 'extensions.tags', 'extensions.setup', 'extensions.userlog', 'jishaku']
+initial_extensions = ['extensions.admin_commands', 'extensions.misc_commands', 'extensions.matchmaking', 'extensions.tags', 'extensions.setup', 'extensions.userlog', 'extensions.moderation', 'extensions.timers', 'jishaku']
 #Contains all the valid datatypes in settings. If you add a new one here, it will be automatically generated
 #upon a new request to retrieve/modify that datatype.
 bot.datatypes = ["LOGCHANNEL", "ELEVATED_LOGCHANNEL",   #Used in module userlog
 "COMMANDSCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI",   #Used in module matchmaking
-"KEEP_ON_TOP_CHANNEL", "KEEP_ON_TOP_MSG"]   #Used in module matchmaking & in main
+"KEEP_ON_TOP_CHANNEL", "KEEP_ON_TOP_MSG", #Used in module matchmaking & in main
+"MOD_MUTEROLE"]  #Moderation & automod
 #These text names are reserved and used for internal functions, other ones may get created by users for tags.
 bot.reservedTextNames = ["KEEP_ON_TOP_CONTENT"]
 #
@@ -144,6 +148,8 @@ def checkExtensions():
         
 bot.checkExtensions = checkExtensions()
 
+
+
 #Executes when the bot starts & is ready.
 @bot.event
 async def on_ready():
@@ -156,71 +162,53 @@ async def on_ready():
 #
 #DBHandler
 #
-#All functions relating to adding, updating, inserting, or removing from any table in the database
+#All helper functions relating to adding, updating, inserting, or removing from any table in the database
 class DBhandler():
-    #Deletes all data related to a specific guild, including but not limited to: all settings, priviliged roles, stored tags, stored multiplayer listings
+    #Deletes all data related to a specific guild, including but not limited to: all settings, priviliged roles, stored tags, stored multiplayer listings etc...
+    #Warning! This also erases any stored warnings & other moderation actions for the guild
     async def deletedata(self, guildID):
         #The nuclear option
-        async with aiosqlite.connect(bot.dbPath) as db:
-            await db.execute("DELETE FROM settings WHERE guild_id = ?", [guildID])
-            await db.execute("DELETE FROM priviliged WHERE guild_id = ?", [guildID])
-            await db.execute("DELETE FROM stored_text WHERE guild_id = ?", [guildID])
-            await db.execute("DELETE FROM match_listings WHERE guild_id = ?", [guildID])
-            await db.commit()
-            #os.remove(f"{guildID}_settings.cfg")
-            logging.warning(f"Settings have been reset and tags erased for guild {guildID}.")
+        await bot.db.execute("DELETE FROM settings WHERE guild_id = ?", [guildID])
+        await bot.db.execute("DELETE FROM priviliged WHERE guild_id = ?", [guildID])
+        await bot.db.execute("DELETE FROM stored_text WHERE guild_id = ?", [guildID])
+        await bot.db.execute("DELETE FROM match_listings WHERE guild_id = ?", [guildID])
+        await bot.db.execute("DELETE FROM users WHERE guild_id = ?", [guildID])
+        await bot.db.commit()
+        logging.warning(f"Settings have been reset and tags erased for guild {guildID}.")
 
-    #Returns the priviliged roles for a specific guild as a list.
-    async def checkprivs(self, guildID):
-        async with aiosqlite.connect(bot.dbPath) as db:
-            cursor = await db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ?", [guildID])
-            roleIDs = await cursor.fetchall()
-            #Abstracting away the conversion from tuples
-            roleIDs = [role[0] for role in roleIDs]
-            return roleIDs
-    #Inserts a priviliged role
-    async def setpriv(self, roleID, guildID):
-        async with aiosqlite.connect(bot.dbPath) as db:
-            await db.execute("INSERT INTO priviliged (guild_id, priviliged_role_id) VALUES (?, ?)", [guildID, roleID])
-            await db.commit()
-    #Deletes a priviliged role
-    async def delpriv(self, roleID, guildID):
-        async with aiosqlite.connect(bot.dbPath) as db:
-            await db.execute("DELETE FROM priviliged WHERE guild_id = ? AND priviliged_role_id = ? ", [guildID, roleID])
-            await db.commit()
+
     #Modifies a value in settings relating to a guild
     async def modifysettings(self, datatype, value, guildID):
         if datatype in bot.datatypes :
-            #Check if we have values for this guild
-            async with aiosqlite.connect(bot.dbPath) as db:
-                cursor = await db.execute("SELECT guild_id FROM settings WHERE guild_id = ?", [guildID])
+        #Check if we have values for this guild
+            cursor = await bot.db.execute("SELECT guild_id FROM settings WHERE guild_id = ?", [guildID])
+            result = await cursor.fetchone()
+            if result != None :
+                #Looking for the datatype
+                cursor = await bot.db.execute("SELECT datatype FROM settings WHERE guild_id = ? AND datatype = ?", [guildID, datatype])
                 result = await cursor.fetchone()
+                #If the datatype does exist, we return the value
                 if result != None :
-                    #Looking for the datatype
-                    cursor = await db.execute("SELECT datatype FROM settings WHERE guild_id = ? AND datatype = ?", [guildID, datatype])
-                    result = await cursor.fetchone()
-                    #If the datatype does exist, we return the value
-                    if result != None :
-                        #We update the matching record with our new value
-                        await db.execute("UPDATE settings SET guild_id = ?, datatype = ?, value = ? WHERE guild_id = ? AND datatype = ?", [guildID, datatype, value, guildID, datatype])
-                        await db.commit()
-                        return
-                    #If it does not, for example if a new valid datatype is added to the code, we will create it, and assign it the value.
-                    else :
-                        await db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, ?)", [guildID, datatype, value])
-                        await db.commit()
-                        return
-                #If no data relating to the guild can be found, we will create every datatype for the guild
-                #Theoretically not necessary, but it outputs better into displaysettings()
-                else :
-                    for item in bot.datatypes :
-                        #We insert every datatype into the table for this guild.
-                        await db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, 0)", [guildID, item])
-                    await db.commit()
-                    #And then we update the value we wanted to change in the first place.
-                    await db.execute("UPDATE settings SET guild_id = ?, datatype = ?, value = ? WHERE guild_id = ? AND datatype = ?", [guildID, datatype, value, guildID, datatype])
-                    await db.commit()
+                    #We update the matching record with our new value
+                    await bot.db.execute("UPDATE settings SET guild_id = ?, datatype = ?, value = ? WHERE guild_id = ? AND datatype = ?", [guildID, datatype, value, guildID, datatype])
+                    await bot.db.commit()
                     return
+                #If it does not, for example if a new valid datatype is added to the code, we will create it, and assign it the value.
+                else :
+                    await bot.db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, ?)", [guildID, datatype, value])
+                    await bot.db.commit()
+                    return
+            #If no data relating to the guild can be found, we will create every datatype for the guild
+            #Theoretically not necessary, but it outputs better into displaysettings()
+            else :
+                for item in bot.datatypes :
+                    #We insert every datatype into the table for this guild.
+                    await bot.db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, 0)", [guildID, item])
+                await bot.db.commit()
+                #And then we update the value we wanted to change in the first place.
+                await bot.db.execute("UPDATE settings SET guild_id = ?, datatype = ?, value = ? WHERE guild_id = ? AND datatype = ?", [guildID, datatype, value, guildID, datatype])
+                await bot.db.commit()
+                return
         else :
             #This is an internal error and indicates a coding error
             logging.critical(f"Invalid datatype called in DBHandler.modifysetting() (Called datatype: {datatype})")
@@ -229,183 +217,243 @@ class DBhandler():
     #Retrieves a setting for a specified guild.
     async def retrievesetting(self, datatype, guildID) :
         if datatype in bot.datatypes :
-            #Check if we have values for this guild
-            async with aiosqlite.connect(bot.dbPath) as db:
-                cursor = await db.execute("SELECT guild_id FROM settings WHERE guild_id = ?", [guildID])
+        #Check if we have values for this guild
+            cursor = await bot.db.execute("SELECT guild_id FROM settings WHERE guild_id = ?", [guildID])
+            result = await cursor.fetchone()
+            #If we do, we check if the datatype exists
+            if result != None :
+                #Looking for the datatype
+                cursor = await bot.db.execute("SELECT datatype FROM settings WHERE guild_id = ? AND datatype = ?", [guildID, datatype])
                 result = await cursor.fetchone()
-                #If we do, we check if the datatype exists
+                #If the datatype does exist, we return the value
                 if result != None :
-                    #Looking for the datatype
-                    cursor = await db.execute("SELECT datatype FROM settings WHERE guild_id = ? AND datatype = ?", [guildID, datatype])
-                    result = await cursor.fetchone()
-                    #If the datatype does exist, we return the value
-                    if result != None :
-                        cursor = await db.execute("SELECT value FROM settings WHERE guild_id = ? AND datatype = ?", [guildID, datatype])
-                        #This is necessary as fetchone() returns it as a tuple of one element.
-                        value = await cursor.fetchone()
-                        return value[0]
-                    #If it does not, for example if a new valid datatype is added to the code, we will create it, then return 0.
-                    else :
-                        await db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, 0)", [guildID, datatype])
-                        await db.commit()
-                        return 0
-                #If no data relating to the guild can be found, we will create every datatype for the guild, and return their value.
-                #Theoretically not necessary, but it outputs better into displaysettings()
+                    cursor = await bot.db.execute("SELECT value FROM settings WHERE guild_id = ? AND datatype = ?", [guildID, datatype])
+                    #This is necessary as fetchone() returns it as a tuple of one element.
+                    value = await cursor.fetchone()
+                    return value[0]
+                #If it does not, for example if a new valid datatype is added to the code, we will create it, then return 0.
                 else :
-                    for item in bot.datatypes :
-                        #We insert every datatype into the table for this guild.
-                        await db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, 0)", [guildID, item])
-                    await db.commit()
-                    #And then we return error -1 to signal that there are no settings
-                    return -1
+                    await bot.db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, 0)", [guildID, datatype])
+                    await bot.db.commit()
+                    return 0
+            #If no data relating to the guild can be found, we will create every datatype for the guild, and return their value.
+            #Theoretically not necessary, but it outputs better into displaysettings()
+            else :
+                for item in bot.datatypes :
+                    #We insert every datatype into the table for this guild.
+                    await bot.db.execute("INSERT INTO settings (guild_id, datatype, value) VALUES (?, ?, 0)", [guildID, item])
+                await bot.db.commit()
+                #And then we return error -1 to signal that there are no settings
+                return -1
         else :
             #This is an internal error and indicates a coding error
             logging.critical(f"Invalid datatype called in DBHandler.retrievesetting() (Called datatype: {datatype})")
 
     #Should really be retrieveallsettings() but it is only used in !settings to display them to the users
     async def displaysettings(self, guildID) :
-        #Check if there are any values stored related to the guild.
-        #If this is true, guild settings exist.
-        async with aiosqlite.connect(bot.dbPath) as db:
-            result = None
-            cursor = await db.execute("SELECT guild_id FROM settings WHERE guild_id = ?", [guildID])
-            result = await cursor.fetchone()
-            #If we find something, we gather it, return it.
-            if result != None :
-                #This gets datapairs in a tuple, print it below if you want to see how it looks
-                cursor = await db.execute("SELECT datatype, value FROM settings WHERE guild_id = ?", [guildID])
-                dbSettings = await cursor.fetchall()
-                #print(dbSettings)
-                #The array we will return to send in the message
-                settings = []
-                #Now we just combine them.
-                i = 0
-                for i in range(len(dbSettings)) :
-                    settings.append(f"{dbSettings[i][0]} = {dbSettings[i][1]} \n")
-                    i += 1
-                return settings
-            #If not, we return error code -1, corresponding to no settings.
-            else:
-                return -1
+    #Check if there are any values stored related to the guild.
+    #If this is true, guild settings exist.
+        result = None
+        cursor = await bot.db.execute("SELECT guild_id FROM settings WHERE guild_id = ?", [guildID])
+        result = await cursor.fetchone()
+        #If we find something, we gather it, return it.
+        if result != None :
+            #This gets datapairs in a tuple, print it below if you want to see how it looks
+            cursor = await bot.db.execute("SELECT datatype, value FROM settings WHERE guild_id = ?", [guildID])
+            dbSettings = await cursor.fetchall()
+            #The array we will return to send in the message
+            settings = []
+            #Now we just combine them.
+            i = 0
+            for i in range(len(dbSettings)) :
+                settings.append(f"{dbSettings[i][0]} = {dbSettings[i][1]} \n")
+                i += 1
+            return settings
+        #If not, we return error code -1, corresponding to no settings.
+        else:
+            return -1
     #Retrieves a piece of stored text inside table stored_text (Mostly used for tags)
     async def retrievetext(self, textname, guildID) :
-        
-        #Check if we have values for this guild
-        async with aiosqlite.connect(bot.dbPath) as db:
-            #Check for the desired text
-            cursor = await db.execute("SELECT text_name FROM stored_text WHERE guild_id = ? AND text_name = ?", [guildID, textname])
-            result = await cursor.fetchone()
-            #If the datatype does exist, we return the value
-            if result != None :
-                cursor = await db.execute("SELECT text_content FROM stored_text WHERE guild_id = ? AND text_name = ?", [guildID, textname])
-                result = await cursor.fetchone()
-                #This is necessary as fetchone() returns it as a tuple of one element.
-                return result[0]
-            #If it does not exist, return None
-            else :
-                return None
+        cursor = await bot.db.execute("SELECT text_content FROM stored_text WHERE guild_id = ? AND text_name = ?", [guildID, textname])
+        result = await cursor.fetchone()
+        #This is necessary as fetchone() returns it as a tuple of one element.
+        if result:
+            return result[0]
     #Stores a piece of text inside table stored_text for later use
     async def storetext(self, textname, textcontent, guildID):
-        #Check if we have values for this guild
-        async with aiosqlite.connect(bot.dbPath) as db:
-            #Check for the desired text
-            cursor = await db.execute("SELECT text_name FROM stored_text WHERE guild_id = ? AND text_name = ?", [guildID, textname])
-            result = await cursor.fetchone()
-            #Updating value if it exists
-            if result != None :
-                await db.execute("UPDATE stored_text SET guild_id = ?, text_name = ?, text_content = ? WHERE guild_id = ? AND text_name = ?", [guildID, textname, textcontent, guildID, textname])
-                await db.commit()
-            #If it does not exist, insert it
-            else :
-                await db.execute("INSERT INTO stored_text (guild_id, text_name, text_content) VALUES (?, ?, ?)", [guildID, textname, textcontent])
-                await db.commit()
+        #Check for the desired text
+        cursor = await bot.db.execute("SELECT text_name FROM stored_text WHERE guild_id = ? AND text_name = ?", [guildID, textname])
+        result = await cursor.fetchone()
+        #Updating value if it exists
+        if result != None :
+            await bot.db.execute("UPDATE stored_text SET guild_id = ?, text_name = ?, text_content = ? WHERE guild_id = ? AND text_name = ?", [guildID, textname, textcontent, guildID, textname])
+            await bot.db.commit()
+        #If it does not exist, insert it
+        else :
+            await bot.db.execute("INSERT INTO stored_text (guild_id, text_name, text_content) VALUES (?, ?, ?)", [guildID, textname, textcontent])
+            await bot.db.commit()
     #Deletes a single text entry
     async def deltext(self, textname, guildID):
-        async with aiosqlite.connect(bot.dbPath) as db:
-            await db.execute("DELETE FROM stored_text WHERE text_name = ? AND guild_id = ?", [textname, guildID])
-            await db.commit()
-            return
+        await bot.db.execute("DELETE FROM stored_text WHERE text_name = ? AND guild_id = ?", [textname, guildID])
+        await bot.db.commit()
+        return
     #Get all tags for a guild (Get all text that is not reserved)
     async def getTags(self, guildID):
-        async with aiosqlite.connect(bot.dbPath) as db:
-
-            cursor = await db.execute("SELECT text_name FROM stored_text WHERE guild_id = ?", [guildID])
-            results = await cursor.fetchall()
-            #Fix for tuples
-            results = [result[0] for result in results]
-            #Remove reserved stuff
-            for result in results :
-                if result in bot.reservedTextNames :
-                    results.remove(result)
-            return results
+        cursor = await bot.db.execute("SELECT text_name FROM stored_text WHERE guild_id = ?", [guildID])
+        results = await cursor.fetchall()
+        #Fix for tuples
+        results = [result[0] for result in results]
+        #Remove reserved stuff
+        for result in results :
+            if result in bot.reservedTextNames :
+                results.remove(result)
+        return results
     #Handling the match_listings table - specific to matchmaking extension
     async def addListing(self, ID, ubiname, hostID, gamemode, playercount, DLC, mods, timezone, additional_info, timestamp, guildID):
-        async with aiosqlite.connect(bot.dbPath) as db:
-            await db.execute("INSERT INTO match_listings (ID, ubiname, hostID, gamemode, playercount, DLC, mods, timezone, additional_info, timestamp, guild_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [ID, ubiname, hostID, gamemode, playercount, DLC, mods, timezone, additional_info, timestamp, guildID])
-            await db.commit()
+            await bot.db.execute("INSERT INTO match_listings (ID, ubiname, hostID, gamemode, playercount, DLC, mods, timezone, additional_info, timestamp, guild_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [ID, ubiname, hostID, gamemode, playercount, DLC, mods, timezone, additional_info, timestamp, guildID])
+            await bot.db.commit()
             return
     async def delListing(self, ID, guildID):
-        async with aiosqlite.connect(bot.dbPath) as db:
-            await db.execute("DELETE FROM match_listings WHERE ID = ? AND guild_id = ?", [ID, guildID])
-            await db.commit()
-            return
+        await bot.db.execute("DELETE FROM match_listings WHERE ID = ? AND guild_id = ?", [ID, guildID])
+        await bot.db.commit()
+        return
     #Retrieve every information about a single listing
     async def retrieveListing(self, ID, guildID):
-        async with aiosqlite.connect(bot.dbPath) as db:
-            cursor = await db.execute("SELECT * FROM match_listings WHERE ID = ? AND guild_id = ?", [ID, guildID])
-            listing = await cursor.fetchone()
-            if listing == None :
-                return
-            listingDict = {
-                "ID": listing[0],
-                "ubiname": listing[1],
-                "hostID": listing[2],
-                "gamemode": listing[3],
-                "playercount": listing[4],
-                "DLC": listing[5],
-                "mods": listing[6],
-                "timezone": listing[7],
-                "additional_info": listing[8],
-                "timestamp": listing[9],
-                "guild_id": listing[10]
-            }
-            return listingDict
+        cursor = await bot.db.execute("SELECT * FROM match_listings WHERE ID = ? AND guild_id = ?", [ID, guildID])
+        listing = await cursor.fetchone()
+        if listing == None :
+            return
+        listingDict = {
+            "ID": listing[0],
+            "ubiname": listing[1],
+            "hostID": listing[2],
+            "gamemode": listing[3],
+            "playercount": listing[4],
+            "DLC": listing[5],
+            "mods": listing[6],
+            "timezone": listing[7],
+            "additional_info": listing[8],
+            "timestamp": listing[9],
+            "guild_id": listing[10]
+        }
+        return listingDict
     #Retrieve every information about every listing stored
     async def retrieveAllListings(self):
-        async with aiosqlite.connect(bot.dbPath) as db:
-            cursor = await db.execute("SELECT * FROM match_listings")
-            results = await cursor.fetchall()
-            ID, ubiname, hostID, gamemode, playercount, DLC, mods, timezone, additional_info, timestamp, guild_id = ([] for i in range(11))
-            for listing in results :
-                ID.append(listing[0])
-                ubiname.append(listing[1])
-                hostID.append(listing[2])
-                gamemode.append(listing[3])
-                playercount.append(listing[4])
-                DLC.append(listing[5])
-                mods.append(listing[6])
-                timezone.append(listing[7])
-                additional_info.append(listing[8])
-                timestamp.append(listing[9])
-                guild_id.append(listing[10])
-            listings = {
-                "ID": ID,
-                "ubiname": ubiname,
-                "hostID": hostID,
-                "gamemode": gamemode,
-                "playercount": playercount,
-                "DLC": DLC,
-                "mods": mods,
-                "timezone": timezone,
-                "additional_info": additional_info,
-                "timestamp": timestamp,
+        cursor = await bot.db.execute("SELECT * FROM match_listings")
+        results = await cursor.fetchall()
+        ID, ubiname, hostID, gamemode, playercount, DLC, mods, timezone, additional_info, timestamp, guild_id = ([] for i in range(11))
+        for listing in results :
+            ID.append(listing[0])
+            ubiname.append(listing[1])
+            hostID.append(listing[2])
+            gamemode.append(listing[3])
+            playercount.append(listing[4])
+            DLC.append(listing[5])
+            mods.append(listing[6])
+            timezone.append(listing[7])
+            additional_info.append(listing[8])
+            timestamp.append(listing[9])
+            guild_id.append(listing[10])
+        listings = {
+            "ID": ID,
+            "ubiname": ubiname,
+            "hostID": hostID,
+            "gamemode": gamemode,
+            "playercount": playercount,
+            "DLC": DLC,
+            "mods": mods,
+            "timezone": timezone,
+            "additional_info": additional_info,
+            "timestamp": timestamp,
+            "guild_id": guild_id
+        }
+        return listings
+    
+    async def createUser(self, userID, guildID, flags=None, warns=0, is_muted=0, notes=None): #Creates an empty user, or you can specify attributes (but you should not)
+        await bot.db.execute("INSERT INTO users (user_id, flags, warns, is_muted, notes, guild_id) VALUES (?, ?, ?, ?, ?, ?)", [userID, flags, warns, is_muted, notes, guildID])
+        await bot.db.commit()
+
+
+    async def getUser(self, userID, guildID): #Gets a single user from the db
+        cursor = await bot.db.execute("SELECT * FROM users WHERE user_id = ? AND guild_id = ?", [userID, guildID])
+        result = await cursor.fetchone()
+        if result:
+            user = {
+                "user_id": result[0],
+                "flags": result[1],
+                "warns": result[2],
+                "is_muted": result[3],
+                "notes": result[4],
+                "guild_id": result[5]
+            }
+            return user
+        else:
+            await self.createUser(userID, guildID) #If the user does not exist, we create an empty entry for them, then repeat the get request
+            return await self.getUser(userID, guildID) #Recursion yay (I am immature)
+    
+    async def getAllGuildUsers(self, guildID):
+        cursor = await bot.db.execute("SELECT * FROM users WHERE guild_id = ?", [guildID])
+        results = await cursor.fetchall()
+        if results:
+            userID, flags, warns, is_muted, notes, guild_id = ([] for i in range(6))
+            for result in results:
+                userID.append(result[0])
+                flags.append(result[1])
+                warns.append(result[2])
+                is_muted.append(result[3])
+                notes.append(result[4])
+                guild_id.append(result[5])
+            users = {
+                "user_id": userID,
+                "flags": flags,
+                "warns": warns,
+                "is_muted": is_muted,
+                "notes": notes,
                 "guild_id": guild_id
             }
-            return listings
+            return users
+    
+    async def updateUser(self, userID, field, value, guildID): #Update a user's specific attribute
+        valid_fields=["flags", "warns", "is_muted", "notes"] #This should prevent SQL Injection, and accidental data writes/errors
+        if field not in valid_fields:
+            logging.critical(f"DBHandler.updateUser referenced invalid field: {field}")
+            return
+        if await self.getUser(userID, guildID):
+            await bot.db.execute(f"UPDATE users SET {field} = ? WHERE user_id = ? AND guild_id = ?", [value, userID, guildID])
+            #Printing the same thing in console
+            await bot.db.commit()
+        else:
+            print("User not found, creating")
+            self.createUser(userID, guildID) #Create the user
+            await bot.db.execute(f"UPDATE users SET {field} = ? WHERE user_id = ? AND guild_id = ?", [value, userID, guildID])
+            await bot.db.commit()
 
 
-#The main instance of DBHandler
 bot.DBHandler = DBhandler()
+
+
+class CommandChecks():
+    
+    '''
+    Checks for commands across the bot
+    '''
+    #Has bot or guild owner
+    async def hasOwner(self, ctx):
+        return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id
+
+    #Check performed to see if the user has priviliged access.
+    async def hasPriviliged(self, ctx):
+        userRoles = [x.id for x in ctx.author.roles]
+        cursor = await ctx.bot.db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ?", [ctx.guild.id])
+        roleIDs = await cursor.fetchall()
+        privroles = [role[0] for role in roleIDs]
+        #Check if any of the roles in user's roles are contained in the priviliged roles.
+        print(any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id))
+        return any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id)
+
+
+bot.CommandChecks = CommandChecks()
+
 
 #The custom help command subclassing the dpy one. See the docs or this guide (https://gist.github.com/InterStella0/b78488fb28cadf279dfd3164b9f0cf96) on how this was made.
 class SnedHelp(commands.HelpCommand):
@@ -524,6 +572,10 @@ async def on_command_error(ctx, error):
             embed = discord.Embed(title=bot.errorMaxConcurrencyReachedTitle, description=bot.errorMaxConcurrencyReachedDesc, color=bot.errorColor)
             embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.channel.send(embed=embed)
+    elif isinstance(error, commands.MemberNotFound):
+        embed=discord.Embed(title="❌ " + _("Cannot find user by that name"), description=_("Please check if you typed everything correctly, then try again.\n**Error:**```{error}```").format(error=str(error)), color=bot.errorColor)
+        await ctx.send(embed=embed)
+
 
     else :
         #If no known error has been passed, we will print the exception to console as usual
@@ -544,9 +596,12 @@ async def on_guild_join(guild):
     #This forces settings to generate for this guild.
     await bot.DBHandler.retrievesetting("COMMANDSCHANNEL", guild.id)
     if guild.system_channel != None :
-        embed=discord.Embed(title=_("Beep Boop!"), description=_("I have been summoned to this server. Use `{prefix}help` to see what I can do!").format(prefix=prefix), color=0xfec01d)
-        embed.set_thumbnail(url=bot.user.avatar_url)
-        await guild.system_channel.send(embed=embed)
+        try:
+            embed=discord.Embed(title=_("Beep Boop!"), description=_("I have been summoned to this server. Use `{prefix}help` to see what I can do!").format(prefix=prefix), color=0xfec01d)
+            embed.set_thumbnail(url=bot.user.avatar_url)
+            await guild.system_channel.send(embed=embed)
+        except discord.Forbidden:
+            pass
     logging.info(f"Bot has been added to new guild {guild.id}.")
 
 #Triggered when bot leaves guild, or gets kicked/banned, or guild gets deleted.
@@ -572,8 +627,6 @@ async def on_message(message):
                 newTop = await message.channel.send(keepOnTopContent)
                 #Set the id to keep the ball rolling
                 await bot.DBHandler.modifysettings("KEEP_ON_TOP_MSG", newTop.id, newTop.guild.id)
-        elif topChannelID == None :
-            logging.warning("Settings not found.")
         #This is necessary, otherwise bot commands will break because on_message would override them
     await bot.process_commands(message)
 
@@ -582,4 +635,4 @@ async def on_message(message):
 try :
     bot.run(TOKEN)
 except KeyboardInterrupt :
-    pass
+    bot.close()

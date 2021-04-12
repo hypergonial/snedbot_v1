@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-06 17:37+0200\n"
+"POT-Creation-Date: 2021-04-13 00:35+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -14,18 +14,4 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
 
-
-#: admin_commands.py:181
-msgid "{offender} has been warned."
-msgstr ""
-
-#: admin_commands.py:181 admin_commands.py:185
-msgid "Warning issued."
-msgstr ""
-
-#: admin_commands.py:185
-msgid ""
-"{offender} has been warned.\n"
-"**Reason:** {reason}"
-msgstr ""
 

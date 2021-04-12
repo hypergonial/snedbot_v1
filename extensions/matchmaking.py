@@ -341,7 +341,7 @@ class Matchmaking(commands.Cog):
             if qType == "ConfirmListing" :
                 #Send listing preview
                 embed=discord.Embed(title=self._("**__Looking for Players: Anno 1800__**"), description=self._("**Ubisoft Connect Username: ** {name} \n **Gamemode: ** {gamemode} \n **Players: ** {playercount} \n **DLC: ** {DLC} \n **Mods:** {mods} \n **Timezone:** {timezone} \n **Additional info:** {additional_info} \n \n Contact {author} in DMs if you are interested, or subscribe by reacting with {arrow}! This will notify the host when {subcap} players have subscribed! (including the host)").format(name=mpsessiondata[0], gamemode=mpsessiondata[1], playercount=mpsessiondata[2], DLC=mpsessiondata[3], mods=mpsessiondata[4], timezone=mpsessiondata[5], additional_info=mpsessiondata[6], author=ctx.author.mention, arrow="⏫", subcap=mpsessiondata[2]), color=mpEmbedColor)
-                embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/203158031511453696/446da0b60a670b6866cd463fb5e87195.png?size=1024")
+                embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/310078048525615106/830900971680038962/union_crop.jpg")
                 embed.set_footer(text=self._("Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted."))
                 await ctx.author.send(embed=embed)
                 embed=discord.Embed(title=self._("Please review your listing!"), description=self._("If everything looks good, hit {check} to submit! If you want to edit any information, hit {pen}. If you want to cancel your submission, hit {cross}.").format(check="✅", pen="🖊️", cross="❌"), color=mpEmbedColor)
@@ -361,14 +361,14 @@ class Matchmaking(commands.Cog):
                     if await self.bot.DBHandler.retrievesetting("LFGROLE", ctx.guild.id) == 0 :
                         #yeah this is long lol
                         embed=discord.Embed(title=self._("**__Looking for Players: Anno 1800__**"), description=self._("**Ubisoft Connect Username: ** {name} \n **Gamemode: ** {gamemode} \n **Players: ** {playercount} \n **DLC: ** {DLC} \n **Mods:** {mods} \n **Timezone:** {timezone} \n **Additional info:** {additional_info} \n \n Contact {author} in DMs if you are interested, or subscribe by reacting with {arrow}! This will notify the host when {subcap} players have subscribed! (including the host)").format(name=mpsessiondata[0], gamemode=mpsessiondata[1], playercount=mpsessiondata[2], DLC=mpsessiondata[3], mods=mpsessiondata[4], timezone=mpsessiondata[5], additional_info=mpsessiondata[6], author=ctx.author.mention, arrow="⏫", subcap=mpsessiondata[2]), color=mpEmbedColor)
-                        embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/203158031511453696/446da0b60a670b6866cd463fb5e87195.png?size=1024")
+                        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/310078048525615106/830900971680038962/union_crop.jpg")
                         embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted.\nID: {listing_id}".format(listing_id=listingID))
                         posting = await channel.send(embed=embed)
                         await posting.add_reaction("⏫")
                         logging.info(f"{ctx.author} User created new multiplayer listing with ID {listingID}. Session data dump: {mpsessiondata}")
                     else :
                         embed=discord.Embed(title=self._("**__Looking for Players: Anno 1800__**"), description=self._("**Ubisoft Connect Username: ** {name} \n **Gamemode: ** {gamemode} \n **Players: ** {playercount} \n **DLC: ** {DLC} \n **Mods:** {mods} \n **Timezone:** {timezone} \n **Additional info:** {additional_info} \n \n Contact {author} in DMs if you are interested, or subscribe by reacting with {arrow}! This will notify the host when {subcap} players have subscribed! (including the host)").format(name=mpsessiondata[0], gamemode=mpsessiondata[1], playercount=mpsessiondata[2], DLC=mpsessiondata[3], mods=mpsessiondata[4], timezone=mpsessiondata[5], additional_info=mpsessiondata[6], author=ctx.author.mention, arrow="⏫", subcap=mpsessiondata[2]), color=mpEmbedColor)
-                        embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/203158031511453696/446da0b60a670b6866cd463fb5e87195.png?size=1024")
+                        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/310078048525615106/830900971680038962/union_crop.jpg")
                         embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted.\nID: {listing_id}".format(listing_id=listingID))
                         posting = await channel.send(embed=embed,content=lfgrole.mention)
                         await posting.add_reaction("⏫")
