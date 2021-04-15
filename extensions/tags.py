@@ -25,7 +25,7 @@ class Tags(commands.Cog):
             self._ = gettext.gettext
 
     @commands.command(help="Calls a tag.", description="Calls a tag that has been previously set. You can get a list of tags via the command `tags`.", usage=f"tag <tagname>")
-    @commands.cooldown(1, 60, type=commands.BucketType.member)
+    @commands.cooldown(1, 20, type=commands.BucketType.member)
     @commands.guild_only()
     async def tag(self, ctx, *, name):
         if name in self.bot.reservedTextNames :
@@ -35,7 +35,7 @@ class Tags(commands.Cog):
             self.tag.reset_cooldown(ctx)
             return
         else :
-            tagContent = await self.bot.DBHandler.retrievetext(name, ctx.guild.id)
+            tagContent = await self.bot.DBHandler.retrievetext(name.lower(), ctx.guild.id)
             if tagContent == None :
                 embed=discord.Embed(title="❌ " + self._("Error: Unknown tag."), description=self._("Cannot find tag by that name."), color=self.bot.errorColor)
                 embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
@@ -77,8 +77,8 @@ class Tags(commands.Cog):
             try:
                 #Store it
                 msgToTag = await ctx.channel.fetch_message(messageID)
-                await self.bot.DBHandler.storetext(name, msgToTag.content, ctx.guild.id)
-                embed=discord.Embed(title="✅ " + self._("Tag added."), description=self._("Tag added! You can now call it via `{prefix}tag {tag_name}`!").format(prefix=self.bot.prefix, tag_name=name), color=self.bot.embedGreen)
+                await self.bot.DBHandler.storetext(name.lower(), msgToTag.content, ctx.guild.id)
+                embed=discord.Embed(title="✅ " + self._("Tag added."), description=self._("Tag added! You can now call it via `{prefix}tag {tag_name}`").format(prefix=ctx.prefix, tag_name=name.lower()), color=self.bot.embedGreen)
                 await ctx.channel.send(embed=embed)
                 return
             except discord.NotFound:
@@ -99,12 +99,12 @@ class Tags(commands.Cog):
             return
         else:
             if name in await self.bot.DBHandler.getTags(ctx.guild.id) :
-                await self.bot.DBHandler.deltext(name, ctx.guild.id)
-                embed=discord.Embed(title="✅ " + self._("Tag deleted."), description=self._("Tag {tag_name} has been removed.").format(tag_name=name), color=self.bot.embedGreen)
+                await self.bot.DBHandler.deltext(name.lower(), ctx.guild.id)
+                embed=discord.Embed(title="✅ " + self._("Tag deleted."), description=self._("Tag {tag_name} has been removed.").format(tag_name=name.lower()), color=self.bot.embedGreen)
                 await ctx.channel.send(embed=embed)
                 return
             else :
-                embed=discord.Embed(title="❌ " + self._("Error: Tag not found."), description=self._("Unable to locate tag. Please run `{prefix}tags` for a list of tags!").format(prefix=self.bot.prefix), color=self.bot.errorColor)
+                embed=discord.Embed(title="❌ " + self._("Error: Tag not found."), description=self._("Unable to locate tag. Please run `{prefix}tags` for a list of tags!").format(prefix=ctx.prefix), color=self.bot.errorColor)
                 await ctx.channel.send(embed=embed)
                 return
 

@@ -2,3 +2,4 @@ discord
 Levenshtein
 aiosqlite
 dotenv
+jishaku
