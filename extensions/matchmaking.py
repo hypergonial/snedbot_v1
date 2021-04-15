@@ -11,6 +11,15 @@ from discord.ext import tasks
 
 #Disclaimer: This extension is proprietary to Annoverse, and should not be used elsewhere without heavy modifications
 
+#Check to see if matchmaking is set up or not
+async def is_setup(ctx):
+    ach = ctx.bot.DBHandler.retrievesetting("ANNOUNCECHANNEL", ctx.guild.id)
+    if ach == 0:
+        return False
+    else:
+        return True
+        
+
 class Matchmaking(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -37,6 +46,7 @@ class Matchmaking(commands.Cog):
     #designated role if set. Can be limited as to which channels it can be run from via the COMMANDSCHANNEL setting.
     @commands.command(help="Start setting up a new multiplayer listing.", description="Start matchmaking! After command execution, you will receive a direct message to help you set up a multiplayer listing! Takes no arguments.", aliases=['multiplayer', 'init', 'match','multi','mp'], usage=f"matchmaking")
     @commands.guild_only()
+    @commands.check(is_setup)
     @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
     @commands.cooldown(1, 72000, type=commands.BucketType.member)
     async def matchmaking(self, ctx):

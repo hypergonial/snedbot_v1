@@ -1,6 +1,8 @@
 import asyncio
 import gettext
 import logging
+import copy
+import itertools
 
 import discord
 from discord.ext import commands
@@ -135,7 +137,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         roleIDs = await cursor.fetchall()
         roleIDs = [role[0] for role in roleIDs]
         if len(roleIDs) == 0 :
-            embed=discord.Embed(title="❌ Error: No priviliged roles set.", description=f"You can add a priviliged role via `{self.bot.prefix}addpriviligedrole <rolename>`.", color=self.bot.errorColor)
+            embed=discord.Embed(title="❌ Error: No priviliged roles set.", description=f"You can add a priviliged role via `{ctx.prefix}priviligedrole add <rolename>`.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
         else :
@@ -222,6 +224,120 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         await ctx.send(embed=embed)
         await self.bot.close()
         logging.info("Bot shut down successfully!")
+    
+    '''
+    @commands.group(help="Check the bot's prefixes.", description="Check the bot's prefixes. You can also use `add/del` to set or remove a prefix. By adding a prefix you override the default one.", usage="prefix [add/del] [prefix]", invoke_without_command=True, case_insensitive=True)
+    @commands.guild_only()
+    async def prefix(self, ctx):
+        cursor = await self.db.execute('SELECT text_content FROM stored_text WHERE text_name = "PREFIX" AND guild_id = ?', [ctx.guild.id])
+        results = await cursor.fetchone()
+        desc = ""
+        if results[0] and len(results) > 0:
+            prefixes = results[0].split(",")
+            for prefix in prefixes:
+                desc = f"{desc}**#{prefixes.index(prefix)}** - `{prefix}` \n"
+            embed=discord.Embed(title="❕ " + self._("**Active prefixes on this server**"), description=desc, color=self.bot.embedBlue)
+            await ctx.send(embed=embed)
+        else:
+            embed=discord.Embed(title="❕ " + self._("**Active prefixes on this server**"), description=f"*#0* - `{self.bot.default_prefix}` *(Default)*", color=self.bot.embedBlue)
+            await ctx.send(embed=embed)
+    
+    @prefix.command(name="add", aliases=["new"])
+    @commands.check(hasPriviliged)
+    @commands.guild_only()
+    async def add_prefix(self, ctx, *, prefix:str):
+        cursor = await self.db.execute('SELECT text_content FROM stored_text WHERE text_name = "PREFIX" AND guild_id = ?', [ctx.guild.id])
+        results = await cursor.fetchone()
+        if prefix in [",", "'", '"']:
+            raise commands.BadArgument("Prefix contains invalid character")
+        embed=discord.Embed()
+        if results[0] and len(results) > 0:
+            prefixes = results[0].split(",")
+            if prefix not in prefixes:
+                prefixes.append(prefix)
+                prefixes = ",".join(prefixes)
+                await self.db.execute('UPDATE stored_text SET text_content = ? WHERE text_name = "PREFIX" AND guild_id = ?', [prefixes, ctx.guild.id])
+                await self.db.commit()
+                embed=discord.Embed(title="✅ Added prefix!", description=f"Added `{prefix}` to the list of valid prefixes.", color=self.bot.embedGreen)
+            else:
+                embed=discord.Embed(title="❌ Prefix already added", description=f"This prefix is already added.", color=self.bot.errorColor)
+        elif results: #If value is Null but otherwise exists
+            await self.db.execute('UPDATE stored_text SET text_content = ? WHERE text_name = "PREFIX" AND guild_id = ?', [prefix, ctx.guild.id])
+            embed=discord.Embed(title="✅ Added prefix!", description=f"Added `{prefix}` to the list of valid prefixes. \n\n*Note: This will deactivate the default prefix*", color=self.bot.embedGreen)
+        else:
+            await self.db.execute('INSERT INTO stored_text (text_name, text_content, guild_id) VALUES ("PREFIX", ?, ?)', [prefix, ctx.guild.id])
+            await self.db.commit()
+            embed=discord.Embed(title="✅ Added prefix!", description=f"Added `{prefix}` to the list of valid prefixes. \n\n*Note: This will deactivate the default prefix*", color=self.bot.embedGreen)
+        await ctx.send(embed=embed)
+
+    @prefix.command(name="del", aliases=["remove", "delete"])
+    @commands.check(hasPriviliged)
+    @commands.guild_only()
+    async def del_prefix(self, ctx, *, prefix:str):
+        cursor = await self.db.execute('SELECT text_content FROM stored_text WHERE text_name = "PREFIX" AND guild_id = ?', [ctx.guild.id])
+        results = await cursor.fetchone()
+        if any(prefix, [",", "'", '"']):
+            raise commands.BadArgument("Invalid prefix format")
+        if results[0] and len(results) > 0:
+            prefixes = results[0].split(",")
+            if prefix in prefixes:
+                prefixes.remove(prefix)
+                if len(prefixes) == 0:
+                    prefixes = None
+                else:
+                    prefixes = ",".join(prefixes)
+                await self.db.execute('UPDATE stored_text SET text_content = ? WHERE text_name = "PREFIX" AND guild_id = ?', [prefixes, ctx.guild.id])
+                await self.db.commit()
+                embed=discord.Embed(title="✅ Removed prefix!", description=f"Removed `{prefix}` from the list of valid prefixes.", color=self.bot.embedGreen)
+            else:
+                embed=discord.Embed(title="❌ Prefix not added", description=f"This prefix is not in the list of valid prefixes.", color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+        else:
+            embed=discord.Embed(title="❌ No custom prefixes", description=f"This server has no custom prefixes to remove from.", color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+    '''  
+
+
+
+
+    @commands.group(help="Run a command while bypassing checks and cooldowns.", description="Run a specified command while bypassing any checks and cooldowns.", usage="sudo <command> [arguments]")
+    @commands.check(hasPriviliged)
+    @commands.has_permissions(administrator=True)
+    async def sudo(self, ctx, *, command):
+        '''
+        Completely bypasses command checks for the command
+        It can break commands and is a very dangerous permission to grant
+        Of course there is a blacklist of commands that we do not want used, ever.
+        '''
+
+        blacklist = ["jsk", "jishaku"] #Stuff that I don't want to work
+        disabled_list = ["help", "sudo"] #Stuff that literally does not work
+        disabled_cogs = ["Annoverse"] #Entire cogs can be disabled too
+
+        for cog in disabled_cogs:
+            try:
+                disabled_list = disabled_list + [command.name.lower() for command in self.bot.get_cog(cog).get_commands()]
+                disabled_list = disabled_list + [alias.lower() for alias in list(itertools.chain(*[command.aliases for command in self.bot.get_cog(cog).get_commands()]))]
+            except AttributeError: #Ignore missing cogs
+                pass
+        if command.lower().startswith(tuple(blacklist)):
+            embed = discord.Embed(title="❌ Command unavailable", description=f"👍 Nice try though...", color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+            return
+        elif command.lower().startswith(tuple(disabled_list)):
+            embed = discord.Embed(title="❌ Command unavailable", description=f"This command is not available while using `{ctx.prefix}sudo`", color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+            return
+        msg = copy.copy(ctx.message)
+        msg.content = ctx.prefix + command
+        new_ctx = await self.bot.get_context(msg)
+        if new_ctx and new_ctx.valid:
+            await new_ctx.command.reinvoke(new_ctx)
+        else:
+            raise commands.CommandNotFound
+
+        
+
 
 def setup(bot):
     logging.info("Adding cog: AdminCommands...")

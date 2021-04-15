@@ -14,35 +14,58 @@ from pathlib import Path
 
 import aiosqlite
 import discord
-from discord.ext import commands
+from discord.ext import commands #, menus
 from dotenv import load_dotenv
 
 #Language
 lang = "en"
 #Is this build experimental?
-experimentalBuild = False
+experimentalBuild = True
 #Version of the bot
-currentVersion = "3.4.0"
+currentVersion = "3.4.1"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 #Activity
 activity = discord.Activity(name='Anno 9', type=discord.ActivityType.playing)
 #Determines bot prefix & logging based on build state.
-prefix = '!'
+default_prefix = '!'
 if experimentalBuild == True : 
-    prefix = '?'
+    default_prefix = '?'
     logging.basicConfig(level=logging.INFO)
 else :
-    prefix = '!'
+    default_prefix = '!'
     logging.basicConfig(level=logging.INFO)
+
+
+#Contains all the valid datatypes in settings. If you add a new one here, it will be automatically generated
+#upon a new request to retrieve/modify that datatype.
+datatypes = ["LOGCHANNEL", "ELEVATED_LOGCHANNEL",   #Used in module userlog
+"COMMANDSCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI",   #Used in module matchmaking
+"KEEP_ON_TOP_CHANNEL", "KEEP_ON_TOP_MSG", #Used in module matchmaking & in main
+"MOD_MUTEROLE"]  #Moderation & automod
+#These text names are reserved and used for internal functions, other ones may get created by users for tags.
+reservedTextNames = ["KEEP_ON_TOP_CONTENT", "PREFIX"]
 
 #Block bot from ever pinging @everyone
 allowed_mentions = discord.AllowedMentions(everyone=False, users=True, roles=True, replied_user=True)
 #This is just my user ID, used for setting up who can & cant use priviliged commands along with a server owner.
 creatorID = 163979124820541440
 
-bot = commands.Bot(command_prefix=prefix, intents= discord.Intents.all(), owner_id=creatorID, case_insensitive=True, help_command=None, activity=activity, max_messages=20000, allowed_mentions=allowed_mentions)
+async def get_prefix(bot, message):    
+    cursor = await bot.db.execute("SELECT text_content FROM stored_text WHERE guild_id = ? AND text_name = ?", [message.guild.id, "PREFIX"])
+    result = await cursor.fetchone()
+    #This is necessary as fetchone() returns it as a tuple of one element.
+    if result[0]:
+        list(result)
+        prefixes = result[0].split(",")
+        print(f"Prefix {prefixes}")
+        return prefixes
+    else:
+        return default_prefix
+
+
+bot = commands.Bot(command_prefix=default_prefix, intents= discord.Intents.all(), owner_id=creatorID, case_insensitive=True, help_command=None, activity=activity, max_messages=20000, allowed_mentions=allowed_mentions)
 
 #General global bot settings
 
@@ -69,25 +92,21 @@ else :
 #No touch, handled in runtime by extensions
 bot.BASE_DIR = BASE_DIR
 bot.currentVersion = currentVersion
-bot.prefix = prefix
 bot.lang = lang
+bot.default_prefix = default_prefix
 bot.experimentalBuild = experimentalBuild
 bot.recentlyDeleted = []
 bot.recentlyEdited = []
+bot.datatypes = datatypes
+bot.reservedTextNames = reservedTextNames
 
 
 #All extensions that are loaded on boot-up, change these to alter what modules you want (Note: These refer to filenames NOT cognames)
 #Note: Without the extension admin_commands, most things will break, so I consider this a must-have. Remove at your own peril.
 #Jishaku is a bot-owner only debug extension, requires 'pip install jishaku'.
-initial_extensions = ['extensions.admin_commands', 'extensions.misc_commands', 'extensions.matchmaking', 'extensions.tags', 'extensions.setup', 'extensions.userlog', 'extensions.moderation', 'extensions.timers', 'jishaku']
-#Contains all the valid datatypes in settings. If you add a new one here, it will be automatically generated
-#upon a new request to retrieve/modify that datatype.
-bot.datatypes = ["LOGCHANNEL", "ELEVATED_LOGCHANNEL",   #Used in module userlog
-"COMMANDSCHANNEL", "ANNOUNCECHANNEL", "ROLEREACTMSG", "LFGROLE", "LFGREACTIONEMOJI",   #Used in module matchmaking
-"KEEP_ON_TOP_CHANNEL", "KEEP_ON_TOP_MSG", #Used in module matchmaking & in main
-"MOD_MUTEROLE"]  #Moderation & automod
-#These text names are reserved and used for internal functions, other ones may get created by users for tags.
-bot.reservedTextNames = ["KEEP_ON_TOP_CONTENT"]
+initial_extensions = ['extensions.admin_commands', 'extensions.misc_commands', 'extensions.matchmaking', 'extensions.tags', 'extensions.setup', 'extensions.userlog', 
+'extensions.moderation', 'extensions.timers', 'extensions.fun', 'extensions.annoverse', 'jishaku']
+
 #
 #Error/warn messages
 #
@@ -104,7 +123,7 @@ bot.errorEmojiDesc = _("Operation cancelled.")
 bot.errorFormatTitle = "❌ " + _("Error: Invalid format entered.")
 bot.errorFormatDesc = _("Operation cancelled.")
 bot.errorCheckFailTitle = "❌ " + _("Error: Insufficient permissions.")
-bot.errorCheckFailDesc = _("Type `{prefix}help` for a list of available commands.").format(prefix=bot.prefix)
+bot.errorCheckFailDesc = _("You did not meet the checks to execute this command. This could also be caused by incorrect configuration. \nType `{prefix}help` for a list of available commands.")
 bot.errorCooldownTitle = "🕘 " + _("Error: This command is on cooldown.")
 bot.errorMissingModuleTitle = "❌ " + _("Error: Missing module.")
 bot.errorMissingModuleDesc = _("This operation is missing a module.")
@@ -435,7 +454,7 @@ bot.DBHandler = DBhandler()
 class CommandChecks():
     
     '''
-    Checks for commands across the bot
+    Custom checks for commands across the bot
     '''
     #Has bot or guild owner
     async def hasOwner(self, ctx):
@@ -452,7 +471,6 @@ class CommandChecks():
 
 
 bot.CommandChecks = CommandChecks()
-
 
 #The custom help command subclassing the dpy one. See the docs or this guide (https://gist.github.com/InterStella0/b78488fb28cadf279dfd3164b9f0cf96) on how this was made.
 class SnedHelp(commands.HelpCommand):
@@ -498,7 +516,7 @@ class SnedHelp(commands.HelpCommand):
     async def send_cog_help(self, cog):
         #I chose not to implement help for cogs, but if you want to do something, do it here
         ctx = self.context
-        embed=discord.Embed(title=bot.unknownCMDstr, description=_("Use `{prefix}help` for a list of available commands.").format(prefix=prefix), color=bot.unknownColor)
+        embed=discord.Embed(title=bot.unknownCMDstr, description=_("Use `{prefix}help` for a list of available commands.").format(prefix=ctx.prefix), color=bot.unknownColor)
         embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         channel = self.get_destination()
         await channel.send(embed=embed)
@@ -508,7 +526,7 @@ class SnedHelp(commands.HelpCommand):
 
     async def send_error_message(self, error):   #Overriding the default help error message
         ctx = self.context
-        embed=discord.Embed(title=bot.unknownCMDstr, description=_("Use `{prefix}help` for a list of available commands.").format(prefix=prefix), color=bot.unknownColor)
+        embed=discord.Embed(title=bot.unknownCMDstr, description=_("Use `{prefix}help` for a list of available commands.").format(prefix=ctx.prefix), color=bot.unknownColor)
         embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         channel = self.get_destination()
         await channel.send(embed=embed)
@@ -527,9 +545,10 @@ async def on_command_error(ctx, error):
     #This gets sent whenever a user has insufficient permissions to execute a command.
     if isinstance(error, commands.CheckFailure):
         logging.info(f"{ctx.author} tried calling a command but did not meet checks.")
-        embed=discord.Embed(title=bot.errorCheckFailTitle, description=bot.errorCheckFailDesc, color=bot.errorColor)
-        embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
-        await ctx.send(embed=embed)
+        if ctx.command.hidden == False:
+            embed=discord.Embed(title=bot.errorCheckFailTitle, description=bot.errorCheckFailDesc.format(prefix=ctx.prefix), color=bot.errorColor)
+            embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+            await ctx.send(embed=embed)
     elif isinstance(error, commands.CommandNotFound):
         logging.info(f"{ctx.author} tried calling a command but the command was not found. ({ctx.message.content})")
         #This is a fancy suggestion thing that will suggest commands that are similar in case of typos.
@@ -544,17 +563,18 @@ async def on_command_error(ctx, error):
         aliasmatches = get_close_matches(cmd, aliases)
         #Check if there are any matches, then suggest if yes.
         if len(matches) > 0:
-            embed=discord.Embed(title=bot.unknownCMDstr, description=_("Did you mean `{prefix}{match}`?").format(prefix=prefix, match=matches[0]), color=bot.unknownColor)
+            embed=discord.Embed(title=bot.unknownCMDstr, description=_("Did you mean `{prefix}{match}`?").format(prefix=ctx.prefix, match=matches[0]), color=bot.unknownColor)
             embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
         elif len(aliasmatches) > 0:
-            embed=discord.Embed(title=bot.unknownCMDstr, description=_("Did you mean `{prefix}{match}`?").format(prefix=prefix, match=aliasmatches[0]), color=bot.unknownColor)
+            embed=discord.Embed(title=bot.unknownCMDstr, description=_("Did you mean `{prefix}{match}`?").format(prefix=ctx.prefix, match=aliasmatches[0]), color=bot.unknownColor)
             embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
         else:
-            embed=discord.Embed(title=bot.unknownCMDstr, description=_("Use `{prefix}help` for a list of available commands.").format(prefix=prefix), color=bot.unknownColor)
+            embed=discord.Embed(title=bot.unknownCMDstr, description=_("Use `{prefix}help` for a list of available commands.").format(prefix=ctx.prefix), color=bot.unknownColor)
             embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.send(embed=embed)
+
     #Cooldown error
     elif isinstance(error, commands.CommandOnCooldown):
         embed=discord.Embed(title=bot.errorCooldownTitle, description=_("Please retry in: `{cooldown}`").format(cooldown=datetime.timedelta(seconds=round(error.retry_after))), color=bot.errorColor)
@@ -562,7 +582,7 @@ async def on_command_error(ctx, error):
         await ctx.send(embed=embed)
     #MissingArg error
     elif isinstance(error, commands.MissingRequiredArgument):
-        embed=discord.Embed(title="❌" + _("Missing argument."), description=_("One or more arguments are missing. \n__Hint:__ You can use `{prefix}help {command_name}` to view command usage.").format(prefix=prefix, command_name=ctx.command.name), color=bot.errorColor)
+        embed=discord.Embed(title="❌" + _("Missing argument."), description=_("One or more arguments are missing. \n__Hint:__ You can use `{prefix}help {command_name}` to view command usage.").format(prefix=ctx.prefix, command_name=ctx.command.name), color=bot.errorColor)
         embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
         logging.info(f"{ctx.author} tried calling a command ({ctx.message.content}) but did not supply sufficient arguments.")
@@ -574,7 +594,12 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.MemberNotFound):
         embed=discord.Embed(title="❌ " + _("Cannot find user by that name"), description=_("Please check if you typed everything correctly, then try again.\n**Error:**```{error}```").format(error=str(error)), color=bot.errorColor)
         await ctx.send(embed=embed)
-
+    elif isinstance(error, commands.errors.BadArgument):
+        embed=discord.Embed(title="❌ " + _("Bad argument"), description=_("Invalid data entered! Check `{prefix}help {command_name}` for more information.\n**Error:**```{error}```").format(prefix=ctx.prefix, command_name=ctx.command.name, error=error), color=bot.errorColor)
+        await ctx.send(embed=embed)
+        return
+    elif isinstance(error, commands.TooManyArguments):
+        embed=discord.Embed(title="❌ " + _("Too many arguments"), description=_("You have provided more arguments than what `{prefix}{command_name}` can take. Check `{prefix}help {command_name}` for more information.").format(prefix=ctx.prefix, command_name=ctx.command.name), color=bot.errorColor)
 
     else :
         #If no known error has been passed, we will print the exception to console as usual
@@ -596,7 +621,7 @@ async def on_guild_join(guild):
     await bot.DBHandler.retrievesetting("COMMANDSCHANNEL", guild.id)
     if guild.system_channel != None :
         try:
-            embed=discord.Embed(title=_("Beep Boop!"), description=_("I have been summoned to this server. Use `{prefix}help` to see what I can do!").format(prefix=prefix), color=0xfec01d)
+            embed=discord.Embed(title=_("Beep Boop!"), description=_("I have been summoned to this server. Use `{prefix}help` to see what I can do!").format(prefix=default_prefix), color=0xfec01d)
             embed.set_thumbnail(url=bot.user.avatar_url)
             await guild.system_channel.send(embed=embed)
         except discord.Forbidden:
@@ -628,10 +653,12 @@ async def on_message(message):
                 await bot.DBHandler.modifysettings("KEEP_ON_TOP_MSG", newTop.id, newTop.guild.id)
         #This is necessary, otherwise bot commands will break because on_message would override them
     await bot.process_commands(message)
+    bot.process_commands
 
 
 #Run bot with token from .env
 try :
     bot.run(TOKEN)
 except KeyboardInterrupt :
+    loop.run_until_complete(bot.db.close())
     bot.close()

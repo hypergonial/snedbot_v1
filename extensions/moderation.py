@@ -178,7 +178,7 @@ class Moderation(commands.Cog):
                 muteembed=discord.Embed(title="🔇 User muted", description=F"**User:** `{offender} ({offender.id})`\n**Moderator:** `{ctx.author} ({ctx.author.id})` via {self.bot.user.mention}\n**Until:** `{dur} (UTC)`\n**Reason:** ```{reason}```", color=self.bot.errorColor)
                 await self.bot.get_cog("Logging").log_elevated(muteembed, ctx.guild.id)
         except ValueError:
-            embed=discord.Embed(title="❌ " + self.bot.errorDataTitle, description=self._("Your entered timeformat is invalid. Type `{prefix}help tempmute` for more information.").format(prefix=self.bot.prefix), color=self.bot.errorColor)
+            embed=discord.Embed(title="❌ " + self.bot.errorDataTitle, description=self._("Your entered timeformat is invalid. Type `{prefix}help tempmute` for more information.").format(prefix=ctx.prefix), color=self.bot.errorColor)
             await ctx.send(embed=embed)
             await ctx.message.delete()
         except AttributeError as error:
@@ -302,7 +302,7 @@ class Moderation(commands.Cog):
             dur = dur[0]
             reason = f"[TEMPBAN] {reason}\nBanned until: {dur}"
         except ValueError:
-            embed=discord.Embed(title="❌ " + self.bot.errorDataTitle, description=self._("Your entered timeformat is invalid. Type `{prefix}help tempban` for more information.").format(prefix=self.bot.prefix), color=self.bot.errorColor)
+            embed=discord.Embed(title="❌ " + self.bot.errorDataTitle, description=self._("Your entered timeformat is invalid. Type `{prefix}help tempban` for more information.").format(prefix=ctx.prefix), color=self.bot.errorColor)
             await ctx.send(embed=embed)
             await ctx.message.delete()
         except AttributeError as error:
@@ -375,7 +375,7 @@ class Moderation(commands.Cog):
                 embed = discord.Embed(title="✅ " + self._("User soft-banned"), description=self._("User has been soft-banned."),color=self.bot.errorColor)
                 await ctx.send(embed=embed)
         except ValueError:
-            embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Invalid format for argument `days-to-delete` See `{prefix}help softban` for command usage.").format(prefix=self.bot.prefix),color=self.bot.errorColor)
+            embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Invalid format for argument `days-to-delete` See `{prefix}help softban` for command usage.").format(prefix=ctx.prefix),color=self.bot.errorColor)
             await ctx.send(embed=embed)
             return
         except discord.Forbidden:

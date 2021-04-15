@@ -25,10 +25,13 @@ class Logging(commands.Cog):
             return
         guild = self.bot.get_guild(guild_id)
         loggingchannel = guild.get_channel(loggingchannelID)
-        if isinstance(logcontent, discord.Embed):
-            await loggingchannel.send(embed=logcontent)
-        elif isinstance(logcontent, str):
-            await loggingchannel.send(content=logcontent)
+        try:
+            if isinstance(logcontent, discord.Embed):
+                await loggingchannel.send(embed=logcontent)
+            elif isinstance(logcontent, str):
+                await loggingchannel.send(content=logcontent)
+        except discord.Forbidden:
+            return
         
 
     async def log_elevated(self, logcontent, guild_id):
@@ -36,10 +39,13 @@ class Logging(commands.Cog):
         elevated_loggingchannelID = await self.bot.DBHandler.retrievesetting("ELEVATED_LOGCHANNEL", guild_id)
         if elevated_loggingchannelID != 0:
             elevated_loggingchannel = guild.get_channel(elevated_loggingchannelID)
-            if isinstance(logcontent, discord.Embed):
-                await elevated_loggingchannel.send(embed=logcontent)
-            elif isinstance(logcontent, str):
-                await elevated_loggingchannel.send(content=logcontent)
+            try:
+                if isinstance(logcontent, discord.Embed):
+                    await elevated_loggingchannel.send(embed=logcontent)
+                elif isinstance(logcontent, str):
+                    await elevated_loggingchannel.send(content=logcontent)
+            except discord.Forbidden:
+                return
         else:
             await self.log_standard(logcontent, guild_id) #Fallback to standard logging channel
 
@@ -101,7 +107,7 @@ class Logging(commands.Cog):
         if loggingchannelID == 0:
             return
         if after.channel.id != loggingchannelID and after.author != self.bot.user :
-            embed = discord.Embed(title=f"🖊️ Message edited", description=f"**Message author:** {after.author} ({after.author.id})\n**Channel:** {after.channel.mention}\n**Before:** ```{before.content}``` \n**After:** ```{after.content}```\n[Jump!]({after.jump_url})", color=self.bot.embedBlue)
+            embed = discord.Embed(title=f"🖊️ Message edited", description=f"**Message author:** `{after.author} ({after.author.id})`\n**Channel:** {after.channel.mention}\n**Before:** ```{before.content}``` \n**After:** ```{after.content}```\n[Jump!]({after.jump_url})", color=self.bot.embedBlue)
             await self.log_standard(embed, after.guild.id)
 
     #This will get called on every message edit regardless of cached state

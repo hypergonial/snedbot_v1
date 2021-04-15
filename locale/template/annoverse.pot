@@ -15,3 +15,19 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
+#: annoverse.py:68
+msgid "This wiki is either not supported or does not exist!"
+msgstr ""
+
+#: annoverse.py:68
+msgid "Wiki does not exist or unsupported"
+msgstr ""
+
+#: annoverse.py:82 annoverse.py:94 annoverse.py:106 annoverse.py:118
+msgid "Could not find anything for `{query}`!"
+msgstr ""
+
+#: annoverse.py:82 annoverse.py:94 annoverse.py:106 annoverse.py:118
+msgid "Not found"
+msgstr ""
+

@@ -20,7 +20,7 @@ class Setup(commands.Cog):
     #It basically just collects a bunch of values from the user, in this case an admin, and then changes the settings
     #based on that, instead of the admin having to use !modify for every single value
     #TL;DR: fancy setup thing
-    @commands.group(help="Starts bot configuration setups.", description = "Used to set up and configure different parts of the bot. \nValid setup-types: `matchmaking, LFG, keepontop, logging`", usage="setup <setuptype>", invoke_without_command=True, case_insensitive=True)
+    @commands.group(help="Starts bot configuration setups.", description = "Used to set up and configure different parts of the bot. \nValid setup-types: `matchmaking, LFG, keepontop, logging, moderation`", usage="setup <setuptype>", invoke_without_command=True, case_insensitive=True)
     @commands.check(hasPriviliged)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
@@ -339,7 +339,7 @@ class Setup(commands.Cog):
                 embed=discord.Embed(title="❌ Error: Unable to locate role.", description="The setup process has been cancelled.", color=self.bot.errorColor)
                 await ctx.channel.send(embed=embed)
                 return
-            embed=discord.Embed(title="🛠️ Moderation Setup", description="✅ Muting is now set up! You can now utilize the `{prefix}mute`, `{prefix}tempmute` and `{prefix}unmute` commands.".format(prefix=self.bot.prefix), color=self.bot.embedGreen)
+            embed=discord.Embed(title="🛠️ Moderation Setup", description="✅ Muting is now set up! You can now utilize the `{prefix}mute`, `{prefix}tempmute` and `{prefix}unmute` commands.".format(prefix=ctx.prefix), color=self.bot.embedGreen)
             await ctx.channel.send(embed=embed)
         
         embed=discord.Embed(title="🛠️ Moderation Setup", description="Which setup do you want to enter?\n**🔇 - Muting**", color=self.bot.embedBlue)

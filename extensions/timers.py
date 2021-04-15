@@ -232,7 +232,7 @@ class Timers(commands.Cog):
             time, timestr = await self.remindertime(timestr)
             logging.debug(f"Received conversion: {time}")
         except ValueError:
-            embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Your timeformat is invalid! Type `{prefix}help reminder` to see valid time formatting.").format(prefix=self.bot.prefix),color=self.bot.errorColor)
+            embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Your timeformat is invalid! Type `{prefix}help reminder` to see valid time formatting.").format(prefix=ctx.prefix),color=self.bot.errorColor)
             await ctx.send(embed=embed)
             return
         print("Timestrs length is: ", len(timestr))
@@ -271,7 +271,7 @@ class Timers(commands.Cog):
                     break
                 i +=1
         else:
-            reminderstr = self._("You have no reminders. You can set one via `{prefix}reminder`!").format(prefix=self.bot.prefix)
+            reminderstr = self._("You have no reminders. You can set one via `{prefix}reminder`!").format(prefix=ctx.prefix)
         embed=discord.Embed(title="✉️ " + self._("Your reminders:"),description=reminderstr, color=self.bot.embedBlue)
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
