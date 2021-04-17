@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-16 00:38+0200\n"
+"POT-Creation-Date: 2021-04-17 14:28+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,84 +15,84 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: fun.py:43
+#: fun.py:40
 msgid "Invalid data entered! Check `{prefix}help typeracer` for more information."
 msgstr ""
 
-#: fun.py:43
+#: fun.py:40
 msgid "Typeracer"
 msgstr ""
 
-#: fun.py:46
+#: fun.py:43
 msgid "Prepare your keyboard of choice!"
 msgstr ""
 
-#: fun.py:46
+#: fun.py:43
 msgid "Typeracing begins in 10 seconds!"
 msgstr ""
 
-#: fun.py:70
+#: fun.py:67
 msgid "Type in text from above as fast as you can!"
 msgstr ""
 
-#: fun.py:97
+#: fun.py:94
 msgid "Nobody was able to complete the typerace within **60** seconds. Typerace cancelled."
 msgstr ""
 
-#: fun.py:97 fun.py:106
+#: fun.py:94 fun.py:103
 msgid "Typeracing results"
 msgstr ""
 
-#: fun.py:100
+#: fun.py:97
 msgid "First Place"
 msgstr ""
 
-#: fun.py:100
+#: fun.py:97
 msgid "{winner} finished first, everyone else has **10 seconds** to submit their reply!"
 msgstr ""
 
-#: fun.py:104
+#: fun.py:100
 msgid ""
 "**Participants:**\n"
 msgstr ""
 
-#: fun.py:116
+#: fun.py:113
 msgid "Googled it for you!"
 msgstr ""
 
-#: fun.py:116 fun.py:125
+#: fun.py:113 fun.py:122
 msgid "[Click me!]({link})"
 msgstr ""
 
-#: fun.py:125
+#: fun.py:122
 msgid "I ducked it for you!"
 msgstr ""
 
-#: fun.py:147
+#: fun.py:144
 msgid "Flipping coin..."
 msgstr ""
 
-#: fun.py:147
+#: fun.py:144
 msgid "Hold on..."
 msgstr ""
 
-#: fun.py:151
+#: fun.py:148
 msgid "Coin flipped"
 msgstr ""
 
-#: fun.py:151
+#: fun.py:148
 msgid "It's **{result}**!"
 msgstr ""
 
-#: fun.py:161
+#: fun.py:158
 msgid "Looking for kitty..."
 msgstr ""
 
-#: fun.py:161 fun.py:169
+#: fun.py:158 fun.py:166
 msgid "Random kitten"
 msgstr ""
 
-#: fun.py:169
+#: fun.py:166
 msgid "Found one!"
 msgstr ""
 

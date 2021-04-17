@@ -33,9 +33,6 @@ class Fun(commands.Cog):
         else :
             logging.error("Invalid language, fallback to English.")
             self._ = gettext.gettext
-        self.typeracer_winners = []
-        self.typeracer_wintime = 0
-        self.typeracer_text = ""
 
     @commands.command(aliases=["typerace"], help="See who can type the fastest!", description="Starts a typerace where you can see who can type the fastest. You can optionally specify the difficulty and the length of the race.\n\n**Difficulty options:**\n`easy` - 1-4 letter words\n`medium` - 5-8 letter words (Default)\n`hard` 9+ letter words\n\n**Length:**\n`1-20` - (Default: `5`) Specifies the amount of words in the typerace", usage="typeracer [difficulty] [length]")
     async def typeracer(self, ctx, difficulty:str="medium", length=5):
@@ -54,7 +51,7 @@ class Fun(commands.Cog):
         for i in range (0, length):
             text.append(random.choice(words))
         text = " ".join(text)
-        self.typeracer_text = text
+        typeracer_text = text #The raw text that needs to be typed
         text = fill(text, 60) #Limit a line to 60 chars, then \n
         img = Image.new("RGBA", (1, 1), color=0) #img of size 1x1 full transparent
         draw = ImageDraw.Draw(img) 
@@ -79,12 +76,12 @@ class Fun(commands.Cog):
         #on_message, but not really
         def tr_check(message):
             if ctx.channel.id == message.channel.id and message.channel == ctx.channel:
-                if self.typeracer_text.lower() == message.content.lower():
+                if typeracer_text.lower() == message.content.lower():
                     winners[message.author] = datetime.datetime.utcnow().timestamp() - start_time #Add winner to list
                     self.bot.loop.create_task(message.add_reaction("✅"))
                     ending.set() #Set the event ending, which starts the ending code
                 #If it is close enough, we will add a marker to show that it is incorrect
-                elif lev.distance(self.typeracer_text.lower(), message.content.lower()) < 3:
+                elif lev.distance(typeracer_text.lower(), message.content.lower()) < 3:
                      self.bot.loop.create_task(message.add_reaction("❌"))
 
         #This is basically an on_message created temporarily, since the check will never return True
@@ -100,9 +97,9 @@ class Fun(commands.Cog):
             embed=discord.Embed(title="🏁 " + self._("First Place"), description=self._("{winner} finished first, everyone else has **10 seconds** to submit their reply!").format(winner=list(winners.keys())[0].mention), color=self.bot.embedGreen)
             await ctx.send(embed=embed)
             await asyncio.sleep(10)
+            desc = self._("**Participants:**\n")
             for winner in winners:
-                desc = self._("**Participants:**\n")
-                desc = (f"{desc}**#{list(winners.keys()).index(winner)+1}** {winner.mention} **{round(winners[winner], 1)}** seconds - **{round(length / winners[winner] * 60)}**WPM\n")
+                desc = (f"{desc}**#{list(winners.keys()).index(winner)+1}** {winner.mention} **{round(winners[winner], 1)}** seconds - **{round((len(typeracer_text)/5) / (winners[winner] / 60))}**WPM\n")
             embed=discord.Embed(title="🏁 " + self._("Typeracing results"), description=desc, color=self.bot.embedGreen)
             await ctx.send(embed=embed)
         finally:
@@ -122,7 +119,7 @@ class Fun(commands.Cog):
     async def ddg(self, ctx, *, query):
         query = query.replace(" ", "%20")
         link = f"https://lmddgtfy.net/?q={query}"
-        embed = discord.Embed(title=self._("🦆 I ducked it for you!"), description=self._("[Click me!]({link})").format(link=link), color=self.bot.embedBlue)
+        embed = discord.Embed(title="🦆 " + self._("I ducked it for you!"), description=self._("[Click me!]({link})").format(link=link), color=self.bot.embedBlue)
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
     
