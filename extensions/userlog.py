@@ -294,15 +294,6 @@ class Logging(commands.Cog):
             await self.log_elevated(embed, after.id)
 
     @commands.Cog.listener()
-    async def on_guild_integrations_update(self, guild):
-        loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", guild.id)
-        if loggingchannelID == 0:
-            return
-        else :
-            embed = discord.Embed(title=f"🖊️ Guild integrations updated", description=f"Guild integrations have been updated.", color=self.bot.embedBlue)
-            await self.log_elevated(embed, guild.id)
-
-    @commands.Cog.listener()
     async def on_member_ban(self, guild, user):
         loggingchannelID = await self.bot.DBHandler.retrievesetting("LOGCHANNEL", guild.id)
         if loggingchannelID == 0:

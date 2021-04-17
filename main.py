@@ -22,7 +22,7 @@ lang = "en"
 #Is this build experimental?
 experimentalBuild = False
 #Version of the bot
-currentVersion = "3.4.1"
+currentVersion = "3.4.2"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
