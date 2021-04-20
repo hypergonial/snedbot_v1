@@ -45,7 +45,7 @@ class Tags(commands.Cog):
             else :
                 if ctx.message.reference != None: #If the original command was invoked as a reply to someone
                     try:
-                        replytomsg = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+                        replytomsg = ctx.channel.get_partial_message(ctx.message.reference.message_id)
                         await replytomsg.reply(content=tagContent, mention_author=True) #Then the invoked tag will also reply to that message
                     except discord.HTTPException:
                         await ctx.channel.send(content=tagContent)
