@@ -158,7 +158,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
     async def add(self, ctx, *, rolename):
         role = discord.utils.get(ctx.guild.roles, name=rolename)
         if role == None:
-            embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.", color=self.bot.errorColor)
+            embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.\n__Note:__ Rolenames are case-sensitive.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
         cursor = await self.db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ?", [ctx.guild.id])
@@ -183,7 +183,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
 
         role = discord.utils.get(ctx.guild.roles, name=rolename)
         if role == None:
-            embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.", color=self.bot.errorColor)
+            embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.\n__Note:__ Rolenames are case-sensitive.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
         cursor = await self.db.execute("SELECT priviliged_role_id FROM priviliged WHERE guild_id = ?", [ctx.guild.id])

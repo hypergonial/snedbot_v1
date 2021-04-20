@@ -176,7 +176,14 @@ class Fun(commands.Cog):
     async def quack(self, ctx):
         await ctx.channel.send("🦆")
         await ctx.message.delete()
-
+    
+    @commands.command(aliases=["bigmoji"],brief="Returns a jumbo-sized emoji.", description="Converts an emoji into it's jumbo-sized variant. Only supports custom emojies. No, the recipe is private.", usage="jumbo <emoji>")
+    @commands.guild_only()
+    async def jumbo(self, ctx, emoji : discord.PartialEmoji):
+        embed=discord.Embed(color=self.bot.embedBlue)
+        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        embed.set_image(url=emoji.url)
+        await ctx.send(embed=embed)
         
     
 

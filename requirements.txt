@@ -1,4 +1,5 @@
 discord
+git+git://github.com/Rapptz/discord-ext-menus@master
 Levenshtein
 aiosqlite
 dotenv
