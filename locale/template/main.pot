@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-17 14:28+0200\n"
+"POT-Creation-Date: 2021-04-21 00:33+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -101,85 +101,87 @@ msgstr ""
 msgid "Unknown command!"
 msgstr ""
 
-#: main.py:484
-msgid "You can also use `{prefix}help <command>` to get more information about a specific command."
+#: main.py:494
+msgid ""
+"You can also use `{prefix}help <command>` to get more information about a specific command.\n"
+"\n"
 msgstr ""
 
-#: main.py:484
+#: main.py:494
 msgid "__Available commands:__"
 msgstr ""
 
-#: main.py:500
+#: main.py:513
 msgid "Command: {prefix}{command}"
 msgstr ""
 
-#: main.py:502 main.py:504
+#: main.py:515 main.py:517
 msgid "Description:"
 msgstr ""
 
-#: main.py:506
+#: main.py:519
 msgid "Usage:"
 msgstr ""
 
-#: main.py:511
+#: main.py:524
 msgid "Aliases:"
 msgstr ""
 
-#: main.py:519 main.py:529 main.py:574
+#: main.py:532 main.py:542 main.py:587
 msgid "Use `{prefix}help` for a list of available commands."
 msgstr ""
 
-#: main.py:566 main.py:570
+#: main.py:579 main.py:583
 msgid "Did you mean `{prefix}{match}`?"
 msgstr ""
 
-#: main.py:580
+#: main.py:593
 msgid "Please retry in: `{cooldown}`"
 msgstr ""
 
-#: main.py:585
+#: main.py:598
 msgid "Missing argument."
 msgstr ""
 
-#: main.py:585
+#: main.py:598
 msgid ""
 "One or more arguments are missing. \n"
 "__Hint:__ You can use `{prefix}help {command_name}` to view command usage."
 msgstr ""
 
-#: main.py:595
+#: main.py:608
 msgid "Cannot find user by that name"
 msgstr ""
 
-#: main.py:595
+#: main.py:608
 msgid ""
 "Please check if you typed everything correctly, then try again.\n"
 "**Error:**```{error}```"
 msgstr ""
 
-#: main.py:598
+#: main.py:611
 msgid "Bad argument"
 msgstr ""
 
-#: main.py:598
+#: main.py:611
 msgid ""
 "Invalid data entered! Check `{prefix}help {command_name}` for more information.\n"
 "**Error:**```{error}```"
 msgstr ""
 
-#: main.py:602
+#: main.py:615
 msgid "Too many arguments"
 msgstr ""
 
-#: main.py:602
+#: main.py:615
 msgid "You have provided more arguments than what `{prefix}{command_name}` can take. Check `{prefix}help {command_name}` for more information."
 msgstr ""
 
-#: main.py:624
+#: main.py:637
 msgid "Beep Boop!"
 msgstr ""
 
-#: main.py:624
+#: main.py:637
 msgid "I have been summoned to this server. Use `{prefix}help` to see what I can do!"
 msgstr ""
 

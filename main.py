@@ -14,7 +14,7 @@ from pathlib import Path
 
 import aiosqlite
 import discord
-from discord.ext import commands #, menus
+from discord.ext import commands, menus
 from dotenv import load_dotenv
 
 #Language
@@ -22,7 +22,7 @@ lang = "en"
 #Is this build experimental?
 experimentalBuild = False
 #Version of the bot
-currentVersion = "3.4.2"
+currentVersion = "3.4.3"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -30,7 +30,7 @@ TOKEN = os.getenv("TOKEN")
 activity = discord.Activity(name='Anno 9', type=discord.ActivityType.playing)
 #Determines bot prefix & logging based on build state.
 default_prefix = '!'
-if experimentalBuild == True : 
+if experimentalBuild == True :
     default_prefix = '?'
     logging.basicConfig(level=logging.INFO)
 else :
@@ -480,20 +480,33 @@ class SnedHelp(commands.HelpCommand):
     
     #Send generic help message with all commands included
     async def send_bot_help(self, mapping):
+
+        #Menu pagination
+        class HelpSource(menus.ListPageSource):
+            '''
+            Takes a list, and puts it into an embed menu, 2 items per page
+            '''
+            def __init__(self, data):
+                super().__init__(data, per_page=2)
+
+            async def format_page(self, menu, entries):
+                offset = menu.current_page * self.per_page
+                embed=discord.Embed(title="⚙️ " + _("__Available commands:__"), description=_("You can also use `{prefix}help <command>` to get more information about a specific command.\n\n").format(prefix=ctx.prefix) + ''.join(f'{v}' for i, v in enumerate(entries, start=offset)), color=bot.embedBlue)
+                embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator) + f"  |  Page {menu.current_page + 1}/{self.get_max_pages()}", icon_url=ctx.author.avatar_url)
+                return embed
+
         ctx = self.context   #Obtaining ctx
-        help_embed = discord.Embed(title="⚙️ " + _("__Available commands:__"), description=_("You can also use `{prefix}help <command>` to get more information about a specific command.").format(prefix=self.clean_prefix), color=bot.embedBlue)
+        cmdslist = []
         #We retrieve all the commands from the mapping of cog,commands
         for cog, commands in mapping.items(): 
             filtered = await self.filter_commands(commands, sort=True)   #This will filter commands to those the user can actually execute
             command_signatures = [self.get_command_signature(command) for command in filtered]   #Get command signature in format as specified above
             #If we have any, put them in categories according to cogs, fallback is "Other"
             if command_signatures:
-                cog_name = getattr(cog, "qualified_name", "Other")
-                help_embed.add_field(name=cog_name, value="\n".join(command_signatures), inline=False)
-            #Put fancy footer on it
-            help_embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-        channel=self.get_destination() #Print it out
-        await channel.send(embed=help_embed)
+                cog_name = getattr(cog, "qualified_name", "Other") #Append items into a list of str, one item per cog
+                cmdslist.append("**{cn}**\n{cs}\n".format(cn=cog_name, cs='\n'.join(command_signatures)))
+        pages = menus.MenuPages(source=HelpSource(cmdslist), clear_reactions_after=True) #Feed the list of commands into the menu system
+        await pages.start(ctx)
 
     async def send_command_help(self, command):
         ctx = self.context   #Obtaining ctx
