@@ -59,6 +59,21 @@ class Annoverse(commands.Cog):
             return desc
         else:
             raise NameError
+    
+
+    async def maybe_reply_embed(self, ctx, embed):
+        '''
+        If message is a reply to someone, the bot's reply will also be a reply
+        to that message.
+        '''
+        if ctx.message.reference != None: #If the original command was invoked as a reply to someone
+            try:
+                replytomsg = ctx.channel.get_partial_message(ctx.message.reference.message_id)
+                await replytomsg.reply(embed=embed, mention_author=True) #Then the invoked tag will also reply to that message
+            except discord.HTTPException:
+                await ctx.channel.send(embed=embed)
+        else :
+            await ctx.channel.send(embed=embed)
 
 
     @commands.group(aliases=["aw"], help="Retrieve wiki articles from an Anno wiki!", description="Retrieve wiki articles from one of the Anno wikis! Defaults to the 1800 one.\n\n**Possible wikis:**\n`1800,2205,2070,1404`", usage="annowiki [wiki] <search term>", invoke_without_command=True, case_insensitive=True)
@@ -77,10 +92,11 @@ class Annoverse(commands.Cog):
         try:
             results = await self.search_fandom(site, query)
             embed=discord.Embed(title=f"Anno 1800 Wiki: {query}", description=results, color=self.annowiki_color)
-            await ctx.send(embed=embed)
+            await self.maybe_reply_embed(ctx, embed)
         except NameError:
             embed=discord.Embed(title="❌ " + self._("Not found"), description=self._("Could not find anything for `{query}`!").format(query=query), color=self.bot.errorColor)
             await ctx.send(embed=embed)
+
     
     @annowiki.command(aliases=["2205"])
     @commands.guild_only()
@@ -89,7 +105,7 @@ class Annoverse(commands.Cog):
         try:
             results = await self.search_fandom(site, query)
             embed=discord.Embed(title=f"Anno 2205 Wiki: {query}", description=results, color=self.annowiki_color)
-            await ctx.send(embed=embed)
+            await self.maybe_reply_embed(ctx, embed)
         except NameError:
             embed=discord.Embed(title="❌ " + self._("Not found"), description=self._("Could not find anything for `{query}`!").format(query=query), color=self.bot.errorColor)
             await ctx.send(embed=embed)
@@ -101,7 +117,7 @@ class Annoverse(commands.Cog):
         try:
             results = await self.search_fandom(site, query)
             embed=discord.Embed(title=f"Anno 2070 Wiki: {query}", description=results, color=self.annowiki_color)
-            await ctx.send(embed=embed)
+            await self.maybe_reply_embed(ctx, embed)
         except NameError:
             embed=discord.Embed(title="❌ " + self._("Not found"), description=self._("Could not find anything for `{query}`!").format(query=query), color=self.bot.errorColor)
             await ctx.send(embed=embed)
@@ -113,7 +129,7 @@ class Annoverse(commands.Cog):
         try:
             results = await self.search_fandom(site, query)
             embed=discord.Embed(title=f"Anno 1404 Wiki: {query}", description=results, color=self.annowiki_color)
-            await ctx.send(embed=embed)
+            await self.maybe_reply_embed(ctx, embed)
         except NameError:
             embed=discord.Embed(title="❌ " + self._("Not found"), description=self._("Could not find anything for `{query}`!").format(query=query), color=self.bot.errorColor)
             await ctx.send(embed=embed)
