@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-21 01:07+0200\n"
+"POT-Creation-Date: 2021-04-26 03:55+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,173 +15,191 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: main.py:117
+#: main.py:108
 msgid "Error: Timed out."
 msgstr ""
 
-#: main.py:118
-msgid "Your request has expired. Execute the command again!"
+#: main.py:109
+msgid "Your session has expired. Execute the command again!"
 msgstr ""
 
-#: main.py:119
+#: main.py:110
 msgid "Error: Invalid data entered."
 msgstr ""
 
-#: main.py:120 main.py:122 main.py:124
+#: main.py:111 main.py:113 main.py:115
 msgid "Operation cancelled."
 msgstr ""
 
-#: main.py:121
+#: main.py:112
 msgid "Error: Invalid reaction entered."
 msgstr ""
 
-#: main.py:123
+#: main.py:114
 msgid "Error: Invalid format entered."
 msgstr ""
 
-#: main.py:125
+#: main.py:116
 msgid "Error: Insufficient permissions."
 msgstr ""
 
-#: main.py:126
+#: main.py:117
 msgid ""
 "You did not meet the checks to execute this command. This could also be caused by incorrect configuration. \n"
 "Type `{prefix}help` for a list of available commands."
 msgstr ""
 
-#: main.py:127
+#: main.py:118
 msgid "Error: This command is on cooldown."
 msgstr ""
 
-#: main.py:128
+#: main.py:119
 msgid "Error: Missing module."
 msgstr ""
 
-#: main.py:129
+#: main.py:120
 msgid "This operation is missing a module."
 msgstr ""
 
-#: main.py:130
+#: main.py:121
 msgid "Error: Max concurrency reached!"
 msgstr ""
 
-#: main.py:131
+#: main.py:122
 msgid "You have reached the maximum amount of instances for this command."
 msgstr ""
 
-#: main.py:134
+#: main.py:125
 msgid "Warning: Invalid data entered."
 msgstr ""
 
-#: main.py:135
+#: main.py:126
 msgid "Please check command usage."
 msgstr ""
 
-#: main.py:136
+#: main.py:127
 msgid "Warning: Invalid reaction entered."
 msgstr ""
 
-#: main.py:137
+#: main.py:128
 msgid "Please enter a valid reaction."
 msgstr ""
 
-#: main.py:138
+#: main.py:129
 msgid "Warning: Invalid format entered."
 msgstr ""
 
-#: main.py:139
+#: main.py:130
 msgid "Please try entering valid data."
 msgstr ""
 
-#: main.py:140
+#: main.py:131
 msgid "Requested by {user_name}#{discrim}"
 msgstr ""
 
-#: main.py:141
+#: main.py:132
 msgid "Unknown command!"
 msgstr ""
 
-#: main.py:494
+#: main.py:341
 msgid ""
-"You can also use `{prefix}help <command>` to get more information about a specific command.\n"
+"You can also use `{prefix}help <command>` to get more information about a specific command and see any subcommands a command may have.\n"
 "\n"
 msgstr ""
 
-#: main.py:494
+#: main.py:341
 msgid "__Available commands:__"
 msgstr ""
 
-#: main.py:513
+#: main.py:360
 msgid "Command: {prefix}{command}"
 msgstr ""
 
-#: main.py:515 main.py:517
+#: main.py:362 main.py:364 main.py:388 main.py:390
 msgid "Description:"
 msgstr ""
 
-#: main.py:519
+#: main.py:366 main.py:392
 msgid "Usage:"
 msgstr ""
 
-#: main.py:524
+#: main.py:371 main.py:397
 msgid "Aliases:"
 msgstr ""
 
-#: main.py:532 main.py:542 main.py:587
+#: main.py:379 main.py:408
 msgid "Use `{prefix}help` for a list of available commands."
 msgstr ""
 
-#: main.py:579 main.py:583
+#: main.py:386
+msgid ""
+"**Note:**\n"
+"To see detailed information about one of the subcommands, type `{prefix}help {group} <subcommand>`"
+msgstr ""
+
+#: main.py:386
+msgid "Group: {prefix}{group}"
+msgstr ""
+
+#: main.py:402
+msgid "Sub-commands:"
+msgstr ""
+
+#: main.py:453 main.py:457
 msgid "Did you mean `{prefix}{match}`?"
 msgstr ""
 
-#: main.py:593
+#: main.py:466
 msgid "Please retry in: `{cooldown}`"
 msgstr ""
 
-#: main.py:598
+#: main.py:471
 msgid "Missing argument."
 msgstr ""
 
-#: main.py:598
+#: main.py:471
 msgid ""
 "One or more arguments are missing. \n"
 "__Hint:__ You can use `{prefix}help {command_name}` to view command usage."
 msgstr ""
 
-#: main.py:608
+#: main.py:482
 msgid "Cannot find user by that name"
 msgstr ""
 
-#: main.py:608
+#: main.py:482
 msgid ""
 "Please check if you typed everything correctly, then try again.\n"
 "**Error:**```{error}```"
 msgstr ""
 
-#: main.py:611
+#: main.py:486
 msgid "Bad argument"
 msgstr ""
 
-#: main.py:611
+#: main.py:486
 msgid ""
 "Invalid data entered! Check `{prefix}help {command_name}` for more information.\n"
 "**Error:**```{error}```"
 msgstr ""
 
-#: main.py:615
+#: main.py:490
 msgid "Too many arguments"
 msgstr ""
 
-#: main.py:615
+#: main.py:490
 msgid "You have provided more arguments than what `{prefix}{command_name}` can take. Check `{prefix}help {command_name}` for more information."
 msgstr ""
 
-#: main.py:637
+#: main.py:513
+msgid "I have been summoned to this server. Use `{prefix}help` to see what I can do!"
+msgstr ""
+
+#: main.py:513 main.py:539
 msgid "Beep Boop!"
 msgstr ""
 
-#: main.py:637
-msgid "I have been summoned to this server. Use `{prefix}help` to see what I can do!"
+#: main.py:539
+msgid "My prefixes on this server are the following: `{prefix}`"
 msgstr ""
 

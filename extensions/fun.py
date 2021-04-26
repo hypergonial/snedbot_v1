@@ -35,10 +35,12 @@ class Fun(commands.Cog):
             self._ = gettext.gettext
 
     @commands.command(aliases=["typerace"], help="See who can type the fastest!", description="Starts a typerace where you can see who can type the fastest. You can optionally specify the difficulty and the length of the race.\n\n**Difficulty options:**\n`easy` - 1-4 letter words\n`medium` - 5-8 letter words (Default)\n`hard` 9+ letter words\n\n**Length:**\n`1-20` - (Default: `5`) Specifies the amount of words in the typerace", usage="typeracer [difficulty] [length]")
+    @commands.max_concurrency(1, per=commands.BucketType.channel,wait=False)
     async def typeracer(self, ctx, difficulty:str="medium", length=5):
         if length not in range(1, 21) or difficulty.lower() not in ("easy", "medium", "hard"):
             embed=discord.Embed(title="🏁 " + self._("Typeracer"), description=self._("Invalid data entered! Check `{prefix}help typeracer` for more information.").format(prefix=ctx.prefix), color=self.bot.errorColor)
             await ctx.send(embed=embed)
+            return
         
         embed = discord.Embed(title="🏁 " + self._("Typeracing begins in 10 seconds!"), description=self._("Prepare your keyboard of choice!"), color=self.bot.embedBlue)
         await ctx.send(embed=embed)
@@ -53,21 +55,24 @@ class Fun(commands.Cog):
         text = " ".join(text)
         typeracer_text = text #The raw text that needs to be typed
         text = fill(text, 60) #Limit a line to 60 chars, then \n
-        img = Image.new("RGBA", (1, 1), color=0) #img of size 1x1 full transparent
-        draw = ImageDraw.Draw(img) 
-        font = ImageFont.truetype('arial.ttf', 40) #Font
-        textwidth, textheight = draw.textsize(text, font) #Size text will take up on image
-        margin = 20
-        img = img.resize((textwidth + margin, textheight + margin)) #Resize image to size of text
-        draw = ImageDraw.Draw(img) #This needs to be redefined after resizing image
-        draw.text((margin / 2, margin / 2), text, font=font, fill="white") #Draw the text in between the two margins
         tempimg_path = Path(self.bot.BASE_DIR, 'temp', 'typeracer.png')
-        img.save(tempimg_path)
-        with open(tempimg_path, 'rb') as fp:
-            embed = discord.Embed(description="🏁 " + self._("Type in text from above as fast as you can!"), color=self.bot.embedBlue)
-            await ctx.send(embed=embed, file=discord.File(fp, 'snedtyperace.png'))
-        os.remove(tempimg_path)
 
+        async def create_image():
+            img = Image.new("RGBA", (1, 1), color=0) #img of size 1x1 full transparent
+            draw = ImageDraw.Draw(img) 
+            font = ImageFont.truetype('arial.ttf', 40) #Font
+            textwidth, textheight = draw.textsize(text, font) #Size text will take up on image
+            margin = 20
+            img = img.resize((textwidth + margin, textheight + margin)) #Resize image to size of text
+            draw = ImageDraw.Draw(img) #This needs to be redefined after resizing image
+            draw.text((margin / 2, margin / 2), text, font=font, fill="white") #Draw the text in between the two margins
+            img.save(tempimg_path)
+            with open(tempimg_path, 'rb') as fp:
+                embed = discord.Embed(description="🏁 " + self._("Type in text from above as fast as you can!"), color=self.bot.embedBlue)
+                await ctx.send(embed=embed, file=discord.File(fp, 'snedtyperace.png'))
+            os.remove(tempimg_path)
+        
+        self.bot.loop.create_task(create_image())
 
         winners = {}
         ending = asyncio.Event()
