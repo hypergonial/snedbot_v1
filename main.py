@@ -23,7 +23,7 @@ lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
 EXPERIMENTAL = False
 #Version of the bot
-current_version = "4.0.0"
+current_version = "4.0.1"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -338,7 +338,7 @@ class SnedHelp(commands.HelpCommand):
 
             async def format_page(self, menu, entries):
                 offset = menu.current_page * self.per_page
-                embed=discord.Embed(title="⚙️ " + _("__Available commands:__"), description=_("You can also use `{prefix}help <command>` to get more information about a specific command and see any subcommands a command may have.\n\n").format(prefix=ctx.prefix) + ''.join(f'{v}' for i, v in enumerate(entries, start=offset)), color=bot.embedBlue)
+                embed=discord.Embed(title="⚙️ " + _("__Available commands:__"), description=_("You can also use `{prefix}help <command>` to get more information about a specific command and see any subcommands a command may have.\nStill lost? [Join our Discord server!](https://discord.gg/kQVNf68W2a)\n\n").format(prefix=ctx.prefix) + ''.join(f'{v}' for i, v in enumerate(entries, start=offset)), color=bot.embedBlue)
                 embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator) + f"  |  Page {menu.current_page + 1}/{self.get_max_pages()}", icon_url=ctx.author.avatar_url)
                 return embed
 
@@ -505,6 +505,12 @@ Guild Join/Leave behaviours
 '''
 @bot.event
 async def on_guild_join(guild):
+    if guild.id == 336642139381301249: #Discord.py specific join behaviour
+        async with bot.pool.acquire() as con:
+            await con.execute('INSERT INTO global_config (guild_id) VALUES ($1)', guild.id)
+            await con.execute('''UPDATE global_config SET prefix = array_append(prefix,$1) WHERE guild_id = $2''', "sned ", guild.id)
+            logging.info("Joined discord.py! :verycool:")
+            return
     #Generate guild entry for DB
     async with bot.pool.acquire() as con:
         await con.execute('INSERT INTO global_config (guild_id) VALUES ($1)', guild.id)

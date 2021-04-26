@@ -195,16 +195,6 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(title="❌ Error: Unable to change nickname.", description=f"This could be due to a permissions issue.", color=self.bot.errorColor)
             await ctx.send(embed=embed)
 
-    @commands.command(help="Shut down the bot.", description="Shuts the bot down properly and closes all pending connections.", usage="shutdown")
-    @commands.is_owner()
-    async def shutdown(self, ctx):
-        embed=discord.Embed(title="Shutting down...", description="Closing all connections...", color=self.bot.errorColor)
-        #await ctx.send("https://media.tenor.com/images/529aed02dae515a28de82141cfd0b019/tenor.gif")
-        await ctx.send(embed=embed)
-        await self.bot.pool.close()
-        await self.bot.close()
-        logging.info("Bot shut down successfully!")
-    
     
     @commands.group(aliases=["prefixes"], help="Check the bot's prefixes. Subcommands of this command allow you to customize your prefix.", description="Check the bot's prefixes. You can also use `add/del` to add or remove a prefix. By adding a prefix you override the default one. The bot can have up to **5** custom prefixes per server. If you forget your prefix, mention the bot!", usage="prefix", invoke_without_command=True, case_insensitive=True)
     @commands.check(hasPriviliged)
@@ -230,6 +220,8 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
     @commands.check(hasPriviliged)
     @commands.guild_only()
     async def add_prefix(self, ctx, *, prefix:str):
+        prefix = prefix.replace('"', '')
+        prefix = prefix.replace("'", "")
         async with self.bot.pool.acquire() as con:
             results = await con.fetch('''SELECT prefix FROM global_config WHERE guild_id = $1''', ctx.guild.id)
 
@@ -250,6 +242,8 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
     @commands.check(hasPriviliged)
     @commands.guild_only()
     async def del_prefix(self, ctx, *, prefix:str):
+        prefix = prefix.replace('"', '')
+        prefix = prefix.replace("'", "")
         async with self.bot.pool.acquire() as con:
             results = await con.fetch('''SELECT prefix FROM global_config WHERE guild_id = $1''', ctx.guild.id)
             if results[0].get('prefix') is not None and prefix in results[0].get('prefix'):
@@ -274,7 +268,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         Of course there is a blacklist of commands that we do not want used, ever.
         '''
         blacklist = ["jsk", "jishaku", "shutdown"] #Stuff that I don't want to work
-        disabled_list = ["help", "sudo"] #Stuff that literally does not work
+        disabled_list = ["help", "sudo", "leave"] #Stuff that literally does not work
         disabled_cogs = ["Annoverse", "Matchmaking", "AdminCommands", "Reaction Roles", "Keep On Top", "Setup"] #Entire cogs can be disabled too
 
         for cog in disabled_cogs:
@@ -298,6 +292,37 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             await new_ctx.command.reinvoke(new_ctx)
         else:
             raise commands.CommandNotFound
+
+
+    @commands.command(help="Shut down the bot.", description="Shuts the bot down properly and closes all pending connections.", usage="shutdown")
+    @commands.is_owner()
+    async def shutdown(self, ctx):
+        embed=discord.Embed(title="Shutting down...", description="Closing all connections...", color=self.bot.errorColor)
+        #await ctx.send("https://media.tenor.com/images/529aed02dae515a28de82141cfd0b019/tenor.gif")
+        await ctx.send(embed=embed)
+        await self.bot.pool.close()
+        await self.bot.close()
+        logging.info("Bot shut down successfully!")
+
+
+    @commands.command(help="Forces the bot to leave this server.", description="Forces the bot to leave this server. Takes no arguments.", usage="leave")
+    @commands.is_owner()
+    @commands.guild_only()
+    async def leave(self, ctx):
+        embed = discord.Embed(title="Are you sure you want the bot to leave?", description="You need an invite link and `Manage Server` permissions to undo this.", color=self.bot.embedBlue)
+        msg = await ctx.channel.send(embed=embed)
+        await msg.add_reaction("✅")
+        await msg.add_reaction("❌")
+        def check(payload):
+            return payload.message_id == msg.id and payload.user_id == ctx.author.id
+        payload = await self.bot.wait_for('raw_reaction_add', timeout=60.0,check=check)
+        if str(payload.emoji) == "✅":
+            embed = discord.Embed(title="🚪 See you soon! (hopefully)", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
+            await ctx.guild.leave()
+        else:
+            embed = discord.Embed(title="Leaving aborted", description="The bot will stay in this server.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
 
         
 
