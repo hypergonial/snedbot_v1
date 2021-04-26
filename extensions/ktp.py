@@ -105,7 +105,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
             await ctx.channel.send(embed=embed)
             payload = await self.bot.wait_for('message', timeout=300.0, check=check)
             ktp_content = payload.content
-            first_top = await ktp_channel.send(ktp_channel)
+            first_top = await ktp_channel.send(ktp_content)
 
             async with self.bot.pool.acquire() as con:
                 await con.execute('''
