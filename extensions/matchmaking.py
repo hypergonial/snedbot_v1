@@ -4,26 +4,151 @@ import gettext
 import logging
 import time
 import uuid
+from dataclasses import dataclass
 
 import discord
 from discord.ext import commands
 from discord.ext import tasks
-
-#Disclaimer: This extension is proprietary to Annoverse, and should not be used elsewhere without heavy modifications
-
+'''
+Disclaimer: This extension is proprietary to Annoverse, and should not be used elsewhere without heavy modifications!
+'''
 #Check to see if matchmaking is set up or not
 async def is_setup(ctx):
-    ach = await ctx.bot.DBHandler.retrievesetting("ANNOUNCECHANNEL", ctx.guild.id)
-    if ach == 0:
+    async with ctx.bot.pool.acquire() as con:
+        result = await con.fetch('''SELECT * FROM matchmaking_config WHERE guild_id = $1''', ctx.guild.id)
+        if len(result) != 0 and result[0]:
+            if result[0].get('announce_channel_id'):
+                return True
         return False
-    else:
-        return True
+
+def is_anno_guild(ctx):
+    anno_guilds=[372128553031958529, 627876365223591976, 818223666143690783] #Guilds that are related to Anno
+    return ctx.guild.id in anno_guilds
         
+#Managing the DB config
+class Matchmaking_Config():
+    def __init__(self, bot):
+        self.bot = bot
+        async def init_table():
+            async with bot.pool.acquire() as con:
+                await con.execute('''
+                CREATE TABLE IF NOT EXISTS public.matchmaking_config
+                (
+                    guild_id bigint,
+                    init_channel_id bigint,
+                    announce_channel_id bigint,
+                    PRIMARY KEY (guild_id),
+                    FOREIGN KEY (guild_id)
+                        REFERENCES global_config (guild_id)
+                        ON DELETE CASCADE
+                )''')
+        bot.loop.run_until_complete(init_table())
+    
+    async def load(self, data : str, guild_id : int):
+        async with self.bot.pool.acquire() as con:
+            result = await con.fetch('''SELECT * FROM matchmaking_config WHERE guild_id = $1''', guild_id)
+            if len(result) != 0 and result[0]:
+                return result[0].get(data)
+    
+    #This one is actually not used anywhere currently, but I thought I would include it for completeness's sake
+    async def save(self, data : str, value : int, guild_id : int):
+        async with self.bot.pool.acquire() as con:
+            await con.execute('''
+            INSERT INTO matchmaking_config (guild_id, $1) VALUES ($2, $3)
+            ON CONFLICT (guild_id) DO
+            UPDATE SET $1 = $3''')
+
+
+@dataclass
+class Listing:
+    '''
+    Represents an instance of a multiplayer listing in the database
+    '''
+
+    id:str
+    ubiname:str
+    host_id:int
+    gamemode:str
+    playercount:str
+    DLC:str
+    mods:str
+    timezone:str
+    additional_info:str
+    timestamp:int
+    guild_id:int
+
+#Class for managing multiplayer Listing dataclasses in relation to the DB
+class Listings():
+    def __init__(self, bot):
+        self.bot = bot
+        async def init_table():
+            async with bot.pool.acquire() as con:
+                await con.execute('''
+                CREATE TABLE IF NOT EXISTS public.matchmaking_listings
+                (
+                    id text,
+                    ubiname text NOT NULL,
+                    host_id bigint NOT NULL,
+                    gamemode text NOT NULL,
+                    playercount text NOT NULL,
+                    DLC text NOT NULL,
+                    mods text NOT NULL,
+                    timezone text NOT NULL,
+                    additional_info text NOT NULL,
+                    timestamp bigint NOT NULL,
+                    guild_id bigint NOT NULL,
+                    PRIMARY KEY (id)
+                )''')
+        bot.loop.run_until_complete(init_table())
+    
+    async def retrieve(self, id):
+        async with self.bot.pool.acquire() as con:
+            result = await con.fetch('''SELECT * FROM matchmaking_listings WHERE id = $1''', id)
+            if len(result) != 0 and result[0]:
+                listing = Listing(id=result[0].get('id'), ubiname=result[0].get('ubiname'), host_id=result[0].get('host_id'), 
+                gamemode=result[0].get('gamemode'), playercount=result[0].get('playercount'), DLC=result[0].get('DLC'), mods=result[0].get('mods'), 
+                timezone=result[0].get('timezone'), additional_info=result[0].get('additional_info'), timestamp=result[0].get('timestamp'), 
+                guild_id=result[0].get('guild_id'))
+
+                return listing
+    
+    async def retrieve_all(self):
+        async with self.bot.pool.acquire() as con:
+            results = await con.fetch('''SELECT * FROM matchmaking_listings ORDER BY timestamp''')
+
+            if len(results) != 0:
+                listings = []
+                for result in results:
+                    listing = Listing(id=result.get('id'), ubiname=result.get('ubiname'), host_id=result.get('host_id'), 
+                    gamemode=result.get('gamemode'), playercount=result.get('playercount'), DLC=result.get('DLC'), mods=result.get('mods'), 
+                    timezone=result.get('timezone'), additional_info=result.get('additional_info'), timestamp=result.get('timestamp'), 
+                    guild_id=result.get('guild_id'))
+                    
+                    listings.append(listing)
+                return listings
+    
+    async def create(self, listing):
+        async with self.bot.pool.acquire() as con:
+            await con.execute('''
+            INSERT INTO matchmaking_listings (id, ubiname, host_id, gamemode, playercount, DLC, mods, timezone, additional_info, timestamp, guild_id) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)''', 
+            listing.id, listing.ubiname, listing.host_id, listing.gamemode, listing.playercount, listing.DLC, listing.mods, listing.timezone, 
+            listing.additional_info, listing.timestamp, listing.guild_id)
+    
+    async def delete(self, id):
+        async with self.bot.pool.acquire() as con:
+            await con.execute('''
+            DELETE FROM matchmaking_listing WHERE id = $1
+            ''', id)
+
+
+
 
 class Matchmaking(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.delExpiredListings.start()
+        self.config = Matchmaking_Config(bot)
+        self.listings = Listings(bot)
         if self.bot.lang == "de":
             de = gettext.translation('matchmaking', localedir=self.bot.localePath, languages=['de'])
             de.install()
@@ -34,12 +159,14 @@ class Matchmaking(commands.Cog):
         else :
             logging.error("Invalid language, fallback to English.")
             self._ = gettext.gettext
+        
+        self.delExpiredListings.start()
     
     def cog_unload(self):
         self.delExpiredListings.cancel()
+    
 
     #Command to initalize matchmaking.
-    #This is the main command of the bot, and is by far the most complicated one.
     #The TL;DR version of this command is the following: It DMs the user, asks them some questions,
     #evaluates the answers based on some criteria, then use those answers to construct a formatted
     #multiplayer listing, which will then in turn go into a preconfigured channel. It will also ping a
@@ -47,15 +174,16 @@ class Matchmaking(commands.Cog):
     @commands.command(help="Start setting up a new multiplayer listing.", description="Start matchmaking! After command execution, you will receive a direct message to help you set up a multiplayer listing! Takes no arguments.", aliases=['multiplayer', 'init', 'match','multi','mp'], usage=f"matchmaking")
     @commands.guild_only()
     @commands.check(is_setup) #If not set up properly, it will not initialize
+    @commands.check(is_anno_guild)
     @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
     @commands.cooldown(1, 72000, type=commands.BucketType.member)
     async def matchmaking(self, ctx):
-        cmdchannel = await self.bot.DBHandler.retrievesetting("COMMANDSCHANNEL", ctx.guild.id)
-        #Performs check if the command is executed in the right channel, if this is 0, this feature is disabled.
-        if cmdchannel != 0 :
+        cmdchannel = await self.config.load('init_channel_id', ctx.guild.id)
+        #Performs check if the command is executed in the right channel, if this is None, this feature is disabled.
+        if cmdchannel:
             if cmdchannel != ctx.channel.id :
                 logging.info(f"User {ctx.author} tried to initialize matchmaking in disabled channel.")
-                self.matchmaking.reset_cooldown(ctx)
+                ctx.command.reset_cooldown(ctx)
                 return
         mpsessiondata = []
         mpEmbedColor = 0xd76b00
@@ -84,6 +212,7 @@ class Matchmaking(commands.Cog):
 
         #The question function, specify a questionType, and if you are modifying or not.
         async def ask(qType, isModifying):
+
             if qType == "UbiName" :
                 embed=discord.Embed(title=self._("Ubisoft Connect username"), description=self._("Please type in your Ubisoft Connect username!"), color=mpEmbedColor)
                 embed.set_footer(text="Note: Maximum length is 32 characters")
@@ -108,7 +237,8 @@ class Matchmaking(commands.Cog):
                     embed = discord.Embed(title=self.bot.errorTimeoutTitle, description=self.bot.errorTimeoutDesc, color=self.bot.errorColor)
                     await ctx.author.send(embed=embed)
                     return -1
-            if qType == "GameMode" :
+
+            elif qType == "GameMode" :
                 embed=discord.Embed(title=self._("Choose your preferred style of play!"), description="⚔️ - PvP (Player versus Player) \n🛡️ - PvE (Players versus Environment)\n⛏️ - Co-Op (Cooperative)", color=mpEmbedColor)
                 embed.set_footer(text=self._("React below with your choice!"))
                 msg = await ctx.author.send(embed=embed)
@@ -149,7 +279,8 @@ class Matchmaking(commands.Cog):
                     embed = discord.Embed(title=self.bot.errorTimeoutTitle, description=self.bot.errorTimeoutDesc, color=self.bot.errorColor)
                     await ctx.author.send(embed=embed)
                     return -1
-            if qType == "PlayerCount" :
+
+            elif qType == "PlayerCount" :
                 embed=discord.Embed(title=self._("How many players you want to play with?"), description="2️⃣ - 2 \n 3️⃣ - 3 \n 4️⃣ - 4 \n ♾️ -" + self._("5 or more"), color=mpEmbedColor)
                 embed.set_footer(text=self._("This should be the minimum amount of players you are willing to play with!"))
                 msg = await ctx.author.send(embed=embed)
@@ -189,7 +320,7 @@ class Matchmaking(commands.Cog):
                     embed = discord.Embed(title=self.bot.errorTimeoutTitle, description=self.bot.errorTimeoutDesc, color=self.bot.errorColor)
                     await ctx.author.send(embed=embed)
                     return -1
-            if qType == "DLC" :
+            elif qType == "DLC" :
                 embed=discord.Embed(title=self._("Now react with the symbol of **all** the DLCs you want to use! Click the green checkmark ({checkmark}) once done!").format(checkmark= "✅"), description=self._(" {DLC0} - The Anarchist \n {DLC1} - Sunken Treasures \n {DLC2} - Botanica \n {DLC3} - The Passage \n {DLC4} - Seat of Power \n {DLC5} - Bright Harvest \n {DLC6} - Land of Lions \n {DLC7} - Docklands").format(DLC0="🔥", DLC1="🤿", DLC2="🌹", DLC3="❄️", DLC4="🏛️", DLC5="🚜", DLC6="🦁", DLC7="⚓"), color=mpEmbedColor)
                 embed.set_footer(text=self._("Note: If you do not own any DLC, just simply press {check} to continue.").format(check="✅"))
                 msg = await ctx.author.send(embed=embed)
@@ -238,7 +369,7 @@ class Matchmaking(commands.Cog):
                     await ctx.author.send(embed=embed)
                     return -1
 
-            if qType == "Mods" :
+            elif qType == "Mods" :
                 #Add msg
                 embed=discord.Embed(title=self._("Are you going to use mods in this match?"), description=self._("React below with your response!"), color=mpEmbedColor)
                 embed.set_footer(text=self._("Note: Mods are not officially supported. All participants must share the same mods to play together. Please share the mods you want to use at the end of the form."))
@@ -275,7 +406,7 @@ class Matchmaking(commands.Cog):
                     await ctx.author.send(embed=embed)
                     return -1
             
-            if qType == "TimeZone" :
+            elif qType == "TimeZone" :
                 embed=discord.Embed(title=self._("Specify your timezone as an UTC offset!"), description=self._("For example: If your timezone is UTC+1, **type in 1!**"), color=mpEmbedColor)
                 embed.set_footer(text=self._("If you are unsure what timezone you are in, you can check here: https://www.timeanddate.com/time/map"))
                 msg = await ctx.author.send(embed=embed)
@@ -317,7 +448,8 @@ class Matchmaking(commands.Cog):
                     embed = discord.Embed(title=self.bot.errorTimeoutTitle, description=self.bot.errorTimeoutDesc, color=self.bot.errorColor)
                     await ctx.author.send(embed=embed)
                     return -1
-            if qType == "Additional" :
+
+            elif qType == "Additional" :
                 embed=discord.Embed(title=self._("If you want to add additional notes to your listing, type it in now!"), description=self._("Examples of what to include (not mandatory): When you want to start, Duration of a match, Mods (if any)"), color=mpEmbedColor)
                 embed.set_footer(text=self._("Type in 'skip' to skip this step! Max length: 256 characters"))
                 msg = await ctx.author.send(embed=embed)
@@ -348,7 +480,7 @@ class Matchmaking(commands.Cog):
                     await ctx.author.send(embed=embed)
                     return -1
             
-            if qType == "ConfirmListing" :
+            elif qType == "ConfirmListing" :
                 #Send listing preview
                 embed=discord.Embed(title=self._("**__Looking for Players: Anno 1800__**"), description=self._("**Ubisoft Connect Username: ** {name} \n **Gamemode: ** {gamemode} \n **Players: ** {playercount} \n **DLC: ** {DLC} \n **Mods:** {mods} \n **Timezone:** {timezone} \n **Additional info:** {additional_info} \n \n Contact {author} in DMs if you are interested, or subscribe by reacting with {arrow}! This will notify the host when {subcap} players have subscribed! (including the host)").format(name=mpsessiondata[0], gamemode=mpsessiondata[1], playercount=mpsessiondata[2], DLC=mpsessiondata[3], mods=mpsessiondata[4], timezone=mpsessiondata[5], additional_info=mpsessiondata[6], author=ctx.author.mention, arrow="⏫", subcap=mpsessiondata[2]), color=mpEmbedColor)
                 embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/310078048525615106/830900971680038962/union_crop.jpg")
@@ -361,36 +493,37 @@ class Matchmaking(commands.Cog):
                 await msg.add_reaction("❌")
                 #Called to create a new multiplayer posting
                 async def createposting(mpsessiondata):
-                    #try:
-                    channel = self.bot.get_channel(await self.bot.DBHandler.retrievesetting("ANNOUNCECHANNEL", ctx.guild.id))
-                    lfgrole = ctx.guild.get_role(await self.bot.DBHandler.retrievesetting("LFGROLE", ctx.guild.id))
-                    listingID = uuid.uuid4()
-                    listing_timestamp = int(round(time.time()))
-                    print(listingID)
-                    #If LFG role is not set up, we will not include a mention to it at the end.
-                    if await self.bot.DBHandler.retrievesetting("LFGROLE", ctx.guild.id) == 0 :
-                        #yeah this is long lol
-                        embed=discord.Embed(title=self._("**__Looking for Players: Anno 1800__**"), description=self._("**Ubisoft Connect Username: ** {name} \n **Gamemode: ** {gamemode} \n **Players: ** {playercount} \n **DLC: ** {DLC} \n **Mods:** {mods} \n **Timezone:** {timezone} \n **Additional info:** {additional_info} \n \n Contact {author} in DMs if you are interested, or subscribe by reacting with {arrow}! This will notify the host when {subcap} players have subscribed! (including the host)").format(name=mpsessiondata[0], gamemode=mpsessiondata[1], playercount=mpsessiondata[2], DLC=mpsessiondata[3], mods=mpsessiondata[4], timezone=mpsessiondata[5], additional_info=mpsessiondata[6], author=ctx.author.mention, arrow="⏫", subcap=mpsessiondata[2]), color=mpEmbedColor)
-                        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/310078048525615106/830900971680038962/union_crop.jpg")
-                        embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted.\nID: {listing_id}".format(listing_id=listingID))
-                        posting = await channel.send(embed=embed)
-                        await posting.add_reaction("⏫")
-                        logging.info(f"{ctx.author} User created new multiplayer listing with ID {listingID}. Session data dump: {mpsessiondata}")
-                    else :
-                        embed=discord.Embed(title=self._("**__Looking for Players: Anno 1800__**"), description=self._("**Ubisoft Connect Username: ** {name} \n **Gamemode: ** {gamemode} \n **Players: ** {playercount} \n **DLC: ** {DLC} \n **Mods:** {mods} \n **Timezone:** {timezone} \n **Additional info:** {additional_info} \n \n Contact {author} in DMs if you are interested, or subscribe by reacting with {arrow}! This will notify the host when {subcap} players have subscribed! (including the host)").format(name=mpsessiondata[0], gamemode=mpsessiondata[1], playercount=mpsessiondata[2], DLC=mpsessiondata[3], mods=mpsessiondata[4], timezone=mpsessiondata[5], additional_info=mpsessiondata[6], author=ctx.author.mention, arrow="⏫", subcap=mpsessiondata[2]), color=mpEmbedColor)
-                        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/310078048525615106/830900971680038962/union_crop.jpg")
-                        embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted.\nID: {listing_id}".format(listing_id=listingID))
-                        posting = await channel.send(embed=embed,content=lfgrole.mention)
-                        await posting.add_reaction("⏫")
-                        logging.info(f"{ctx.author} User created new multiplayer listing with ID {listingID}. Session data dump: {mpsessiondata}") 
-                    await self.bot.DBHandler.addListing(str(listingID), mpsessiondata[0], ctx.author.id, mpsessiondata[1], mpsessiondata[2], mpsessiondata[3], mpsessiondata[4], mpsessiondata[5], mpsessiondata[6], listing_timestamp, ctx.guild.id)
-                    
-                #except:
-                    #    #If for whatever reason the message cannot be made, we message the user about it.
-                    #    logging.error(f"Could not create listing for {ctx.author} due to unhandled exception. Did you set up matchmaking?")
-                    #    embed=discord.Embed(title="❌ " + self._("Error: Exception encountered."), description=self._("Failed to generated listing. Contact an administrator! Operation cancelled."), color=self.bot.errorColor)
-                    #    await ctx.author.send(embed=embed)
-                    #    return -1
+                    try:
+                        channel = self.bot.get_channel(await self.config.load('announce_channel_id', ctx.guild.id))
+                        lfgrole_id = await self.config.load('lfgrole_id', ctx.guild.id)
+                        listingID = uuid.uuid4()
+                        listing_timestamp = int(round(time.time()))
+                        print(listingID)
+                        #If LFG role is not set up, we will not include a mention to it at the end.
+                        if lfgrole_id == None:
+                            #yeah this is long lol
+                            embed=discord.Embed(title=self._("**__Looking for Players: Anno 1800__**"), description=self._("**Ubisoft Connect Username: ** {name} \n **Gamemode: ** {gamemode} \n **Players: ** {playercount} \n **DLC: ** {DLC} \n **Mods:** {mods} \n **Timezone:** {timezone} \n **Additional info:** {additional_info} \n \n Contact {author} in DMs if you are interested, or subscribe by reacting with {arrow}! This will notify the host when {subcap} players have subscribed! (including the host)").format(name=mpsessiondata[0], gamemode=mpsessiondata[1], playercount=mpsessiondata[2], DLC=mpsessiondata[3], mods=mpsessiondata[4], timezone=mpsessiondata[5], additional_info=mpsessiondata[6], author=ctx.author.mention, arrow="⏫", subcap=mpsessiondata[2]), color=mpEmbedColor)
+                            embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/310078048525615106/830900971680038962/union_crop.jpg")
+                            embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted.\nID: {listing_id}".format(listing_id=listingID))
+                            posting = await channel.send(embed=embed)
+                            await posting.add_reaction("⏫")
+                            logging.info(f"{ctx.author} User created new multiplayer listing with ID {listingID}. Session data dump: {mpsessiondata}")
+                        else :
+                            lfgrole = ctx.guild.get_role(lfgrole_id)
+                            embed=discord.Embed(title=self._("**__Looking for Players: Anno 1800__**"), description=self._("**Ubisoft Connect Username: ** {name} \n **Gamemode: ** {gamemode} \n **Players: ** {playercount} \n **DLC: ** {DLC} \n **Mods:** {mods} \n **Timezone:** {timezone} \n **Additional info:** {additional_info} \n \n Contact {author} in DMs if you are interested, or subscribe by reacting with {arrow}! This will notify the host when {subcap} players have subscribed! (including the host)").format(name=mpsessiondata[0], gamemode=mpsessiondata[1], playercount=mpsessiondata[2], DLC=mpsessiondata[3], mods=mpsessiondata[4], timezone=mpsessiondata[5], additional_info=mpsessiondata[6], author=ctx.author.mention, arrow="⏫", subcap=mpsessiondata[2]), color=mpEmbedColor)
+                            embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/310078048525615106/830900971680038962/union_crop.jpg")
+                            embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted.\nID: {listing_id}".format(listing_id=listingID))
+                            posting = await channel.send(embed=embed,content=lfgrole.mention)
+                            await posting.add_reaction("⏫")
+                            logging.info(f"{ctx.author} User created new multiplayer listing with ID {listingID}. Session data dump: {mpsessiondata}")
+                        listing = Listing(str(listingID), mpsessiondata[0], ctx.author.id, mpsessiondata[1], mpsessiondata[2], mpsessiondata[3], mpsessiondata[4], mpsessiondata[5], mpsessiondata[6], listing_timestamp, ctx.guild.id)
+                        await self.listings.create(listing)
+                    except Exception as error:
+                            #If for whatever reason the message cannot be made, we message the user about it.
+                            logging.error(f"Could not create listing for {ctx.author} due to unhandled exception. Did you set up matchmaking?")
+                            embed=discord.Embed(title="❌ " + self._("Error: Exception encountered."), description=self._("Failed to generated listing. Contact an administrator! Operation cancelled.\n**Exception:** ```{exception}```").format(exception=error), color=self.bot.errorColor)
+                            await ctx.author.send(embed=embed)
+                            return -1
 
                 #Returns -1 for fail, 0 for successful modification
                 async def modifylisting():
@@ -484,18 +617,19 @@ class Matchmaking(commands.Cog):
                     await ctx.author.send(embed=embed)
                     return -1
         
-        #Call all the functions defined earlier
-        #Error codes:
-        # 1 = finished
-        # 0 = success, continue
-        # -1 = Fatal error, cancel command
-        # -2 = Invalid value, repeat question
-        # -3 = Repeat question, no error, only triggered when editing
-        #  
-        #
-        #This means that we keep looping until our error code is -2 or -3, stop loop when it is 0
-        #And return the whole command if it is -1
+        '''
+        Call all the functions defined earlier
+        Return codes:
+         1 = finished
+         0 = success, continue
+         -1 = Fatal error, cancel command
+         -2 = Invalid value, repeat question
+         -3 = Repeat question, no error, only triggered when editing
+          
         
+        This means that we keep looping until our error code is -2 or -3, stop loop when it is 0
+        And return the whole command if it is -1
+        '''
         #I also count how many invalid values have been added, and how many edits have been made, and if it reaches a value, it will cancel the command.
         warns = 0
         edits = 0
@@ -509,7 +643,7 @@ class Matchmaking(commands.Cog):
             errcode = await ask(qtypes[question], False)
             #If it is fatal, return the whole command
             if errcode == -1:
-                self.matchmaking.reset_cooldown(ctx)
+                ctx.command.reset_cooldown(ctx)
                 return
             #If it succeeds, we move to the next question
             elif errcode == 0:
@@ -520,7 +654,7 @@ class Matchmaking(commands.Cog):
                     embed=discord.Embed(title="❌ " + self._("Exceeded edit limit."), description=self._("You cannot make more edits to your submission. Please try executing the command again."),color=self.bot.errorColor)
                     await ctx.author.send(embed=embed)
                     logging.info(f"{ctx.author} exceeded listing edit limit in matchmaking.")
-                    self.matchmaking.reset_cooldown(ctx)
+                    ctx.command.reset_cooldown(ctx)
                     return
                 else :
                     edits += 1
@@ -530,7 +664,7 @@ class Matchmaking(commands.Cog):
                     embed=discord.Embed(title="❌ " + self._("Exceeded error limit."), description=self._("You have made too many errors. Please retry your submission."), color=self.bot.errorColor)
                     await ctx.author.send(embed=embed)
                     logging.info(f"{ctx.author} exceeded listing error limit in matchmaking.")
-                    self.matchmaking.reset_cooldown(ctx)
+                    ctx.command.reset_cooldown(ctx)
                     return
                 else:
                     warns += 1
@@ -544,48 +678,30 @@ class Matchmaking(commands.Cog):
             embed = discord.Embed(title=self.bot.errorMaxConcurrencyReachedTitle, description=self._("You already have a matchmaking request in progress."), color=self.bot.errorColor)
             embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.channel.send(embed=embed)
-            logging.info(f"{ctx.author} exceeded max concurrency for matchmaking command.")
 
     
     #Remove listings older than a week from the database
     @tasks.loop(seconds=3600.0)
     async def delExpiredListings(self):
+        await self.bot.wait_until_ready()
         logging.info("Checking for expired matchmaking listings...")
-        listings = await self.bot.DBHandler.retrieveAllListings()
-        for timestamp in listings["timestamp"]:
-            if (int(round(time.time())) - timestamp) > 604800:
-                await self.bot.DBHandler.delListing(listings["ID"][listings["timestamp"].index(timestamp)], listings["guild_id"][listings["timestamp"].index(timestamp)])
-                logging.info("Deleted listing {ID} from database.".format(ID=listings["ID"][listings["timestamp"].index(timestamp)]))
+        listings = await self.listings.retrieve_all()
+        if listings and len(listings) !=0:
+            for listing in listings:
+                if (int(round(time.time())) - listing.timestamp) > 604800:
+                    await self.listings.delete(listing.id)
+                    logging.info("Deleted listing {ID} from database.".format(ID=listing.id))
 
 
-    #Reaction roles for LFG, and subscribing to listings
-    #Directly related to matchmaking functionality
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
+        '''
+        This is where listing subscriptions are handled via reactions
+        '''
         #Check if we are in a guild so we dont bombard the database with Null errors.
         if payload.guild_id != None : 
-            guild = self.bot.get_guild(payload.guild_id)
-            #Check if it is the message we set
-            if await self.bot.DBHandler.retrievesetting("ROLEREACTMSG", payload.guild_id) == payload.message_id :
-                #Check the emoji
-                if payload.emoji == self.bot.get_emoji(await self.bot.DBHandler.retrievesetting("LFGREACTIONEMOJI", guild.id)) and payload.user_id != self.bot.user.id:
-                    member = guild.get_member(payload.user_id)
-                    try:
-                        #Then set the role for the user
-                        role = guild.get_role(await self.bot.DBHandler.retrievesetting("LFGROLE", guild.id))
-                        await member.add_roles(role)
-                        logging.info(f"Role {role} added to {member}")
-                        #Also DM the user about the change, and let them know that the action was performed successfully.
-                        embed=discord.Embed(title="💬 " + self._("Notifications enabled."), description=self._("You are now looking for games, and will be notified of any new multiplayer listing!"), color=self.bot.embedGreen)
-                        await member.send(embed=embed)
-                        return
-                    except:
-                        #In case anything goes wrong, we will tell the user to bully admins who can then bully me :) /s
-                        embed=discord.Embed(title="❌ " + self._("Error: Exception encountered."), description=self._("Failed to add role. Contact an administrator! Operation cancelled."), color=self.bot.errorColor)
-                        await member.send(embed=embed)
-                        logging.error(f"Unable to modify roles for {member}. Possible permissions issue.")
-                        return
-            elif await self.bot.DBHandler.retrievesetting("ANNOUNCECHANNEL", guild.id) == payload.channel_id:
+            if await self.config.load('announce_channel_id', payload.guild_id) == payload.channel_id:
+                guild = self.bot.get_guild(payload.guild_id)
                 #I put a fair number of logging in here to track abuse of this feature
                 if str(payload.emoji) == "⏫" and payload.user_id != self.bot.user.id:
                     #The listing message
@@ -598,15 +714,15 @@ class Matchmaking(commands.Cog):
                     listingContent = listing.embeds
                     listingFooter = listingContent[0].footer
                     listingID = listingFooter.text.split("ID: ")[1]
-                    listingData = await self.bot.DBHandler.retrieveListing(listingID, ctx.guild.id)
+                    db_listing = await self.listings.retrieve(listingID)
                     #Detect missing data
-                    if listingData == None :
+                    if db_listing == None :
                         logging.info(f"{member} tried to subscribe to an expired listing.")
                         return
                     #The second line contains information about playercount
-                    playerCount = listingData["playercount"]
+                    playerCount = db_listing.playercount
                     #We get the host from the DB
-                    host = ctx.guild.get_member(listingData["hostID"])
+                    host = ctx.guild.get_member(db_listing.host_id)
                     #We get a list of users who reacted to this
                     interestedPlayers = await listing.reactions[0].users().flatten()
                     #Remove bot accounts from this list, and join them together in a new str.
@@ -644,23 +760,8 @@ class Matchmaking(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
         if payload.guild_id != None :
-            setmsg = await self.bot.DBHandler.retrievesetting("ROLEREACTMSG", payload.guild_id)
-            guild = self.bot.get_guild(payload.guild_id)
-            if setmsg == payload.message_id :
-                if payload.emoji == self.bot.get_emoji(await self.bot.DBHandler.retrievesetting("LFGREACTIONEMOJI", guild.id)) and payload.user_id != self.bot.user.id:
-                    member = guild.get_member(payload.user_id)
-                    try:
-                        role = guild.get_role(await self.bot.DBHandler.retrievesetting("LFGROLE", guild.id))
-                        await member.remove_roles(role)
-                        logging.info(f"Role {role} removed from {member}")
-                        embed=discord.Embed(title="💬 " + self._("Notifications disabled."), description=self._("You will no longer get notifications on multiplayer game listings."), color=self.bot.errorColor)
-                        await member.send(embed=embed)
-                    except:
-                        embed=discord.Embed(title="❌ " + self._("Error: Exception encountered."), description=self._("Failed to remove role. Contact an administrator! Operation cancelled."), color=self.bot.errorColor)
-                        await member.send(embed=embed)
-                        logging.error(f"Unable to modify roles for {member}. Possible permissions or hierarchy issue.")
-
-            elif await self.bot.DBHandler.retrievesetting("ANNOUNCECHANNEL", guild.id) == payload.channel_id:
+            if await self.config.load('announce_channel_id', payload.guild_id) == payload.channel_id:
+                guild = self.bot.get_guild(payload.guild_id)
                 #I put a fair number of logging in here to track abuse of this feature
                 if str(payload.emoji) == "⏫" and payload.user_id != self.bot.user.id:
                     #The person who reacted
@@ -673,11 +774,11 @@ class Matchmaking(commands.Cog):
                     listingContent = listing.embeds
                     listingFooter = listingContent[0].footer
                     listingID = listingFooter.text.split("ID: ")[1]
-                    listingData = await self.bot.DBHandler.retrieveListing(listingID, ctx.guild.id)
-                    if listingData == None :
+                    db_listing = await self.listings.retrieve(listingID)
+                    if listing == None :
                         logging.info(f"{member} tried to unsubscribe from an expired listing.")
                         return
-                    host = ctx.guild.get_member(listingData["hostID"])
+                    host = ctx.guild.get_member(db_listing.host_id)
                     if member.id != host.id :
                         logging.info(f"{member.name}#{member.discriminator} removed themselves from a listing.")
                         embed=discord.Embed(title=f"📝 " + self._("You have unsubscribed from {hostname}'s listing.").format(hostname=host.name), description=self._("The host will no longer see you signed up to this listing."), color=self.bot.errorColor)

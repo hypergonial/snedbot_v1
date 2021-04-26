@@ -4,7 +4,7 @@ import gettext
 import logging
 import re
 
-import aiosqlite
+import asyncpg
 import discord
 import Levenshtein as lev
 from discord.ext import commands, tasks
@@ -34,10 +34,27 @@ class Timer():
 class Timers(commands.Cog):
 
     def __init__(self, bot):
+        async def init_table():
+            async with bot.pool.acquire() as con:
+                await con.execute('''
+                CREATE TABLE IF NOT EXISTS public.timers
+                (
+                    id serial NOT NULL,
+                    guild_id bigint NOT NULL,
+                    user_id bigint NOT NULL,
+                    channel_id bigint,
+                    event text NOT NULL,
+                    expires bigint NOT NULL,
+                    notes text,
+                    PRIMARY KEY (id),
+                    FOREIGN KEY (guild_id)
+                        REFERENCES global_config (guild_id)
+                        ON DELETE CASCADE
+                )''')
+        bot.loop.run_until_complete(init_table())
         self.bot = bot
         self.current_timer = None
-        self.db = bot.db
-        self.currenttask = None #bot.loop.create_task(self.dispatch_timers())
+        self.currenttask = None
         if self.bot.lang == "de":
             de = gettext.translation('timers', localedir=self.bot.localePath, languages=['de'])
             de.install()
@@ -49,6 +66,8 @@ class Timers(commands.Cog):
             logging.error("Invalid language, fallback to English.")
             self._ = gettext.gettext
         self.wait_for_active_timers.start()
+
+
 
     def cog_unload(self):
         self.currenttask.cancel()
@@ -62,27 +81,29 @@ class Timers(commands.Cog):
         #Get any pair of <number><word> with a single optional space in between, and return them as a dict (sort of)
         time_regex = re.compile(r"(\d+(?:[.,]\d+)?)\s{0,1}([a-zA-Z]+)")
         time_letter_dict = {"h":3600, "s":1, "m":60, "d":86400, "w":86400*7, "M":86400*30, "Y":86400*365}
-        time_word_dict = {"hour":3600, "second":1, "minute":60, "day": 86400, "week": 86400*7, "month":86400*30, "year":86400*365}
+        time_word_dict = {"hour":3600, "second":1, "minute":60, "day": 86400, "week": 86400*7, "month":86400*30, "year":86400*365, "sec": 1, "min": 60}
         matches = time_regex.findall(timestr)
         time = 0
-        strings = []
+        strings = [] #Stores all identified times
         logging.debug(f"Matches: {matches}")
         for val, category in matches:
-            strings.append(val + category)
-            strings.append(val + " " + category) #Append both with space & without
             val = val.replace(',', '.') #Replace commas with periods to correctly register decimal places
             #If this is a single letter
             if len(category) == 1:
                 if category in time_letter_dict.keys():
+                    strings.append(val + category)
+                    strings.append(val + " " + category) #Append both with space & without
                     time += time_letter_dict[category]*float(val)
             else:
                 #If a partial match is found with any of the keys
                 #Reason for making the same code here is because words are case-insensitive, as opposed to single letters
                 for string in time_word_dict.keys():
-                    if lev.distance(category.lower(), string.lower()) <= 2: #If str has 2 or less different letters (One for plural, one for being dumb)
+                    if lev.distance(category.lower(), string.lower()) <= 1: #If str has 1 or less different letters (For plural)
                         time += time_word_dict[string]*float(val)
+                        strings.append(val + category)
+                        strings.append(val + " " + category)
                         break
-
+        print(strings)
         logging.debug(f"Time: {time}")
         if time > 0:
             time = datetime.datetime.utcnow() + datetime.timedelta(seconds=time)
@@ -139,36 +160,36 @@ class Timers(commands.Cog):
     async def get_latest_timer(self, days=7):
         await self.bot.wait_until_ready() #This must be included or you get a lot of NoneType errors while booting up, and timers do not get delivered
         logging.debug("Getting latest timer...")
-        cursor = await self.db.execute("SELECT * FROM timers WHERE expires < ? ORDER BY expires LIMIT 1", [round((datetime.datetime.utcnow() + datetime.timedelta(days=days)).timestamp())])
-        result = await cursor.fetchone()
-        logging.debug(f"Latest timer: {result}")
-        if result != None:
-            timer = Timer(id=result[0],guild_id=result[1],user_id=result[2],channel_id=result[3],event=result[4],expires=result[5],notes=result[6])
-            #self.current_timer = timer
-            logging.debug(f"Timer latest: {timer}")
-            return timer
+        async with self.bot.pool.acquire() as con:
+            result = await con.fetch('''SELECT * FROM timers WHERE expires < $1 ORDER BY expires LIMIT 1''', round((datetime.datetime.utcnow() + datetime.timedelta(days=days)).timestamp()))
+            logging.debug(f"Latest timer from db: {result}")
+            if len(result) != 0 and result[0]:
+                timer = Timer(id=result[0].get('id'),guild_id=result[0].get('guild_id'),user_id=result[0].get('user_id'),channel_id=result[0].get('channel_id'),event=result[0].get('event'),expires=result[0].get('expires'),notes=result[0].get('notes'))
+                #self.current_timer = timer
+                logging.debug(f"Timer class created for latest: {timer}")
+                return timer
     
 
     #The actual calling of the timer, deletes it from the db & dispatches the event
     async def call_timer(self, timer : Timer):
-        logging.debug("Deleting timer from DB")
-        logging.debug("Deleting entry {timerid}".format(timerid=timer.id))
-        await self.db.execute("DELETE FROM timers WHERE id = ?", [timer.id])
-        await self.db.commit()
-        #Set the currently evaluated timer to None
-        self.current_timer = None
-        logging.debug("Deleted")
-        '''
-        Dispatch an event named eventname_timer_complete, which will cause all listeners 
-        for this event to fire. This function is not documented, so if anything breaks, it
-        is probably in here. It passes on the timer's dict.
-        '''
-        logging.debug("Dispatching..")
-        event = timer.event
-        event_name = f'{event}_timer_complete'
-        logging.debug(event_name)
-        self.bot.dispatch(event_name, timer)
-        logging.debug("Dispatched.")
+        logging.debug("Deleting timer entry {timerid}".format(timerid=timer.id))
+        async with self.bot.pool.acquire() as con:
+            await con.execute('''DELETE FROM timers WHERE id = $1''', timer.id)
+            await self.db.commit()
+            #Set the currently evaluated timer to None
+            self.current_timer = None
+            logging.debug("Deleted")
+            '''
+            Dispatch an event named eventname_timer_complete, which will cause all listeners 
+            for this event to fire. This function is not documented, so if anything breaks, it
+            is probably in here. It passes on the timer's dict.
+            '''
+            logging.debug("Dispatching..")
+            event = timer.event
+            event_name = f'{event}_timer_complete'
+            logging.debug(event_name)
+            self.bot.dispatch(event_name, timer)
+            logging.debug("Dispatched.")
 
     async def dispatch_timers(self):
         logging.debug("Dispatching timers.")
@@ -199,15 +220,15 @@ class Timers(commands.Cog):
             self.currenttask.cancel()
             self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
 
-    async def create_timer(self, expiry : datetime.datetime, event :str, guild_id : int, user_id:int, channel_id:int=None, *, notes:str=None):
-        logging.debug(f"Expiry: {expiry}")
-        expiry=round(expiry.timestamp()) #Converting it to time since epoch
-        await self.db.execute("INSERT INTO timers (guild_id, channel_id, user_id, event, expires, notes) VALUES (?, ?, ?, ?, ?, ?)", [guild_id, channel_id, user_id, event, expiry, notes])
-        await self.db.commit()
+    async def create_timer(self, expires : datetime.datetime, event :str, guild_id : int, user_id:int, channel_id:int=None, *, notes:str=None):
+        logging.debug(f"Expiry: {expires}")
+        expires=round(expires.timestamp()) #Converting it to time since epoch
+        async with self.bot.pool.acquire() as con:
+            await con.execute('''INSERT INTO timers (guild_id, channel_id, user_id, event, expires, notes) VALUES ($1, $2, $3, $4, $5, $6)''', guild_id, channel_id, user_id, event, expires, notes)
         logging.debug("Saved to database.")
         #If there is already a timer in queue, and it has an expiry that is further than the timer we just created
         #Then we reboot the dispatch_timers() function to re-check for the latest timer.
-        if self.current_timer and expiry < self.current_timer.expires:
+        if self.current_timer and expires < self.current_timer.expires:
             logging.debug("Reshuffled timers, this is now the latest timer.")
             self.currenttask.cancel()
             self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
@@ -242,24 +263,24 @@ class Timers(commands.Cog):
         embed = discord.Embed(title="✅ " + self._("Reminder set"), description=self._("Reminder set for: `{time_year}-{time_month}-{time_day} {time_hour}:{time_minute} (UTC)`").format(time_year=time.year, time_month=str(time.month).rjust(2, '0'), time_day=str(time.day).rjust(2, '0'), time_hour=str(time.hour).rjust(2, '0'), time_minute=str(time.minute).rjust(2, '0')), color=self.bot.embedGreen)
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
-        await self.create_timer(expiry=time, event="reminder", guild_id=ctx.guild.id,user_id=ctx.author.id, channel_id=ctx.channel.id, notes=note)
+        await self.create_timer(expires=time, event="reminder", guild_id=ctx.guild.id,user_id=ctx.author.id, channel_id=ctx.channel.id, notes=note)
 
 
     @commands.command(usage="reminders", help="Lists all reminders you have pending.", description="Lists all your pending reminders, you can get a reminder's ID here to delete it.", aliases=["myreminders", "listreminders"])
     @commands.guild_only()
     async def reminders(self, ctx):
-        cursor = await self.db.execute("SELECT * FROM timers WHERE guild_id = ? AND user_id = ?", [ctx.guild.id, ctx.author.id])
-        results = await cursor.fetchall()
+        async with self.bot.pool.acquire() as con:
+            results = await con.fetch('''SELECT * FROM timers WHERE guild_id = $1 AND user_id = $2 ORDER BY expires LIMIT 10''', ctx.guild.id, ctx.author.id)
         timers = []
         reminderstr = ""
         for result in results :
-            if result[4] == "reminder":
-                note_stripped = result[6].replace("\n", " ") #Avoid the reminder dialog breaking
+            if result.get('event') == "reminder":
+                note_stripped = result.get('notes').replace("\n", " ") #Avoid the reminder dialog breaking
                 note_stripped = note_stripped.split("[Jump to original message!]")[0] #Remove jump url
                 if len(note_stripped) > 50:
                     note_stripped = f"{note_stripped[slice(47)]}..."
-                timers.append(Timer(id=result[0],guild_id=result[1],user_id=result[2],channel_id=result[3],event=result[4],expires=result[5],notes=note_stripped))      
-        i = 0
+                timers.append(Timer(id=result.get('id'),guild_id=result.get('guild_id'),user_id=result.get('user_id'),channel_id=result.get('channel_id'),event=result.get('event'),expires=result.get('expires'),notes=note_stripped))      
+
         if len(timers) != 0:
             for timer in timers:
                 time = datetime.datetime.fromtimestamp(timer.expires)
@@ -267,9 +288,6 @@ class Timers(commands.Cog):
                     reminderstr = reminderstr + f"**ID: {timer.id}** - **{time.year}-{time.month}-{time.day} {time.hour}:{time.minute} (UTC)**\n{timer.notes}\n"
                 else:
                     reminderstr = reminderstr + f"**ID: {timer.id}** - **{time.year}-{time.month}-{time.day} {time.hour}:{time.minute} (UTC)**\n"
-                if i == 10:
-                    break
-                i +=1
         else:
             reminderstr = self._("You have no reminders. You can set one via `{prefix}reminder`!").format(prefix=ctx.prefix)
         embed=discord.Embed(title="✉️ " + self._("Your reminders:"),description=reminderstr, color=self.bot.embedBlue)
@@ -278,23 +296,22 @@ class Timers(commands.Cog):
     
     @commands.command(usage="delreminder <reminder_ID>", help="Deletes a reminder.", description="Deletes a reminder by it's ID, which you can obtain via the `reminders` command.")
     @commands.guild_only()
-    async def delreminder(self, ctx, ID):
-        cursor = await self.db.execute("SELECT ID FROM timers WHERE user_id = ? AND id = ?", [ctx.author.id, ID])
-        result = await cursor.fetchone()
-        if result:
-            await self.db.execute("DELETE FROM timers WHERE user_id = ? AND id = ?", [ctx.author.id, ID])
-            await self.db.commit()
-            embed = discord.Embed(title="✅ " + self._("Reminder deleted"), description=self._("Reminder **{ID}** has been deleted.").format(ID=ID), color=self.bot.embedGreen)
-            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-            await ctx.send(embed=embed)
-            #If we just deleted the currently running timer, then we re-evaluate to find the next timer.
-            if self.current_timer and self.current_timer.id == int(ID):
-                self.currenttask.cancel()
-                self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
-        else:
-            embed = discord.Embed(title="❌ " + self._("Reminder not found"), description=self._("Cannot find reminder with ID **{ID}**.").format(ID=ID), color=self.bot.errorColor)
-            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-            await ctx.send(embed=embed)
+    async def delreminder(self, ctx, ID : int):
+        async with self.bot.pool.acquire() as con:
+            result = await con.fetch('''SELECT ID FROM timers WHERE user_id = $1 AND id = $2''', ctx.author.id, ID)
+            if result:
+                await con.execute('''DELETE FROM timers WHERE user_id = $1 AND id = $2''', ctx.author.id, ID)
+                embed = discord.Embed(title="✅ " + self._("Reminder deleted"), description=self._("Reminder **{ID}** has been deleted.").format(ID=ID), color=self.bot.embedGreen)
+                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+                await ctx.send(embed=embed)
+                #If we just deleted the currently running timer, then we re-evaluate to find the next timer.
+                if self.current_timer and self.current_timer.id == int(ID):
+                    self.currenttask.cancel()
+                    self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
+            else:
+                embed = discord.Embed(title="❌ " + self._("Reminder not found"), description=self._("Cannot find reminder with ID **{ID}**.").format(ID=ID), color=self.bot.errorColor)
+                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+                await ctx.send(embed=embed)
 
 
     @commands.Cog.listener()

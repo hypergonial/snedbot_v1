@@ -1,14 +1,15 @@
-import aiohttp
-import asyncio
 import argparse
+import asyncio
 import gettext
 import logging
-import random
-from pathlib import Path
 import os
+import random
 import shlex
+from pathlib import Path
 
+import aiohttp
 import discord
+import psutil
 from discord.ext import commands
 
 
@@ -31,6 +32,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         else :
             logging.error("Invalid language, fallback to English.")
             self._ = gettext.gettext
+        psutil.cpu_percent(interval=1) #We need to do this here so that subsequent CPU % calls will be non-blocking
 
     @commands.command(help="Displays a user's avatar.", description="Displays a user's avatar for your viewing (or stealing) pleasure.", usage=f"avatar <userID|userMention|userName>")
     @commands.cooldown(1, 30, type=commands.BucketType.member)
@@ -115,9 +117,12 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     @commands.command(help="Displays information about the bot.", description="Displays information about the bot. Takes no arguments.", usage="about", aliases=["info"])
     @commands.guild_only()
     async def about(self, ctx):
-        embed=discord.Embed(title=f"ℹ️ About {self.bot.user.name}", description=f"**Version:** {self.bot.currentVersion} \n**Language:** {self.bot.lang} \n**Made by:** Hyper#0001 \n**GitHub:** https://github.com/HyperGH/AnnoSnedBot", color=self.bot.embedBlue)
+        embed=discord.Embed(title=f"ℹ️ About {self.bot.user.name}", description=f"**Version:** {self.bot.current_version} \n**Language:** {self.bot.lang} \n**Made by:** Hyper#0001 \n**GitHub:** https://github.com/HyperGH/AnnoSnedBot", color=self.bot.embedBlue)
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         embed.set_thumbnail(url=self.bot.user.avatar_url)
+        embed.add_field(name="CPU utilization", value=f"`{round(psutil.cpu_percent(interval=None))}%`")
+        embed.add_field(name="Memory utilization", value=f"`{round(psutil.virtual_memory().used / 1048576)}MB`")
+        embed.add_field(name="Latency", value=f"`{round(self.bot.latency * 1000)}ms`")
         await ctx.channel.send(embed=embed)
 
     #Retrieves info about the current guild for the end-user
@@ -143,8 +148,8 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
             embed=discord.Embed(title=self.bot.errorMissingModuleTitle, description="This command requires the extension `moderation` to be active.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
-        db_user = await self.bot.DBHandler.getUser(user.id, ctx.guild.id)
-        warns = db_user["warns"]
+        db_user = await self.bot.global_config.get_user(user.id, ctx.guild.id)
+        warns = db_user.warns
         embed = discord.Embed(title=self._("{user}'s warnings").format(user=user), description=self._("**Warnings:** `{warns}`").format(warns=warns), color=self.bot.warnColor)
         embed.set_thumbnail(url=user.avatar_url)
         await ctx.send(embed=embed)

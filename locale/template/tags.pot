@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-21 01:07+0200\n"
+"POT-Creation-Date: 2021-04-26 03:55+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,63 +15,145 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: tags.py:32 tags.py:73 tags.py:97
-msgid "Error: Reserved."
-msgstr ""
-
-#: tags.py:32 tags.py:73 tags.py:97
-msgid "This name is reserved for internal functions. Try another name."
-msgstr ""
-
-#: tags.py:40
+#: tags.py:126 tags.py:163 tags.py:265
 msgid "Cannot find tag by that name."
 msgstr ""
 
-#: tags.py:40
-msgid "Error: Unknown tag."
+#: tags.py:126 tags.py:163 tags.py:265
+msgid "Error: Unknown tag"
 msgstr ""
 
-#: tags.py:60
+#: tags.py:140
+msgid "Error: Tag exists"
+msgstr ""
+
+#: tags.py:140
+msgid "This tag already exists. If the owner of this tag is no longer in the server, you can try doing `{prefix}tag claim {name}`"
+msgstr ""
+
+#: tags.py:146
+msgid "Tag created!"
+msgstr ""
+
+#: tags.py:146 tags.py:196
+msgid "You can now call it with `{prefix}tag {name}`"
+msgstr ""
+
+#: tags.py:159
+msgid ""
+"**Aliases:** `{aliases}`\n"
+"**Tag owner:** {owner}\n"
+msgstr ""
+
+#: tags.py:159
+msgid "Tag Info: {tag_name}"
+msgstr ""
+
+#: tags.py:173
+msgid "A tag or alias is already created with the same name."
+msgstr ""
+
+#: tags.py:173
+msgid "Error: Already taken"
+msgstr ""
+
+#: tags.py:188
+msgid "Error: Too many aliases"
+msgstr ""
+
+#: tags.py:188
+msgid "Tag `{tag}` can only have up to **5** aliases."
+msgstr ""
+
+#: tags.py:196
+msgid "Alias created"
+msgstr ""
+
+#: tags.py:201
+msgid "Error: Duplicate alias"
+msgstr ""
+
+#: tags.py:201
+msgid "Tag `{tag}` already has an alias called `{alias}`."
+msgstr ""
+
+#: tags.py:205 tags.py:230 tags.py:247 tags.py:285
+msgid "Error: Invalid tag"
+msgstr ""
+
+#: tags.py:205 tags.py:230 tags.py:247 tags.py:285
+msgid "You either do not own this tag or it does not exist."
+msgstr ""
+
+#: tags.py:222
+msgid "Alias `{alias}` for tag `{name}` has been deleted."
+msgstr ""
+
+#: tags.py:222
+msgid "Alias deleted"
+msgstr ""
+
+#: tags.py:226
+msgid "Error: Unknown alias"
+msgstr ""
+
+#: tags.py:226
+msgid "Tag `{tag}` does not have an alias called `{alias}`."
+msgstr ""
+
+#: tags.py:243
+msgid "Tag `{name}`'s ownership was successfully transferred to {receiver}"
+msgstr ""
+
+#: tags.py:243
+msgid "Tag transferred"
+msgstr ""
+
+#: tags.py:261
+msgid "Tag `{name}` now belongs to you."
+msgstr ""
+
+#: tags.py:261
+msgid "Tag claimed"
+msgstr ""
+
+#: tags.py:269
+msgid "Error: Not owned"
+msgstr ""
+
+#: tags.py:269
+msgid "Tag owner is still in the server. You can only claim tags that have been abandoned."
+msgstr ""
+
+#: tags.py:281
+msgid "Tag `{name}` has been successfully edited."
+msgstr ""
+
+#: tags.py:281
+msgid "Tag edited"
+msgstr ""
+
+#: tags.py:296
+msgid "Tag `{name}` has been deleted."
+msgstr ""
+
+#: tags.py:296
+msgid "Tag deleted"
+msgstr ""
+
+#: tags.py:300
+msgid "Error: Tag not owned"
+msgstr ""
+
+#: tags.py:300
+msgid "You cannot delete someone else's tag."
+msgstr ""
+
+#: tags.py:311 tags.py:315
 msgid "Available tags for this guild:"
 msgstr ""
 
-#: tags.py:81
-msgid "Tag added! You can now call it via `{prefix}tag {tag_name}`"
-msgstr ""
-
-#: tags.py:81
-msgid "Tag added."
-msgstr ""
-
-#: tags.py:85
-msgid "Error: Message not found."
-msgstr ""
-
-#: tags.py:85
-msgid "Please **__make sure__** you ran the command in the channel you want to get the message from!"
-msgstr ""
-
-#: tags.py:89
-msgid "Error: Tag name too short."
-msgstr ""
-
-#: tags.py:89
-msgid "Your tag name must be 3 characters long or more."
-msgstr ""
-
-#: tags.py:103
-msgid "Tag deleted."
-msgstr ""
-
-#: tags.py:103
-msgid "Tag {tag_name} has been removed."
-msgstr ""
-
-#: tags.py:107
-msgid "Error: Tag not found."
-msgstr ""
-
-#: tags.py:107
-msgid "Unable to locate tag. Please run `{prefix}tags` for a list of tags!"
+#: tags.py:315
+msgid "There are currently no tags! You can create one via `{prefix}tag create`"
 msgstr ""
 
