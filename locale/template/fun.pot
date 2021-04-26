@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-26 03:55+0200\n"
+"POT-Creation-Date: 2021-04-26 22:12+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -68,31 +68,31 @@ msgstr ""
 msgid "I ducked it for you!"
 msgstr ""
 
-#: fun.py:149
+#: fun.py:158
 msgid "Flipping coin..."
 msgstr ""
 
-#: fun.py:149
+#: fun.py:158
 msgid "Hold on..."
 msgstr ""
 
-#: fun.py:153
+#: fun.py:162
 msgid "Coin flipped"
 msgstr ""
 
-#: fun.py:153
+#: fun.py:162
 msgid "It's **{result}**!"
 msgstr ""
 
-#: fun.py:163
+#: fun.py:172
 msgid "Looking for kitty..."
 msgstr ""
 
-#: fun.py:163 fun.py:171
+#: fun.py:172 fun.py:180
 msgid "Random kitten"
 msgstr ""
 
-#: fun.py:171
+#: fun.py:180
 msgid "Found one!"
 msgstr ""
 

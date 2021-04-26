@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-26 03:55+0200\n"
+"POT-Creation-Date: 2021-04-26 22:12+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -104,6 +104,7 @@ msgstr ""
 #: main.py:341
 msgid ""
 "You can also use `{prefix}help <command>` to get more information about a specific command and see any subcommands a command may have.\n"
+"Still lost? [Join our Discord server!](https://discord.gg/kQVNf68W2a)\n"
 "\n"
 msgstr ""
 
@@ -191,15 +192,15 @@ msgstr ""
 msgid "You have provided more arguments than what `{prefix}{command_name}` can take. Check `{prefix}help {command_name}` for more information."
 msgstr ""
 
-#: main.py:513
+#: main.py:519
 msgid "I have been summoned to this server. Use `{prefix}help` to see what I can do!"
 msgstr ""
 
-#: main.py:513 main.py:539
+#: main.py:519 main.py:545
 msgid "Beep Boop!"
 msgstr ""
 
-#: main.py:539
+#: main.py:545
 msgid "My prefixes on this server are the following: `{prefix}`"
 msgstr ""
 

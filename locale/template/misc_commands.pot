@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-26 03:55+0200\n"
+"POT-Creation-Date: 2021-04-26 22:12+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -57,7 +57,11 @@ msgstr ""
 msgid "Failed parsing arguments."
 msgstr ""
 
-#: misc_commands.py:134
+#: misc_commands.py:132
+msgid "[Click here]({invite_url}) for an invite link!"
+msgstr ""
+
+#: misc_commands.py:142
 msgid ""
 "**Name:** `{guild_name}`\n"
 "**ID:** `{guild_id}`\n"
@@ -70,15 +74,15 @@ msgid ""
 "**Nitro Boost level:** `{premium_tier}`"
 msgstr ""
 
-#: misc_commands.py:134
+#: misc_commands.py:142
 msgid "Server information"
 msgstr ""
 
-#: misc_commands.py:153
+#: misc_commands.py:161
 msgid "**Warnings:** `{warns}`"
 msgstr ""
 
-#: misc_commands.py:153
+#: misc_commands.py:161
 msgid "{user}'s warnings"
 msgstr ""
 

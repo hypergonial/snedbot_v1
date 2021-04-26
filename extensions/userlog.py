@@ -88,7 +88,7 @@ class Logging(commands.Cog):
                 if entry.action == discord.AuditLogAction.message_delete:
                     if entry.target == message.author :
                         moderator = entry.user
-                        break
+                    break
                 else :
                     break
         except discord.Forbidden:
@@ -180,7 +180,7 @@ class Logging(commands.Cog):
                 if entry.action == discord.AuditLogAction.role_delete:
                     if entry.target == role or entry.target.id == role.id :
                         moderator = entry.user
-                        break
+                    break
                 else :
                     break
         except discord.Forbidden:
@@ -196,7 +196,7 @@ class Logging(commands.Cog):
                 if entry.action == discord.AuditLogAction.channel_delete:
                     if entry.target == channel or entry.target.id == channel.id :
                         moderator = entry.user
-                        break
+                    break
                 else :
                     break
         except discord.Forbidden:
@@ -214,7 +214,7 @@ class Logging(commands.Cog):
                 if entry.action == discord.AuditLogAction.channel_create:
                     if entry.target == channel or entry.target.id == channel.id :
                         moderator = entry.user
-                        break
+                    break
                 else :
                     break
         except discord.Forbidden:
@@ -230,7 +230,7 @@ class Logging(commands.Cog):
                 if entry.action == discord.AuditLogAction.role_create:
                     if entry.target == role or entry.target.id == role.id :
                         moderator = entry.user
-                        break
+                    break
                 else :
                     break
         except discord.Forbidden:
@@ -246,7 +246,7 @@ class Logging(commands.Cog):
                 if entry.action == discord.AuditLogAction.role_update:
                     if entry.target == after or entry.target.id == after.id :
                         moderator = entry.user
-                        break
+                    break
                 else :
                     break
         except discord.Forbidden:
@@ -279,7 +279,7 @@ class Logging(commands.Cog):
                 if entry.target == user :
                     moderator = entry.user
                     reason = entry.reason
-                    break
+                break
         except discord.Forbidden:
             return
         if entry.reason != None:
@@ -297,7 +297,7 @@ class Logging(commands.Cog):
                 if entry.target == user :
                     moderator = entry.user
                     reason = entry.reason
-                    break
+                break
         except discord.Forbidden:
             return
         embed = discord.Embed(title=f"🔨 User unbanned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:** ```{reason}```", color=self.bot.embedGreen)
@@ -313,7 +313,7 @@ class Logging(commands.Cog):
                     if entry.target == member :
                         moderator = entry.user
                         reason = entry.reason
-                        break
+                    break
                 else :
                     break
         except discord.Forbidden:
@@ -364,7 +364,7 @@ class Logging(commands.Cog):
                     if entry.action == discord.AuditLogAction.member_role_update:
                         if entry.target == after :
                             moderator = entry.user
-                            break
+                        break
                     else :
                         break
             except discord.Forbidden:

@@ -128,6 +128,15 @@ class Fun(commands.Cog):
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
     
+    @commands.command(help='Shows a random fun fact.', description="Shows a fun fact. Why? Why not?\n\nFacts painstakingly gathered by `fusiongames#8748`.", usage="funfact")
+    @commands.guild_only()
+    async def funfact(self, ctx):
+        fun_path = Path(self.bot.BASE_DIR, 'etc', 'funfacts.txt')
+        fun_facts = open(fun_path, "r").readlines()
+        embed = discord.Embed(title="🤔 Did you know?", description=f"{random.choice(fun_facts)}", color=self.bot.embedBlue)
+        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=embed)
+
     @commands.command(help="Shows a fact about penguins.", description="Shows a random fact about penguins. Why? Why not?", usage="penguinfact")
     @commands.cooldown(1, 10, type=commands.BucketType.member)
     @commands.guild_only()
