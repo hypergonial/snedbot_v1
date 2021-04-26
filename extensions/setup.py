@@ -10,6 +10,9 @@ async def hasOwner(ctx):
     return await ctx.bot.CommandChecks.hasOwner(ctx)
 async def hasPriviliged(ctx):
     return await ctx.bot.CommandChecks.hasPriviliged(ctx)
+def is_anno_guild(ctx):
+    anno_guilds=[372128553031958529, 627876365223591976, 818223666143690783] #Guilds that are related to Anno
+    return ctx.guild.id in anno_guilds
 
 #This is an entirely optional extension, but you are masochistic if you are not using it :D
 
@@ -32,6 +35,7 @@ class Setup(commands.Cog):
 
     @setup.command(help="Helps set up matchmaking")
     @commands.check(hasPriviliged)
+    @commands.check(is_anno_guild)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def matchmaking(self, ctx):
