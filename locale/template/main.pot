@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-04-26 22:12+0200\n"
+"POT-Creation-Date: 2021-04-26 22:46+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -101,106 +101,106 @@ msgstr ""
 msgid "Unknown command!"
 msgstr ""
 
-#: main.py:341
+#: main.py:343
 msgid ""
 "You can also use `{prefix}help <command>` to get more information about a specific command and see any subcommands a command may have.\n"
 "Still lost? [Join our Discord server!](https://discord.gg/kQVNf68W2a)\n"
 "\n"
 msgstr ""
 
-#: main.py:341
+#: main.py:343
 msgid "__Available commands:__"
 msgstr ""
 
-#: main.py:360
+#: main.py:362
 msgid "Command: {prefix}{command}"
 msgstr ""
 
-#: main.py:362 main.py:364 main.py:388 main.py:390
+#: main.py:364 main.py:366 main.py:390 main.py:392
 msgid "Description:"
 msgstr ""
 
-#: main.py:366 main.py:392
+#: main.py:368 main.py:394
 msgid "Usage:"
 msgstr ""
 
-#: main.py:371 main.py:397
+#: main.py:373 main.py:399
 msgid "Aliases:"
 msgstr ""
 
-#: main.py:379 main.py:408
+#: main.py:381 main.py:410
 msgid "Use `{prefix}help` for a list of available commands."
 msgstr ""
 
-#: main.py:386
+#: main.py:388
 msgid ""
 "**Note:**\n"
 "To see detailed information about one of the subcommands, type `{prefix}help {group} <subcommand>`"
 msgstr ""
 
-#: main.py:386
+#: main.py:388
 msgid "Group: {prefix}{group}"
 msgstr ""
 
-#: main.py:402
+#: main.py:404
 msgid "Sub-commands:"
 msgstr ""
 
-#: main.py:453 main.py:457
+#: main.py:455 main.py:459
 msgid "Did you mean `{prefix}{match}`?"
 msgstr ""
 
-#: main.py:466
+#: main.py:468
 msgid "Please retry in: `{cooldown}`"
 msgstr ""
 
-#: main.py:471
+#: main.py:473
 msgid "Missing argument."
 msgstr ""
 
-#: main.py:471
+#: main.py:473
 msgid ""
 "One or more arguments are missing. \n"
 "__Hint:__ You can use `{prefix}help {command_name}` to view command usage."
 msgstr ""
 
-#: main.py:482
+#: main.py:484
 msgid "Cannot find user by that name"
 msgstr ""
 
-#: main.py:482
+#: main.py:484
 msgid ""
 "Please check if you typed everything correctly, then try again.\n"
 "**Error:**```{error}```"
 msgstr ""
 
-#: main.py:486
+#: main.py:488
 msgid "Bad argument"
 msgstr ""
 
-#: main.py:486
+#: main.py:488
 msgid ""
 "Invalid data entered! Check `{prefix}help {command_name}` for more information.\n"
 "**Error:**```{error}```"
 msgstr ""
 
-#: main.py:490
+#: main.py:492
 msgid "Too many arguments"
 msgstr ""
 
-#: main.py:490
+#: main.py:492
 msgid "You have provided more arguments than what `{prefix}{command_name}` can take. Check `{prefix}help {command_name}` for more information."
 msgstr ""
 
-#: main.py:519
+#: main.py:521
 msgid "I have been summoned to this server. Use `{prefix}help` to see what I can do!"
 msgstr ""
 
-#: main.py:519 main.py:545
+#: main.py:521 main.py:547
 msgid "Beep Boop!"
 msgstr ""
 
-#: main.py:545
+#: main.py:547
 msgid "My prefixes on this server are the following: `{prefix}`"
 msgstr ""
 

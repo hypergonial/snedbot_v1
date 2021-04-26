@@ -23,7 +23,7 @@ lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
 EXPERIMENTAL = False
 #Version of the bot
-current_version = "4.0.1"
+current_version = "4.0.2"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -141,16 +141,6 @@ logging.info(f"Language: {lang}")
 
 
 
-def checkExtensions():
-    '''
-    Simple function that just gets all currently loaded cog/extension names
-    '''
-    extensions = []
-    for cogName,cogClass in bot.cogs.items():
-        extensions.append(cogName)
-    return extensions
-        
-bot.checkExtensions = checkExtensions()
 
 async def startup():
     '''
@@ -294,6 +284,18 @@ if __name__ == '__main__':
         except Exception as e:
             logging.error(f'Failed to load extension {extension}.', file=sys.stderr)
             traceback.print_exc()
+
+
+def checkExtensions():
+    '''
+    Simple function that just gets all currently loaded cog/extension names
+    '''
+    extensions = []
+    for cogName,cogClass in bot.cogs.items():
+        extensions.append(cogName)
+    return extensions
+        
+bot.checkExtensions = checkExtensions()
 
 class CommandChecks():
     
