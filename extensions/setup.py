@@ -92,33 +92,10 @@ class Setup(commands.Cog):
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def keepontop(self, ctx):
-        embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description="Specify the channel where you want to keep a message on the top by mentioning it!", color=self.bot.embedBlue)
-        await ctx.channel.send(embed=embed)
-        try :
-            def check(payload):
-                return payload.author == ctx.author and payload.channel.id == ctx.channel.id
-            payload = await self.bot.wait_for('message', timeout=60.0, check=check)
-            keepOnTopChannel = await commands.TextChannelConverter().convert(ctx, payload.content)
-            embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description=f"Channel set to {keepOnTopChannel.mention}!", color=self.bot.embedBlue)
-            await ctx.channel.send(embed=embed)
-            embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description="Now type in the message you want to be kept on top!", color=self.bot.embedBlue)
-            await ctx.channel.send(embed=embed)
-            payload = await self.bot.wait_for('message', timeout=300.0, check=check)
-            keepOnTopMessage = payload.content
-            await self.bot.DBHandler.modifysettings("KEEP_ON_TOP_CHANNEL", keepOnTopChannel.id, ctx.guild.id)
-            await self.bot.DBHandler.storetext("KEEP_ON_TOP_CONTENT", keepOnTopMessage, ctx.guild.id)
-            firstTop = await keepOnTopChannel.send(keepOnTopMessage)
-            await self.bot.DBHandler.modifysettings("KEEP_ON_TOP_MSG", firstTop.id, firstTop.guild.id)
-            embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description=f"✅ Setup completed. This message will now be kept on top of {keepOnTopChannel.mention}!", color=self.bot.embedGreen)
-            await ctx.channel.send(embed=embed)
-            logging.info(f"Setup for keep-on-top concluded successfully on guild {ctx.guild.id}.")
-
-        except commands.ChannelNotFound:
-            embed=discord.Embed(title="❌ Error: Unable to locate channel.", description="The setup process has been cancelled.", color=self.bot.errorColor)
-            await ctx.channel.send(embed=embed)
-            return
-        except asyncio.TimeoutError:
-            embed=discord.Embed(title=self.bot.errorTimeoutTitle, description=self.bot.errorTimeoutDesc, color=self.bot.errorColor)
+        try:
+            await ctx.invoke(self.bot.get_command('keepontop add'))
+        except AttributeError:
+            embed=discord.Embed(title=self.bot.errorMissingModuleTitle, description="This setup requires the extension `ktp` to be active.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
         
