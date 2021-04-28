@@ -138,7 +138,7 @@ class Listings():
     async def delete(self, id):
         async with self.bot.pool.acquire() as con:
             await con.execute('''
-            DELETE FROM matchmaking_listing WHERE id = $1
+            DELETE FROM matchmaking_listings WHERE id = $1
             ''', id)
 
 
