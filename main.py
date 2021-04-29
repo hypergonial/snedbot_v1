@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 #Language
 lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
-EXPERIMENTAL = True
+EXPERIMENTAL = False
 #Version of the bot
 current_version = "4.0.4"
 #Loading token from .env file. If this file does not exist, nothing will work.
@@ -48,7 +48,6 @@ creatorID = 163979124820541440
 
 async def get_prefix(bot, message):
     if message.guild.id in bot.cache['prefix']: #If prefix is cached
-        logging.info("Cached")
         return bot.cache['prefix'][message.guild.id] #Get from cache
     else:
         async with bot.pool.acquire() as con: #Else try to find in db
