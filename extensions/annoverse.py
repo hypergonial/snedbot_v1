@@ -11,8 +11,7 @@ async def hasOwner(ctx):
 async def hasPriviliged(ctx):
     return await ctx.bot.CommandChecks.hasPriviliged(ctx)
 def is_anno_guild(ctx):
-    anno_guilds=[372128553031958529, 627876365223591976, 818223666143690783] #Guilds that are related to Anno
-    return ctx.guild.id in anno_guilds
+    return ctx.guild.id in ctx.bot.anno_guilds
 
 class Annoverse(commands.Cog):
     def __init__(self, bot):

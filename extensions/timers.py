@@ -103,7 +103,6 @@ class Timers(commands.Cog):
                         strings.append(val + category)
                         strings.append(val + " " + category)
                         break
-        print(strings)
         logging.debug(f"Time: {time}")
         if time > 0:
             time = datetime.datetime.utcnow() + datetime.timedelta(seconds=time)
@@ -115,10 +114,8 @@ class Timers(commands.Cog):
     #Used to create a reminder note
     async def remindertime(self, timestr : str):
         time, strings = await self.converttime(timestr)
-        print(strings)
-        print(timestr)
         no_start = False
-        no_end = False
+        #no_end = False
         for string in strings:
             if timestr.startswith(string):
                 timestr = timestr.replace(string, "")
@@ -151,7 +148,8 @@ class Timers(commands.Cog):
                 elif timestr.endswith(string):
                     timestr = timestr.replace(string, "")
                 else:
-                    no_end = True
+                    pass
+                    #no_end = True
         
         timestr = timestr.capitalize()
         return time, timestr
@@ -175,7 +173,6 @@ class Timers(commands.Cog):
         logging.debug("Deleting timer entry {timerid}".format(timerid=timer.id))
         async with self.bot.pool.acquire() as con:
             await con.execute('''DELETE FROM timers WHERE id = $1''', timer.id)
-            await self.db.commit()
             #Set the currently evaluated timer to None
             self.current_timer = None
             logging.debug("Deleted")
@@ -330,6 +327,7 @@ class Timers(commands.Cog):
                 try: #Fallback to DM if cannot send in channel
                     await user.send(embed=embed, content="I lost access to the channel this reminder was sent from, so here it is!")
                 except discord.Forbidden:
+                    logging.info(f"Failed to deliver reminder to user {user}.")
                     return
 
 def setup(bot):

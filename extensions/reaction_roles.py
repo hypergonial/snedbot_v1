@@ -31,6 +31,28 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
                 )''')
         bot.loop.run_until_complete(init_table())
 
+    async def check_rr(self, payload):
+        '''
+        Checks if the reaction was added to a message in the RR cache or not,
+        falls back to the database if no cache entry for the guild was found.
+        Returns the reaction role and the member who reacted
+        '''
+        #WIP TBD
+        if payload.guild_id in self.bot.cache['rr'][payload.guild_id]:
+            pass
+        else:
+            async with self.bot.pool.acquire() as con:
+                results = await con.fetch('''SELECT * FROM reaction_roles WHERE guild_id = $1''', payload.guild_id)
+                for result in results:
+                    if result.get('reactionrole_msg_id') == payload.message_id and result.get('reactionrole_channel_id') == payload.channel_id and result.get('reactionrole_emoji_id') == payload.emoji.id:
+                        guild = self.bot.get_guild(result.get('guild_id'))
+                        member = guild.get_member(payload.user_id)
+                        role = guild.get_role(result.get('reactionrole_role_id'))
+                        return member, role
+
+
+
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         if payload.guild_id:

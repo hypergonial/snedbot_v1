@@ -23,7 +23,7 @@ lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
 EXPERIMENTAL = False
 #Version of the bot
-current_version = "4.0.4"
+current_version = "4.0.5"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -72,7 +72,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 bot.localePath = Path(BASE_DIR, 'locale')
 bot.pool = bot.loop.run_until_complete(asyncpg.create_pool(dsn="postgres://postgres:{DBPASS}@192.168.1.101:5432/{db_name}".format(DBPASS=DBPASS, db_name=db_name)))
 
-bot.whitelisted_guilds = [372128553031958529, 627876365223591976, 818223666143690783, 836248845268680785]
+bot.whitelisted_guilds = [372128553031958529, 627876365223591976, 818223666143690783, 836248845268680785] #Guilds whitelisted for certain commands
+bot.anno_guilds = [372128553031958529, 627876365223591976, 818223666143690783] #Guilds whitelisted for Anno-related commands
 
 if lang == "de":
     de = gettext.translation('main', localedir=bot.localePath, languages=['de'])
@@ -97,6 +98,7 @@ bot.recentlyDeleted = []
 bot.recentlyEdited = []
 bot.cache = {}
 bot.cache['prefix'] = {}
+bot.cache['rr'] = {}
 
 
 #All extensions that are loaded on boot-up, change these to alter what modules you want (Note: These refer to filenames NOT cognames)
@@ -339,7 +341,7 @@ bot.CommandChecks = CommandChecks()
 class SnedHelp(commands.HelpCommand):
     #Method to get information about a command to display in send_bot_help
     def get_command_signature(self, command):
-        return '`{prefix}{command}` - {commandbrief}'.format(prefix=self.clean_prefix, command=command.name, commandbrief=command.short_doc) #short_doc goes to brief first, otherwise gets first line of help
+        return '`{prefix}{parent}{command}` - {commandbrief}'.format(prefix=self.clean_prefix, parent=command.full_parent_name, command=command.name, commandbrief=command.short_doc) #short_doc goes to brief first, otherwise gets first line of help
     
     def get_subcommand_signature(self, group, command): #Essentially the same as get_command_signature but appends the group name in front of the command
         return '`{prefix}{group} {command}` - {commandbrief}'.format(prefix=self.clean_prefix, group=group.name, command=command.name, commandbrief=command.short_doc)
@@ -376,7 +378,10 @@ class SnedHelp(commands.HelpCommand):
 
     async def send_command_help(self, command):
         ctx = self.context   #Obtaining ctx
-        detail_embed=discord.Embed(title="⚙️ " + _("Command: {prefix}{command}").format(prefix=self.clean_prefix, command=command.name), color=bot.embedBlue)
+        if command.parents:
+            detail_embed=discord.Embed(title="⚙️ " + _("Command: {prefix}{parent} {command}").format(prefix=self.clean_prefix, parent=command.full_parent_name, command=command.name), color=bot.embedBlue)
+        else:
+            detail_embed=discord.Embed(title="⚙️ " + _("Command: {prefix}{command}").format(prefix=self.clean_prefix, command=command.name), color=bot.embedBlue)
         if command.description:
             detail_embed.add_field(name=_("Description:"), value=command.description)  #Getting command description
         elif command.help:
@@ -385,7 +390,10 @@ class SnedHelp(commands.HelpCommand):
             detail_embed.add_field(name=_("Usage:"), value=f"`{self.clean_prefix}{command.usage}`", inline=False) #Getting command usage & formatting it
         aliases = []
         for alias in command.aliases:
-            aliases.append(f"`{self.clean_prefix}{alias}`")  #Adding some custom formatting to each alias
+            if command.parents:
+                aliases.append(f"`{self.clean_prefix}{command.full_parent_name} {alias}`")
+            else:
+                aliases.append(f"`{self.clean_prefix}{alias}`")  #Adding some custom formatting to each alias
         if aliases:
             detail_embed.add_field(name=_("Aliases:"), value=", ".join(aliases), inline=False)   #If any aliases exist, we add those to the embed in new field
         detail_embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
@@ -415,7 +423,8 @@ class SnedHelp(commands.HelpCommand):
         if aliases:
             group_embed.add_field(name=_("Aliases:"), value=", ".join(aliases), inline=False)   #If any aliases exist, we add those to the embed in new field
         sub_cmds = []
-        for command in group.walk_commands():
+        filtered = await self.filter_commands(group.walk_commands(), sort=True)
+        for command in filtered:
             sub_cmds.append(self.get_subcommand_signature(group, command))
         sub_cmds = "\n".join(sub_cmds)
         group_embed.add_field(name=_("Sub-commands:"), value=f"{sub_cmds}")
