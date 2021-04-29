@@ -209,7 +209,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             prefixes = results[0].get('prefix')
             desc = ""
             for prefix in prefixes:
-                desc = f"{desc}**#{prefixes.index(prefix)}** - `{prefix}` \n"
+                desc = f"{desc}**#{prefixes.index(prefix)+1}** - `{prefix}` \n"
             embed=discord.Embed(title="❕ " + self._("**Active prefixes on this server**"), description=desc, color=self.bot.embedBlue)
             await ctx.send(embed=embed)
         else:
@@ -222,6 +222,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
     async def add_prefix(self, ctx, *, prefix:str):
         prefix = prefix.replace('"', '')
         prefix = prefix.replace("'", "")
+        if prefix == "": return
         async with self.bot.pool.acquire() as con:
             results = await con.fetch('''SELECT prefix FROM global_config WHERE guild_id = $1''', ctx.guild.id)
 
@@ -229,6 +230,14 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
                 await con.execute('''
                 UPDATE global_config SET prefix = array_append(prefix,$1) WHERE guild_id = $2
                 ''', prefix, ctx.guild.id)
+
+                if results[0].get('prefix') is None: #If no prefix is found
+                    self.bot.cache['prefix'][ctx.guild.id] = [prefix]
+                else:
+                    prefixes = results[0].get('prefix')
+                    prefixes.append(prefix)
+                    self.bot.cache['prefix'][ctx.guild.id] = prefixes #Update the cache
+
                 embed = discord.Embed(title="✅ Prefix added", description=f"Prefix **{prefix}** has been added to the list of valid prefixes.\n\n**Note:** Setting a custom prefix disables the default prefix. If you forget your prefix, mention the bot!", color=self.bot.embedGreen)
                 await ctx.send(embed=embed)
             elif prefix in results[0].get('prefix'):
@@ -244,13 +253,20 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
     async def del_prefix(self, ctx, *, prefix:str):
         prefix = prefix.replace('"', '')
         prefix = prefix.replace("'", "")
+        if prefix == "": return
         async with self.bot.pool.acquire() as con:
             results = await con.fetch('''SELECT prefix FROM global_config WHERE guild_id = $1''', ctx.guild.id)
             if results[0].get('prefix') is not None and prefix in results[0].get('prefix'):
                 await con.execute('''
                 UPDATE global_config SET prefix = array_remove(prefix,$1) WHERE guild_id = $2
                 ''', prefix, ctx.guild.id)
-                embed = discord.Embed(title="✅ Prefix added", description=f"Prefix **{prefix}** has been removed from the list of valid prefixes.\n\n**Note:** Removing all custom prefixes will re-enable the default prefix. If you forget your prefix, mention the bot!", color=self.bot.embedGreen)
+
+                prefixes = results[0].get('prefix')
+                prefixes.remove(prefix)
+                if len(prefixes) == 0: prefixes = self.bot.default_prefix #Fallback to default if all are deleted
+                self.bot.cache['prefix'][ctx.guild.id] = prefixes #Update the cache
+
+                embed = discord.Embed(title="✅ Prefix removed", description=f"Prefix **{prefix}** has been removed from the list of valid prefixes.\n\n**Note:** Removing all custom prefixes will re-enable the default prefix. If you forget your prefix, mention the bot!", color=self.bot.embedGreen)
                 await ctx.send(embed=embed)
             elif prefix not in results[0].get('prefix'):
                 embed=discord.Embed(title="❌ Prefix not found", description=f"The specified prefix cannot be removed as it is not found.", color=self.bot.errorColor)

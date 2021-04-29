@@ -22,8 +22,7 @@ async def is_setup(ctx):
         return False
 
 def is_anno_guild(ctx):
-    anno_guilds=[372128553031958529, 627876365223591976, 818223666143690783] #Guilds that are related to Anno
-    return ctx.guild.id in anno_guilds
+    return ctx.guild.id in ctx.bot.anno_guilds
         
 #Managing the DB config
 class Matchmaking_Config():
@@ -699,7 +698,7 @@ class Matchmaking(commands.Cog):
         This is where listing subscriptions are handled via reactions
         '''
         #Check if we are in a guild so we dont bombard the database with Null errors.
-        if payload.guild_id != None : 
+        if payload.guild_id != None and payload.guild_id in self.bot.anno_guilds: 
             if await self.config.load('announce_channel_id', payload.guild_id) == payload.channel_id:
                 guild = self.bot.get_guild(payload.guild_id)
                 #I put a fair number of logging in here to track abuse of this feature
@@ -759,7 +758,7 @@ class Matchmaking(commands.Cog):
     #Same thing but in reverse
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
-        if payload.guild_id != None :
+        if payload.guild_id != None and payload.guild_id in self.bot.anno_guilds:
             if await self.config.load('announce_channel_id', payload.guild_id) == payload.channel_id:
                 guild = self.bot.get_guild(payload.guild_id)
                 #I put a fair number of logging in here to track abuse of this feature

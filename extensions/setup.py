@@ -11,8 +11,9 @@ async def hasOwner(ctx):
 async def hasPriviliged(ctx):
     return await ctx.bot.CommandChecks.hasPriviliged(ctx)
 def is_anno_guild(ctx):
-    anno_guilds=[372128553031958529, 627876365223591976, 818223666143690783] #Guilds that are related to Anno
-    return ctx.guild.id in anno_guilds
+    return ctx.guild.id in ctx.bot.anno_guilds
+def is_whitelisted_guild(ctx):
+    return ctx.guild.id in ctx.bot.whitelisted_guilds
 
 #This is an entirely optional extension, but you are masochistic if you are not using it :D
 
@@ -93,6 +94,7 @@ class Setup(commands.Cog):
 
     @setup.command(help="Helps set up a keep-on-top message, that will sticky a message on top of a channel at all times.", aliases=["keep-on-top"])
     @commands.check(hasPriviliged)
+    @commands.check(is_whitelisted_guild)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def keepontop(self, ctx):
