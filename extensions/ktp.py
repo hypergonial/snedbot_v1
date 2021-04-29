@@ -30,13 +30,16 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
                 )''')
         bot.loop.run_until_complete(init_table())
     
+    async def cog_check(self, ctx):
+        return ctx.guild.id in self.bot.whitelisted_guilds
+    
     @commands.Cog.listener()
     async def on_message(self, message):
         '''
         Check if the message is no longer on top, delete the old, and move it to the "top" again
         Also update the message ID so we know which one to delete next time
         '''
-        if message.guild:
+        if message.guild and message.guild.id in self.bot.whitelisted_guilds:
             async with self.bot.pool.acquire() as con:
                 results = await con.fetch('''SELECT * FROM ktp WHERE guild_id = $1''', message.guild.id)
                 for result in results:
