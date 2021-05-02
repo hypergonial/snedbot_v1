@@ -8,7 +8,6 @@
  - Moderation capabilities
  - Auto-Moderation [WIP]
  - Reaction Roles
- - Keep-On-Top Messages
  - Logging
  - Fun commands (e.g: coinflipping, cat pictures, typeracing, reminders etc..)
 
