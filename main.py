@@ -23,7 +23,7 @@ lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
 EXPERIMENTAL = False
 #Version of the bot
-current_version = "4.0.5"
+current_version = "4.1.0"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -47,7 +47,9 @@ allowed_mentions = discord.AllowedMentions(everyone=False, users=True, roles=Tru
 creatorID = 163979124820541440
 
 async def get_prefix(bot, message):
-    if message.guild.id in bot.cache['prefix']: #If prefix is cached
+    if message.guild is None:
+        return default_prefix
+    elif message.guild.id in bot.cache['prefix']: #If prefix is cached
         return bot.cache['prefix'][message.guild.id] #Get from cache
     else:
         async with bot.pool.acquire() as con: #Else try to find in db
@@ -99,6 +101,7 @@ bot.recentlyEdited = []
 bot.cache = {}
 bot.cache['prefix'] = {}
 bot.cache['rr'] = {}
+bot.cd_mapping = commands.CooldownMapping.from_cooldown(10, 10, commands.BucketType.channel)
 
 
 #All extensions that are loaded on boot-up, change these to alter what modules you want (Note: These refer to filenames NOT cognames)
@@ -317,7 +320,7 @@ def checkExtensions():
 bot.checkExtensions = checkExtensions()
 
 class CommandChecks():
-    
+
     '''
     Custom checks for commands across the bot
     '''
@@ -341,10 +344,10 @@ bot.CommandChecks = CommandChecks()
 class SnedHelp(commands.HelpCommand):
     #Method to get information about a command to display in send_bot_help
     def get_command_signature(self, command):
-        return '`{prefix}{parent}{command}` - {commandbrief}'.format(prefix=self.clean_prefix, parent=command.full_parent_name, command=command.name, commandbrief=command.short_doc) #short_doc goes to brief first, otherwise gets first line of help
+        return '**`{prefix}{parent}{command}`** - {commandbrief}'.format(prefix=self.clean_prefix, parent=command.full_parent_name, command=command.name, commandbrief=command.short_doc) #short_doc goes to brief first, otherwise gets first line of help
     
     def get_subcommand_signature(self, group, command): #Essentially the same as get_command_signature but appends the group name in front of the command
-        return '`{prefix}{group} {command}` - {commandbrief}'.format(prefix=self.clean_prefix, group=group.name, command=command.name, commandbrief=command.short_doc)
+        return '**`{prefix}{group} {command}`** - {commandbrief}'.format(prefix=self.clean_prefix, group=group.name, command=command.name, commandbrief=command.short_doc)
     
     #Send generic help message with all commands included
     async def send_bot_help(self, mapping):
@@ -358,10 +361,29 @@ class SnedHelp(commands.HelpCommand):
                 super().__init__(data, per_page=2)
 
             async def format_page(self, menu, entries):
-                offset = menu.current_page * self.per_page
-                embed=discord.Embed(title="⚙️ " + _("__Available commands:__"), description=_("You can also use `{prefix}help <command>` to get more information about a specific command and see any subcommands a command may have.\nStill lost? [Join our Discord server!](https://discord.gg/kQVNf68W2a)\n\n").format(prefix=ctx.prefix) + ''.join(f'{v}' for i, v in enumerate(entries, start=offset)), color=bot.embedBlue)
-                embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator) + f"  |  Page {menu.current_page + 1}/{self.get_max_pages()}", icon_url=ctx.author.avatar_url)
-                return embed
+                if menu.current_page == 0:
+                    embed=discord.Embed(title="🏠 " + _("__Help Home__"), color=bot.embedBlue, description='''**How to navigate this help dialogue**
+
+                    Navigate via the ◀️ ▶️ reactions, or skip to the end via the ⏮️ ⏭️ reactions.
+                    You can stop this help session by reacting with ⏹️.
+
+                    **Command Usage & Syntax**
+
+                    `<argument>` is a __required__ parameter
+                    `[argument]` is an __optional__ parameter
+                    `<foo|bar>` means foo __OR__ bar
+
+                    *Do not include the brackets in your commands!*        
+
+                    React with ▶️ to see the next page and what commands are available to you!
+                    ''')
+                    embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator) + f"  |  Page {menu.current_page + 1}/{self.get_max_pages()}", icon_url=ctx.author.avatar_url)
+                    return embed
+                else:
+                    offset = menu.current_page * self.per_page
+                    embed=discord.Embed(title="⚙️ " + _("__Available commands:__"), description=_("**Tip:** You can also type `{prefix}help [command]` to get more information about a specific command and see any subcommands a command may have.\nStill lost? [Join our Discord server!](https://discord.gg/kQVNf68W2a)\n\n").format(prefix=ctx.prefix) + ''.join(f'{v}' for i, v in enumerate(entries, start=offset)), color=bot.embedBlue)
+                    embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator) + f"  |  Page {menu.current_page + 1}/{self.get_max_pages()}", icon_url=ctx.author.avatar_url)
+                    return embed
 
         ctx = self.context   #Obtaining ctx
         cmdslist = []
@@ -387,13 +409,13 @@ class SnedHelp(commands.HelpCommand):
         elif command.help:
             detail_embed.add_field(name=_("Description:"), value=command.help)  #Fallback to help attribute if description does not exist
         if command.usage:
-            detail_embed.add_field(name=_("Usage:"), value=f"`{self.clean_prefix}{command.usage}`", inline=False) #Getting command usage & formatting it
+            detail_embed.add_field(name=_("Usage:"), value=f"**`{self.clean_prefix}{command.usage}`**", inline=False) #Getting command usage & formatting it
         aliases = []
         for alias in command.aliases:
             if command.parents:
-                aliases.append(f"`{self.clean_prefix}{command.full_parent_name} {alias}`")
+                aliases.append(f"**`{self.clean_prefix}{command.full_parent_name} {alias}`**")
             else:
-                aliases.append(f"`{self.clean_prefix}{alias}`")  #Adding some custom formatting to each alias
+                aliases.append(f"**`{self.clean_prefix}{alias}`**")  #Adding some custom formatting to each alias
         if aliases:
             detail_embed.add_field(name=_("Aliases:"), value=", ".join(aliases), inline=False)   #If any aliases exist, we add those to the embed in new field
         detail_embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
@@ -416,10 +438,10 @@ class SnedHelp(commands.HelpCommand):
         elif group.help:
             group_embed.add_field(name=_("Description:"), value=group.help)  #Fallback to help attribute if description does not exist
         if group.usage:
-            group_embed.add_field(name=_("Usage:"), value=f"`{self.clean_prefix}{group.usage}`", inline=False) #Getting command usage & formatting it
+            group_embed.add_field(name=_("Usage:"), value=f"**`{self.clean_prefix}{group.usage}`**", inline=False) #Getting command usage & formatting it
         aliases = []
         for alias in group.aliases:
-            aliases.append(f"`{self.clean_prefix}{alias}`")  #Adding some custom formatting to each alias
+            aliases.append(f"**`{self.clean_prefix}{alias}`**")  #Adding some custom formatting to each alias
         if aliases:
             group_embed.add_field(name=_("Aliases:"), value=", ".join(aliases), inline=False)   #If any aliases exist, we add those to the embed in new field
         sub_cmds = []
@@ -451,10 +473,6 @@ async def on_command_error(ctx, error):
     '''
     if isinstance(error, commands.CheckFailure):
         logging.info(f"{ctx.author} tried calling a command but did not meet checks.")
-        if ctx.command.hidden == False:
-            embed=discord.Embed(title=bot.errorCheckFailTitle, description=bot.errorCheckFailDesc.format(prefix=ctx.prefix), color=bot.errorColor)
-            embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-            await ctx.send(embed=embed)
 
     if isinstance(error, commands.CommandInvokeError):
         if isinstance(error.original, asyncio.exceptions.TimeoutError):
@@ -465,7 +483,7 @@ async def on_command_error(ctx, error):
             raise error
 
     elif isinstance(error, commands.CommandNotFound):
-        logging.info(f"{ctx.author} tried calling a command but the command was not found. ({ctx.message.content})")
+        logging.info(f"{ctx.author} tried calling a command in but the command was not found. ({ctx.message.content})")
         #This is a fancy suggestion thing that will suggest commands that are similar in case of typos.
         #Get original cmd, and convert it into lowercase as to make it case-insensitive
         cmd = ctx.invoked_with.lower()
@@ -562,19 +580,24 @@ async def on_guild_remove(guild):
 
 @bot.event
 async def on_message(message):
-    mentions = [f"<@{bot.user.id}>", f"<@!{bot.user.id}>"]
-    if mentions[0] == message.content or mentions[1] == message.content:
-        async with bot.pool.acquire() as con:
-            results = await con.fetch('''SELECT prefix FROM global_config WHERE guild_id = $1''', message.guild.id)
-        if results[0].get('prefix'):
-            prefix = results[0].get('prefix')
-        else:
-            prefix = [default_prefix]
-        embed=discord.Embed(title=_("Beep Boop!"), description=_("My prefixes on this server are the following: `{prefix}`").format(prefix=", ".join(prefix)), color=0xfec01d)
-        embed.set_thumbnail(url=bot.user.avatar_url)
-        await message.reply(embed=embed)
+    bucket = bot.cd_mapping.get_bucket(message)
+    retry_after = bucket.update_rate_limit()
+    if not retry_after: #If not ratelimited
+        mentions = [f"<@{bot.user.id}>", f"<@!{bot.user.id}>"]
+        if mentions[0] == message.content or mentions[1] == message.content:
+            async with bot.pool.acquire() as con:
+                results = await con.fetch('''SELECT prefix FROM global_config WHERE guild_id = $1''', message.guild.id)
+            if results[0].get('prefix'):
+                prefix = results[0].get('prefix')
+            else:
+                prefix = [default_prefix]
+            embed=discord.Embed(title=_("Beep Boop!"), description=_("My prefixes on this server are the following: `{prefix}`").format(prefix=", ".join(prefix)), color=0xfec01d)
+            embed.set_thumbnail(url=bot.user.avatar_url)
+            await message.reply(embed=embed)
 
-    await bot.process_commands(message)
+        await bot.process_commands(message)
+    else:
+        pass #Ignore requests that would exceed rate-limits
 
 
 #Run bot with token from .env

@@ -36,6 +36,7 @@ class Matchmaking_Config():
                     guild_id bigint,
                     init_channel_id bigint,
                     announce_channel_id bigint,
+                    lfg_role_id bigint,
                     PRIMARY KEY (guild_id),
                     FOREIGN KEY (guild_id)
                         REFERENCES global_config (guild_id)
@@ -159,10 +160,10 @@ class Matchmaking(commands.Cog):
             logging.error("Invalid language, fallback to English.")
             self._ = gettext.gettext
         
-        self.delExpiredListings.start()
+        self.delExpiredListings.start() # pylint: disable=<no-member>
     
     def cog_unload(self):
-        self.delExpiredListings.cancel()
+        self.delExpiredListings.cancel() # pylint: disable=<no-member>
     
 
     #Command to initalize matchmaking.
@@ -195,7 +196,7 @@ class Matchmaking(commands.Cog):
         embed=discord.Embed(title=self._("**Starting matchmaking...**"), description=self._("Started matchmaking for **{name}#{discrim}**. Please check your DMs!").format(name=ctx.author.name, discrim=ctx.author.discriminator), color=mpEmbedColor)
         embed.set_footer(text=self._("If you didn't receive a DM, make sure you have direct messages enabled from server members."))
         await ctx.channel.send(embed=embed)
-        embed=discord.Embed(title=self._("**Hello!**"), description=self._("I will help you set up a new multiplayer listing!  Follow the steps below! Note: You can edit your submission at the end in case you made any errors!"), color=mpEmbedColor)
+        embed=discord.Embed(title=self._("**Hello!**"), description=self._("I will help you set up a new multiplayer listing!  Follow the steps below! \n__Note:__ You can edit your submission at the end in case you made any errors!"), color=mpEmbedColor)
         embed.set_thumbnail(url="https://cdn.discordapp.com/avatars/203158031511453696/446da0b60a670b6866cd463fb5e87195.png?size=1024")
         await ctx.author.send(embed=embed)
 
@@ -494,10 +495,9 @@ class Matchmaking(commands.Cog):
                 async def createposting(mpsessiondata):
                     try:
                         channel = self.bot.get_channel(await self.config.load('announce_channel_id', ctx.guild.id))
-                        lfgrole_id = await self.config.load('lfgrole_id', ctx.guild.id)
+                        lfgrole_id = await self.config.load('lfg_role_id', ctx.guild.id)
                         listingID = uuid.uuid4()
                         listing_timestamp = int(round(time.time()))
-                        print(listingID)
                         #If LFG role is not set up, we will not include a mention to it at the end.
                         if lfgrole_id == None:
                             #yeah this is long lol

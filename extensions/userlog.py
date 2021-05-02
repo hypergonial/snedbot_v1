@@ -42,6 +42,7 @@ class Logging(commands.Cog):
             loggingchannelID = result[0].get('log_channel_id')
             guild = self.bot.get_guild(guild_id)
             loggingchannel = guild.get_channel(loggingchannelID)
+            if loggingchannel is None: return
             try:
                 if isinstance(logcontent, discord.Embed):
                     await loggingchannel.send(embed=logcontent)
@@ -55,11 +56,13 @@ class Logging(commands.Cog):
         async with self.bot.pool.acquire() as con:
             result = await con.fetch('''SELECT elevated_log_channel_id FROM log_config WHERE guild_id = $1''', guild_id)
             if len(result) == 0:
+                await self.log_standard(logcontent, guild_id)
                 return
             elevated_loggingchannelID = result[0].get('elevated_log_channel_id')
             if elevated_loggingchannelID:
                 guild = self.bot.get_guild(guild_id)
                 elevated_loggingchannel = guild.get_channel(elevated_loggingchannelID)
+                if elevated_loggingchannel is None: await self.log_standard(logcontent, guild_id)
                 try:
                     if isinstance(logcontent, discord.Embed):
                         await elevated_loggingchannel.send(embed=logcontent)
@@ -105,7 +108,7 @@ class Logging(commands.Cog):
             else:
                 #Logging channel
                 embed = discord.Embed(title=f"🗑️ Message deleted", description=f"**Message author:** `{message.author} ({message.author.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{contentfield}```", color=self.bot.errorColor)
-                await self.log_standard(embed, message.guild.id) 
+                await self.log_standard(embed, message.guild.id)
 
     #Message editing logging
 

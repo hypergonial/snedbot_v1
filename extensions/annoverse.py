@@ -82,7 +82,7 @@ class Annoverse(commands.Cog):
             embed=discord.Embed(title="❌ " + self._("Wiki does not exist or unsupported"), description=self._("This wiki is either not supported or does not exist!").format(query=query), color=self.bot.errorColor)
             await ctx.send(embed=embed)
             return
-        await ctx.invoke(self.annowiki.get_command("anno1800"), query=query)
+        await ctx.invoke(self.annowiki.get_command("anno1800"), query=query) # pylint: disable=<no-member>
     
     @annowiki.command(aliases=["1800"])
     @commands.guild_only()

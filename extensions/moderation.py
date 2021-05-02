@@ -3,6 +3,7 @@ import datetime
 import gettext
 import logging
 import shlex
+import re
 
 import aiosqlite
 import discord
@@ -40,54 +41,76 @@ class Moderation(commands.Cog):
         else :
             logging.error("Invalid language, fallback to English.")
             self._ = gettext.gettext
+        self.spam_cd_mapping = commands.CooldownMapping.from_cooldown(8, 8, commands.BucketType.member)
+        self.invite_cd_mapping = commands.CooldownMapping.from_cooldown(2, 30, commands.BucketType.member)
+        self.invite_mute_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
     
-    #Warn a user & print it to logs, needs logs to be set up
-    @commands.command(help="Warns a user.", description="Warns the user and logs it.", usage="warn <user> [reason]")
-    @commands.check(hasPriviliged)
-    @commands.guild_only()
-    async def warn(self, ctx, offender:discord.Member, *, reason:str=None):
+
+    async def warn(self, ctx, member:discord.Member, moderator:discord.Member, reason:str=None):
         '''
         Warn a member, increasing their warning count and logging it.
-        Requires userlog extension to work. Person warning must be priviliged.
+        Requires userlog extension for full functionality.
         '''
-        db_user = await self.bot.global_config.get_user(offender.id, ctx.guild.id)
+        db_user = await self.bot.global_config.get_user(member.id, ctx.guild.id)
         warns = db_user.warns
         warns +=1
         new_user = self.bot.global_config.User(user_id = db_user.user_id, guild_id = db_user.guild_id, flags=db_user.flags, warns=warns, is_muted=db_user.is_muted, notes=db_user.notes)
         await self.bot.global_config.update_user(new_user) #Update warns for user by incrementing it
-        if reason == None :
-            embed=discord.Embed(title="⚠️" + self._("Warning issued"), description=self._("{offender} has been warned.").format(offender=offender.mention), color=self.bot.warnColor)
-            warnembed=discord.Embed(title="⚠️ Warning issued.", description=f"{offender.mention} has been warned by {ctx.author.mention}.\n**Warns:** {warns}\n\n[Jump!]({ctx.message.jump_url})", color=self.bot.warnColor)
+        if reason is None :
+            embed=discord.Embed(title="⚠️" + self._("Warning issued"), description=self._("{offender} has been warned by {moderator}.").format(offender=member.mention, moderator=moderator.mention), color=self.bot.warnColor)
+            warnembed=discord.Embed(title="⚠️ Warning issued.", description=f"{member.mention} has been warned by {moderator.mention}.\n**Warns:** {warns}\n\n[Jump!]({ctx.message.jump_url})", color=self.bot.warnColor)
         else :
-            embed=discord.Embed(title="⚠️" + self._("Warning issued"), description=self._("{offender} has been warned.\n**Reason:** {reason}").format(offender=offender.mention, reason=reason), color=self.bot.warnColor)
-            warnembed=discord.Embed(title="⚠️ Warning issued.", description=f"{offender.mention} has been warned by {ctx.author.mention}.\n**Warns:** {warns}\n**Reason:** ```{reason}```\n[Jump!]({ctx.message.jump_url})", color=self.bot.warnColor)
+            embed=discord.Embed(title="⚠️" + self._("Warning issued"), description=self._("{offender} has been warned by {moderator}.\n**Reason:** ```{reason}```").format(offender=member.mention, moderator=moderator.mention, reason=reason), color=self.bot.warnColor)
+            warnembed=discord.Embed(title="⚠️ Warning issued.", description=f"{member.mention} has been warned by {moderator.mention}.\n**Warns:** {warns}\n**Reason:** ```{reason}```\n[Jump!]({ctx.message.jump_url})", color=self.bot.warnColor)
         try:
             await self.bot.get_cog("Logging").log_elevated(warnembed, ctx.guild.id)
             await ctx.send(embed=embed)
         except AttributeError:
-            embed=discord.Embed(title="❌ " + self._("Warning failed"), description=self._("Logging is not set up properly."), color=self.bot.errorColor)
-            await ctx.send(embed=embed, delete_after=20)
-            await ctx.message.delete()
+            pass
 
 
-    @commands.command(help="Mutes a user.", description="Mutes a user permanently (until unmuted). Logs the event if logging is set up.", usage="mute <user> [reason]")
+    #Warn a user & print it to logs, needs logs to be set up
+    @commands.group(name="warn", help="Warns a user. Subcommands allow you to clear warnings.", aliases=["bonk"], description="Warns the user and logs it.", usage="warn <user> [reason]", invoke_without_command=True, case_insensitive=True)
     @commands.check(hasPriviliged)
     @commands.guild_only()
-    async def mute(self, ctx, offender:discord.Member, *, reason:str=None):
+    async def warn_cmd(self, ctx, offender:discord.Member, *, reason:str=None):
         '''
-        Mutes a member, by assigning the Mute role defined in settings.
-        Muter must be priviliged.
+        Warn command. Person warning must be priviliged.
         '''
-        if offender.id == ctx.author.id:
-            embed=discord.Embed(title="❌ " + self._("You cannot mute yourself"), description=self._("You cannot mute your own account."), color=self.bot.errorColor)
-            await ctx.send(embed=embed)
-            return
+        await self.warn(ctx, member=offender, moderator=ctx.author, reason=reason)
+    
+
+    @warn_cmd.command(name="clear", help="Clears all warnings from the specified user.", aliases=["clr"])
+    @commands.check(hasPriviliged)
+    @commands.guild_only()
+    async def warn_clr(self, ctx, offender:discord.Member, *, reason:str=None):
+        '''
+        Clears all stored warnings for a specified user.
+        '''
         db_user = await self.bot.global_config.get_user(offender.id, ctx.guild.id)
-        is_muted = db_user.is_muted
-        if is_muted == True:
-            embed=discord.Embed(title="❌ " + self._("Already muted"), description=self._("{offender} is already muted.").format(offender=offender.mention), color=self.bot.errorColor)
+        new_user = self.bot.global_config.User(user_id = db_user.user_id, guild_id = db_user.guild_id, flags=db_user.flags, warns=0, is_muted=db_user.is_muted, notes=db_user.notes)
+        await self.bot.global_config.update_user(new_user) #Update warns for user by incrementing it
+        if reason is None :
+            embed=discord.Embed(title="✅ " + self._("Warnings cleared"), description=self._("{offender}'s warnings have been cleared.").format(offender=offender.mention), color=self.bot.embedGreen)
+            warnembed=discord.Embed(title="⚠️ Warnings cleared.", description=f"{offender.mention}'s warnings have been cleared by {ctx.author.mention}.\n\n[Jump!]({ctx.message.jump_url})", color=self.bot.embedGreen)
+        else :
+            embed=discord.Embed(title="✅ " + self._("Warnings cleared"), description=self._("{offender}'s warnings have been cleared.\n**Reason:** ```{reason}```").format(offender=offender.mention, reason=reason), color=self.bot.embedGreen)
+            warnembed=discord.Embed(title="⚠️ Warnings cleared.", description=f"{offender.mention}'s warnings have been cleared by {ctx.author.mention}.\n**Reason:** ```{reason}```\n[Jump!]({ctx.message.jump_url})", color=self.bot.embedGreen)
+        try:
+            await self.bot.get_cog("Logging").log_elevated(warnembed, ctx.guild.id)
             await ctx.send(embed=embed)
-            return
+        except AttributeError:
+            pass
+
+
+    async def mute(self, ctx, member:discord.Member, moderator:discord.Member, duration:str=None, reason:str=None):
+        '''
+        Handles muting a user. If logging is set up, it will log it. Time is converted via the timers extension.
+        If duration is provided, it is a tempmute, otherwise permanent. Updates database. Returns converted duration, if any.
+        '''
+        db_user = await self.bot.global_config.get_user(member.id, ctx.guild.id)
+        if db_user.is_muted:
+            raise ValueError('This member is already muted.')
         else:
             mute_role_id = 0
             async with self.bot.pool.acquire() as con:
@@ -96,21 +119,58 @@ class Moderation(commands.Cog):
                     mute_role_id = result[0].get('mute_role_id')
             mute_role = ctx.guild.get_role(mute_role_id)
             try:
-                await offender.add_roles(mute_role)
-            except AttributeError:
-                embed=discord.Embed(title="❌ " + self._("Mute role not set"), description=self._("Unable to mute user.").format(offender=offender.mention), color=self.bot.errorColor)
-                await ctx.send(embed=embed)
-                return
-            new_user = self.bot.global_config.User(user_id = db_user.user_id, guild_id = db_user.guild_id, flags=db_user.flags, warns=db_user.warns, is_muted=True, notes=db_user.notes)
-            await self.bot.global_config.update_user(new_user)
-            embed=discord.Embed(title="🔇 " + self._("User muted"), description=self._("**{offender}** has been muted.").format(offender=offender.mention), color=self.bot.embedGreen)
-            await ctx.send(embed=embed)
-            muteembed=discord.Embed(title="🔇 User muted", description=F"**User:** `{offender} ({offender.id})`\n**Moderator:** `{ctx.author} ({ctx.author.id})` via {self.bot.user.mention}\n**Reason:** ```{reason}```", color=self.bot.errorColor)
-            try:
-                await self.bot.get_cog("Logging").log_elevated(muteembed, ctx.guild.id)
-            except AttributeError:
-                pass
+                await member.add_roles(mute_role, reason=reason)
+            except:
+                raise
+            else:
+                new_user = self.bot.global_config.User(user_id = db_user.user_id, guild_id = db_user.guild_id, flags=db_user.flags, warns=db_user.warns, is_muted=True, notes=db_user.notes)
+                await self.bot.global_config.update_user(new_user)
+                dur = None
+                if duration:
+                    try:                   
+                        dur = await self.bot.get_cog("Timers").converttime(duration)
+                        await self.bot.get_cog("Timers").create_timer(expires=dur[0], event="tempmute", guild_id=ctx.guild.id, user_id=member.id, channel_id=ctx.channel.id)
+                    except AttributeError:
+                        raise ModuleNotFoundError('timers extension not found')
+                try:
+                    if not duration: duration = "Infinite"
+                    else: duration = f"{dur[0]} (UTC)"
+                    muteembed=discord.Embed(title="🔇 User muted", description=F"**User:** `{member} ({member.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Until:** `{duration}`\n**Reason:** ```{reason}```", color=self.bot.errorColor)
+                    await self.bot.get_cog("Logging").log_elevated(muteembed, ctx.guild.id)
+                except:
+                    pass
+                if dur:
+                    return dur[0] #Return it if needed to display
     
+
+    async def unmute(self, ctx, member:discord.Member, moderator:discord.Member, reason:str=None):
+        '''
+        Handles unmuting a user, if logging is set up, it will log it. Updates database.
+        '''
+        db_user = await self.bot.global_config.get_user(member.id, ctx.guild.id)
+        if not db_user.is_muted:
+            raise ValueError('This member is not muted.')
+        else:
+            mute_role_id = 0
+            async with self.bot.pool.acquire() as con:
+                result = await con.fetch('''SELECT mute_role_id FROM mod_config WHERE guild_id = $1''', ctx.guild.id)
+                if len(result) != 0 and result[0]:
+                    mute_role_id = result[0].get('mute_role_id')
+            mute_role = ctx.guild.get_role(mute_role_id)
+            try:
+                await member.remove_roles(mute_role)
+            except:
+                raise
+            else:
+                new_user = self.bot.global_config.User(user_id = db_user.user_id, guild_id = db_user.guild_id, flags=db_user.flags, warns=db_user.warns, is_muted=False, notes=db_user.notes)
+                await self.bot.global_config.update_user(new_user)
+                try:
+                    muteembed=discord.Embed(title="🔉 User unmuted", description=F"**User:** `{member} ({member.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Reason:** ```{reason}```", color=self.bot.embedGreen)
+                    await self.bot.get_cog("Logging").log_elevated(muteembed, ctx.guild.id)
+                except:
+                    pass
+                
+
     @commands.Cog.listener()
     async def on_member_join(self, member):
         '''
@@ -127,40 +187,57 @@ class Moderation(commands.Cog):
                     if len(result) != 0 and result[0]:
                         mute_role_id = result[0].get('mute_role_id')
                 mute_role = member.guild.get_role(mute_role_id)
-                await member.add_roles(mute_role)
+                await member.add_roles(mute_role, reason="User was muted previously.")
             except AttributeError:
-                return
+                return       
 
-    @commands.command(help="Unmutes a user.", description="Unmutes a user. Logs the event if logging is set up.", usage="unmute <user> [reason]")
+
+    @commands.command(name="mute", help="Mutes a user.", description="Mutes a user permanently (until unmuted). Logs the event if logging is set up.", usage="mute <user> [reason]")
     @commands.check(hasPriviliged)
     @commands.guild_only()
-    async def unmute(self, ctx, offender:discord.Member, *, reason:str=None):
-        db_user = await self.bot.global_config.get_user(offender.id, ctx.guild.id)
-        is_muted = db_user.is_muted
-        if is_muted == False:
-            embed=discord.Embed(title="❌ " + self._("Not muted"), description=self._("{offender} is not muted.").format(offender=offender.mention), color=self.bot.errorColor)
+    async def mute_cmd(self, ctx, offender:discord.Member, *, reason:str=None):
+        '''
+        Mutes a member, by assigning the Mute role defined in settings.
+        Muter must be priviliged.
+        '''
+        if offender.id == ctx.author.id:
+            embed=discord.Embed(title="❌ " + self._("You cannot mute yourself"), description=self._("You cannot mute your own account."), color=self.bot.errorColor)
             await ctx.send(embed=embed)
-            return
         else:
-            mute_role_id = 0
-            async with self.bot.pool.acquire() as con:
-                result = await con.fetch('''SELECT mute_role_id FROM mod_config WHERE guild_id = $1''', ctx.guild.id)
-                if len(result) != 0 and result[0]:
-                    mute_role_id = result[0].get('mute_role_id')
-            mute_role = ctx.guild.get_role(mute_role_id)
             try:
-                await offender.remove_roles(mute_role)
-            except AttributeError:
-                embed=discord.Embed(title="❌ " + self._("Mute role not set"), description=self._("Unable to unmute user.").format(offender=offender.mention), color=self.bot.errorColor)
+                await self.mute(ctx, offender, moderator=ctx.author, reason=reason)
+            except ValueError as error:
+                if str(error) == 'This member is already muted.':
+                    embed=discord.Embed(title="❌ " + self._("Already muted"), description=self._("{offender} is already muted.").format(offender=offender.mention), color=self.bot.errorColor)
+                    await ctx.send(embed=embed)
+            except (AttributeError, discord.Forbidden):
+                embed=discord.Embed(title="❌ " + self._("Mute role error"), description=self._("Unable to mute user. Check if you have a mute role configured, and if the bot has permissions to add said role.").format(offender=offender.mention), color=self.bot.errorColor)
+                await ctx.send(embed=embed)              
+            else:
+                if not reason: reason = "No reason specified"
+                embed=discord.Embed(title="🔇 " + self._("User muted"), description=self._("**{offender}** has been muted.\n**Reason:** ```{reason}```").format(offender=offender.mention, reason=reason), color=self.bot.embedGreen)
                 await ctx.send(embed=embed)
-                return
-            new_user = self.bot.global_config.User(user_id = db_user.user_id, guild_id = db_user.guild_id, flags=db_user.flags, warns=db_user.warns, is_muted=False, notes=db_user.notes)
-            await self.bot.global_config.update_user(new_user)
-            embed=discord.Embed(title="✅ " + self._("User unmuted"), description=self._("**{offender}** has been unmuted.").format(offender=offender.mention), color=self.bot.embedGreen)
+
+
+    @commands.command(name="unmute", help="Unmutes a user.", description="Unmutes a user. Logs the event if logging is set up.", usage="unmute <user> [reason]")
+    @commands.check(hasPriviliged)
+    @commands.guild_only()
+    async def unmute_cmd(self, ctx, offender:discord.Member, *, reason:str=None):
+        try:
+            await self.unmute(ctx, offender, moderator=ctx.author, reason=reason)
+        except ValueError as error:
+            if str(error) == 'This member is not muted.':
+                embed=discord.Embed(title="❌ " + self._("Not muted"), description=self._("{offender} is not muted.").format(offender=offender.mention), color=self.bot.errorColor)
+                await ctx.send(embed=embed)
+        except (AttributeError, discord.Forbidden):
+            embed=discord.Embed(title="❌ " + self._("Mute role error"), description=self._("Unable to unmute user. Check if you have a mute role configured, and if the bot has permissions to remove said role.").format(offender=offender.mention), color=self.bot.errorColor)
+            await ctx.send(embed=embed)              
+        else:
+            if not reason: reason = "No reason specified"
+            embed=discord.Embed(title="🔉 " + self._("User unmuted"), description=self._("**{offender}** has unbeen unmuted.\n**Reason:** ```{reason}```").format(offender=offender.mention, reason=reason), color=self.bot.embedGreen)
             await ctx.send(embed=embed)
-            muteembed=discord.Embed(title="🔉 User unmuted", description=F"**User:** `{offender} ({offender.id})`\n**Moderator:** `{ctx.author} ({ctx.author.id})` via {self.bot.user.mention}\n**Reason:** ```{reason}```", color=self.bot.embedGreen)
-            await self.bot.get_cog("Logging").log_elevated(muteembed, ctx.guild.id)
     
+
     @commands.command(help="Temporarily mutes a user.", description="Mutes a user for a specified duration. Logs the event if logging is set up.\n\n**Time formatting:**\n`s` or `second(s)`\n`m` or `minute(s)`\n`h` or `hour(s)`\n`d` or `day(s)`\n`w` or `week(s)`\n`M` or `month(s)`\n`Y` or `year(s)`\n\n**Example:** `tempmute @User -d 5minutes -r 'Being naughty'` or `tempmute @User 5d`\n**Note:** If your arguments contain spaces, you must wrap them in quotation marks.", usage="tempmute <user> -d <duration> -r [reason] OR tempmute <user> <duration>")
     @commands.check(hasPriviliged)
     @commands.guild_only()
@@ -183,57 +260,37 @@ class Moderation(commands.Cog):
         except:
             dur = args
             reason = "No reason provided"
-        try:
 
-            dur = await self.bot.get_cog("Timers").converttime(dur)
-            dur = dur[0]
-            db_user = await self.bot.global_config.get_user(offender.id, ctx.guild.id)
-            is_muted = db_user.is_muted
-            if is_muted == True:
+        try:
+            muted_until = await self.mute(ctx, offender, moderator=ctx.author, duration=dur, reason=reason)
+        except ValueError as error:
+            if str(error) == 'This member is already muted.':
                 embed=discord.Embed(title="❌ " + self._("Already muted"), description=self._("{offender} is already muted.").format(offender=offender.mention), color=self.bot.errorColor)
                 await ctx.send(embed=embed)
-                return
             else:
-                await self.bot.get_cog("Timers").create_timer(expires=dur, event="tempmute", guild_id=ctx.guild.id, user_id=offender.id, channel_id=ctx.channel.id)
-                mute_role_id = 0
-                async with self.bot.pool.acquire() as con:
-                    result = await con.fetch('SELECT mute_role_id FROM mod_config WHERE guild_id = $1', ctx.guild.id)
-                    if len(result) != 0 and result[0]:
-                        mute_role_id = result[0].get('mute_role_id')
-                mute_role = ctx.guild.get_role(mute_role_id)
-                try:
-                    await offender.add_roles(mute_role)
-                except AttributeError:
-                    embed=discord.Embed(title="❌ " + self._("Mute role not set"), description=self._("Unable to mute user.").format(offender=offender.mention), color=self.bot.errorColor)
-                    await ctx.send(embed=embed)
-                    return
-                new_user = self.bot.global_config.User(user_id = db_user.user_id, guild_id = db_user.guild_id, flags=db_user.flags, warns=db_user.warns, is_muted=True, notes=db_user.notes)
-                await self.bot.global_config.update_user(new_user)
-                embed=discord.Embed(title="🔇 " + self._("User muted"), description=self._("**{offender}** has been muted until `{time}`.").format(offender=offender.mention, time=dur), color=self.bot.embedGreen)
+                embed=discord.Embed(title="❌ " + self.bot.errorDataTitle, description=self._("Your entered timeformat is invalid. Type `{prefix}help tempmute` for more information.").format(prefix=ctx.prefix), color=self.bot.errorColor)
                 await ctx.send(embed=embed)
-                muteembed=discord.Embed(title="🔇 User muted", description=F"**User:** `{offender} ({offender.id})`\n**Moderator:** `{ctx.author} ({ctx.author.id})` via {self.bot.user.mention}\n**Until:** `{dur} (UTC)`\n**Reason:** ```{reason}```", color=self.bot.errorColor)
-                await self.bot.get_cog("Logging").log_elevated(muteembed, ctx.guild.id)
-        except ValueError:
-            embed=discord.Embed(title="❌ " + self.bot.errorDataTitle, description=self._("Your entered timeformat is invalid. Type `{prefix}help tempmute` for more information.").format(prefix=ctx.prefix), color=self.bot.errorColor)
+        except (AttributeError, discord.Forbidden):
+            embed=discord.Embed(title="❌ " + self._("Mute role error"), description=self._("Unable to mute user. Check if you have a mute role configured, and if the bot has permissions to add said role.").format(offender=offender.mention), color=self.bot.errorColor)
             await ctx.send(embed=embed)
-            await ctx.message.delete()
-        except AttributeError as error:
-            embed=discord.Embed(title="❌ " + self._("Muting failed."), description=self._("This function requires an extension that is not enabled.\n**Error:** ```{error}```").format(error=error), color=self.bot.errorColor)
+        except ModuleNotFoundError:
+            embed=discord.Embed(title="❌ " + self._("Muting failed"), description=self._("This function requires an extension that is not enabled.\n**Error:** ```{error}```").format(error=error), color=self.bot.errorColor)
+            await ctx.send(embed=embed)    
+        else:
+            embed=discord.Embed(title="🔇 " + self._("User muted"), description=self._("**{offender}** has been muted until `{duration} (UTC)`.\n**Reason:** ```{reason}```").format(offender=offender.mention, duration=muted_until, reason=reason), color=self.bot.embedGreen)
             await ctx.send(embed=embed)
-            return
     
+
     @commands.Cog.listener()
     async def on_tempmute_timer_complete(self, timer):
         guild = self.bot.get_guild(timer.guild_id)
-        if guild is None:
-            return
         db_user = await self.bot.global_config.get_user(timer.user_id, timer.guild_id)
         is_muted = db_user.is_muted
-        if is_muted == False:
+        if not is_muted:
             return
         new_user = self.bot.global_config.User(user_id = db_user.user_id, guild_id = db_user.guild_id, flags=db_user.flags, warns=db_user.warns, is_muted=False, notes=db_user.notes)
         await self.bot.global_config.update_user(new_user) #Update this here so if the user comes back, they are not perma-muted :pepeLaugh:
-        if guild.get_member(timer.user_id) != None: #Check if the user is still in the guild
+        if guild.get_member(timer.user_id) is not None: #Check if the user is still in the guild
             mute_role_id = 0
             async with self.bot.pool.acquire() as con:
                 result = await con.fetch('SELECT mute_role_id FROM mod_config WHERE guild_id = $1', timer.guild_id)
@@ -242,12 +299,13 @@ class Moderation(commands.Cog):
             mute_role = guild.get_role(mute_role_id)
             try:
                 offender = guild.get_member(timer.user_id)
-                await offender.remove_roles(mute_role)
-            except AttributeError:
+                await offender.remove_roles(mute_role,  reason="Temporary mute expired.")
+                embed=discord.Embed(title="🔉 User unmuted.", description=f"**{offender}** `({offender.id})` has been unmuted because their temporary mute expired.".format(offender=offender.mention), color=self.bot.embedGreen)
+                await self.bot.get_cog("Logging").log_elevated(embed, timer.guild_id)
+            except (AttributeError, discord.Forbidden):
                 return
-            embed=discord.Embed(title="🔉 User unmuted.", description=f"**{offender}** `({offender.id})` has been unmuted because their temporary mute expired.".format(offender=offender.mention), color=self.bot.embedGreen)
-            await self.bot.get_cog("Logging").log_elevated(embed, timer.guild_id)
     
+
     @commands.command(help="Bans a user.", description="Bans a user with an optional reason. Deletes the last 7 days worth of messages from the user.", usage="ban <user> [reason]")
     @commands.check(hasPriviliged)
     @commands.has_permissions(ban_members=True)
@@ -288,6 +346,7 @@ class Moderation(commands.Cog):
             await ctx.send(embed=embed)
             return
 
+
     @commands.command(help="Unbans a user.", description="Unbans a user with an optional reason. Deletes the last 7 days worth of messages from the user.", usage="unban <user> [reason]")
     @commands.check(hasPriviliged)
     @commands.has_permissions(ban_members=True)
@@ -320,6 +379,7 @@ class Moderation(commands.Cog):
             await ctx.send(embed=embed)
             return
     
+
     @commands.command(help="Temporarily bans a user.", description="Temporarily bans a user for the duration specified. Deletes the last 7 days worth of messages from the user.\n\n**Time formatting:**\n`s` or `second(s)`\n`m` or `minute(s)`\n`h` or `hour(s)`\n`d` or `day(s)`\n`w` or `week(s)`\n`M` or `month(s)`\n`Y` or `year(s)`\n\n**Example:** `tempban @User -d 5minutes -r 'Being naughty'` or `tempban @User 5d`\n**Note:** If your arguments contain spaces, you must wrap them in quotation marks.", usage="tempban <user> -d <duration> -r [reason] OR tempban <user> <duration>")
     @commands.check(hasPriviliged)
     @commands.has_permissions(ban_members=True)
@@ -393,7 +453,7 @@ class Moderation(commands.Cog):
         try:
             offender = await self.bot.fetch_user(timer.user_id)
             await guild.unban(offender, reason="User unbanned: Tempban expired")
-        except AttributeError:
+        except:
             return
 
     @commands.command(help="Softbans a user.", description="Bans a user then immediately unbans them, which means it will erase all messages from the user in the specified range.", usage="softban <user> [days-to-delete] [reason]")
@@ -505,6 +565,55 @@ class Moderation(commands.Cog):
             embed = discord.Embed(title="❌ " + self._("Bot has insufficient permissions"), description=self._("The bot has insufficient permissions to perform message deletion, or this user cannot have his messages removed."),color=self.bot.errorColor)
             await ctx.send(embed=embed)
             return
+    
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        '''
+        Auto-Moderation
+        '''
+        if message.guild is None:
+            return
+        bucket = self.spam_cd_mapping.get_bucket(message)
+        retry_after = bucket.update_rate_limit()
+        if retry_after: #If user exceeded spam limits
+            db_user = await self.bot.global_config.get_user(message.author.id, message.guild.id)
+            ctx = await self.bot.get_context(message)
+            if not db_user.is_muted and not await hasPriviliged(ctx) and not message.author.bot:
+                try:
+                    await self.mute(ctx, message.author, moderator=ctx.guild.me, duration="15min", reason="Automatic mute for spam")
+                except:
+                    pass
+                else:
+                    embed=discord.Embed(title="🔇 " + self._("User muted"), description=self._("**{offender}** has been auto-muted for **15** minutes due to spamming.").format(offender=message.author.mention), color=self.bot.errorColor)
+                    embed.set_footer(text=self._("If you believe this was a mistake, contact a moderator."))
+                    await message.channel.send(embed=embed)
+        else:
+            invite_regex = re.compile(r"(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?")
+            matches = invite_regex.findall(message.content)
+            ctx = await self.bot.get_context(message)
+            if matches and not await hasPriviliged(ctx):
+                bucket = self.invite_cd_mapping.get_bucket(message)
+                invite_rt = bucket.update_rate_limit()
+                try:
+                    await message.delete() #If we cannot delete the message, we will just ignore any further automod actions
+                except:
+                    pass
+                else:
+                    if invite_rt: #If invite ratelimited
+                        mute_bucket = self.invite_mute_cd_mapping.get_bucket(message)
+                        invite_mute_rt = mute_bucket.update_rate_limit()
+                        if invite_mute_rt: #If user has been warned previously
+                            try:
+                                await self.mute(ctx, message.author, moderator=ctx.guild.me, duration="15min", reason="Automatic mute for sending discord invite links")
+                            except:
+                                pass
+                            else:
+                                embed=discord.Embed(title="🔇 " + self._("User muted"), description=self._("**{offender}** has been auto-muted for **15** minutes due to sending invite links.").format(offender=message.author.mention), color=self.bot.errorColor)
+                                embed.set_footer(text=self._("If you believe this was a mistake, contact a moderator."))
+                                await message.channel.send(embed=embed)
+                        else: #Warn user for repeat offenses
+                            await self.warn(ctx, message.author, ctx.guild.me, reason="Trying to send Discord invite links")
+
     
 
 def setup(bot):

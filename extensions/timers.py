@@ -65,13 +65,13 @@ class Timers(commands.Cog):
         else :
             logging.error("Invalid language, fallback to English.")
             self._ = gettext.gettext
-        self.wait_for_active_timers.start()
+        self.wait_for_active_timers.start() # pylint: disable=<no-member>
 
 
 
     def cog_unload(self):
         self.currenttask.cancel()
-        self.wait_for_active_timers.cancel()
+        self.wait_for_active_timers.cancel() # pylint: disable=<no-member>
     
     #Tries converting a string to datetime.datetime via regex, returns datetime.datetime and strings it extracted from if successful, otherwise raises ValueError
     #Result of 12 hours of pain #remember
@@ -98,7 +98,7 @@ class Timers(commands.Cog):
                 #If a partial match is found with any of the keys
                 #Reason for making the same code here is because words are case-insensitive, as opposed to single letters
                 for string in time_word_dict.keys():
-                    if lev.distance(category.lower(), string.lower()) <= 1: #If str has 1 or less different letters (For plural)
+                    if lev.distance(category.lower(), string.lower()) <= 1: #If str has 1 or less different letters (For plural) pylint: disable=<no-member>
                         time += time_word_dict[string]*float(val)
                         strings.append(val + category)
                         strings.append(val + " " + category)
@@ -253,7 +253,7 @@ class Timers(commands.Cog):
             embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Your timeformat is invalid! Type `{prefix}help reminder` to see valid time formatting.").format(prefix=ctx.prefix),color=self.bot.errorColor)
             await ctx.send(embed=embed)
             return
-        print("Timestrs length is: ", len(timestr))
+        logging.debug(f"Timestrs length is: {len(timestr)}")
         if timestr is None or len(timestr) == 0:
             timestr = "..."
         note = timestr+f"\n\n[Jump to original message!]({ctx.message.jump_url})"

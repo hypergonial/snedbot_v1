@@ -86,7 +86,7 @@ class Fun(commands.Cog):
                     self.bot.loop.create_task(message.add_reaction("✅"))
                     ending.set() #Set the event ending, which starts the ending code
                 #If it is close enough, we will add a marker to show that it is incorrect
-                elif lev.distance(typeracer_text.lower(), message.content.lower()) < 3:
+                elif lev.distance(typeracer_text.lower(), message.content.lower()) < 3: # pylint: disable=<no-member>
                      self.bot.loop.create_task(message.add_reaction("❌"))
 
         #This is basically an on_message created temporarily, since the check will never return True

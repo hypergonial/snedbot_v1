@@ -63,20 +63,31 @@ class Setup(commands.Cog):
                 embed=discord.Embed(title="🛠️ Matchmaking setup", description=f"Commands channel set to {cmdchannel.mention}", color=self.bot.embedBlue)
                 await ctx.channel.send(embed=embed)
 
-            embed=discord.Embed(title="🛠️ Matchmaking setup", description="Now please mention the channel where the multiplayer listings should go. If you already have LFG reaction roles set up, they will also be pinged once a listing goes live.", color=self.bot.embedBlue)
+            embed=discord.Embed(title="🛠️ Matchmaking setup", description="Now please mention the channel where the multiplayer listings should go.", color=self.bot.embedBlue)
             await ctx.channel.send(embed=embed)
             payload = await self.bot.wait_for('message', timeout=60.0, check=check)
             announcechannel = await commands.TextChannelConverter().convert(ctx, payload.content)
             embed=discord.Embed(title="🛠️ Matchmaking setup", description=f"Multiplayer listings channel set to {announcechannel.mention}", color=self.bot.embedBlue)
             await ctx.channel.send(embed=embed)
 
+            embed=discord.Embed(title="🛠️ Matchmaking setup", description=f"Now specify the role that should be mentioned when a new listing is created. Type `skip` to skip this step.", color=self.bot.embedBlue)
+            await ctx.channel.send(embed=embed)
+            message = await self.bot.wait_for('message', timeout=60.0, check=check)
+            if message.content == "skip":
+                lfg_role_id = None
+            else:
+                lfg_role = await commands.RoleConverter().convert(ctx, message.content)
+                lfg_role_id = lfg_role.id
+                embed=discord.Embed(title="🛠️ Matchmaking setup", description=f"Multiplayer LFG role set to {lfg_role.mention}", color=self.bot.embedBlue)
+                await ctx.channel.send(embed=embed)
+
             #Executing based on info
 
             async with self.bot.pool.acquire() as con:
                 await con.execute('''
-                INSERT INTO matchmaking_config (guild_id, init_channel_id, announce_channel_id) VALUES ($1, $2, $3)
+                INSERT INTO matchmaking_config (guild_id, init_channel_id, announce_channel_id, lfg_role_id) VALUES ($1, $2, $3, $4)
                 ON CONFLICT (guild_id) DO
-                UPDATE SET init_channel_id = $2, announce_channel_id = $3''', ctx.guild.id, cmdchannel_id, announcechannel.id)
+                UPDATE SET init_channel_id = $2, announce_channel_id = $3, lfg_role_id = $4''', ctx.guild.id, cmdchannel_id, announcechannel.id, lfg_role_id)
 
             embed=discord.Embed(title="🛠️ Matchmaking setup", description="✅ Setup completed. Matchmaking set up!", color=self.bot.embedGreen)
             await ctx.channel.send(embed=embed)
@@ -85,6 +96,10 @@ class Setup(commands.Cog):
 
         except commands.ChannelNotFound:
             embed=discord.Embed(title="❌ Error: Channel not found.", description="Unable to locate channel. Operation cancelled.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+        except commands.RoleNotFound:
+            embed=discord.Embed(title="❌ Error: Role not found.", description="Unable to locate role. Operation cancelled.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
         except asyncio.TimeoutError:
