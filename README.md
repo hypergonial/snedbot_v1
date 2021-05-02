@@ -6,6 +6,7 @@
  - Easy to use commands
  - Setup commands to simplify configuration for administrators
  - Moderation capabilities
+ - Auto-Moderation [WIP]
  - Reaction Roles
  - Keep-On-Top Messages
  - Logging
