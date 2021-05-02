@@ -23,7 +23,7 @@ lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
 EXPERIMENTAL = False
 #Version of the bot
-current_version = "4.1.0"
+current_version = "4.1.1"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -352,6 +352,18 @@ class SnedHelp(commands.HelpCommand):
     #Send generic help message with all commands included
     async def send_bot_help(self, mapping):
 
+        class HelpPages(menus.MenuPages):
+            '''
+            Subclassing MenuPages to add an offset for the homepage (so it does not swallow the first page)
+            '''
+            def __init__(self, initial_message, source, **kwargs):
+                self.initial_message = initial_message
+                super().__init__(source, **kwargs)
+            
+            async def send_initial_message(self, _, channel):
+                self.current_page = -1
+                return await channel.send(embed=self.initial_message)
+
         #Menu pagination
         class HelpSource(menus.ListPageSource):
             '''
@@ -361,29 +373,11 @@ class SnedHelp(commands.HelpCommand):
                 super().__init__(data, per_page=2)
 
             async def format_page(self, menu, entries):
-                if menu.current_page == 0:
-                    embed=discord.Embed(title="🏠 " + _("__Help Home__"), color=bot.embedBlue, description='''**How to navigate this help dialogue**
-
-                    Navigate via the ◀️ ▶️ reactions, or skip to the end via the ⏮️ ⏭️ reactions.
-                    You can stop this help session by reacting with ⏹️.
-
-                    **Command Usage & Syntax**
-
-                    `<argument>` is a __required__ parameter
-                    `[argument]` is an __optional__ parameter
-                    `<foo|bar>` means foo __OR__ bar
-
-                    *Do not include the brackets in your commands!*        
-
-                    React with ▶️ to see the next page and what commands are available to you!
-                    ''')
-                    embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator) + f"  |  Page {menu.current_page + 1}/{self.get_max_pages()}", icon_url=ctx.author.avatar_url)
-                    return embed
-                else:
-                    offset = menu.current_page * self.per_page
-                    embed=discord.Embed(title="⚙️ " + _("__Available commands:__"), description=_("**Tip:** You can also type `{prefix}help [command]` to get more information about a specific command and see any subcommands a command may have.\nStill lost? [Join our Discord server!](https://discord.gg/kQVNf68W2a)\n\n").format(prefix=ctx.prefix) + ''.join(f'{v}' for i, v in enumerate(entries, start=offset)), color=bot.embedBlue)
-                    embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator) + f"  |  Page {menu.current_page + 1}/{self.get_max_pages()}", icon_url=ctx.author.avatar_url)
-                    return embed
+                #offset = (menu.current_page-999) * self.per_page --> This also works and changes nothing c:
+                offset = menu.current_page * self.per_page
+                embed=discord.Embed(title="⚙️ " + _("__Available commands:__"), description=_("**Tip:** You can also type **`{prefix}help [command]`** to get more information about a specific command and see any subcommands a command may have.\nStill lost? [Join our Discord server!](https://discord.gg/kQVNf68W2a)\n\n").format(prefix=ctx.prefix) + ''.join(f'{v}' for i, v in enumerate(entries, start=offset)), color=bot.embedBlue)
+                embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator) + f"  |  Page {menu.current_page + 1}/{self.get_max_pages()}", icon_url=ctx.author.avatar_url)
+                return embed
 
         ctx = self.context   #Obtaining ctx
         cmdslist = []
@@ -395,7 +389,25 @@ class SnedHelp(commands.HelpCommand):
             if command_signatures:
                 cog_name = getattr(cog, "qualified_name", "Other") #Append items into a list of str, one item per cog
                 cmdslist.append("**{cn}**\n{cs}\n".format(cn=cog_name, cs='\n'.join(command_signatures)))
-        pages = menus.MenuPages(source=HelpSource(cmdslist), clear_reactions_after=True) #Feed the list of commands into the menu system
+        
+        help_home_embed=discord.Embed(title="🏠 " + _("__Help Home__"), color=bot.embedBlue, description='''**How to navigate this help dialogue**
+
+        Navigate via the ◀️ ▶️ reactions, or skip to the end via the ⏮️ ⏭️ reactions.
+        You can stop this help session by reacting with ⏹️.
+
+        **Command Usage & Syntax**
+
+        `<argument>` is a __required__ parameter
+        `[argument]` is an __optional__ parameter
+        `<foo|bar>` means foo __OR__ bar
+
+        *Do not include the brackets in your commands!*        
+
+        React with ▶️ to see the next page and what commands are available to you!
+        ''')
+        help_home_embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+
+        pages = HelpPages(help_home_embed, source=HelpSource(cmdslist), clear_reactions_after=True) #Feed the list of commands into the menu system
         await pages.start(ctx)
 
     async def send_command_help(self, command):
@@ -432,7 +444,7 @@ class SnedHelp(commands.HelpCommand):
 
     async def send_group_help(self, group):
         ctx = self.context
-        group_embed = discord.Embed(title="⚙️ " + _("Group: {prefix}{group}").format(prefix=ctx.prefix, group=group.name), description=_("**Note:**\nTo see detailed information about one of the subcommands, type `{prefix}help {group} <subcommand>`").format(prefix=ctx.prefix, group=group.name), color=bot.embedBlue)
+        group_embed = discord.Embed(title="⚙️ " + _("Group: {prefix}{group}").format(prefix=ctx.prefix, group=group.name), description=_("**Note:**\nTo see detailed information about one of the subcommands, type **`{prefix}help {group} [subcommand]`**").format(prefix=ctx.prefix, group=group.name), color=bot.embedBlue)
         if group.description:
             group_embed.add_field(name=_("Description:"), value=group.description)  #Getting command description
         elif group.help:
