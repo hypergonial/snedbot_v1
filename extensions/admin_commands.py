@@ -16,19 +16,7 @@ async def hasPriviliged(ctx):
 
 class AdminCommands(commands.Cog, name="Admin Commands"):
     def __init__(self, bot):
-        async def init_table():
-            async with bot.pool.acquire() as con:
-                await con.execute('''
-                CREATE TABLE IF NOT EXISTS public.priviliged
-                (
-                    guild_id bigint NOT NULL,
-                    priviliged_role_id bigint NOT NULL,
-                    PRIMARY KEY (guild_id, priviliged_role_id),
-                    FOREIGN KEY (guild_id)
-                        REFERENCES global_config (guild_id)
-                        ON DELETE CASCADE
-                )''')
-        bot.loop.run_until_complete(init_table())
+
         self.bot = bot
         if self.bot.lang == "de":
             de = gettext.translation('admin_commands', localedir=self.bot.localePath, languages=['de'])

@@ -13,22 +13,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
     
     def __init__(self, bot):
         self.bot = bot
-        async def init_table():
-            async with bot.pool.acquire() as con:
-                await con.execute('''
-                CREATE TABLE IF NOT EXISTS public.ktp
-                (
-                    guild_id bigint NOT NULL,
-                    ktp_id serial NOT NULL,
-                    ktp_channel_id bigint NOT NULL,
-                    ktp_msg_id bigint NOT NULL,
-                    ktp_content text NOT NULL,
-                    PRIMARY KEY (guild_id, ktp_id),
-                    FOREIGN KEY (guild_id)
-                        REFERENCES global_config (guild_id)
-                        ON DELETE CASCADE
-                )''')
-        bot.loop.run_until_complete(init_table())
+
     
     async def cog_check(self, ctx):
         return ctx.guild.id in self.bot.whitelisted_guilds

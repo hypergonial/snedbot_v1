@@ -11,20 +11,7 @@ from discord.ext import commands
 class Logging(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        async def init_table():
-            async with bot.pool.acquire() as con:
-                await con.execute('''
-                CREATE TABLE IF NOT EXISTS public.log_config
-                (
-                    guild_id bigint NOT NULL,
-                    log_channel_id bigint NOT NULL,
-                    elevated_log_channel_id bigint,
-                    PRIMARY KEY (guild_id),
-                    FOREIGN KEY (guild_id)
-                        REFERENCES global_config (guild_id)
-                        ON DELETE CASCADE
-                )''')
-        bot.loop.run_until_complete(init_table())
+
 
     '''
     Functions to call to log events, standard
@@ -101,7 +88,7 @@ class Logging(commands.Cog):
             contentfield = f"{message.content}\n//The message contained a file."
         if message.embeds:
             contentfield = contentfield + "\n//The message contained an embed."
-        if message.author != self.bot.user :
+        if not message.author.bot:
             if moderator != None: #If this was deleted by a mod
                 embed = discord.Embed(title=f"🗑️ Message deleted by Moderator", description=f"**Message author:** `{message.author} ({message.author.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{contentfield}```", color=self.bot.errorColor)
                 await self.log_elevated(embed, message.guild.id)
@@ -124,28 +111,9 @@ class Logging(commands.Cog):
         #Add it to the recently deleted so on_raw_message_edit will ignore this
         self.bot.recentlyEdited.append(after.id)
         #Then do info collection & dump
-        if after.author != self.bot.user :
+        if not after.author.bot:
             embed = discord.Embed(title=f"🖊️ Message edited", description=f"**Message author:** `{after.author} ({after.author.id})`\n**Channel:** {after.channel.mention}\n**Before:** ```{before.content}``` \n**After:** ```{after.content}```\n[Jump!]({after.jump_url})", color=self.bot.embedBlue)
             await self.log_standard(embed, after.guild.id)
-
-    #This will get called on every message edit regardless of cached state
-    @commands.Cog.listener()
-    async def on_raw_message_edit(self, payload):
-        if payload.guild_id == None :
-            return
-        #Wait for on_message_edit to complete
-        await asyncio.sleep(1)
-        #If it is in the list, we remove it and stop
-        if payload.message_id in self.bot.recentlyEdited :
-            self.bot.recentlyEdited.remove(payload.message_id)
-            return
-        #Else it is not cached, so we run the logic related to producing a generic edit message.
-        else :
-            guild = self.bot.get_guild(payload.guild_id)
-            channel = guild.get_channel(payload.channel_id)
-            message = await channel.fetch_message(payload.message_id)
-            embed = discord.Embed(title=f"🖊️ Message edited", description=f"**Channel:** {channel.mention}\n**Message author:** `{message.author} ({message.author.id})`\n\n**Message contents were not cached.**\n\n**Current content**: ```{message.content}```\n[Jump!]({message.jump_url})", color=self.bot.embedBlue)
-            await self.log_standard(embed, guild.id)
 
 
     @commands.Cog.listener()
@@ -159,15 +127,14 @@ class Logging(commands.Cog):
             async for entry in guild.audit_logs(): #Get the bot that did it
                 if entry.action == discord.AuditLogAction.message_bulk_delete:
                     moderator = entry.user
-                    mod_id = moderator.id
                     break
                 else :
                     break
         except discord.Forbidden:
-            mod_id = None
+            pass
         guild = self.bot.get_guild(payload.guild_id)
         channel = guild.get_channel(payload.channel_id)
-        embed = discord.Embed(title=f"🗑️ Bulk message deletion", description=f"**Channel:** {channel.mention}\n**Mod-Bot:** `{moderator} ({mod_id})`\n```Multiple messages have been purged.```", color=self.bot.errorColor)
+        embed = discord.Embed(title=f"🗑️ Bulk message deletion", description=f"**Channel:** {channel.mention}\n**Mod-Bot:** `{moderator}`\n```Multiple messages have been purged.```", color=self.bot.errorColor)
         await self.log_elevated(embed, payload.guild_id)
     #Does not work, idk why but this event is never called
     @commands.Cog.listener()
@@ -188,7 +155,7 @@ class Logging(commands.Cog):
                     break
         except discord.Forbidden:
             return
-        embed = discord.Embed(title=f"🗑️ Role deleted", description=f"**Role:** `{role}`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.errorColor)
+        embed = discord.Embed(title=f"🗑️ Role deleted", description=f"**Role:** `{role}`\n**Moderator:** `{moderator}`", color=self.bot.errorColor)
         await self.log_elevated(embed, role.guild.id)
     
     @commands.Cog.listener()
@@ -238,7 +205,7 @@ class Logging(commands.Cog):
                     break
         except discord.Forbidden:
             return
-        embed = discord.Embed(title=f"❇️ Role created", description=f"**Role:** `{role}`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.embedGreen)
+        embed = discord.Embed(title=f"❇️ Role created", description=f"**Role:** `{role}`\n**Moderator:** `{moderator}`", color=self.bot.embedGreen)
         await self.log_elevated(embed, role.guild.id)
     
     @commands.Cog.listener()
@@ -255,7 +222,7 @@ class Logging(commands.Cog):
         except discord.Forbidden:
             return
         if moderator:
-            embed = discord.Embed(title=f"🖊️ Role updated", description=f"**Role:** `{after.name}` \n**Moderator:** `{moderator} ({moderator.id})`\n**Before:**```Name: {before.name}\nColor: {before.color}\nHoisted: {before.hoist}\nManaged: {before.managed}\nMentionable: {before.mentionable}\nPosition: {before.position}\nPermissions: {before.permissions}```\n**After:**\n```Name: {after.name}\nColor: {after.color}\nHoisted: {after.hoist}\nManaged: {after.managed}\nMentionable: {after.mentionable}\nPosition:{after.position}\nPermissions: {after.permissions}```", color=self.bot.embedBlue)
+            embed = discord.Embed(title=f"🖊️ Role updated", description=f"**Role:** `{after.name}` \n**Moderator:** `{moderator}`\n**Before:**```Name: {before.name}\nColor: {before.color}\nHoisted: {before.hoist}\nManaged: {before.managed}\nMentionable: {before.mentionable}\nPosition: {before.position}\nPermissions: {before.permissions}```\n**After:**\n```Name: {after.name}\nColor: {after.color}\nHoisted: {after.hoist}\nManaged: {after.managed}\nMentionable: {after.mentionable}\nPosition:{after.position}\nPermissions: {after.permissions}```", color=self.bot.embedBlue)
             await self.log_elevated(embed, after.guild.id)
 
     @commands.Cog.listener()
@@ -270,7 +237,7 @@ class Logging(commands.Cog):
                     break
         except discord.Forbidden:
             return
-        embed = discord.Embed(title=f"🖊️ Guild updated", description=f"Guild settings have been updated by {moderator} `({moderator.id})`.", color=self.bot.embedBlue)
+        embed = discord.Embed(title=f"🖊️ Guild updated", description=f"Guild settings have been updated by `{moderator}`.", color=self.bot.embedBlue)
         await self.log_elevated(embed, after.id)
 
     @commands.Cog.listener()
@@ -278,11 +245,13 @@ class Logging(commands.Cog):
         try:
             moderator = "Undefined"
             reason = "Not specified"
-            async for entry in guild.audit_logs(action=discord.AuditLogAction.ban):
-                if entry.target == user :
+            async for entry in guild.audit_logs():
+                if entry.target == user and entry.action == discord.AuditLogAction.ban:
                     moderator = entry.user
                     reason = entry.reason
-                break
+                    break
+                else:
+                    break
         except discord.Forbidden:
             return
         if entry.reason != None:
@@ -296,11 +265,13 @@ class Logging(commands.Cog):
     async def on_member_unban(self, guild, user):
         try:
             moderator = "Undefined"
-            async for entry in guild.audit_logs(action=discord.AuditLogAction.unban):
-                if entry.target == user :
+            async for entry in guild.audit_logs():
+                if entry.target == user and entry.action == discord.AuditLogAction.unban:
                     moderator = entry.user
                     reason = entry.reason
-                break
+                    break
+                else:
+                    break
         except discord.Forbidden:
             return
         embed = discord.Embed(title=f"🔨 User unbanned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:** ```{reason}```", color=self.bot.embedGreen)
@@ -339,16 +310,6 @@ class Logging(commands.Cog):
         embed = discord.Embed(title=f"🚪 User joined", description=f"**User:** `{member} ({member.id})`\n**User count:** `{member.guild.member_count}`", color=self.bot.embedGreen)
         await self.log_standard(embed, member.guild.id)
     
-    @commands.Cog.listener()
-    async def on_command(self, ctx):
-        if ctx.guild == None:
-            return
-        if len(ctx.message.content) >= 1000: #Slicing for sanity lol
-            cmdmsg = ctx.message.content[slice(1000)] + "..."
-        else:
-            cmdmsg = ctx.message.content
-        embed = discord.Embed(title=f"☎️ Command called", description=f"**User:** `{ctx.author} ({ctx.author.id})`\n**Channel:** {ctx.channel.mention}\n**Command:** `{cmdmsg}`\n\n[Jump!]({ctx.message.jump_url})", color=self.bot.embedBlue)
-        await self.log_standard(embed, ctx.guild.id)
     
     @commands.Cog.listener()
     async def on_member_update(self, before, after):

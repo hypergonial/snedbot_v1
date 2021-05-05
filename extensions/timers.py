@@ -34,24 +34,7 @@ class Timer():
 class Timers(commands.Cog):
 
     def __init__(self, bot):
-        async def init_table():
-            async with bot.pool.acquire() as con:
-                await con.execute('''
-                CREATE TABLE IF NOT EXISTS public.timers
-                (
-                    id serial NOT NULL,
-                    guild_id bigint NOT NULL,
-                    user_id bigint NOT NULL,
-                    channel_id bigint,
-                    event text NOT NULL,
-                    expires bigint NOT NULL,
-                    notes text,
-                    PRIMARY KEY (id),
-                    FOREIGN KEY (guild_id)
-                        REFERENCES global_config (guild_id)
-                        ON DELETE CASCADE
-                )''')
-        bot.loop.run_until_complete(init_table())
+
         self.bot = bot
         self.current_timer = None
         self.currenttask = None
@@ -242,6 +225,7 @@ class Timers(commands.Cog):
     @commands.command(aliases=["remindme", "remind"], usage="reminder <when>", help="Sets a reminder to the specified time.", description="Sets a reminder with at the specified time, with an optional message.\n\n**Time formatting:**\n`s` or `second(s)`\n`m` or `minute(s)`\n`h` or `hour(s)`\n`d` or `day(s)`\n`w` or `week(s)`\n`M` or `month(s)`\n`Y` or `year(s)`\n\n**Example:** `reminder in 2 hours to go sleep` or `reminder 5d example message`")
     @commands.guild_only()
     async def reminder(self, ctx, *, timestr):
+        await ctx.channel.trigger_typing()
         if len(timestr) >= 2000:
             embed = discord.Embed(title="❌ " + self._("Reminder too long"), description=self._("Your reminder cannot exceed **2000** characters!"),color=self.bot.errorColor)
             await ctx.send(embed=embed)

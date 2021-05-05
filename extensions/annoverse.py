@@ -87,6 +87,7 @@ class Annoverse(commands.Cog):
     @annowiki.command(aliases=["1800"])
     @commands.guild_only()
     async def anno1800(self, ctx, *, query:str=None):
+        await ctx.channel.trigger_typing()
         site = "anno1800"
         try:
             results = await self.search_fandom(site, query)
@@ -100,6 +101,7 @@ class Annoverse(commands.Cog):
     @annowiki.command(aliases=["2205"])
     @commands.guild_only()
     async def anno2205(self, ctx, *, query:str=None):
+        await ctx.channel.trigger_typing()
         site = "anno2205"
         try:
             results = await self.search_fandom(site, query)
@@ -112,6 +114,7 @@ class Annoverse(commands.Cog):
     @annowiki.command(aliases=["2070"])
     @commands.guild_only()
     async def anno2070(self, ctx, *, query:str=None):
+        await ctx.channel.trigger_typing()
         site = "anno2070"
         try:
             results = await self.search_fandom(site, query)
@@ -124,6 +127,7 @@ class Annoverse(commands.Cog):
     @annowiki.command(aliases=["1404"])
     @commands.guild_only()
     async def anno1404(self, ctx, *, query:str=None):
+        await ctx.channel.trigger_typing()
         site = "anno1404"
         try:
             results = await self.search_fandom(site, query)

@@ -13,23 +13,7 @@ async def hasPriviliged(ctx):
 class ReactionRoles(commands.Cog, name="Reaction Roles"):
     def __init__(self, bot):
         self.bot = bot
-        async def init_table():
-            async with bot.pool.acquire() as con:
-                await con.execute('''
-                CREATE TABLE IF NOT EXISTS public.reaction_roles
-                (
-                    guild_id bigint NOT NULL,
-                    reactionrole_id serial NOT NULL,
-                    reactionrole_channel_id bigint NOT NULL,
-                    reactionrole_msg_id bigint NOT NULL,
-                    reactionrole_emoji_id bigint NOT NULL,
-                    reactionrole_role_id bigint NOT NULL,
-                    PRIMARY KEY (guild_id, reactionrole_id),
-                    FOREIGN KEY (guild_id)
-                        REFERENCES global_config (guild_id)
-                        ON DELETE CASCADE
-                )''')
-        bot.loop.run_until_complete(init_table())
+
 
     async def check_rr(self, payload):
         '''
@@ -47,8 +31,9 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
                     if result.get('reactionrole_msg_id') == payload.message_id and result.get('reactionrole_channel_id') == payload.channel_id and result.get('reactionrole_emoji_id') == payload.emoji.id:
                         guild = self.bot.get_guild(result.get('guild_id'))
                         member = guild.get_member(payload.user_id)
-                        role = guild.get_role(result.get('reactionrole_role_id'))
-                        return member, role
+                        if not member.bot:
+                            role = guild.get_role(result.get('reactionrole_role_id'))
+                            return member, role
 
 
 

@@ -23,7 +23,7 @@ lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
 EXPERIMENTAL = False
 #Version of the bot
-current_version = "4.1.1"
+current_version = "4.2.0"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -252,11 +252,14 @@ class GlobalConfig():
         Takes an instance of GlobalConfig.User and tries to either update or create a new user entry if one does not exist already
         '''
         async with bot.pool.acquire() as con:
-            await con.execute('''
-            INSERT INTO users (user_id, guild_id, flags, warns, is_muted, notes) 
-            VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT (user_id, guild_id) DO
-            UPDATE SET flags = $3, warns = $4, is_muted = $5, notes = $6''', user.user_id, user.guild_id, user.flags, user.warns, user.is_muted, user.notes)
+            try:
+                await con.execute('''
+                INSERT INTO users (user_id, guild_id, flags, warns, is_muted, notes) 
+                VALUES ($1, $2, $3, $4, $5, $6)
+                ON CONFLICT (user_id, guild_id) DO
+                UPDATE SET flags = $3, warns = $4, is_muted = $5, notes = $6''', user.user_id, user.guild_id, user.flags, user.warns, user.is_muted, user.notes)
+            except asyncpg.exceptions.ForeignKeyViolationError:
+                logging.warn('Trying to update a guild db_user whose guild no longer exists. This could be due to pending timers.')
 
     async def get_user(self, user_id, guild_id): 
         '''
@@ -460,8 +463,9 @@ class SnedHelp(commands.HelpCommand):
         filtered = await self.filter_commands(group.walk_commands(), sort=True)
         for command in filtered:
             sub_cmds.append(self.get_subcommand_signature(group, command))
-        sub_cmds = "\n".join(sub_cmds)
-        group_embed.add_field(name=_("Sub-commands:"), value=f"{sub_cmds}")
+        if sub_cmds:
+            sub_cmds = "\n".join(sub_cmds)
+            group_embed.add_field(name=_("Sub-commands:"), value=f"{sub_cmds}")
         channel = self.get_destination()
         await channel.send(embed=group_embed)
 
@@ -483,14 +487,18 @@ async def on_command_error(ctx, error):
 
     Generic error handling. Will catch all otherwise not handled errors
     '''
+
     if isinstance(error, commands.CheckFailure):
         logging.info(f"{ctx.author} tried calling a command but did not meet checks.")
+        if isinstance(error, commands.BotMissingPermissions):
+            embed=discord.Embed(title="❌ " + _("Bot missing permissions"), description=_("The bot requires additional permissions to execute this command.\n**Error:**```{error}```").format(error=error), color=bot.errorColor)
+            return await ctx.send(embed=embed)
 
     if isinstance(error, commands.CommandInvokeError):
         if isinstance(error.original, asyncio.exceptions.TimeoutError):
             embed=discord.Embed(title=bot.errorTimeoutTitle, description=bot.errorTimeoutDesc, color=bot.errorColor)
             embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-            await ctx.send(embed=embed)
+            return await ctx.send(embed=embed)
         else:
             raise error
 
@@ -510,11 +518,11 @@ async def on_command_error(ctx, error):
         if len(matches) > 0:
             embed=discord.Embed(title=bot.unknownCMDstr, description=_("Did you mean `{prefix}{match}`?").format(prefix=ctx.prefix, match=matches[0]), color=bot.unknownColor)
             embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-            await ctx.send(embed=embed)
+            return await ctx.send(embed=embed)
         elif len(aliasmatches) > 0:
             embed=discord.Embed(title=bot.unknownCMDstr, description=_("Did you mean `{prefix}{match}`?").format(prefix=ctx.prefix, match=aliasmatches[0]), color=bot.unknownColor)
             embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-            await ctx.send(embed=embed)
+            return await ctx.send(embed=embed)
         '''else:
             embed=discord.Embed(title=bot.unknownCMDstr, description=_("Use `{prefix}help` for a list of available commands.").format(prefix=ctx.prefix), color=bot.unknownColor)
             embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
@@ -523,29 +531,31 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.CommandOnCooldown):
         embed=discord.Embed(title=bot.errorCooldownTitle, description=_("Please retry in: `{cooldown}`").format(cooldown=datetime.timedelta(seconds=round(error.retry_after))), color=bot.errorColor)
         embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-        await ctx.send(embed=embed)
+        return await ctx.send(embed=embed)
 
     elif isinstance(error, commands.MissingRequiredArgument):
         embed=discord.Embed(title="❌" + _("Missing argument."), description=_("One or more arguments are missing. \n__Hint:__ You can use `{prefix}help {command_name}` to view command usage.").format(prefix=ctx.prefix, command_name=ctx.command.name), color=bot.errorColor)
         embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-        await ctx.send(embed=embed)
         logging.info(f"{ctx.author} tried calling a command ({ctx.message.content}) but did not supply sufficient arguments.")
+        return await ctx.send(embed=embed)
+
 
     elif isinstance(error, commands.MaxConcurrencyReached):
-            embed = discord.Embed(title=bot.errorMaxConcurrencyReachedTitle, description=bot.errorMaxConcurrencyReachedDesc, color=bot.errorColor)
-            embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-            await ctx.channel.send(embed=embed)
+        embed = discord.Embed(title=bot.errorMaxConcurrencyReachedTitle, description=bot.errorMaxConcurrencyReachedDesc, color=bot.errorColor)
+        embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        return await ctx.channel.send(embed=embed)
 
     elif isinstance(error, commands.MemberNotFound):
         embed=discord.Embed(title="❌ " + _("Cannot find user by that name"), description=_("Please check if you typed everything correctly, then try again.\n**Error:**```{error}```").format(error=str(error)), color=bot.errorColor)
-        await ctx.send(embed=embed)
+        return await ctx.send(embed=embed)
 
     elif isinstance(error, commands.errors.BadArgument):
         embed=discord.Embed(title="❌ " + _("Bad argument"), description=_("Invalid data entered! Check `{prefix}help {command_name}` for more information.\n**Error:**```{error}```").format(prefix=ctx.prefix, command_name=ctx.command.name, error=error), color=bot.errorColor)
-        await ctx.send(embed=embed)
+        return await ctx.send(embed=embed)
 
     elif isinstance(error, commands.TooManyArguments):
         embed=discord.Embed(title="❌ " + _("Too many arguments"), description=_("You have provided more arguments than what `{prefix}{command_name}` can take. Check `{prefix}help {command_name}` for more information.").format(prefix=ctx.prefix, command_name=ctx.command.name), color=bot.errorColor)
+        return await ctx.send(embed=embed)
 
     else :
         #If no known error has been passed, we will print the exception to console as usual
@@ -556,7 +566,7 @@ async def on_command_error(ctx, error):
 #Executed on any command attempt
 @bot.event
 async def on_command(ctx):
-    logging.info(f"{ctx.author} called command {ctx.message.content}")
+    logging.info(f"{ctx.author} called command {ctx.message.content} in guild {ctx.guild.id}")
 
 '''
 Guild Join/Leave behaviours

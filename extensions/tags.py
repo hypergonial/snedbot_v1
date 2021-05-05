@@ -28,22 +28,7 @@ class TagHandler():
     '''
     def __init__(self, bot):
         self.bot = bot
-        async def init_table():
-            async with bot.pool.acquire() as con:
-                await con.execute('''
-                CREATE TABLE IF NOT EXISTS public.tags
-                (
-                    guild_id bigint NOT NULL,
-                    tag_name text NOT NULL,
-                    tag_owner_id bigint NOT NULL,
-                    tag_aliases text[],
-                    tag_content text NOT NULL,
-                    PRIMARY KEY (guild_id, tag_name),
-                    FOREIGN KEY (guild_id)
-                        REFERENCES global_config (guild_id)
-                        ON DELETE CASCADE
-                )''')
-        bot.loop.run_until_complete(init_table())
+
     
     async def get(self, tag_name : str, guild_id : int):
         '''

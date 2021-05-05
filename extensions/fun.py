@@ -11,7 +11,7 @@ import aiohttp
 
 import discord
 import Levenshtein as lev
-from discord.ext import commands
+from discord.ext import commands, menus
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -182,6 +182,29 @@ class Fun(commands.Cog):
         embed.set_image(url=catjson[0]["url"])
         await msg.edit(embed=embed)
     
+    @commands.command(help="Searches Wikipedia for results.", description="Searches Wikipedia and returns the 5 most relevant entries to your query.", usage="wiki <query>")
+    @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
+    @commands.cooldown(1, 10, type=commands.BucketType.member)
+    @commands.guild_only()
+    async def wiki(self, ctx, *, query):
+        await ctx.channel.trigger_typing()
+        link = "https://en.wikipedia.org/w/api.php?action=opensearch&search={query}&limit=5"
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(link.format(query=query.replace(" ", "+"))) as response:
+                results_dict = await response.json()
+                results_text = results_dict[1] #2nd element contains text, 4th links
+                results_link = results_dict[3]
+
+        desc=""
+        if len(results_text) > 0:
+            for result in results_text:
+                desc = f"{desc}[{result}]({results_link[results_text.index(result)]})\n"
+            embed=discord.Embed(title=self._("Wikipedia: {query}").format(query=query), description=desc, color=self.bot.miscColor)
+        else:
+            embed=discord.Embed(title="❌ " + self._("No results"), description=self._("Could not find anything related to your query."), color=self.bot.errorColor)
+        await ctx.send(embed=embed)
+
     #Fun command, because yes. (Needs mod privilege as it can be abused for spamming)
     #This may or may not have been a test command for testing priviliges & permissions :P
     @commands.command(brief = "Deploys the duck army.", description="🦆 I am surprised you even need help for this...", usage=f"quack")
@@ -190,6 +213,13 @@ class Fun(commands.Cog):
     async def quack(self, ctx):
         await ctx.channel.send("🦆")
         await ctx.message.delete()
+
+    @commands.command(brief="Repeats what you said.", description="Repeats the provided message, while deleting the command message.", usage="echo <message>")
+    @commands.check(hasPriviliged)
+    @commands.bot_has_permissions(manage_messages=True)
+    async def echo(self, ctx, *, content):
+        await ctx.message.delete()
+        await ctx.send(content=content)
     
     @commands.command(aliases=["bigmoji"],brief="Returns a jumbo-sized emoji.", description="Converts an emoji into it's jumbo-sized variant. Only supports custom emojies. No, the recipe is private.", usage="jumbo <emoji>")
     @commands.guild_only()

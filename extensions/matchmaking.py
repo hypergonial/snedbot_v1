@@ -28,21 +28,7 @@ def is_anno_guild(ctx):
 class Matchmaking_Config():
     def __init__(self, bot):
         self.bot = bot
-        async def init_table():
-            async with bot.pool.acquire() as con:
-                await con.execute('''
-                CREATE TABLE IF NOT EXISTS public.matchmaking_config
-                (
-                    guild_id bigint,
-                    init_channel_id bigint,
-                    announce_channel_id bigint,
-                    lfg_role_id bigint,
-                    PRIMARY KEY (guild_id),
-                    FOREIGN KEY (guild_id)
-                        REFERENCES global_config (guild_id)
-                        ON DELETE CASCADE
-                )''')
-        bot.loop.run_until_complete(init_table())
+
     
     async def load(self, data : str, guild_id : int):
         async with self.bot.pool.acquire() as con:
@@ -81,25 +67,7 @@ class Listing:
 class Listings():
     def __init__(self, bot):
         self.bot = bot
-        async def init_table():
-            async with bot.pool.acquire() as con:
-                await con.execute('''
-                CREATE TABLE IF NOT EXISTS public.matchmaking_listings
-                (
-                    id text,
-                    ubiname text NOT NULL,
-                    host_id bigint NOT NULL,
-                    gamemode text NOT NULL,
-                    playercount text NOT NULL,
-                    DLC text NOT NULL,
-                    mods text NOT NULL,
-                    timezone text NOT NULL,
-                    additional_info text NOT NULL,
-                    timestamp bigint NOT NULL,
-                    guild_id bigint NOT NULL,
-                    PRIMARY KEY (id)
-                )''')
-        bot.loop.run_until_complete(init_table())
+
     
     async def retrieve(self, id):
         async with self.bot.pool.acquire() as con:
