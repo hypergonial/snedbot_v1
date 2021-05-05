@@ -631,7 +631,7 @@ class Moderation(commands.Cog):
         - Auto-Moderation has been set to **(╯°□°）╯︵ ┻━┻**
           - **All** auto-moderation actions will now result in a **permanent ban**
         
-        You can disable raidmode via the **`{prefix}raidmode off`** command.""")
+        You can disable raidmode via the **`{prefix}raidmode off`** command.""".format(prefix=ctx.prefix))
         await ctx.send(embed=embed)
 
     @raidmode.command(name="off", aliases=["disable"], help="Disables raidmode.", description="Disables raidmode, setting auto-moderation to the previous setting, and server verification to `Medium`.")
