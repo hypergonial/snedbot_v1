@@ -1,4 +1,4 @@
-# Sned v4.1.1
+# Sned v4.2.0
 
 ## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  originally made for matchmaking and other purposes on the Annoverse discord guild.
 
