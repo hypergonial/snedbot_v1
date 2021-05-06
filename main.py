@@ -338,7 +338,7 @@ class CommandChecks():
             results = await con.fetch('''SELECT priviliged_role_id FROM priviliged WHERE guild_id = $1''', ctx.guild.id)
             privroles = [result.get('priviliged_role_id') for result in results]
             #Check if any of the roles in user's roles are contained in the priviliged roles.
-            return any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id)
+            return any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
 
 
 bot.CommandChecks = CommandChecks()
