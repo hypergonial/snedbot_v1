@@ -651,7 +651,6 @@ class Matchmaking(commands.Cog):
     @tasks.loop(seconds=3600.0)
     async def delExpiredListings(self):
         await self.bot.wait_until_ready()
-        logging.info("Checking for expired matchmaking listings...")
         listings = await self.listings.retrieve_all()
         if listings and len(listings) !=0:
             for listing in listings:

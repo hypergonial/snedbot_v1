@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-05-06 00:25+0200\n"
+"POT-Creation-Date: 2021-05-06 22:52+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -335,33 +335,33 @@ msgstr ""
 msgid "You already have a matchmaking request in progress."
 msgstr ""
 
-#: matchmaking.py:707
+#: matchmaking.py:706
 msgid "They will receive a notification when their desired playercap has been reached."
 msgstr ""
 
-#: matchmaking.py:707
+#: matchmaking.py:706
 msgid "You have subscribed to {hostname}'s game!"
 msgstr ""
 
-#: matchmaking.py:715
+#: matchmaking.py:714
 msgid ""
 "Hello! Just letting you know that your multiplayer listing on **{guild_name}** has reached {player_count} or more interested players.\n"
 "Players who want to play with you in this match: {interested_mentions}"
 msgstr ""
 
-#: matchmaking.py:715
+#: matchmaking.py:714
 msgid "Your listing reached your set playercap!"
 msgstr ""
 
-#: matchmaking.py:716
+#: matchmaking.py:715
 msgid "If you believe that this feature was abused, contact a moderator immediately!"
 msgstr ""
 
-#: matchmaking.py:751
+#: matchmaking.py:750
 msgid "The host will no longer see you signed up to this listing."
 msgstr ""
 
-#: matchmaking.py:751
+#: matchmaking.py:750
 msgid "You have unsubscribed from {hostname}'s listing."
 msgstr ""
 

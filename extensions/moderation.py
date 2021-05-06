@@ -618,6 +618,7 @@ class Moderation(commands.Cog):
     @raidmode.command(name="on", aliases=["enable"], help="Enables raidmode.", description="Enables raidmode, setting auto-moderation to the highest setting, and server verification to `High`.")
     @commands.check(hasPriviliged)
     @commands.bot_has_permissions(manage_roles=True, manage_messages=True, ban_members=True, kick_members=True, manage_guild=True)
+    @commands.has_permissions(ban_members=True, manage_messages=True)
     async def raidmode_on(self, ctx):
         async with self.bot.pool.acquire() as con:
             await con.execute('''
@@ -789,7 +790,7 @@ class Moderation(commands.Cog):
         
 
         mentions = sum(member.id != message.author.id and not member.bot for member in message.mentions)
-        if mentions > 5:
+        if mentions > 7:
             await self.automod_punish(ctx, offender=message.author, severity=3, delete_original=True, reason=f"Spamming {mentions} mentions")
             
         else: #If user posted a discord invite

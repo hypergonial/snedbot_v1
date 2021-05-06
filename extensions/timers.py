@@ -56,14 +56,17 @@ class Timers(commands.Cog):
         self.currenttask.cancel()
         self.wait_for_active_timers.cancel() # pylint: disable=<no-member>
     
-    #Tries converting a string to datetime.datetime via regex, returns datetime.datetime and strings it extracted from if successful, otherwise raises ValueError
-    #Result of 12 hours of pain #remember
+    
     async def converttime(self, timestr : str):
+        '''
+        Tries converting a string to datetime.datetime via regex, returns datetime.datetime and strings it extracted from if successful, otherwise raises ValueError
+        Result of 12 hours of pain #remember
+        '''
         logging.debug(f"String passed: {timestr}")
         #timestr = timestr.replace(' ', '')
         #Get any pair of <number><word> with a single optional space in between, and return them as a dict (sort of)
         time_regex = re.compile(r"(\d+(?:[.,]\d+)?)\s{0,1}([a-zA-Z]+)")
-        time_letter_dict = {"h":3600, "s":1, "m":60, "d":86400, "w":86400*7, "M":86400*30, "Y":86400*365}
+        time_letter_dict = {"h":3600, "s":1, "m":60, "d":86400, "w":86400*7, "M":86400*30, "Y":86400*365, "y":86400*365}
         time_word_dict = {"hour":3600, "second":1, "minute":60, "day": 86400, "week": 86400*7, "month":86400*30, "year":86400*365, "sec": 1, "min": 60}
         matches = time_regex.findall(timestr)
         time = 0
@@ -93,13 +96,16 @@ class Timers(commands.Cog):
              raise ValueError("Failed converting time from string.")
         return time, strings
 
-    #Tries removing the times & dates from the beginning or end of a string, while converting the times to datetime object via converttime()
-    #Used to create a reminder note
+    
     async def remindertime(self, timestr : str):
+        '''
+        Tries removing the times & dates from the beginning or end of a string, while converting the times to datetime object via converttime()
+        Used to create a reminder note
+        '''
         time, strings = await self.converttime(timestr)
-        no_start = False
-        #no_end = False
+
         for string in strings:
+            timestr = timestr.strip()
             if timestr.startswith(string):
                 timestr = timestr.replace(string, "")
             elif timestr.startswith("in " + string + " to"):
@@ -114,30 +120,30 @@ class Timers(commands.Cog):
                 timestr = timestr[3 : len(timestr)]
             elif timestr.startswith("for "):
                 timestr = timestr[4 : len(timestr)]
-            else:
-                no_start = True
-        if no_start == True:
-            for string in strings:
-                if timestr.endswith("in " + string):
-                    timestr = timestr.replace("in " + string, "")
-                elif timestr.endswith("after " + string):
-                    timestr = timestr.replace("after" + string, "")
-                elif timestr.endswith("in " + string + " from now"):
-                    timestr = timestr.replace("in " + string + " from now", "")
-                elif timestr.endswith(string + " from now"):
-                 timestr = timestr.replace(string + " from now", "")
-                elif timestr.endswith(string + " later"):
-                    timestr = timestr.replace(string + " later", "")
-                elif timestr.endswith(string):
-                    timestr = timestr.replace(string, "")
-                else:
-                    pass
-                    #no_end = True
+            elif timestr.startswith("and "):
+                timestr = timestr[4 : len(timestr)]
+            if timestr.startswith(" "):
+                timestr = timestr[1 : len(timestr)]
+
+        for string in strings:
+            timestr = timestr.strip()
+            if timestr.endswith("in " + string):
+                timestr = timestr.replace("in " + string, "")
+            elif timestr.endswith("after " + string):
+                timestr = timestr.replace("after" + string, "")
+            elif timestr.endswith("in " + string + " from now"):
+                timestr = timestr.replace("in " + string + " from now", "")
+            elif timestr.endswith(string + " from now"):
+                timestr = timestr.replace(string + " from now", "")
+            elif timestr.endswith(string + " later"):
+                timestr = timestr.replace(string + " later", "")
+            elif timestr.endswith(string):
+                timestr = timestr.replace(string, "")
         
         timestr = timestr.capitalize()
         return time, timestr
 
-    #Gets the timer the first timer that is about to expire in X days, and returns it. Return None if no timers are found in that scope.
+    #Gets the first timer that is about to expire in X days, and returns it. Return None if no timers are found in that scope.
     async def get_latest_timer(self, days=7):
         await self.bot.wait_until_ready() #This must be included or you get a lot of NoneType errors while booting up, and timers do not get delivered
         logging.debug("Getting latest timer...")
@@ -162,7 +168,7 @@ class Timers(commands.Cog):
             '''
             Dispatch an event named eventname_timer_complete, which will cause all listeners 
             for this event to fire. This function is not documented, so if anything breaks, it
-            is probably in here. It passes on the timer's dict.
+            is probably in here. It passes on the Timer
             '''
             logging.debug("Dispatching..")
             event = timer.event
@@ -225,26 +231,31 @@ class Timers(commands.Cog):
     @commands.command(aliases=["remindme", "remind"], usage="reminder <when>", help="Sets a reminder to the specified time.", description="Sets a reminder with at the specified time, with an optional message.\n\n**Time formatting:**\n`s` or `second(s)`\n`m` or `minute(s)`\n`h` or `hour(s)`\n`d` or `day(s)`\n`w` or `week(s)`\n`M` or `month(s)`\n`Y` or `year(s)`\n\n**Example:** `reminder in 2 hours to go sleep` or `reminder 5d example message`")
     @commands.guild_only()
     async def reminder(self, ctx, *, timestr):
-        await ctx.channel.trigger_typing()
-        if len(timestr) >= 2000:
-            embed = discord.Embed(title="❌ " + self._("Reminder too long"), description=self._("Your reminder cannot exceed **2000** characters!"),color=self.bot.errorColor)
+        if len(timestr) >= 1000:
+            embed = discord.Embed(title="❌ " + self._("Reminder too long"), description=self._("Your reminder cannot exceed **1000** characters!"),color=self.bot.errorColor)
             await ctx.send(embed=embed)
             return
+        await ctx.channel.trigger_typing()
         try:
             time, timestr = await self.remindertime(timestr)
             logging.debug(f"Received conversion: {time}")
+            print(timestr)
         except ValueError:
             embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Your timeformat is invalid! Type `{prefix}help reminder` to see valid time formatting.").format(prefix=ctx.prefix),color=self.bot.errorColor)
             await ctx.send(embed=embed)
-            return
-        logging.debug(f"Timestrs length is: {len(timestr)}")
-        if timestr is None or len(timestr) == 0:
-            timestr = "..."
-        note = timestr+f"\n\n[Jump to original message!]({ctx.message.jump_url})"
-        embed = discord.Embed(title="✅ " + self._("Reminder set"), description=self._("Reminder set for: `{time_year}-{time_month}-{time_day} {time_hour}:{time_minute} (UTC)`").format(time_year=time.year, time_month=str(time.month).rjust(2, '0'), time_day=str(time.day).rjust(2, '0'), time_hour=str(time.hour).rjust(2, '0'), time_minute=str(time.minute).rjust(2, '0')), color=self.bot.embedGreen)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-        await ctx.send(embed=embed)
-        await self.create_timer(expires=time, event="reminder", guild_id=ctx.guild.id,user_id=ctx.author.id, channel_id=ctx.channel.id, notes=note)
+        else:
+            if (time - datetime.datetime.utcnow()).total_seconds() > 31536000*5:
+                embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Sorry, but that's a bit too far in the future.").format(prefix=ctx.prefix),color=self.bot.errorColor)
+                await ctx.send(embed=embed)
+            else:
+                logging.debug(f"Timestrs length is: {len(timestr)}")
+                if timestr is None or len(timestr) == 0:
+                    timestr = "..."
+                note = timestr+f"\n\n[Jump to original message!]({ctx.message.jump_url})"
+                embed = discord.Embed(title="✅ " + self._("Reminder set"), description=self._("Reminder set for: `{time_year}-{time_month}-{time_day} {time_hour}:{time_minute} (UTC)`").format(time_year=time.year, time_month=str(time.month).rjust(2, '0'), time_day=str(time.day).rjust(2, '0'), time_hour=str(time.hour).rjust(2, '0'), time_minute=str(time.minute).rjust(2, '0')), timestamp=time, color=self.bot.embedGreen)
+                embed.set_footer(text="In your timezone that is:", icon_url=ctx.author.avatar_url)
+                await self.create_timer(expires=time, event="reminder", guild_id=ctx.guild.id,user_id=ctx.author.id, channel_id=ctx.channel.id, notes=note)
+                await ctx.send(embed=embed)
 
 
     @commands.command(usage="reminders", help="Lists all reminders you have pending.", description="Lists all your pending reminders, you can get a reminder's ID here to delete it.", aliases=["myreminders", "listreminders"])

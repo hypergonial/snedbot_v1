@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-05-06 00:25+0200\n"
+"POT-Creation-Date: 2021-05-06 22:52+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -73,8 +73,8 @@ msgid ""
 "**Reason:** ```{reason}```"
 msgstr ""
 
-#: moderation.py:222 moderation.py:287 moderation.py:705 moderation.py:719
-#: moderation.py:731
+#: moderation.py:222 moderation.py:287 moderation.py:706 moderation.py:720
+#: moderation.py:732
 msgid "User muted"
 msgstr ""
 
@@ -138,12 +138,12 @@ msgid ""
 "**Reason:** ```{raw_reason}```"
 msgstr ""
 
-#: moderation.py:339 moderation.py:443 moderation.py:748 moderation.py:759
+#: moderation.py:339 moderation.py:443 moderation.py:749 moderation.py:760
 msgid "You have been banned"
 msgstr ""
 
 #: moderation.py:347 moderation.py:350 moderation.py:452 moderation.py:455
-#: moderation.py:753 moderation.py:764
+#: moderation.py:754 moderation.py:765
 msgid "User banned"
 msgstr ""
 
@@ -238,7 +238,7 @@ msgid ""
 "**Reason:** ```{raw_reason}```"
 msgstr ""
 
-#: moderation.py:502 moderation.py:737
+#: moderation.py:502 moderation.py:738
 msgid "You have been soft-banned"
 msgstr ""
 
@@ -332,39 +332,39 @@ msgstr ""
 msgid "Messages cleared"
 msgstr ""
 
-#: moderation.py:705 moderation.py:719 moderation.py:731
+#: moderation.py:706 moderation.py:720 moderation.py:732
 msgid ""
 "**{offender}** has been auto-muted for **15** minutes.\n"
 "**Reason:**```{reason}```"
 msgstr ""
 
-#: moderation.py:706 moderation.py:720 moderation.py:732
+#: moderation.py:707 moderation.py:721 moderation.py:733
 msgid "If you believe this was a mistake, contact a moderator."
 msgstr ""
 
-#: moderation.py:737
+#: moderation.py:738
 msgid ""
 "You have been soft-banned from **{guild}**. You may rejoin.\n"
 "**Reason:** ```{reason}```"
 msgstr ""
 
-#: moderation.py:743
+#: moderation.py:744
 msgid ""
 "**{offender}** has been auto-softbanned.\n"
 "**Reason:** ```{reason}```"
 msgstr ""
 
-#: moderation.py:743
+#: moderation.py:744
 msgid "User softbanned"
 msgstr ""
 
-#: moderation.py:748 moderation.py:759
+#: moderation.py:749 moderation.py:760
 msgid ""
 "You have been banned from **{guild}**.\n"
 "**Reason:** ```{reason}```"
 msgstr ""
 
-#: moderation.py:753 moderation.py:764
+#: moderation.py:754 moderation.py:765
 msgid ""
 "**{offender}** has been auto-banned.\n"
 "**Reason:** ```{reason}```"
