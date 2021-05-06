@@ -329,16 +329,20 @@ class CommandChecks():
     '''
     #Has bot or guild owner
     async def hasOwner(self, ctx):
-        return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id
+        if ctx.guild:
+            return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id
+        else:
+            return ctx.author.id == ctx.bot.owner_id
 
     #Check performed to see if the user has priviliged access.
     async def hasPriviliged(self, ctx):
-        userRoles = [x.id for x in ctx.author.roles]
-        async with bot.pool.acquire() as con:
-            results = await con.fetch('''SELECT priviliged_role_id FROM priviliged WHERE guild_id = $1''', ctx.guild.id)
-            privroles = [result.get('priviliged_role_id') for result in results]
-            #Check if any of the roles in user's roles are contained in the priviliged roles.
-            return any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
+        if ctx.guild:
+            userRoles = [x.id for x in ctx.author.roles]
+            async with bot.pool.acquire() as con:
+                results = await con.fetch('''SELECT priviliged_role_id FROM priviliged WHERE guild_id = $1''', ctx.guild.id)
+                privroles = [result.get('priviliged_role_id') for result in results]
+                #Check if any of the roles in user's roles are contained in the priviliged roles.
+                return any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
 
 
 bot.CommandChecks = CommandChecks()
