@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-05-06 22:52+0200\n"
+"POT-Creation-Date: 2021-05-08 12:58+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,145 +15,145 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: tags.py:111 tags.py:148 tags.py:250
+#: tags.py:102 tags.py:139 tags.py:241
 msgid "Cannot find tag by that name."
 msgstr ""
 
-#: tags.py:111 tags.py:148 tags.py:250
+#: tags.py:102 tags.py:139 tags.py:241
 msgid "Error: Unknown tag"
 msgstr ""
 
-#: tags.py:125
+#: tags.py:116
 msgid "Error: Tag exists"
 msgstr ""
 
-#: tags.py:125
+#: tags.py:116
 msgid "This tag already exists. If the owner of this tag is no longer in the server, you can try doing `{prefix}tag claim {name}`"
 msgstr ""
 
-#: tags.py:131
+#: tags.py:122
 msgid "Tag created!"
 msgstr ""
 
-#: tags.py:131 tags.py:181
+#: tags.py:122 tags.py:172
 msgid "You can now call it with `{prefix}tag {name}`"
 msgstr ""
 
-#: tags.py:144
+#: tags.py:135
 msgid ""
 "**Aliases:** `{aliases}`\n"
 "**Tag owner:** {owner}\n"
 msgstr ""
 
-#: tags.py:144
+#: tags.py:135
 msgid "Tag Info: {tag_name}"
 msgstr ""
 
-#: tags.py:158
+#: tags.py:149
 msgid "A tag or alias is already created with the same name."
 msgstr ""
 
-#: tags.py:158
+#: tags.py:149
 msgid "Error: Already taken"
 msgstr ""
 
-#: tags.py:173
+#: tags.py:164
 msgid "Error: Too many aliases"
 msgstr ""
 
-#: tags.py:173
+#: tags.py:164
 msgid "Tag `{tag}` can only have up to **5** aliases."
 msgstr ""
 
-#: tags.py:181
+#: tags.py:172
 msgid "Alias created"
 msgstr ""
 
-#: tags.py:186
+#: tags.py:177
 msgid "Error: Duplicate alias"
 msgstr ""
 
-#: tags.py:186
+#: tags.py:177
 msgid "Tag `{tag}` already has an alias called `{alias}`."
 msgstr ""
 
-#: tags.py:190 tags.py:215 tags.py:232 tags.py:270
+#: tags.py:181 tags.py:206 tags.py:223 tags.py:261
 msgid "Error: Invalid tag"
 msgstr ""
 
-#: tags.py:190 tags.py:215 tags.py:232 tags.py:270
+#: tags.py:181 tags.py:206 tags.py:223 tags.py:261
 msgid "You either do not own this tag or it does not exist."
 msgstr ""
 
-#: tags.py:207
+#: tags.py:198
 msgid "Alias `{alias}` for tag `{name}` has been deleted."
 msgstr ""
 
-#: tags.py:207
+#: tags.py:198
 msgid "Alias deleted"
 msgstr ""
 
-#: tags.py:211
+#: tags.py:202
 msgid "Error: Unknown alias"
 msgstr ""
 
-#: tags.py:211
+#: tags.py:202
 msgid "Tag `{tag}` does not have an alias called `{alias}`."
 msgstr ""
 
-#: tags.py:228
+#: tags.py:219
 msgid "Tag `{name}`'s ownership was successfully transferred to {receiver}"
 msgstr ""
 
-#: tags.py:228
+#: tags.py:219
 msgid "Tag transferred"
 msgstr ""
 
-#: tags.py:246
+#: tags.py:237
 msgid "Tag `{name}` now belongs to you."
 msgstr ""
 
-#: tags.py:246
+#: tags.py:237
 msgid "Tag claimed"
 msgstr ""
 
-#: tags.py:254
+#: tags.py:245
 msgid "Error: Not owned"
 msgstr ""
 
-#: tags.py:254
+#: tags.py:245
 msgid "Tag owner is still in the server. You can only claim tags that have been abandoned."
 msgstr ""
 
-#: tags.py:266
+#: tags.py:257
 msgid "Tag `{name}` has been successfully edited."
 msgstr ""
 
-#: tags.py:266
+#: tags.py:257
 msgid "Tag edited"
 msgstr ""
 
-#: tags.py:281
+#: tags.py:272
 msgid "Tag `{name}` has been deleted."
 msgstr ""
 
-#: tags.py:281
+#: tags.py:272
 msgid "Tag deleted"
 msgstr ""
 
-#: tags.py:285
+#: tags.py:276
 msgid "Error: Tag not owned"
 msgstr ""
 
-#: tags.py:285
+#: tags.py:276
 msgid "You cannot delete someone else's tag."
 msgstr ""
 
-#: tags.py:296 tags.py:300
+#: tags.py:287 tags.py:291
 msgid "Available tags for this guild:"
 msgstr ""
 
-#: tags.py:300
+#: tags.py:291
 msgid "There are currently no tags! You can create one via `{prefix}tag create`"
 msgstr ""
 

@@ -16,10 +16,10 @@ Also thanks to Vex#3110 from the discord.py discord for the original regex code,
 I tweaked to to be a bit more generally applicable (and possibly more shit) :verycool:
 '''
 
-async def hasOwner(ctx):
-    return await ctx.bot.CommandChecks.hasOwner(ctx)
-async def hasPriviliged(ctx):
-    return await ctx.bot.CommandChecks.hasPriviliged(ctx)
+async def has_owner(ctx):
+    return await ctx.bot.custom_checks.has_owner(ctx)
+async def has_priviliged(ctx):
+    return await ctx.bot.custom_checks.has_priviliged(ctx)
 
 class Timer():
     def __init__(self, id, guild_id, user_id,event, channel_id=None, expires=None, notes=None):
@@ -38,16 +38,7 @@ class Timers(commands.Cog):
         self.bot = bot
         self.current_timer = None
         self.currenttask = None
-        if self.bot.lang == "de":
-            de = gettext.translation('timers', localedir=self.bot.localePath, languages=['de'])
-            de.install()
-            self._ = de.gettext
-        elif self.bot.lang == "en":
-            self._ = gettext.gettext
-        #Fallback to english
-        else :
-            logging.error("Invalid language, fallback to English.")
-            self._ = gettext.gettext
+        self._ = self.bot.get_localization('timers', self.bot.lang)
         self.wait_for_active_timers.start() # pylint: disable=<no-member>
 
 

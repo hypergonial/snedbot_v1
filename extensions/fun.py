@@ -15,24 +15,15 @@ from discord.ext import commands, menus
 from PIL import Image, ImageDraw, ImageFont
 
 
-async def hasOwner(ctx):
-    return await ctx.bot.CommandChecks.hasOwner(ctx)
-async def hasPriviliged(ctx):
-    return await ctx.bot.CommandChecks.hasPriviliged(ctx)
+async def has_owner(ctx):
+    return await ctx.bot.custom_checks.has_owner(ctx)
+async def has_priviliged(ctx):
+    return await ctx.bot.custom_checks.has_priviliged(ctx)
 
 class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        if self.bot.lang == "de":
-            de = gettext.translation('misc_commands', localedir=self.bot.localePath, languages=['de'])
-            de.install()
-            self._ = de.gettext
-        elif self.bot.lang == "en":
-            self._ = gettext.gettext
-        #Fallback to english
-        else :
-            logging.error("Invalid language, fallback to English.")
-            self._ = gettext.gettext
+        self._ = self.bot.get_localization('fun', self.bot.lang)
 
     @commands.command(aliases=["typerace"], help="See who can type the fastest!", description="Starts a typerace where you can see who can type the fastest. You can optionally specify the difficulty and the length of the race.\n\n**Difficulty options:**\n`easy` - 1-4 letter words\n`medium` - 5-8 letter words (Default)\n`hard` 9+ letter words\n\n**Length:**\n`1-20` - (Default: `5`) Specifies the amount of words in the typerace", usage="typeracer [difficulty] [length]")
     @commands.max_concurrency(1, per=commands.BucketType.channel,wait=False)
@@ -127,6 +118,12 @@ class Fun(commands.Cog):
         embed = discord.Embed(title="🦆 " + self._("I ducked it for you!"), description=self._("[Click me!]({link})").format(link=link), color=self.bot.embedBlue)
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
+
+    @commands.command(help="Boom!", description="Because who doesn't like blowing stuff up?", usage="boom")
+    async def boom(self, ctx):
+        embed=discord.Embed(title="💥 BOOM!", color=discord.Colour.gold())
+        embed.set_image(url='https://media1.tenor.com/images/ed5f49e5717a642812b019deb19ad264/tenor.gif')
+        await ctx.send(embed=embed)
     
     @commands.command(help='Shows a random fun fact.', description="Shows a fun fact. Why? Why not?\n\nFacts painstakingly gathered by `fusiongames#8748`.", usage="funfact")
     @commands.guild_only()
@@ -208,14 +205,14 @@ class Fun(commands.Cog):
     #Fun command, because yes. (Needs mod privilege as it can be abused for spamming)
     #This may or may not have been a test command for testing priviliges & permissions :P
     @commands.command(brief = "Deploys the duck army.", description="🦆 I am surprised you even need help for this...", usage=f"quack")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.guild_only()
     async def quack(self, ctx):
         await ctx.channel.send("🦆")
         await ctx.message.delete()
 
     @commands.command(brief="Repeats what you said.", description="Repeats the provided message, while deleting the command message.", usage="echo <message>")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.bot_has_permissions(manage_messages=True)
     async def echo(self, ctx, *, content):
         await ctx.message.delete()

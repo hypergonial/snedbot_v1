@@ -4,10 +4,10 @@ import logging
 import discord
 from discord.ext import commands
 
-async def hasOwner(ctx):
-    return await ctx.bot.CommandChecks.hasOwner(ctx)
-async def hasPriviliged(ctx):
-    return await ctx.bot.CommandChecks.hasPriviliged(ctx)
+async def has_owner(ctx):
+    return await ctx.bot.custom_checks.has_owner(ctx)
+async def has_priviliged(ctx):
+    return await ctx.bot.custom_checks.has_priviliged(ctx)
 
 class KeepOnTop(commands.Cog, name="Keep On Top"):
     
@@ -41,7 +41,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
 
 
     @commands.group(aliases=["ktp"], help="[BETA] Lists all keep-on-top messages. Subcommands can add/remove them.", description="Helps you list/manage keep-on-top messages. Keep-on-top messages are messages that are always the last message in the given channel, effectively being pinned.", usage="keepontop", invoke_without_command=True, case_insensitive=True)
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     async def keepontop(self, ctx):
         '''
         Lets you "pin" a message to the top of a channel by 
@@ -61,7 +61,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
                 await ctx.channel.send(embed=embed)
 
     @keepontop.command(name="add", aliases=["create", "new", "setup"], help="Initializes a setup to add a new keep-on-top message.", description="Initializes a setup to start configuring a new keep-on-top message. A server can have up to **3** keep-on-top messages. Takes no arguments.", usage="keepontop add")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     async def ktp_add(self, ctx):
 
         async with self.bot.pool.acquire() as con:
@@ -110,7 +110,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
             return
     
     @keepontop.command(name="delete", aliases=["del", "remove"], help="Removes a keep-on-top message.", description="Removes a keep-on-top message entry, stopping the bot from keeping it on top anymore. You can get the keep-on-top entry ID via the `keepontop` command.", usage="keepontop delete <ID>")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     async def ktp_delete(self, ctx, id:int):
         async with self.bot.pool.acquire() as con:
             results = await con.fetch('''SELECT * FROM ktp WHERE guild_id = $1 AND ktp_id = $2''', ctx.guild.id, id)

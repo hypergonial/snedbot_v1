@@ -9,29 +9,20 @@ import discord
 from discord.ext import commands
 
 
-async def hasOwner(ctx):
-    return await ctx.bot.CommandChecks.hasOwner(ctx)
-async def hasPriviliged(ctx):
-    return await ctx.bot.CommandChecks.hasPriviliged(ctx)
+async def has_owner(ctx):
+    return await ctx.bot.custom_checks.has_owner(ctx)
+async def has_priviliged(ctx):
+    return await ctx.bot.custom_checks.has_priviliged(ctx)
 
 class AdminCommands(commands.Cog, name="Admin Commands"):
     def __init__(self, bot):
 
         self.bot = bot
-        if self.bot.lang == "de":
-            de = gettext.translation('admin_commands', localedir=self.bot.localePath, languages=['de'])
-            de.install()
-            self._ = de.gettext
-        elif self.bot.lang == "en":
-            self._ = gettext.gettext
-        #Fallback to english
-        else :
-            logging.error("Invalid language, fallback to English.")
-            self._ = gettext.gettext
+        self._ = self.bot.get_localization('admin_commands', self.bot.lang)
 
     #Returns basically all information we know about a given member of this guild.
     @commands.command(help="Get information about a user.", description="Provides information about a specified user. If they are in the server, more detailed information will be provided.\n\n__Note:__ To receive information about users outside this server, you must use their ID.", usage=f"whois <userID|userMention|userName>")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.guild_only()
     async def whois(self, ctx, *, user : discord.User) :
         if user in ctx.guild.members:
@@ -52,7 +43,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
 
     #Command used for deleting a guild settings file
     @commands.command(help="Resets all settings for this guild.", description = "Resets all settings for this guild. Requires priviliged access and administrator permissions. Will also erase all tags, reminders, reaction roles and pending moderation actions. Irreversible.", usage="resetsettings")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def resetsettings(self, ctx):
@@ -94,7 +85,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
 
     #Display the current settings for this guild.
     @commands.command(help="Displays settings.", description="Displays the settings for the current guild.", usage="settings")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.guild_only()
     async def settings(self, ctx):
         embed=discord.Embed(title=f"⚙️ Settings for this guild:    ({ctx.guild.id})", description=f"```This command has been deprecated and will be removed in subsequent versions! Database values are no longer directly exposed to the user. Consider using the setup command for configuration.```", color=self.bot.embedBlue)
@@ -102,7 +93,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
 
 
     @commands.group(aliases=['privrole', 'botadmin', 'privroles', 'priviligedroles'],help="List all priviliged roles. Subcommands may add or remove priviliged roles.", description="Returns all priviliged roles on this server. You can optionally set or remove new roles as priviliged roles.", usage=f"priviligedrole", invoke_without_command=True, case_insensitive=True)
-    @commands.check(hasOwner)
+    @commands.check(has_owner)
     @commands.guild_only()
     async def priviligedrole(self, ctx) :
         '''
@@ -130,7 +121,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
 
         #Commands used to add and/or remove other roles from executing potentially unwanted things
     @priviligedrole.command(aliases=['set'], help="Add role to priviliged roles", description="Adds a role to the list of priviliged roles, allowing them to execute admin commands.", usage="priviligedrole add <rolename>")
-    @commands.check(hasOwner)
+    @commands.check(has_owner)
     @commands.guild_only()
     async def add(self, ctx, *, role:discord.Role):
         if role == None:
@@ -153,7 +144,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
 
 
     @priviligedrole.command(aliases=['rem', 'del', 'delete'], help="Remove role from priviliged roles.", description="Removes a role to the list of priviliged roles, revoking their permission to execute admin commands.", usage=f"priviligedrole remove <rolename>")
-    @commands.check(hasOwner)
+    @commands.check(has_owner)
     @commands.guild_only()
     async def remove(self, ctx, *, role:discord.Role):
         if role == None:
@@ -174,7 +165,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
 
 
     @commands.command(help="Sets the bot's nickname.", description="Sets the bot's nickname for this server. Provide `Null` or `None` to reset nickname.", usage="setnick <nickname>")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.guild_only()
     async def setnick(self, ctx, *, nick):
         '''
@@ -192,7 +183,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
 
     
     @commands.group(aliases=["prefixes"], help="Check the bot's prefixes. Subcommands of this command allow you to customize your prefix.", description="Check the bot's prefixes. You can also use `add/del` to add or remove a prefix. By adding a prefix you override the default one. The bot can have up to **5** custom prefixes per server. If you forget your prefix, mention the bot!", usage="prefix", invoke_without_command=True, case_insensitive=True)
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.guild_only()
     async def prefix(self, ctx):
         '''
@@ -208,11 +199,11 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed=discord.Embed(title="❕ " + self._("**Active prefixes on this server**"), description=desc, color=self.bot.embedBlue)
             await ctx.send(embed=embed)
         else:
-            embed=discord.Embed(title="❕ " + self._("**Active prefixes on this server**"), description=f"*#0* - `{self.bot.default_prefix}` *(Default)*", color=self.bot.embedBlue)
+            embed=discord.Embed(title="❕ " + self._("**Active prefixes on this server**"), description=f"*#0* - `{self.bot.DEFAULT_PREFIX}` *(Default)*", color=self.bot.embedBlue)
             await ctx.send(embed=embed)
     
     @prefix.command(name="add", aliases=["new"], help="Adds a new prefix.", description="Adds a prefix to the list of valid prefixes.", usage="prefix add <prefix>")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.guild_only()
     async def add_prefix(self, ctx, *, prefix:str):
         prefix = prefix.replace('"', '')
@@ -243,7 +234,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
                 await ctx.send(embed=embed)
 
     @prefix.command(name="del", aliases=["remove", "delete"], help="Removes a prefix.", description="Removes a prefix from the list of valid prefixes.", usage="prefix del <prefix>")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.guild_only()
     async def del_prefix(self, ctx, *, prefix:str):
         prefix = prefix.replace('"', '')
@@ -258,7 +249,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
 
                 prefixes = results[0].get('prefix')
                 prefixes.remove(prefix)
-                if len(prefixes) == 0: prefixes = self.bot.default_prefix #Fallback to default if all are deleted
+                if len(prefixes) == 0: prefixes = self.bot.DEFAULT_PREFIX #Fallback to default if all are deleted
                 self.bot.cache['prefix'][ctx.guild.id] = prefixes #Update the cache
 
                 embed = discord.Embed(title="✅ Prefix removed", description=f"Prefix **{prefix}** has been removed from the list of valid prefixes.\n\n**Note:** Removing all custom prefixes will re-enable the default prefix. If you forget your prefix, mention the bot!", color=self.bot.embedGreen)
@@ -270,7 +261,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
 
 
     @commands.group(help="Run a command while bypassing checks and cooldowns.", description="Run a specified command while bypassing any checks and cooldowns. Requires server administator permissions for the user to run this command alongside priviliged access.", usage="sudo <command> [arguments]")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.has_permissions(administrator=True)
     async def sudo(self, ctx, *, command):
         '''

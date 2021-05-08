@@ -4,10 +4,10 @@ import discord
 from discord.ext import commands
 
 
-async def hasOwner(ctx):
-    return await ctx.bot.CommandChecks.hasOwner(ctx)
-async def hasPriviliged(ctx):
-    return await ctx.bot.CommandChecks.hasPriviliged(ctx)
+async def has_owner(ctx):
+    return await ctx.bot.custom_checks.has_owner(ctx)
+async def has_priviliged(ctx):
+    return await ctx.bot.custom_checks.has_priviliged(ctx)
 
 
 class ReactionRoles(commands.Cog, name="Reaction Roles"):
@@ -68,7 +68,7 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
 
     @commands.group(aliases=["rr"], help="Manages reaction roles.", description="Lists all reaction roles set for this guild, if any. Subcommands allow you to remove or set additional ones.", usage="reactionrole", invoke_without_command=True, case_insensitive=True)
     @commands.guild_only()
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     async def reactionrole(self, ctx):
         async with ctx.bot.pool.acquire() as con:
             results = await con.fetch('''SELECT * FROM reaction_roles WHERE guild_id = $1''', ctx.guild.id)
@@ -85,7 +85,7 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
 
     @reactionrole.command(name="delete", aliases=["del", "remove"], help="Removes a reaction role by ID.", description="Removes a reaction role of the specified ID. You can get the ID via the `reactionrole` command.", usage="reactionrole delete <ID>")
     @commands.guild_only()
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     async def rr_delete(self, ctx, id:int):
         async with self.bot.pool.acquire() as con:
             results = await con.fetch('''SELECT * FROM reaction_roles WHERE guild_id = $1 AND reactionrole_id = $2''', ctx.guild.id, id)
@@ -106,7 +106,7 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
 
     @reactionrole.command(name="add", aliases=["new", "setup", "create"], help="Initializes setup to add a new reaction role.", description="Initializes a setup to help you add a new reaction role. You can also access this setup via the `setup` command. Takes no arguments.", usage="reactionrole add")
     @commands.guild_only()
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def rr_setup(self, ctx):
         '''

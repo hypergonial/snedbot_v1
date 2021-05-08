@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-05-06 22:52+0200\n"
+"POT-Creation-Date: 2021-05-08 12:58+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,55 +15,55 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: timers.py:235
+#: timers.py:226
 msgid "Reminder too long"
 msgstr ""
 
-#: timers.py:235
+#: timers.py:226
 msgid "Your reminder cannot exceed **1000** characters!"
 msgstr ""
 
-#: timers.py:244
+#: timers.py:235
 msgid "Your timeformat is invalid! Type `{prefix}help reminder` to see valid time formatting."
 msgstr ""
 
-#: timers.py:248
+#: timers.py:239
 msgid "Sorry, but that's a bit too far in the future."
 msgstr ""
 
-#: timers.py:255
+#: timers.py:246
 msgid "Reminder set"
 msgstr ""
 
-#: timers.py:255
+#: timers.py:246
 msgid "Reminder set for: `{time_year}-{time_month}-{time_day} {time_hour}:{time_minute} (UTC)`"
 msgstr ""
 
-#: timers.py:284
+#: timers.py:275
 msgid "You have no reminders. You can set one via `{prefix}reminder`!"
 msgstr ""
 
-#: timers.py:285
+#: timers.py:276
 msgid "Your reminders:"
 msgstr ""
 
-#: timers.py:296
+#: timers.py:287
 msgid "Reminder **{ID}** has been deleted."
 msgstr ""
 
-#: timers.py:296
+#: timers.py:287
 msgid "Reminder deleted"
 msgstr ""
 
-#: timers.py:304
+#: timers.py:295
 msgid "Cannot find reminder with ID **{ID}**."
 msgstr ""
 
-#: timers.py:304
+#: timers.py:295
 msgid "Reminder not found"
 msgstr ""
 
-#: timers.py:318
+#: timers.py:309
 msgid "{user}, your reminder:"
 msgstr ""
 

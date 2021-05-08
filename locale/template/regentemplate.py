@@ -40,6 +40,8 @@ else :
     print(f"fun.pot @ {BASE_DIR}")
     os.system(f'cmd /c "py -{py_ver} "{pygettextpy_path}" -d "{Path(BASE_DIR, "annoverse")}" annoverse.py"')
     print(f"annoverse.pot @ {BASE_DIR}")
+    os.system(f'cmd /c "py -{py_ver} "{pygettextpy_path}" -d "{Path(BASE_DIR, "help")}" help.py"')
+    print(f"help.pot @ {BASE_DIR}")
 
         
     print()

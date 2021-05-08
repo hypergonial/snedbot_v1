@@ -13,25 +13,10 @@ import psutil
 from discord.ext import commands
 
 
-async def hasOwner(ctx):
-    return await ctx.bot.CommandChecks.hasOwner(ctx)
-async def hasPriviliged(ctx):
-    return await ctx.bot.CommandChecks.hasPriviliged(ctx)
-
-
 class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     def __init__(self, bot):
         self.bot = bot
-        if self.bot.lang == "de":
-            de = gettext.translation('misc_commands', localedir=self.bot.localePath, languages=['de'])
-            de.install()
-            self._ = de.gettext
-        elif self.bot.lang == "en":
-            self._ = gettext.gettext
-        #Fallback to english
-        else :
-            logging.error("Invalid language, fallback to English.")
-            self._ = gettext.gettext
+        self._ = self.bot.get_localization('misc_commands', self.bot.lang)
         psutil.cpu_percent(interval=1) #We need to do this here so that subsequent CPU % calls will be non-blocking
 
     @commands.command(help="Displays a user's avatar.", description="Displays a user's avatar for your viewing (or stealing) pleasure.", usage=f"avatar <userID|userMention|userName>")

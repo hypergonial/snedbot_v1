@@ -9,25 +9,16 @@ import aiosqlite
 import discord
 from discord.ext import commands
 
-async def hasOwner(ctx):
-    return await ctx.bot.CommandChecks.hasOwner(ctx)
-async def hasPriviliged(ctx):
-    return await ctx.bot.CommandChecks.hasPriviliged(ctx)
+async def has_owner(ctx):
+    return await ctx.bot.custom_checks.has_owner(ctx)
+async def has_priviliged(ctx):
+    return await ctx.bot.custom_checks.has_priviliged(ctx)
 
 class Moderation(commands.Cog):
     def __init__(self, bot):
         
         self.bot = bot
-        if self.bot.lang == "de":
-            de = gettext.translation('moderation', localedir=self.bot.localePath, languages=['de'])
-            de.install()
-            self._ = de.gettext
-        elif self.bot.lang == "en":
-            self._ = gettext.gettext
-        #Fallback to english
-        else :
-            logging.error("Invalid language, fallback to English.")
-            self._ = gettext.gettext
+        self._ = self.bot.get_localization('moderation', self.bot.lang)
         self.spam_cd_mapping = commands.CooldownMapping.from_cooldown(8, 10, commands.BucketType.member)
         self.invite_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
         self.invite_mute_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
@@ -73,7 +64,7 @@ class Moderation(commands.Cog):
 
     #Warn a user & print it to logs, needs logs to be set up
     @commands.group(name="warn", help="Warns a user. Subcommands allow you to clear warnings.", aliases=["bonk"], description="Warns the user and logs it.", usage="warn <user> [reason]", invoke_without_command=True, case_insensitive=True)
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.guild_only()
     async def warn_cmd(self, ctx, offender:discord.Member, *, reason:str=None):
         '''
@@ -83,7 +74,7 @@ class Moderation(commands.Cog):
     
 
     @warn_cmd.command(name="clear", help="Clears all warnings from the specified user.", aliases=["clr"])
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.guild_only()
     async def warn_clr(self, ctx, offender:discord.Member, *, reason:str=None):
         '''
@@ -195,7 +186,7 @@ class Moderation(commands.Cog):
 
 
     @commands.command(name="mute", help="Mutes a user.", description="Mutes a user permanently (until unmuted). Logs the event if logging is set up.", usage="mute <user> [reason]")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def mute_cmd(self, ctx, offender:discord.Member, *, reason:str=None):
@@ -224,7 +215,7 @@ class Moderation(commands.Cog):
 
 
     @commands.command(name="unmute", help="Unmutes a user.", description="Unmutes a user. Logs the event if logging is set up.", usage="unmute <user> [reason]")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def unmute_cmd(self, ctx, offender:discord.Member, *, reason:str=None):
@@ -245,7 +236,7 @@ class Moderation(commands.Cog):
     
 
     @commands.command(help="Temporarily mutes a user.", description="Mutes a user for a specified duration. Logs the event if logging is set up.\n\n**Time formatting:**\n`s` or `second(s)`\n`m` or `minute(s)`\n`h` or `hour(s)`\n`d` or `day(s)`\n`w` or `week(s)`\n`M` or `month(s)`\n`Y` or `year(s)`\n\n**Example:** `tempmute @User -d 5minutes -r 'Being naughty'` or `tempmute @User 5d`\n**Note:** If your arguments contain spaces, you must wrap them in quotation marks.", usage="tempmute <user> -d <duration> -r [reason] OR tempmute <user> <duration>")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.guild_only()
     async def tempmute(self, ctx, offender:discord.Member, *, args):
@@ -314,7 +305,7 @@ class Moderation(commands.Cog):
     
 
     @commands.command(help="Bans a user.", description="Bans a user with an optional reason. Deletes the last 7 days worth of messages from the user.", usage="ban <user> [reason]")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
     @commands.guild_only()
@@ -360,7 +351,7 @@ class Moderation(commands.Cog):
 
 
     @commands.command(help="Unbans a user.", description="Unbans a user with an optional reason. Deletes the last 7 days worth of messages from the user.", usage="unban <user> [reason]")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
     @commands.guild_only()
@@ -395,7 +386,7 @@ class Moderation(commands.Cog):
     
 
     @commands.command(help="Temporarily bans a user.", description="Temporarily bans a user for the duration specified. Deletes the last 7 days worth of messages from the user.\n\n**Time formatting:**\n`s` or `second(s)`\n`m` or `minute(s)`\n`h` or `hour(s)`\n`d` or `day(s)`\n`w` or `week(s)`\n`M` or `month(s)`\n`Y` or `year(s)`\n\n**Example:** `tempban @User -d 5minutes -r 'Being naughty'` or `tempban @User 5d`\n**Note:** If your arguments contain spaces, you must wrap them in quotation marks.", usage="tempban <user> -d <duration> -r [reason] OR tempban <user> <duration>")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
     @commands.guild_only()
@@ -476,7 +467,7 @@ class Moderation(commands.Cog):
             return
 
     @commands.command(help="Softbans a user.", description="Bans a user then immediately unbans them, which means it will erase all messages from the user in the specified range.", usage="softban <user> [days-to-delete] [reason]")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(ban_members=True)
     @commands.guild_only()
@@ -528,7 +519,7 @@ class Moderation(commands.Cog):
             return
     
     @commands.command(help="Kicks a user.", description="Kicks a user with an optional reason. Deletes the last 7 days worth of messages from the user.", usage="kick <user> [reason]")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(kick_members=True)
     @commands.guild_only()
@@ -570,7 +561,7 @@ class Moderation(commands.Cog):
             return
     
     @commands.command(aliases=["bulkdelete", "bulkdel"], help="Deletes multiple messages at once.", description="Deletes up to 100 messages at once. Defaults to 5 messages. You can optionally specify a user whose messages will be purged.", usage="purge [limit] [user]")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
     @commands.guild_only()
@@ -593,7 +584,7 @@ class Moderation(commands.Cog):
         await ctx.send(embed=embed, delete_after=20.0)
     
     @commands.command(aliases=['clr'], help="Cleans up the bot's messages.", description="Delete up to 50 of the bot's own responses in this channel. Defaults to 5.", usage="clear [limit]")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.bot_has_permissions(manage_messages=True)
     async def clear(self, ctx, limit=5):
         if limit > 50:
@@ -610,13 +601,13 @@ class Moderation(commands.Cog):
         await ctx.send(embed=embed, delete_after=20.0)
 
     @commands.group(help="Controls raidmode for this server.", description="Controls raidmode for this server. Enabling raidmode will set auto-moderation to the highest level, and also sets the server verification level to `High`. Disabling sets it back to `Medium`.\n\n**Requires the following permissions for the bot:**\n`Manage Roles, Manage Messages, Manage Server, Kick Members, Ban Members`\n\nPlease ensure that the bot has all of those permissions, otherwise this command will not work properly.", usage="raidmode [on/off]", invoke_without_command=True, case_insensitive=True)
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.bot_has_permissions(manage_roles=True, manage_messages=True, ban_members=True, kick_members=True)
     async def raidmode(self, ctx):
         await ctx.send_help(ctx.command)
 
     @raidmode.command(name="on", aliases=["enable"], help="Enables raidmode.", description="Enables raidmode, setting auto-moderation to the highest setting, and server verification to `High`.")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.bot_has_permissions(manage_roles=True, manage_messages=True, ban_members=True, kick_members=True, manage_guild=True)
     @commands.has_permissions(ban_members=True, manage_messages=True)
     async def raidmode_on(self, ctx):
@@ -636,7 +627,7 @@ class Moderation(commands.Cog):
         await ctx.send(embed=embed)
 
     @raidmode.command(name="off", aliases=["disable"], help="Disables raidmode.", description="Disables raidmode, setting auto-moderation to the previous setting, and server verification to `Medium`.")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.bot_has_permissions(manage_roles=True, manage_messages=True, ban_members=True, kick_members=True, manage_guild=True)
     async def raidmode_off(self, ctx):
         async with self.bot.pool.acquire() as con:
@@ -670,7 +661,7 @@ class Moderation(commands.Cog):
         if not bot_perms.ban_members or not bot_perms.manage_roles or not bot_perms.manage_messages or not bot_perms.kick_members:
             return
 
-        if await hasPriviliged(ctx):
+        if await has_priviliged(ctx):
             return
 
         async with self.bot.pool.acquire() as con:
@@ -785,7 +776,7 @@ class Moderation(commands.Cog):
             db_user = await self.bot.global_config.get_user(message.author.id, message.guild.id)
             ctx = await self.bot.get_context(message)
 
-            if not db_user.is_muted and not await hasPriviliged(ctx) and not message.author.bot:
+            if not db_user.is_muted and not await has_priviliged(ctx) and not message.author.bot:
                 await self.automod_punish(ctx, offender=message.author, severity=2, reason="Spam")
         
 

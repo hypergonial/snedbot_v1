@@ -11,6 +11,8 @@ from discord.ext import commands
 class Logging(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.recently_edited = []
+        self.recently_deleted = []
 
 
     '''
@@ -67,10 +69,8 @@ class Logging(commands.Cog):
     @commands.Cog.listener()
     async def on_message_delete(self, message):
         #Guild-only, self ignored
-        if message.guild == None or message.author == self.bot.user :
+        if message.guild is None or message.author.bot:
             return
-        #Add it to the recently deleted so on_raw_message_delete will ignore this
-        self.bot.recentlyDeleted.append(message.id)
         #Then do info collection & dump
         moderator = None
         try:
@@ -88,28 +88,24 @@ class Logging(commands.Cog):
             contentfield = f"{message.content}\n//The message contained a file."
         if message.embeds:
             contentfield = contentfield + "\n//The message contained an embed."
-        if not message.author.bot:
-            if moderator != None: #If this was deleted by a mod
-                embed = discord.Embed(title=f"🗑️ Message deleted by Moderator", description=f"**Message author:** `{message.author} ({message.author.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{contentfield}```", color=self.bot.errorColor)
-                await self.log_elevated(embed, message.guild.id)
-            else:
-                #Logging channel
-                embed = discord.Embed(title=f"🗑️ Message deleted", description=f"**Message author:** `{message.author} ({message.author.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{contentfield}```", color=self.bot.errorColor)
-                await self.log_standard(embed, message.guild.id)
+
+        if moderator != None: #If this was deleted by a mod
+            embed = discord.Embed(title=f"🗑️ Message deleted by Moderator", description=f"**Message author:** `{message.author} ({message.author.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{contentfield}```", color=self.bot.errorColor)
+            await self.log_elevated(embed, message.guild.id)
+        else:
+            #Logging channel
+            embed = discord.Embed(title=f"🗑️ Message deleted", description=f"**Message author:** `{message.author} ({message.author.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{contentfield}```", color=self.bot.errorColor)
+            await self.log_standard(embed, message.guild.id)
 
     #Message editing logging
 
     #First, if the message was cached, provide detailed info
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
-        if after.guild == None :
-            return
-        #Do this check to avoid embed edits triggering log
-        if before.content == after.content:
-            self.bot.recentlyEdited.append(after.id)
+        if after.guild is None or before.content == after.content:
             return
         #Add it to the recently deleted so on_raw_message_edit will ignore this
-        self.bot.recentlyEdited.append(after.id)
+        self.recently_edited.append(after.id)
         #Then do info collection & dump
         if not after.author.bot:
             embed = discord.Embed(title=f"🖊️ Message edited", description=f"**Message author:** `{after.author} ({after.author.id})`\n**Channel:** {after.channel.mention}\n**Before:** ```{before.content}``` \n**After:** ```{after.content}```\n[Jump!]({after.jump_url})", color=self.bot.embedBlue)

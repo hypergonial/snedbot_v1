@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-05-06 22:52+0200\n"
+"POT-Creation-Date: 2021-05-08 12:58+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,53 +15,53 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: misc_commands.py:41
+#: misc_commands.py:26
 msgid "{member_name}'s avatar:"
 msgstr ""
 
-#: misc_commands.py:50
+#: misc_commands.py:35
 msgid "Latency: `{latency}ms`"
 msgstr ""
 
-#: misc_commands.py:77 misc_commands.py:82
+#: misc_commands.py:62 misc_commands.py:67
 msgid "Failed parsing arguments"
 msgstr ""
 
-#: misc_commands.py:77 misc_commands.py:111
+#: misc_commands.py:62 misc_commands.py:96
 msgid "**Exception:** ```{exception}```"
 msgstr ""
 
-#: misc_commands.py:82
+#: misc_commands.py:67
 msgid ""
 "**Exception:** ```SystemExit: {exception}```\n"
 "**Note:** If you are trying to pass multiple words as an argument, wrap them in quotation marks."
 msgstr ""
 
-#: misc_commands.py:87
+#: misc_commands.py:72
 msgid "Missing required argument"
 msgstr ""
 
-#: misc_commands.py:87
+#: misc_commands.py:72
 msgid "You are missing a required argument. Please check `{prefix}help embed` for command usage."
 msgstr ""
 
-#: misc_commands.py:96
+#: misc_commands.py:81
 msgid "For valid colors, see the [discord.py API reference](https://discordpy.readthedocs.io/en/latest/api.html#discord.Colour)"
 msgstr ""
 
-#: misc_commands.py:96
+#: misc_commands.py:81
 msgid "Invalid color"
 msgstr ""
 
-#: misc_commands.py:111
+#: misc_commands.py:96
 msgid "Failed parsing arguments."
 msgstr ""
 
-#: misc_commands.py:132
+#: misc_commands.py:117
 msgid "[Click here]({invite_url}) for an invite link!"
 msgstr ""
 
-#: misc_commands.py:142
+#: misc_commands.py:127
 msgid ""
 "**Name:** `{guild_name}`\n"
 "**ID:** `{guild_id}`\n"
@@ -74,15 +74,15 @@ msgid ""
 "**Nitro Boost level:** `{premium_tier}`"
 msgstr ""
 
-#: misc_commands.py:142
+#: misc_commands.py:127
 msgid "Server information"
 msgstr ""
 
-#: misc_commands.py:161
+#: misc_commands.py:146
 msgid "**Warnings:** `{warns}`"
 msgstr ""
 
-#: misc_commands.py:161
+#: misc_commands.py:146
 msgid "{user}'s warnings"
 msgstr ""
 

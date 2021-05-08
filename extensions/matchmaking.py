@@ -117,16 +117,7 @@ class Matchmaking(commands.Cog):
         self.bot = bot
         self.config = Matchmaking_Config(bot)
         self.listings = Listings(bot)
-        if self.bot.lang == "de":
-            de = gettext.translation('matchmaking', localedir=self.bot.localePath, languages=['de'])
-            de.install()
-            self._ = de.gettext
-        elif self.bot.lang == "en":
-            self._ = gettext.gettext
-        #Fallback to english
-        else :
-            logging.error("Invalid language, fallback to English.")
-            self._ = gettext.gettext
+        self._ = self.bot.get_localization('matchmaking', self.bot.lang)
         
         self.delExpiredListings.start() # pylint: disable=<no-member>
     

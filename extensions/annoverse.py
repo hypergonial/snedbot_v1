@@ -6,10 +6,10 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-async def hasOwner(ctx):
-    return await ctx.bot.CommandChecks.hasOwner(ctx)
-async def hasPriviliged(ctx):
-    return await ctx.bot.CommandChecks.hasPriviliged(ctx)
+async def has_owner(ctx):
+    return await ctx.bot.custom_checks.has_owner(ctx)
+async def has_priviliged(ctx):
+    return await ctx.bot.custom_checks.has_priviliged(ctx)
 def is_anno_guild(ctx):
     return ctx.guild.id in ctx.bot.anno_guilds
 
@@ -18,16 +18,7 @@ class Annoverse(commands.Cog):
         self.bot = bot
         self.annowiki_color = discord.Color.from_rgb(218, 166, 100)
 
-        if self.bot.lang == "de":
-            de = gettext.translation('admin_commands', localedir=self.bot.localePath, languages=['de'])
-            de.install()
-            self._ = de.gettext
-        elif self.bot.lang == "en":
-            self._ = gettext.gettext
-        #Fallback to english
-        else :
-            logging.error("Invalid language, fallback to English.")
-            self._ = gettext.gettext
+        self._ = self.bot.get_localization('annoverse', self.bot.lang)
 
     def cog_check(self,ctx):
         return is_anno_guild(ctx)

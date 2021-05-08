@@ -6,10 +6,10 @@ import discord
 from discord.ext import commands
 
 
-async def hasOwner(ctx):
-    return await ctx.bot.CommandChecks.hasOwner(ctx)
-async def hasPriviliged(ctx):
-    return await ctx.bot.CommandChecks.hasPriviliged(ctx)
+async def has_owner(ctx):
+    return await ctx.bot.custom_checks.has_owner(ctx)
+async def has_priviliged(ctx):
+    return await ctx.bot.custom_checks.has_priviliged(ctx)
 def is_anno_guild(ctx):
     return ctx.guild.id in ctx.bot.anno_guilds
 def is_whitelisted_guild(ctx):
@@ -26,7 +26,7 @@ class Setup(commands.Cog):
     #based on that, instead of the admin having to use !modify for every single value
     #TL;DR: fancy setup thing
     @commands.group(help="Starts bot configuration setups.", description = "Used to set up and configure different parts of the bot.", usage="setup <setuptype>", invoke_without_command=True, case_insensitive=True)
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def setup (self, ctx):
@@ -35,14 +35,14 @@ class Setup(commands.Cog):
         await ctx.send_help(ctx.command)
 
     @setup.command(help="Helps set up matchmaking")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.check(is_anno_guild)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def matchmaking(self, ctx):
     #This setup will set up the !matchmaking command to work properly.
-        extensions = self.bot.checkExtensions
-        if "Matchmaking" not in extensions :
+        cogs = await self.bot.current_cogs()
+        if "Matchmaking" not in cogs:
             embed=discord.Embed(title=self.bot.errorMissingModuleTitle, description="This setup requires the extension `matchmaking` to be active.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
@@ -108,7 +108,7 @@ class Setup(commands.Cog):
             return
 
     @setup.command(help="Helps set up a keep-on-top message, that will sticky a message on top of a channel at all times.", aliases=["keep-on-top"])
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.check(is_whitelisted_guild)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
@@ -121,12 +121,12 @@ class Setup(commands.Cog):
             return
         
     @setup.command(help="Helps you set up logging, and different logging levels.", aliases=["logs"])
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def logging(self, ctx):
-        extensions = self.bot.checkExtensions
-        if "Logging" not in extensions:
+        cogs = await self.bot.current_cogs()
+        if "Logging" not in cogs:
             embed=discord.Embed(title=self.bot.errorMissingModuleTitle, description="This setup requires the extension `userlog` to be active.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
@@ -175,12 +175,12 @@ class Setup(commands.Cog):
             return
 
     @setup.command(help="Helps you set up different parts of moderation.", aliases=["mod"])
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def moderation(self, ctx):
-        extensions = self.bot.checkExtensions
-        if "Moderation" not in extensions:
+        cogs = await self.bot.current_cogs()
+        if "Moderation" not in cogs:
             embed=discord.Embed(title=self.bot.errorMissingModuleTitle, description="This setup requires the extension `moderation` to be active.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
@@ -279,7 +279,7 @@ class Setup(commands.Cog):
             await ctx.channel.send(embed=embed)
 
     @setup.command(help="Helps you set up a reaction role.", description="Helps you set up a reaction role, the command for managing reaction roles is `reactionrole`.", aliases=["rr"], usage="setup reactionrole")
-    @commands.check(hasPriviliged)
+    @commands.check(has_priviliged)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def reaction_roles(self, ctx):

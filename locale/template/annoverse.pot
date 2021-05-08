@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-05-06 22:52+0200\n"
+"POT-Creation-Date: 2021-05-08 12:58+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,19 +15,19 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: annoverse.py:82
+#: annoverse.py:73
 msgid "This wiki is either not supported or does not exist!"
 msgstr ""
 
-#: annoverse.py:82
+#: annoverse.py:73
 msgid "Wiki does not exist or unsupported"
 msgstr ""
 
-#: annoverse.py:97 annoverse.py:111 annoverse.py:124 annoverse.py:137
+#: annoverse.py:88 annoverse.py:102 annoverse.py:115 annoverse.py:128
 msgid "Could not find anything for `{query}`!"
 msgstr ""
 
-#: annoverse.py:97 annoverse.py:111 annoverse.py:124 annoverse.py:137
+#: annoverse.py:88 annoverse.py:102 annoverse.py:115 annoverse.py:128
 msgid "Not found"
 msgstr ""
 
