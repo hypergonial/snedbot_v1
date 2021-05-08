@@ -1,4 +1,4 @@
-# Sned v4.2.0
+# Sned v4.3.0
 
 ## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  originally made for matchmaking and other purposes on the Annoverse discord guild.
 
@@ -12,8 +12,8 @@
  - Fun commands (e.g: coinflipping, cat pictures, typeracing, reminders etc..)
 
 ### Commands & usage:
- - For a full list of commands use `!help`
- - If you changed the prefix of the bot but forgot it, mention the bot. (Default prefix is `!`)
+ - For a full list of commands use `sned help`
+ - If you changed the prefix of the bot but forgot it, mention the bot. (Default prefix is `sned `)
 
 ### How to set up:
 If you don't absolutely need this bot, I would prefer if you don't create an instance of it. Instead, join the Annoverse discord, or reach out to me directly. Regardless, here is how you set it up:
