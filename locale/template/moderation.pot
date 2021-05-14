@@ -5,98 +5,98 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-05-08 12:58+0200\n"
+"POT-Creation-Date: 2021-05-14 23:29+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=cp1252\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: moderation.py:53
+#: moderation.py:52
 msgid "**{offender}** has been warned by **{moderator}**."
 msgstr ""
 
-#: moderation.py:53 moderation.py:56
+#: moderation.py:52 moderation.py:55
 msgid "Warning issued"
 msgstr ""
 
-#: moderation.py:56
+#: moderation.py:55
 msgid ""
 "**{offender}** has been warned by **{moderator}**.\n"
 "**Reason:** ```{reason}```"
 msgstr ""
 
-#: moderation.py:87
+#: moderation.py:86
 msgid "**{offender}**'s warnings have been cleared."
 msgstr ""
 
-#: moderation.py:87 moderation.py:90
+#: moderation.py:86 moderation.py:89
 msgid "Warnings cleared"
 msgstr ""
 
-#: moderation.py:90
+#: moderation.py:89
 msgid ""
 "**{offender}**'s warnings have been cleared.\n"
 "**Reason:** ```{reason}```"
 msgstr ""
 
-#: moderation.py:199
+#: moderation.py:198
 msgid "You cannot mute yourself"
 msgstr ""
 
-#: moderation.py:199 moderation.py:248
+#: moderation.py:198 moderation.py:248
 msgid "You cannot mute your own account."
 msgstr ""
 
-#: moderation.py:206 moderation.py:266
+#: moderation.py:205 moderation.py:266
 msgid "**{offender}** is already muted."
 msgstr ""
 
-#: moderation.py:206 moderation.py:266
+#: moderation.py:205 moderation.py:266
 msgid "Already muted"
 msgstr ""
 
-#: moderation.py:209 moderation.py:230 moderation.py:272
+#: moderation.py:208 moderation.py:229 moderation.py:272
 msgid "Mute role error"
 msgstr ""
 
-#: moderation.py:209 moderation.py:272
+#: moderation.py:208 moderation.py:272
 msgid "Unable to mute user. Check if you have a mute role configured, and if the bot has permissions to add said role."
 msgstr ""
 
-#: moderation.py:213
+#: moderation.py:212
 msgid ""
 "**{offender}** has been muted.\n"
 "**Reason:** ```{reason}```"
 msgstr ""
 
-#: moderation.py:213 moderation.py:278 moderation.py:697 moderation.py:711
+#: moderation.py:212 moderation.py:278 moderation.py:697 moderation.py:711
 #: moderation.py:723
 msgid "User muted"
 msgstr ""
 
-#: moderation.py:227
+#: moderation.py:226
 msgid "**{offender} is not muted."
 msgstr ""
 
-#: moderation.py:227
+#: moderation.py:226
 msgid "Not muted"
 msgstr ""
 
-#: moderation.py:230
+#: moderation.py:229
 msgid "Unable to unmute user. Check if you have a mute role configured, and if the bot has permissions to remove said role."
 msgstr ""
 
-#: moderation.py:234
+#: moderation.py:233
 msgid ""
 "**{offender}** has unbeen unmuted.\n"
 "**Reason:** ```{reason}```"
 msgstr ""
 
-#: moderation.py:234
+#: moderation.py:233
 msgid "User unmuted"
 msgstr ""
 

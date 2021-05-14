@@ -5,155 +5,207 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-05-08 12:58+0200\n"
+"POT-Creation-Date: 2021-05-14 23:29+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=cp1252\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
 
 
-#: tags.py:102 tags.py:139 tags.py:241
+#: tags.py:168 tags.py:205 tags.py:307
 msgid "Cannot find tag by that name."
 msgstr ""
 
-#: tags.py:102 tags.py:139 tags.py:241
+#: tags.py:168 tags.py:205 tags.py:307
 msgid "Error: Unknown tag"
 msgstr ""
 
-#: tags.py:116
+#: tags.py:182
 msgid "Error: Tag exists"
 msgstr ""
 
-#: tags.py:116
+#: tags.py:182
 msgid "This tag already exists. If the owner of this tag is no longer in the server, you can try doing `{prefix}tag claim {name}`"
 msgstr ""
 
-#: tags.py:122
+#: tags.py:188
 msgid "Tag created!"
 msgstr ""
 
-#: tags.py:122 tags.py:172
+#: tags.py:188 tags.py:238
 msgid "You can now call it with `{prefix}tag {name}`"
 msgstr ""
 
-#: tags.py:135
+#: tags.py:201
 msgid ""
 "**Aliases:** `{aliases}`\n"
 "**Tag owner:** {owner}\n"
 msgstr ""
 
-#: tags.py:135
+#: tags.py:201
 msgid "Tag Info: {tag_name}"
 msgstr ""
 
-#: tags.py:149
+#: tags.py:215
 msgid "A tag or alias is already created with the same name."
 msgstr ""
 
-#: tags.py:149
+#: tags.py:215
 msgid "Error: Already taken"
 msgstr ""
 
-#: tags.py:164
+#: tags.py:230
 msgid "Error: Too many aliases"
 msgstr ""
 
-#: tags.py:164
+#: tags.py:230
 msgid "Tag `{tag}` can only have up to **5** aliases."
 msgstr ""
 
-#: tags.py:172
+#: tags.py:238
 msgid "Alias created"
 msgstr ""
 
-#: tags.py:177
+#: tags.py:243
 msgid "Error: Duplicate alias"
 msgstr ""
 
-#: tags.py:177
+#: tags.py:243
 msgid "Tag `{tag}` already has an alias called `{alias}`."
 msgstr ""
 
-#: tags.py:181 tags.py:206 tags.py:223 tags.py:261
+#: tags.py:247 tags.py:272 tags.py:289 tags.py:327
 msgid "Error: Invalid tag"
 msgstr ""
 
-#: tags.py:181 tags.py:206 tags.py:223 tags.py:261
+#: tags.py:247 tags.py:272 tags.py:289 tags.py:327
 msgid "You either do not own this tag or it does not exist."
 msgstr ""
 
-#: tags.py:198
+#: tags.py:264
 msgid "Alias `{alias}` for tag `{name}` has been deleted."
 msgstr ""
 
-#: tags.py:198
+#: tags.py:264
 msgid "Alias deleted"
 msgstr ""
 
-#: tags.py:202
+#: tags.py:268
 msgid "Error: Unknown alias"
 msgstr ""
 
-#: tags.py:202
+#: tags.py:268
 msgid "Tag `{tag}` does not have an alias called `{alias}`."
 msgstr ""
 
-#: tags.py:219
+#: tags.py:285
 msgid "Tag `{name}`'s ownership was successfully transferred to {receiver}"
 msgstr ""
 
-#: tags.py:219
+#: tags.py:285
 msgid "Tag transferred"
 msgstr ""
 
-#: tags.py:237
+#: tags.py:303
 msgid "Tag `{name}` now belongs to you."
 msgstr ""
 
-#: tags.py:237
+#: tags.py:303
 msgid "Tag claimed"
 msgstr ""
 
-#: tags.py:245
+#: tags.py:311
 msgid "Error: Not owned"
 msgstr ""
 
-#: tags.py:245
+#: tags.py:311
 msgid "Tag owner is still in the server. You can only claim tags that have been abandoned."
 msgstr ""
 
-#: tags.py:257
+#: tags.py:323
 msgid "Tag `{name}` has been successfully edited."
 msgstr ""
 
-#: tags.py:257
+#: tags.py:323
 msgid "Tag edited"
 msgstr ""
 
-#: tags.py:272
+#: tags.py:338
 msgid "Tag `{name}` has been deleted."
 msgstr ""
 
-#: tags.py:272
+#: tags.py:338
 msgid "Tag deleted"
 msgstr ""
 
-#: tags.py:276
+#: tags.py:342
 msgid "Error: Tag not owned"
 msgstr ""
 
-#: tags.py:276
+#: tags.py:342
 msgid "You cannot delete someone else's tag."
 msgstr ""
 
-#: tags.py:287 tags.py:291
+#: tags.py:357
+msgid "Error: Tag not found"
+msgstr ""
+
+#: tags.py:357
+msgid "This tag either does not exist in the origin server, or the bot is not a member of this server."
+msgstr ""
+
+#: tags.py:360
+msgid "Error: Tag already exists"
+msgstr ""
+
+#: tags.py:360
+msgid "This tag already exists on this server. Try running `{prefix}tag delete {name}`"
+msgstr ""
+
+#: tags.py:363
+msgid "Tag `{name}` has been successfully imported from **{guild}**."
+msgstr ""
+
+#: tags.py:363
+msgid "Tag imported"
+msgstr ""
+
+#: tags.py:379
+msgid ""
+"An import error occurred.\n"
+"**Error:** ```{error}```"
+msgstr ""
+
+#: tags.py:379
+msgid "Error: Tag import error"
+msgstr ""
+
+#: tags.py:382
+msgid "All tags have been successfully imported from **{guild}** with strategy **{strategy}**."
+msgstr ""
+
+#: tags.py:382
+msgid "Tags imported"
+msgstr ""
+
+#: tags.py:385
+msgid "Error: Invalid import strategy"
+msgstr ""
+
+#: tags.py:385
+msgid ""
+"Your import strategy has not been specified or is invalid.\n"
+"You **must** specify an import strategy in case of a bulk-import."
+msgstr ""
+
+#: tags.py:395 tags.py:399
 msgid "Available tags for this guild:"
 msgstr ""
 
-#: tags.py:291
+#: tags.py:399
 msgid "There are currently no tags! You can create one via `{prefix}tag create`"
 msgstr ""
 

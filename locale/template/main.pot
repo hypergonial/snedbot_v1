@@ -5,12 +5,12 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2021-05-08 12:58+0200\n"
+"POT-Creation-Date: 2021-05-14 23:29+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=cp1252\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
 
@@ -84,7 +84,7 @@ msgid "You have provided more arguments than what `{prefix}{command_name}` can t
 msgstr ""
 
 #: main.py:328
-msgid "Error: Timed out."
+msgid "Error: Timed out"
 msgstr ""
 
 #: main.py:329
@@ -92,7 +92,7 @@ msgid "Your session has expired. Execute the command again!"
 msgstr ""
 
 #: main.py:330
-msgid "Error: Invalid data entered."
+msgid "Error: Invalid data entered"
 msgstr ""
 
 #: main.py:331 main.py:333 main.py:335
@@ -100,15 +100,15 @@ msgid "Operation cancelled."
 msgstr ""
 
 #: main.py:332
-msgid "Error: Invalid reaction entered."
+msgid "Error: Invalid reaction entered"
 msgstr ""
 
 #: main.py:334
-msgid "Error: Invalid format entered."
+msgid "Error: Invalid format entered"
 msgstr ""
 
 #: main.py:336
-msgid "Error: Insufficient permissions."
+msgid "Error: Insufficient permissions"
 msgstr ""
 
 #: main.py:337
@@ -118,15 +118,15 @@ msgid ""
 msgstr ""
 
 #: main.py:338
-msgid "Error: This command is on cooldown."
+msgid "Error: This command is on cooldown"
 msgstr ""
 
 #: main.py:339
-msgid "Error: Missing module."
+msgid "Error: Missing module"
 msgstr ""
 
 #: main.py:340
-msgid "This operation is missing a module."
+msgid "This operation is missing a module"
 msgstr ""
 
 #: main.py:341
@@ -138,7 +138,7 @@ msgid "You have reached the maximum amount of instances for this command."
 msgstr ""
 
 #: main.py:345
-msgid "Warning: Invalid data entered."
+msgid "Warning: Invalid data entered"
 msgstr ""
 
 #: main.py:346
@@ -146,7 +146,7 @@ msgid "Please check command usage."
 msgstr ""
 
 #: main.py:347
-msgid "Warning: Invalid reaction entered."
+msgid "Warning: Invalid reaction entered"
 msgstr ""
 
 #: main.py:348
@@ -154,7 +154,7 @@ msgid "Please enter a valid reaction."
 msgstr ""
 
 #: main.py:349
-msgid "Warning: Invalid format entered."
+msgid "Warning: Invalid format entered"
 msgstr ""
 
 #: main.py:350
