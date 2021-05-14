@@ -1,0 +1,8 @@
+Changes & additions:
+ -
+
+Bugfixes:
+ -
+
+Ideas:
+ - Add tag migrate command to migrate tags from other guilds
