@@ -5,7 +5,6 @@ import logging
 import shlex
 import re
 
-import aiosqlite
 import discord
 from discord.ext import commands
 
@@ -244,6 +243,7 @@ class Moderation(commands.Cog):
         Temporarily mutes a memeber, assigning them a Muted role defined in the settings
         Uses userlog extension to log the event and timers to count the time & unmute on schedule.
         '''
+        await ctx.channel.trigger_typing()
         if offender.id == ctx.author.id:
             embed=discord.Embed(title="❌ " + self._("You cannot mute yourself."), description=self._("You cannot mute your own account."), color=self.bot.errorColor)
             await ctx.send(embed=embed)

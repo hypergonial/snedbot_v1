@@ -22,6 +22,19 @@ class Tag:
     tag_content:str
 
 
+class TagAlreadyExists(Exception):
+    '''
+    Raised when a tag is trying to get created but already exists
+    '''
+    pass
+
+class TagNotFound(Exception):
+    '''
+    Raised when a tag is not found, although most functions just return None when this happens
+    '''
+    pass
+
+
 class TagHandler():
     '''
     A class for common database operations regarding tags
@@ -74,7 +87,60 @@ class TagHandler():
         async with self.bot.pool.acquire() as con:
             await con.execute('''DELETE FROM tags WHERE tag_name = $1 AND guild_id = $2''', tag_name, guild_id)
     
+    async def migrate(self, origin_id:int, destination_id:int, invoker_id:int, tag_name:str):
+        '''
+        Migrates a tag from one guild to another.
+        '''
+        dest_tag = await self.get(tag_name, destination_id)
+        if not dest_tag:
+            tag = await self.get(tag_name, origin_id)
+            if tag:
+                tag.guild_id = destination_id #Change it's ID so it belongs to the new guild
+                tag.tag_owner_id = invoker_id #New owner is whoever imported the tag
+                await self.create(tag)
+            else:
+                raise TagNotFound('This tag does not exist at origin, cannot migrate.')
+        else:
+            raise TagAlreadyExists('This tag already exists at destination, cannot migrate.')
 
+    async def migrate_all(self, origin_id:int, destination_id:int, invoker_id:int, strategy:str):
+        '''
+        Migrates all tags from one server to a different one. 'strategy' defines overriding behaviour.
+
+        override - Override all tags on the destination server.
+        keep - Keep conflicting tags in the destination server.
+
+        Note: Migration of all tags does not migrate aliases.
+        '''
+        tags = await self.get_all(origin_id)
+        tags_unpacked = []
+        for tag in tags:
+            '''
+            Unpack tag objects into a 2D list that contains all the info required about them,
+            for easy insertion into the database.
+            '''
+            tag_unpacked = [destination_id, tag.tag_name, invoker_id, None, tag.tag_content]
+            tags_unpacked.append(tag_unpacked)
+
+        if strategy == "override":
+            async with self.bot.pool.acquire() as con:
+                await con.executemany('''
+                INSERT INTO tags (guild_id, tag_name, tag_owner_id, tag_aliases, tag_content)
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (guild_id, tag_name) DO
+                UPDATE SET tag_owner_id=$3, tag_aliases=$4, tag_content = $5''', 
+                tags_unpacked)
+        elif strategy == "keep":
+            async with self.bot.pool.acquire() as con:
+                await con.executemany('''
+                INSERT INTO tags (guild_id, tag_name, tag_owner_id, tag_aliases, tag_content)
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (guild_id, tag_name) DO
+                NOTHING''', 
+                tags_unpacked)
+        else:
+            raise ValueError('Invalid strategy specified.')
+    
 
 class Tags(commands.Cog):
     def __init__(self, bot):
@@ -275,6 +341,48 @@ class Tags(commands.Cog):
         else:
             embed=discord.Embed(title="❌ " + self._("Error: Tag not owned"), description=self._("You cannot delete someone else's tag."), color=self.bot.errorColor)
             embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+            await ctx.send(embed=embed)
+
+    @tag.group(name="import", help="Imports a tag from a different server.", description="Imports a tag from a different server. You must specify the ID of the server you wish to import the tag from.\nUse the `bulk` subcommand to import all tags from a given server.", usage="tag import <tag_name> <origin_ID>", invoke_without_command=True, case_insensitive=True)
+    @commands.guild_only()
+    @commands.is_owner()
+    async def migrate_in(self, ctx, name:str, origin_id:int):
+        '''
+        Move a tag from a specified guild to this guild. In case of conflict, prompts the user to delete the tag.
+        '''
+        await ctx.channel.trigger_typing()
+        try:
+            await self.tag_handler.migrate(origin_id, ctx.guild.id, ctx.author.id, name)
+        except TagNotFound:
+            embed=discord.Embed(title="❌ " + self._("Error: Tag not found"), description=self._("This tag either does not exist in the origin server, or the bot is not a member of this server."), color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+        except TagAlreadyExists:
+            embed=discord.Embed(title="❌ " + self._("Error: Tag already exists"), description=self._("This tag already exists on this server. Try running `{prefix}tag delete {name}`").format(prefix=ctx.prefix, name=name), color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(title="✅ " + self._("Tag imported"), description=self._("Tag `{name}` has been successfully imported from **{guild}**.").format(name=name.lower(), guild=self.bot.get_guild(origin_id).name), color=self.bot.embedGreen)
+            await ctx.send(embed=embed)
+    
+    @migrate_in.command(name="bulk", help="Tries importing all tags from a different server.", description="Tries importing all tags from a different server. You must specify the ID of the server you wish to import the tags from.\nAlso specify the strategy:\n`override` - Override existing tags on this server with imported ones\n`keep` - Keep existing tags in event of a conflict.", usage="tag import bulk <origin_ID> <strategy>")
+    @commands.guild_only()
+    @commands.is_owner()
+    async def migrate_in_bulk(self, ctx, origin_id:int, strategy:str=None):
+        '''
+        Tries moving all tags from a specified guild to this guild. Determines what happens in the event of a conflict,
+        depending on the strategy selected by the user.
+        See strategies in TagHandler.migrate_all() for more.
+        '''
+        if strategy and strategy in ["keep", "override"]:
+            try:
+                await self.tag_handler.migrate_all(origin_id, ctx.guild.id, ctx.author.id, strategy)
+            except Exception as error:
+                embed=discord.Embed(title="❌ " + self._("Error: Tag import error"), description=self._("An import error occurred.\n**Error:** ```{error}```").format(error=error), color=self.bot.errorColor)
+                await ctx.send(embed=embed)
+            else:
+                embed = discord.Embed(title="✅ " + self._("Tags imported"), description=self._("All tags have been successfully imported from **{guild}** with strategy **{strategy}**.").format(guild=self.bot.get_guild(origin_id).name, strategy=strategy), color=self.bot.embedGreen)
+                await ctx.send(embed=embed)
+        else:
+            embed=discord.Embed(title="❌ " + self._("Error: Invalid import strategy"), description=self._("Your import strategy has not been specified or is invalid.\nYou **must** specify an import strategy in case of a bulk-import."), color=self.bot.errorColor)
             await ctx.send(embed=embed)
 
     @tag.command(name="list", help="Displays all the tags you can call.", description="Shows a list of all available tags in this server.", usage="tag list")

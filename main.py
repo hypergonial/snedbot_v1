@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 #Language
 lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
-EXPERIMENTAL = False
+EXPERIMENTAL = True
 #Version of the bot
 current_version = "4.3.0"
 #Loading token from .env file. If this file does not exist, nothing will work.
@@ -325,28 +325,28 @@ This contains strings for common error/warn msgs.
 '''
 #Errors:
 bot.errorColor = 0xff0000
-bot.errorTimeoutTitle = "🕘 " + _("Error: Timed out.")
+bot.errorTimeoutTitle = "🕘 " + _("Error: Timed out")
 bot.errorTimeoutDesc = _("Your session has expired. Execute the command again!")
-bot.errorDataTitle = "❌ " + _("Error: Invalid data entered.")
+bot.errorDataTitle = "❌ " + _("Error: Invalid data entered")
 bot.errorDataDesc = _("Operation cancelled.")
-bot.errorEmojiTitle = "❌ " + _("Error: Invalid reaction entered.")
+bot.errorEmojiTitle = "❌ " + _("Error: Invalid reaction entered")
 bot.errorEmojiDesc = _("Operation cancelled.")
-bot.errorFormatTitle = "❌ " + _("Error: Invalid format entered.")
+bot.errorFormatTitle = "❌ " + _("Error: Invalid format entered")
 bot.errorFormatDesc = _("Operation cancelled.")
-bot.errorCheckFailTitle = "❌ " + _("Error: Insufficient permissions.")
+bot.errorCheckFailTitle = "❌ " + _("Error: Insufficient permissions")
 bot.errorCheckFailDesc = _("You did not meet the checks to execute this command. This could also be caused by incorrect configuration. \nType `{prefix}help` for a list of available commands.")
-bot.errorCooldownTitle = "🕘 " + _("Error: This command is on cooldown.")
-bot.errorMissingModuleTitle = "❌ " + _("Error: Missing module.")
-bot.errorMissingModuleDesc = _("This operation is missing a module.")
+bot.errorCooldownTitle = "🕘 " + _("Error: This command is on cooldown")
+bot.errorMissingModuleTitle = "❌ " + _("Error: Missing module")
+bot.errorMissingModuleDesc = _("This operation is missing a module")
 bot.errorMaxConcurrencyReachedTitle = "❌ " + _("Error: Max concurrency reached!")
 bot.errorMaxConcurrencyReachedDesc= _("You have reached the maximum amount of instances for this command.")
 #Warns:
 bot.warnColor = 0xffcc4d
-bot.warnDataTitle = "⚠️ " + _("Warning: Invalid data entered.")
+bot.warnDataTitle = "⚠️ " + _("Warning: Invalid data entered")
 bot.warnDataDesc = _("Please check command usage.")
-bot.warnEmojiTitle = "⚠️ " + _("Warning: Invalid reaction entered.")
+bot.warnEmojiTitle = "⚠️ " + _("Warning: Invalid reaction entered")
 bot.warnEmojiDesc = _("Please enter a valid reaction.")
-bot.warnFormatTitle = "⚠️ " + _("Warning: Invalid format entered.")
+bot.warnFormatTitle = "⚠️ " + _("Warning: Invalid format entered")
 bot.warnFormatDesc = _("Please try entering valid data.")
 bot.requestFooter = _("Requested by {user_name}#{discrim}")
 bot.unknownCMDstr = "❓ " + _("Unknown command!")
