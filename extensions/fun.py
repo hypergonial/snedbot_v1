@@ -218,7 +218,7 @@ class Fun(commands.Cog):
         await ctx.message.delete()
         await ctx.send(content=content)
 
-    @echo.command(name="to", help="Repeats what you said in a different channel.", description="Repeats the provided message in a given channel, while deleting the command message.", usage="echo <channel> <message>")
+    @echo.command(name="to", help="Repeats what you said in a different channel.", description="Repeats the provided message in a given channel, while deleting the command message.", usage="echo to <channel> <message>")
     @commands.check(has_priviliged)
     @commands.bot_has_permissions(manage_messages=True)
     async def echo_to(self, ctx, channel:discord.TextChannel, *, content:str):
@@ -233,7 +233,7 @@ class Fun(commands.Cog):
         embed.set_image(url=emoji.url)
         await ctx.send(embed=embed)
         
-        
+
 def setup(bot):
     logging.info("Adding cog: Fun...")
     bot.add_cog(Fun(bot))
