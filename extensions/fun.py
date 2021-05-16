@@ -211,13 +211,20 @@ class Fun(commands.Cog):
         await ctx.channel.send("🦆")
         await ctx.message.delete()
 
-    @commands.command(brief="Repeats what you said.", description="Repeats the provided message, while deleting the command message.", usage="echo <message>")
+    @commands.group(brief="Repeats what you said.", description="Repeats the provided message, while deleting the command message.", usage="echo <message>", invoke_without_command=True, case_insensitive=True)
     @commands.check(has_priviliged)
     @commands.bot_has_permissions(manage_messages=True)
-    async def echo(self, ctx, *, content):
+    async def echo(self, ctx, *, content:str):
         await ctx.message.delete()
         await ctx.send(content=content)
-    
+
+    @echo.command(name="to", help="Repeats what you said in a different channel.", description="Repeats the provided message in a given channel, while deleting the command message.", usage="echo <channel> <message>")
+    @commands.check(has_priviliged)
+    @commands.bot_has_permissions(manage_messages=True)
+    async def echo_to(self, ctx, channel:discord.TextChannel, *, content:str):
+        await ctx.message.delete()
+        await channel.send(content=content)
+
     @commands.command(aliases=["bigmoji"],brief="Returns a jumbo-sized emoji.", description="Converts an emoji into it's jumbo-sized variant. Only supports custom emojies. No, the recipe is private.", usage="jumbo <emoji>")
     @commands.guild_only()
     async def jumbo(self, ctx, emoji : discord.PartialEmoji):
@@ -226,8 +233,7 @@ class Fun(commands.Cog):
         embed.set_image(url=emoji.url)
         await ctx.send(embed=embed)
         
-    
-
+        
 def setup(bot):
     logging.info("Adding cog: Fun...")
     bot.add_cog(Fun(bot))
