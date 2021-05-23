@@ -257,9 +257,9 @@ class Logging(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member):
         type = "standard"
+        moderator = "Unknown"
+        reason = "Error retrieving data from audit logs!"
         try:
-            moderator = "Undefined"
-            reason = "Not specified"
             async for entry in member.guild.audit_logs():
                 if entry.action == discord.AuditLogAction.kick:
                     if entry.target == member :
@@ -283,17 +283,11 @@ class Logging(commands.Cog):
             await self.log_standard(embed, member.guild.id)
         #If we did
         elif type == "kick" :
-            if entry.reason != None :
-                embed = discord.Embed(title=f"🚪👈 User was kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
-            else :
-                embed = discord.Embed(title=f"🚪👈 User was kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```Not specified```", color=self.bot.errorColor)
+            embed = discord.Embed(title=f"🚪👈 User was kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
             await self.log_elevated(embed, member.guild.id)
         
         elif type == "ban":
-            if entry.reason != None:
-                embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
-            else :
-                embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```Not specified```", color=self.bot.errorColor)
+            embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
             await self.log_elevated(embed, member.guild.id)
 
                 
