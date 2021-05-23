@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 #Language
 lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
-EXPERIMENTAL = True
+EXPERIMENTAL = False
 #Version of the bot
 current_version = "4.3.3"
 #Loading token from .env file. If this file does not exist, nothing will work.
