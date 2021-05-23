@@ -236,26 +236,6 @@ class Logging(commands.Cog):
         embed = discord.Embed(title=f"🖊️ Guild updated", description=f"Guild settings have been updated by `{moderator}`.", color=self.bot.embedBlue)
         await self.log_elevated(embed, after.id)
 
-    @commands.Cog.listener()
-    async def on_member_ban(self, guild, user):
-        try:
-            moderator = "Undefined"
-            reason = "Not specified"
-            async for entry in guild.audit_logs():
-                if entry.target == user and entry.action == discord.AuditLogAction.ban:
-                    moderator = entry.user
-                    reason = entry.reason
-                    break
-                else:
-                    break
-        except discord.Forbidden:
-            return
-        if entry.reason != None:
-            embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
-        else :
-            embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:**```Not specified```", color=self.bot.errorColor)
-        await self.log_elevated(embed, guild.id)
-
     
     @commands.Cog.listener()
     async def on_member_unban(self, guild, user):
@@ -273,8 +253,10 @@ class Logging(commands.Cog):
         embed = discord.Embed(title=f"🔨 User unbanned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:** ```{reason}```", color=self.bot.embedGreen)
         await self.log_elevated(embed, guild.id)
 
+
     @commands.Cog.listener()
     async def on_member_remove(self, member):
+        type = "standard"
         try:
             moderator = "Undefined"
             reason = "Not specified"
@@ -283,22 +265,37 @@ class Logging(commands.Cog):
                     if entry.target == member :
                         moderator = entry.user
                         reason = entry.reason
+                        type = "kick"
                     break
+                elif entry.action == discord.AuditLogAction.ban:
+                    if entry.target == member :
+                        moderator = entry.user
+                        reason = entry.reason
+                        type = "ban"
                 else :
                     break
         except discord.Forbidden:
             pass
+
         #If we have not found a kick auditlog
-        if moderator == "Undefined":
+        if type == "standard":
             embed = discord.Embed(title=f"🚪 User left", description=f"**User:** `{member} ({member.id})`\n**User count:** `{member.guild.member_count}`", color=self.bot.errorColor)
             await self.log_standard(embed, member.guild.id)
         #If we did
-        else :
+        elif type == "kick" :
             if entry.reason != None :
                 embed = discord.Embed(title=f"🚪👈 User was kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
             else :
                 embed = discord.Embed(title=f"🚪👈 User was kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```Not specified```", color=self.bot.errorColor)
             await self.log_elevated(embed, member.guild.id)
+        
+        elif type == "ban":
+            if entry.reason != None:
+                embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
+            else :
+                embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```Not specified```", color=self.bot.errorColor)
+            await self.log_elevated(embed, member.guild.id)
+
                 
 
     @commands.Cog.listener()

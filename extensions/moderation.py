@@ -271,7 +271,7 @@ class Moderation(commands.Cog):
         except (AttributeError, discord.Forbidden):
             embed=discord.Embed(title="❌ " + self._("Mute role error"), description=self._("Unable to mute user. Check if you have a mute role configured, and if the bot has permissions to add said role.").format(offender=offender.mention), color=self.bot.errorColor)
             await ctx.send(embed=embed)
-        except ModuleNotFoundError:
+        except ModuleNotFoundError as error:
             embed=discord.Embed(title="❌ " + self._("Muting failed"), description=self._("This function requires an extension that is not enabled.\n**Error:** ```{error}```").format(error=error), color=self.bot.errorColor)
             await ctx.send(embed=embed)    
         else:
@@ -321,10 +321,10 @@ class Moderation(commands.Cog):
             return
         if reason:
             raw_reason = reason #Shown to the public
-            reason = f"Reason: {reason}\n\nExecuted by {ctx.author} ({ctx.author.id})"
+            reason = f"{ctx.author} ({ctx.author.id}):\nReason: {reason}"
         else:
             raw_reason = reason
-            reason = f"No reason provided - Executed by {ctx.author} ({ctx.author.id})"
+            reason = f"{ctx.author} ({ctx.author.id}):\nNo reason provided"
 
         try:
             embed = discord.Embed(title="🔨 " + self._("You have been banned"), description=self._("You have been banned from **{guild}**.\n**Reason:** ```{raw_reason}```").format(guild=ctx.guild.name, raw_reason=raw_reason),color=self.bot.errorColor)
@@ -363,10 +363,10 @@ class Moderation(commands.Cog):
         await ctx.channel.trigger_typing()
         if reason:
             raw_reason = reason #Shown to the public
-            reason = f"Reason: {reason}\n\nExecuted by {ctx.author} ({ctx.author.id})"
+            reason = f"{ctx.author} ({ctx.author.id}):\n{reason}"
         else:
             raw_reason = reason
-            reason = f"No reason provided - Executed by {ctx.author} ({ctx.author.id})"
+            reason = f"{ctx.author} ({ctx.author.id}):\nNo reason provided"
         try:
             await ctx.guild.unban(offender, reason=reason)
             if raw_reason:
@@ -425,10 +425,10 @@ class Moderation(commands.Cog):
             return
         if reason:
             raw_reason = reason #Shown to the public
-            reason = f"{reason}\n\nExecuted by {ctx.author} ({ctx.author.id})"
+            reason = f"{ctx.author} ({ctx.author.id}):\n{reason}"
         else:
             raw_reason = reason
-            reason = f"No reason provided - Executed by {ctx.author} ({ctx.author.id})"
+            reason = f"{ctx.author} ({ctx.author.id}):\nNo reason provided"
         
         try:
             embed = discord.Embed(title="🔨 " + self._("You have been banned"), description=self._("You have been banned from **{guild}**.\n**Reason:** ```{raw_reason}```").format(guild=ctx.guild.name, raw_reason=raw_reason),color=self.bot.errorColor)
@@ -485,10 +485,10 @@ class Moderation(commands.Cog):
             return
         if reason:
             raw_reason = reason #Shown to the public
-            reason = f"[SOFTBAN] {reason}\n\nExecuted by {ctx.author} ({ctx.author.id})"
+            reason = f"[SOFTBAN] {ctx.author} ({ctx.author.id}):\n{reason}"
         else:
             raw_reason = reason
-            reason = f"[SOFTBAN] No reason provided - Executed by {ctx.author} ({ctx.author.id})"
+            reason = f"[SOFTBAN] {ctx.author} ({ctx.author.id}):\nNo reason provided"
             try:
                 embed = discord.Embed(title="🔨 " + self._("You have been soft-banned"), description=self._("You have been soft-banned from **{guild}**. You may rejoin.\n**Reason:** ```{raw_reason}```").format(guild=ctx.guild.name, raw_reason=raw_reason),color=self.bot.errorColor)
                 await offender.send(embed=embed)
@@ -531,10 +531,10 @@ class Moderation(commands.Cog):
             return
         if reason != None:
             raw_reason = reason #Shown to the public
-            reason = f"Reason: {reason}\n\nExecuted by {ctx.author} ({ctx.author.id})"
+            reason = f"{ctx.author} ({ctx.author.id}):\n{reason}"
         else:
             raw_reason = reason
-            reason = f"No reason provided - Executed by {ctx.author} ({ctx.author.id})"
+            reason = f"{ctx.author} ({ctx.author.id}):\nNo reason provided"
         
         try:
             embed = discord.Embed(title="🚪👈 " + self._("You have been kicked"), description=self._("You have been kicked from **{guild}**.\n**Reason:** ```{raw_reason}```").format(guild=ctx.guild.name, raw_reason=raw_reason),color=self.bot.errorColor)
