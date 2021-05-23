@@ -321,10 +321,10 @@ class Moderation(commands.Cog):
             return
         if reason:
             raw_reason = reason #Shown to the public
-            reason = f"{ctx.author} ({ctx.author.id}):\nReason: {reason}"
+            reason = f"{ctx.author} ({ctx.author.id}): \nReason: {reason}"
         else:
             raw_reason = reason
-            reason = f"{ctx.author} ({ctx.author.id}):\nNo reason provided"
+            reason = f"{ctx.author} ({ctx.author.id}): \nNo reason provided"
 
         try:
             embed = discord.Embed(title="🔨 " + self._("You have been banned"), description=self._("You have been banned from **{guild}**.\n**Reason:** ```{raw_reason}```").format(guild=ctx.guild.name, raw_reason=raw_reason),color=self.bot.errorColor)
@@ -363,10 +363,10 @@ class Moderation(commands.Cog):
         await ctx.channel.trigger_typing()
         if reason:
             raw_reason = reason #Shown to the public
-            reason = f"{ctx.author} ({ctx.author.id}):\n{reason}"
+            reason = f"{ctx.author} ({ctx.author.id}): \n{reason}"
         else:
             raw_reason = reason
-            reason = f"{ctx.author} ({ctx.author.id}):\nNo reason provided"
+            reason = f"{ctx.author} ({ctx.author.id}): \nNo reason provided"
         try:
             await ctx.guild.unban(offender, reason=reason)
             if raw_reason:
@@ -425,10 +425,10 @@ class Moderation(commands.Cog):
             return
         if reason:
             raw_reason = reason #Shown to the public
-            reason = f"{ctx.author} ({ctx.author.id}):\n{reason}"
+            reason = f"{ctx.author} ({ctx.author.id}): \n{reason}"
         else:
             raw_reason = reason
-            reason = f"{ctx.author} ({ctx.author.id}):\nNo reason provided"
+            reason = f"{ctx.author} ({ctx.author.id}): \nNo reason provided"
         
         try:
             embed = discord.Embed(title="🔨 " + self._("You have been banned"), description=self._("You have been banned from **{guild}**.\n**Reason:** ```{raw_reason}```").format(guild=ctx.guild.name, raw_reason=raw_reason),color=self.bot.errorColor)
@@ -485,10 +485,10 @@ class Moderation(commands.Cog):
             return
         if reason:
             raw_reason = reason #Shown to the public
-            reason = f"[SOFTBAN] {ctx.author} ({ctx.author.id}):\n{reason}"
+            reason = f"[SOFTBAN] {ctx.author} ({ctx.author.id}): \n{reason}"
         else:
             raw_reason = reason
-            reason = f"[SOFTBAN] {ctx.author} ({ctx.author.id}):\nNo reason provided"
+            reason = f"[SOFTBAN] {ctx.author} ({ctx.author.id}): \nNo reason provided"
             try:
                 embed = discord.Embed(title="🔨 " + self._("You have been soft-banned"), description=self._("You have been soft-banned from **{guild}**. You may rejoin.\n**Reason:** ```{raw_reason}```").format(guild=ctx.guild.name, raw_reason=raw_reason),color=self.bot.errorColor)
                 await offender.send(embed=embed)
@@ -531,10 +531,10 @@ class Moderation(commands.Cog):
             return
         if reason != None:
             raw_reason = reason #Shown to the public
-            reason = f"{ctx.author} ({ctx.author.id}):\n{reason}"
+            reason = f"{ctx.author} ({ctx.author.id}): \n{reason}"
         else:
             raw_reason = reason
-            reason = f"{ctx.author} ({ctx.author.id}):\nNo reason provided"
+            reason = f"{ctx.author} ({ctx.author.id}): \nNo reason provided"
         
         try:
             embed = discord.Embed(title="🚪👈 " + self._("You have been kicked"), description=self._("You have been kicked from **{guild}**.\n**Reason:** ```{raw_reason}```").format(guild=ctx.guild.name, raw_reason=raw_reason),color=self.bot.errorColor)
@@ -690,7 +690,7 @@ class Moderation(commands.Cog):
 
             if automod_level in [3, 4]:
                 try:
-                    await self.mute(ctx, offender, ctx.guild.me, "15min", reason=f"Muted by auto-moderator\nReason:{reason}")
+                    await self.mute(ctx, offender, ctx.guild.me, "15min", reason=f"Muted by auto-moderator \nReason:{reason}")
                 except:
                     pass
                 else:
@@ -730,9 +730,9 @@ class Moderation(commands.Cog):
                     await offender.send(embed=embed)
                 except:
                     pass
-                await offender.ban(reason=f"Softbanned by auto-moderator\nReason:{reason}", delete_message_days=1)
+                await offender.ban(reason=f"Softbanned by auto-moderator \nReason:{reason}", delete_message_days=1)
                 await offender.unban(reason="Automatic unban by softban")
-                embed = discord.Embed(title="🔨 " + self._("User softbanned"), description=self._("**{offender}** has been auto-softbanned.\n**Reason:** ```{reason}```").format(offender=offender, reason=reason),color=self.bot.errorColor)
+                embed = discord.Embed(title="🔨 " + self._("User softbanned"), description=self._("**{offender}** has been auto-softbanned. \n**Reason:** ```{reason}```").format(offender=offender, reason=reason),color=self.bot.errorColor)
                 await ctx.send(embed=embed)
 
             elif automod_level == 4:
@@ -741,7 +741,7 @@ class Moderation(commands.Cog):
                     await offender.send(embed=embed)
                 except:
                     pass
-                await offender.ban(reason=f"Permabanned by auto-moderator\nReason:{reason}", delete_message_days=1)
+                await offender.ban(reason=f"Permabanned by auto-moderator \nReason:{reason}", delete_message_days=1)
                 embed = discord.Embed(title="🔨 " + self._("User banned"), description=self._("**{offender}** has been auto-banned.\n**Reason:** ```{reason}```").format(offender=offender, reason=reason),color=self.bot.errorColor)
                 await ctx.send(embed=embed)
 
@@ -752,7 +752,7 @@ class Moderation(commands.Cog):
                 await offender.send(embed=embed)
             except:
                 pass
-            await offender.ban(reason=f"Permabanned by auto-moderator\nReason:{reason}", delete_message_days=7)
+            await offender.ban(reason=f"Permabanned by auto-moderator \nReason:{reason}", delete_message_days=7)
             embed = discord.Embed(title="🔨 " + self._("User banned"), description=self._("**{offender}** has been auto-banned.\n**Reason:** ```{reason}```").format(offender=offender, reason=reason),color=self.bot.errorColor)
             await ctx.send(embed=embed)
                 
