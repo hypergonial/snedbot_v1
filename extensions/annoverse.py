@@ -24,7 +24,7 @@ class Annoverse(commands.Cog):
         return is_anno_guild(ctx)
     
 
-    @commands.Cog.listener
+    @commands.Cog.listener()
     async def on_message(self, message):
         '''
         Quick hack for giveaway on Annoverse, remove this after done
