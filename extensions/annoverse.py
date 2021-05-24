@@ -23,6 +23,18 @@ class Annoverse(commands.Cog):
     def cog_check(self,ctx):
         return is_anno_guild(ctx)
     
+
+    @commands.Cog.listener
+    async def on_message(self, message):
+        '''
+        Quick hack for giveaway on Annoverse, remove this after done
+        '''
+        if message.guild.id == 372128553031958529 and message.channel.id == 846472729981222922 and not message.author.bot:
+            ctx = await self.bot.get_context(message)
+            if not await has_priviliged(ctx):
+                await message.channel.set_permissions(message.author, send_messages=False, reason="Giveaway submission")
+
+
     '''
     Searches the fandom specified with the link and query via opensearch, then
     return a formatted description for insertion in an embed or message.

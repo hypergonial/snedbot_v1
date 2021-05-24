@@ -67,8 +67,8 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
         async with self.bot.pool.acquire() as con:
             results = await con.fetch('''SELECT * FROM ktp WHERE guild_id = $1''', ctx.guild.id)
         
-        if results and len(results) >= 1:
-            embed=discord.Embed(title="❌ Error: Too many keep-on-top messages", description="A server can only have up to **1** keep-on-top message(s) at a time.\n__Note:__ If you deleted the keep-on-top message before deleting the entry, make sure to also delete the entry!", color=self.bot.errorColor)
+        if results and len(results) >= 10:
+            embed=discord.Embed(title="❌ Error: Too many keep-on-top messages", description="A server can only have up to **10** keep-on-top message(s) at a time.\n__Note:__ If you deleted the keep-on-top message before deleting the entry, make sure to also delete the entry!", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
 
