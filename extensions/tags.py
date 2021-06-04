@@ -1,11 +1,12 @@
-from difflib import get_close_matches
 import gettext
 import logging
 from dataclasses import dataclass
+from difflib import get_close_matches
 from itertools import chain
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, menus
+
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
@@ -109,7 +110,7 @@ class TagHandler():
         '''
         Migrates all tags from one server to a different one. 'strategy' defines overriding behaviour.
 
-        override - Override all tags on the destination server.
+        override - Override all tags in the destination server.
         keep - Keep conflicting tags in the destination server.
 
         Note: Migration of all tags does not migrate aliases.
@@ -399,12 +400,26 @@ class Tags(commands.Cog):
     @commands.cooldown(1, 20, type=commands.BucketType.member)
     @commands.guild_only()
     async def list_tags(self, ctx):
+
+        class TagSource(menus.ListPageSource):
+            '''
+            Takes a list of tag names to convert into a menu.
+            '''
+            def __init__(self, data):
+                super().__init__(data, per_page=10)
+            
+            async def format_page(self,menu,entries):
+                self._ = menu.ctx.bot.get_localization('tags', menu.ctx.bot.lang)
+                offset = menu.current_page * self.per_page
+                embed = discord.Embed(title='💬 ' + self._("Available tags for this server:"), description="\n".join(f'**{i+1}.** {v}' for i, v in enumerate(entries, start=offset)), color=menu.ctx.bot.embedBlue)
+                embed.set_footer(text=menu.ctx.bot.requestFooter.format(user_name=menu.ctx.author.name, discrim=menu.ctx.author.discriminator) + f"  |  Page {menu.current_page + 1}/{self.get_max_pages()}", icon_url=menu.ctx.author.avatar_url)
+                return embed
+
+
         tags = await self.tag_handler.get_all(ctx.guild.id)
         if tags:
-            tags = ", ".join([tag.tag_name for tag in tags])
-            embed = discord.Embed(title="💬 " + self._("Available tags for this guild:"), description=f"`{tags}`", color=self.bot.embedBlue)
-            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-            await ctx.send(embed=embed)
+            pages = menus.MenuPages(source=TagSource(sorted([tag.tag_name for tag in tags])), clear_reactions_after=True)
+            await pages.start(ctx)
         else:
             embed = discord.Embed(title="💬 " + self._("Available tags for this guild:"), description=self._("There are currently no tags! You can create one via `{prefix}tag create`").format(prefix=ctx.prefix), color=self.bot.embedBlue)
             await ctx.send(embed=embed)
