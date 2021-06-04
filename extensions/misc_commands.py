@@ -106,7 +106,8 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         embed.set_thumbnail(url=self.bot.user.avatar_url)
         embed.add_field(name="CPU utilization", value=f"`{round(psutil.cpu_percent(interval=None))}%`")
-        embed.add_field(name="Memory utilization", value=f"`{round(psutil.virtual_memory().used / 1048576)}MB`")
+        process = psutil.Process() #gets current process
+        embed.add_field(name="Memory utilization", value=f"`{round(process.memory_info().vms / 1048576)}MB`")
         embed.add_field(name="Latency", value=f"`{round(self.bot.latency * 1000)}ms`")
         await ctx.channel.send(embed=embed)
     
