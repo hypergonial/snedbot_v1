@@ -211,6 +211,11 @@ class Fun(commands.Cog):
         await ctx.channel.send("🦆")
         await ctx.message.delete()
 
+    @commands.command(hidden=True, brief = "Hmm...", description="I mean... what did you expect?", usage="die")
+    @commands.guild_only()
+    async def die(self, ctx):
+        await ctx.send("You died.")
+
     @commands.group(brief="Repeats what you said.", description="Repeats the provided message, while deleting the command message.", usage="echo <message>", invoke_without_command=True, case_insensitive=True)
     @commands.check(has_priviliged)
     @commands.bot_has_permissions(manage_messages=True)
