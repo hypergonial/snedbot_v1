@@ -118,7 +118,7 @@ class Logging(commands.Cog):
             return
     #Produce bulk msg generic log
         try:
-            moderator = "Undefined" 
+            moderator = "Discord" 
             guild = self.bot.get_guild(payload.guild_id)
             async for entry in guild.audit_logs(): #Get the bot that did it
                 if entry.action == discord.AuditLogAction.message_bulk_delete:
@@ -130,7 +130,7 @@ class Logging(commands.Cog):
             pass
         guild = self.bot.get_guild(payload.guild_id)
         channel = guild.get_channel(payload.channel_id)
-        embed = discord.Embed(title=f"🗑️ Bulk message deletion", description=f"**Channel:** {channel.mention}\n**Mod-Bot:** `{moderator}`\n```Multiple messages have been purged.```", color=self.bot.errorColor)
+        embed = discord.Embed(title=f"🗑️ Bulk message deletion", description=f"**Channel:** {channel.mention}\n**Moderator:** `{moderator}`\n```Multiple messages have been purged.```", color=self.bot.errorColor)
         await self.log_elevated(embed, payload.guild_id)
     #Does not work, idk why but this event is never called
     @commands.Cog.listener()

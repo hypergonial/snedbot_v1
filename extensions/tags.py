@@ -1,6 +1,8 @@
+from difflib import get_close_matches
 import gettext
 import logging
 from dataclasses import dataclass
+from itertools import chain
 
 import discord
 from discord.ext import commands
@@ -183,7 +185,7 @@ class Tags(commands.Cog):
             embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.channel.send(embed=embed)
         else:
-            if ctx.message.attachments[0]: #Attachment support for tags
+            if len(ctx.message.attachments) > 0 and ctx.message.attachments[0]: #Attachment support for tags
                 content = f"{content}\n{ctx.message.attachments[0].url}"
                 
             new_tag = Tag(guild_id=ctx.guild.id, tag_name=name.lower(), tag_owner_id=ctx.author.id, tag_aliases=None, tag_content=content)
@@ -223,16 +225,17 @@ class Tags(commands.Cog):
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
         if tag and tag.tag_owner_id == ctx.author.id:
             aliases = []
-            if tag.tag_aliases and alias not in tag.tag_aliases or tag.tag_aliases == None or len(tag.tag_aliases) == 0:
+            if tag.tag_aliases and alias.lower() not in tag.tag_aliases or tag.tag_aliases == None or len(tag.tag_aliases) == 0:
                 if tag.tag_aliases == None:
-                    aliases.append(alias)
-                elif len(tag.tag_aliases) <= 5:
+                    aliases.append(alias.lower())
+                elif len(tag.tag_aliases) <= 4:
                     aliases = tag.tag_aliases
-                    aliases.append(alias)
+                    aliases.append(alias.lower())
                 else:
                     embed=discord.Embed(title="❌ " + self._("Error: Too many aliases"), description=self._("Tag `{tag}` can only have up to **5** aliases.").format(tag=tag.tag_name), color=self.bot.errorColor)
                     embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
                     await ctx.send(embed=embed)
+                    return
 
                 #Delete the tag, and recreate it with the new aliases
                 await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
@@ -322,9 +325,9 @@ class Tags(commands.Cog):
         if tag and tag.tag_owner_id == ctx.author.id:
             await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
 
-            if ctx.message.attachments[0]: #Attachment support for tags
+            if len(ctx.message.attachments) > 0 and ctx.message.attachments[0]: #Attachment support for tags
                 new_content = f"{new_content}\n{ctx.message.attachments[0].url}"
-                
+
             new_tag = Tag(guild_id=ctx.guild.id, tag_name=tag.tag_name, tag_owner_id=tag.tag_owner_id, tag_aliases=tag.tag_aliases, tag_content=new_content)
             await self.tag_handler.create(new_tag)
             embed = discord.Embed(title="✅ " + self._("Tag edited"), description=self._("Tag `{name}` has been successfully edited.").format(name=new_tag.tag_name), color=self.bot.embedGreen)
@@ -404,6 +407,43 @@ class Tags(commands.Cog):
             await ctx.send(embed=embed)
         else:
             embed = discord.Embed(title="💬 " + self._("Available tags for this guild:"), description=self._("There are currently no tags! You can create one via `{prefix}tag create`").format(prefix=ctx.prefix), color=self.bot.embedBlue)
+            await ctx.send(embed=embed)
+
+    @tag.command(name="search", help="Tries to search for a specified tag.", description="Tries searching for a specified tag in the list of this server's tags.", usage="tag search <name>")
+    @commands.cooldown(1, 10, type=commands.BucketType.member)
+    @commands.guild_only()
+    async def search_tags(self, ctx, query:str):
+        tags = await self.tag_handler.get_all(ctx.guild.id)
+        if tags:
+            tag_names = [tag.tag_name for tag in tags]
+            tag_aliases = []
+            for tag in tags:
+                if tag.tag_aliases:     tag_aliases.append(tag.tag_aliases)
+            tag_aliases = list(chain(*tag_aliases))
+
+            name_matches = get_close_matches(query , tag_names)
+            alias_matches = get_close_matches(query, tag_aliases)
+
+            response = []
+            if len(name_matches) > 0:
+                for name in name_matches:
+                    response.append(name)
+            if len(alias_matches) > 0:
+                for name in alias_matches:
+                    response.append(f"*{name}*")
+
+            if len(response) > 0:
+                if len(response) < 5:
+                    response = response[0:5]
+                response = " \n".join(response)
+                embed = discord.Embed(title="🔎 " + self._("Search results:"), description=f"{response}", color=self.bot.embedBlue)
+                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+                await ctx.send(embed=embed)
+            else:
+                embed = discord.Embed(title="🔎 " + self._("Not found"), description=self._("Unable to find tags with that name.").format(prefix=ctx.prefix), color=self.bot.errorColor)
+                await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(title="🔎 " + self._("Search failed"), description=self._("There are currently no tags in this guild. You can create one via `{prefix}tag create`").format(prefix=ctx.prefix), color=self.bot.errorColor)
             await ctx.send(embed=embed)
 
 def setup(bot):

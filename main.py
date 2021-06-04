@@ -23,7 +23,7 @@ lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
 EXPERIMENTAL = False
 #Version of the bot
-current_version = "4.3.3"
+current_version = "4.3.5"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -93,13 +93,12 @@ class SnedBot(commands.Bot):
 
         self.EXPERIMENTAL = EXPERIMENTAL
 
-        self.DEFAULT_PREFIX = 'sned '
+        self.DEFAULT_PREFIX = 'sn '
         if self.EXPERIMENTAL == True :
             self.DEFAULT_PREFIX = '?'
             logging.basicConfig(level=logging.INFO)
             DB_NAME = "sned_exp"
         else :
-            self.DEFAULT_PREFIX = 'sned '
             logging.basicConfig(level=logging.INFO)
             DB_NAME = "sned"
 
