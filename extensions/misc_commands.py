@@ -137,7 +137,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     async def warns(self, ctx, user:discord.Member=None):
         if user is None:
             user = ctx.author
-        extensions = self.bot.current_cogs()
+        extensions = await self.bot.current_cogs()
         if "Moderation" not in extensions :
             embed=discord.Embed(title=self.bot.errorMissingModuleTitle, description="This command requires the extension `moderation` to be active.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
