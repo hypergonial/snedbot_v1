@@ -183,6 +183,9 @@ class Tags(commands.Cog):
             embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.channel.send(embed=embed)
         else:
+            if ctx.message.attachments[0]: #Attachment support for tags
+                content = f"{content}\n{ctx.message.attachments[0].url}"
+                
             new_tag = Tag(guild_id=ctx.guild.id, tag_name=name.lower(), tag_owner_id=ctx.author.id, tag_aliases=None, tag_content=content)
             await self.tag_handler.create(new_tag)
             embed = discord.Embed(title="✅ " + self._("Tag created!"), description=self._("You can now call it with `{prefix}tag {name}`").format(prefix=ctx.prefix, name=name), color=self.bot.embedGreen)
@@ -318,6 +321,10 @@ class Tags(commands.Cog):
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
         if tag and tag.tag_owner_id == ctx.author.id:
             await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
+
+            if ctx.message.attachments[0]: #Attachment support for tags
+                new_content = f"{new_content}\n{ctx.message.attachments[0].url}"
+                
             new_tag = Tag(guild_id=ctx.guild.id, tag_name=tag.tag_name, tag_owner_id=tag.tag_owner_id, tag_aliases=tag.tag_aliases, tag_content=new_content)
             await self.tag_handler.create(new_tag)
             embed = discord.Embed(title="✅ " + self._("Tag edited"), description=self._("Tag `{name}` has been successfully edited.").format(name=new_tag.tag_name), color=self.bot.embedGreen)
