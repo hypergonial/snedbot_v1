@@ -22,6 +22,9 @@ async def has_priviliged(ctx):
     return await ctx.bot.custom_checks.has_priviliged(ctx)
 
 class Timer():
+    '''
+    Represents a timer object.
+    '''
     def __init__(self, id, guild_id, user_id,event, channel_id=None, expires=None, notes=None):
         self.id = id
         self.guild_id = guild_id
@@ -197,7 +200,7 @@ class Timers(commands.Cog):
             self.currenttask.cancel()
             self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
 
-    async def create_timer(self, expires : datetime.datetime, event :str, guild_id : int, user_id:int, channel_id:int=None, *, notes:str=None):
+    async def create_timer(self, expires:datetime.datetime, event:str, guild_id:int, user_id:int, channel_id:int=None, *, notes:str=None):
         logging.debug(f"Expiry: {expires}")
         expires=round(expires.timestamp()) #Converting it to time since epoch
         async with self.bot.pool.acquire() as con:
@@ -281,7 +284,7 @@ class Timers(commands.Cog):
     @commands.guild_only()
     async def delreminder(self, ctx, ID : int):
         async with self.bot.pool.acquire() as con:
-            result = await con.fetch('''SELECT ID FROM timers WHERE user_id = $1 AND id = $2''', ctx.author.id, ID)
+            result = await con.fetch('''SELECT ID FROM timers WHERE user_id = $1 AND id = $2 AND event = $3''', ctx.author.id, ID, "reminder")
             if result:
                 await con.execute('''DELETE FROM timers WHERE user_id = $1 AND id = $2''', ctx.author.id, ID)
                 embed = discord.Embed(title="✅ " + self._("Reminder deleted"), description=self._("Reminder **{ID}** has been deleted.").format(ID=ID), color=self.bot.embedGreen)

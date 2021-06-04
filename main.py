@@ -23,7 +23,7 @@ lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
 EXPERIMENTAL = False
 #Version of the bot
-current_version = "4.3.7"
+current_version = "4.4.0"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -36,6 +36,7 @@ Note #2: If you remove the extension "help", then the bot will fall back to the 
 Jishaku is a bot-owner only debug extension, requires 'pip install jishaku'.
 '''
 initial_extensions = (
+    'extensions.help',
     'extensions.admin_commands', 
     'extensions.moderation',
     'extensions.reaction_roles', 
@@ -47,8 +48,8 @@ initial_extensions = (
     'extensions.timers', 
     'extensions.fun', 
     'extensions.annoverse',
+    'extensions.giveaway',
     'extensions.misc_commands',
-    'extensions.help',
     'jishaku'
 )
 
