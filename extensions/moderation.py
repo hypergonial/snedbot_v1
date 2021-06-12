@@ -490,8 +490,8 @@ class Moderation(commands.Cog):
                     await ctx.guild.ban(member, reason=f"Mass-banned by {ctx.author} ({ctx.author.id}): \n{reason}")
                 except:
                     failed += 1
-                    if "Error banning a user, they may already be banned or have left the server." not in errors:
-                        errors.append("Error banning a user, they may already be banned or have left the server.")
+                    if "Error banning a user, userID is invalid or user is no longer member of the server." not in errors:
+                        errors.append("Error banning a user, userID is invalid or user is no longer member of the server.")
             else:
                 failed += 1
                 if "Exceeded maximum amount (100) of users bannable by this command." not in errors:
