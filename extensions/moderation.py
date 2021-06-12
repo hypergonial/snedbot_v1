@@ -503,7 +503,7 @@ class Moderation(commands.Cog):
         else:
             embed = discord.Embed(title="🔨 " + self._("Massban concluded with failures"), description=self._("Banned **{amount}/{total}** users.\n**Reason:** ```{reason}```").format(amount=len(user_ids_conv)-failed, total=len(user_ids_conv), reason=reason),color=self.bot.warnColor)
             await ctx.send(embed=embed)
-            embed = discord.Embed(title="🔨 " + self._("Failures encountered:"), description=self._("Some errors were encountered during the mass-ban: \n```{errors}```").format("\n".join(errors)),color=self.bot.warnColor)
+            embed = discord.Embed(title="🔨 " + self._("Failures encountered:"), description=self._("Some errors were encountered during the mass-ban: \n```{errors}```").format(errors="\n".join(errors)),color=self.bot.warnColor)
             await ctx.send(embed=embed)
 
 
