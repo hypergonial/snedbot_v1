@@ -233,8 +233,9 @@ class Logging(commands.Cog):
                     break
         except discord.Forbidden:
             return
-        embed = discord.Embed(title=f"🖊️ Guild updated", description=f"Guild settings have been updated by `{moderator}`.", color=self.bot.embedBlue)
-        await self.log_elevated(embed, after.id)
+        if moderator != "Undefined":
+            embed = discord.Embed(title=f"🖊️ Guild updated", description=f"Guild settings have been updated by `{moderator}`.", color=self.bot.embedBlue)
+            await self.log_elevated(embed, after.id)
 
     
     @commands.Cog.listener()
