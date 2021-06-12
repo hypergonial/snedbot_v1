@@ -478,7 +478,7 @@ class Moderation(commands.Cog):
             except ValueError:
                 failed += 1
                 if "Invalid user-ID provided." not in errors:
-                    errors.append("Invalid user-ID provided.")
+                    errors.append("An invalid, non-numerical userID was provided.")
 
         await ctx.channel.trigger_typing() #Long operation, so typing is triggered
         
@@ -495,7 +495,7 @@ class Moderation(commands.Cog):
             else:
                 failed += 1
                 if "Exceeded maximum amount (100) of users bannable by this command." not in errors:
-                    errors.append("Exceeded maximum amount of users bannable by this command.")
+                    errors.append("Exceeded maximum amount (100) of users bannable by this command.")
         
         if failed == 0:
             embed = discord.Embed(title="🔨 " + self._("Massban successful"), description=self._("Successfully banned **{amount}** users.\n**Reason:** ```{reason}```").format(amount=len(user_ids_conv), reason=reason),color=self.bot.embedGreen)

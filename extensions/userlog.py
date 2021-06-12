@@ -233,7 +233,7 @@ class Logging(commands.Cog):
                     break
         except discord.Forbidden:
             return
-        if moderator != "Undefined":
+        if moderator != "Undefined": #Necessary as e.g. Nitro boosts trigger guild update
             embed = discord.Embed(title=f"🖊️ Guild updated", description=f"Guild settings have been updated by `{moderator}`.", color=self.bot.embedBlue)
             await self.log_elevated(embed, after.id)
 
@@ -257,6 +257,9 @@ class Logging(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
+
+        await asyncio.sleep(1) #Wait for audit log to be present
+
         type = "standard"
         moderator = "Unknown"
         reason = "Error retrieving data from audit logs!"
@@ -279,17 +282,18 @@ class Logging(commands.Cog):
             pass
 
         #If we have not found a kick auditlog
-        if type == "standard":
-            embed = discord.Embed(title=f"🚪 User left", description=f"**User:** `{member} ({member.id})`\n**User count:** `{member.guild.member_count}`", color=self.bot.errorColor)
-            await self.log_standard(embed, member.guild.id)
         #If we did
-        elif type == "kick" :
+        if type == "kick" :
             embed = discord.Embed(title=f"🚪👈 User was kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
             await self.log_elevated(embed, member.guild.id)
         
         elif type == "ban":
             embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
             await self.log_elevated(embed, member.guild.id)
+
+        elif type == "standard":
+            embed = discord.Embed(title=f"🚪 User left", description=f"**User:** `{member} ({member.id})`\n**User count:** `{member.guild.member_count}`", color=self.bot.errorColor)
+            await self.log_standard(embed, member.guild.id)
 
                 
 
@@ -322,18 +326,14 @@ class Logging(commands.Cog):
             except discord.Forbidden:
                 return
             if len(add_diff) != 0 :
-                embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name}#{after.discriminator} ({after.id})`\n**Moderator:** `{moderator.name}#{moderator.discriminator} ({moderator.id})`\n**Role added:** `{add_diff[0]}`", color=self.bot.embedBlue)
+                embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name}#{after.discriminator} ({after.id})`\n**Moderator:** `{moderator}`\n**Role added:** `{add_diff[0]}`", color=self.bot.embedBlue)
             elif len(rem_diff) != 0 :
-                embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name}#{after.discriminator} ({after.id})`\n**Moderator:** `{moderator.name}#{moderator.discriminator} ({moderator.id})`\n**Role removed:** `{rem_diff[0]}`", color=self.bot.embedBlue)
+                embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name}#{after.discriminator} ({after.id})`\n**Moderator:** `{moderator}`\n**Role removed:** `{rem_diff[0]}`", color=self.bot.embedBlue)
             #Role updates are considered elevated due to importance
             if moderator.id == self.bot.user.id:
                 await self.log_standard(embed, after.guild.id)
             else:
                 await self.log_elevated(embed, after.guild.id)
-        
-        elif before.pending != after.pending:
-            embed = discord.Embed(title=f"🖊️ Member state changed", description=f"**User:** `{after.name} ({after.id})`\n`Pending: {before.pending}` ---> `Pending: {after.pending}`", color=self.bot.embedBlue)
-            await self.log_standard(embed, after.guild.id)
 
 def setup(bot):
     logging.info("Adding cog: Logging...")
