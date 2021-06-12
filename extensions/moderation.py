@@ -477,8 +477,8 @@ class Moderation(commands.Cog):
                 user_ids_conv.append(int(userid))
             except ValueError:
                 failed += 1
-                if "Invalid user-ID provided." not in errors:
-                    errors.append("An invalid, non-numerical userID was provided.")
+                if " - An invalid, non-numerical userID was provided." not in errors:
+                    errors.append(" - An invalid, non-numerical userID was provided.")
 
         await ctx.channel.trigger_typing() #Long operation, so typing is triggered
         
@@ -490,12 +490,12 @@ class Moderation(commands.Cog):
                     await ctx.guild.ban(member, reason=f"Mass-banned by {ctx.author} ({ctx.author.id}): \n{reason}")
                 except:
                     failed += 1
-                    if "Error banning a user, userID is invalid or user is no longer member of the server." not in errors:
-                        errors.append("Error banning a user, userID is invalid or user is no longer member of the server.")
+                    if " - Error banning a user, userID is invalid or user is no longer member of the server." not in errors:
+                        errors.append(" - Error banning a user, userID is invalid or user is no longer member of the server.")
             else:
                 failed += 1
-                if "Exceeded maximum amount (100) of users bannable by this command." not in errors:
-                    errors.append("Exceeded maximum amount (100) of users bannable by this command.")
+                if " - Exceeded maximum amount (100) of users bannable by this command." not in errors:
+                    errors.append(" - Exceeded maximum amount (100) of users bannable by this command.")
         
         if failed == 0:
             embed = discord.Embed(title="🔨 " + self._("Massban successful"), description=self._("Successfully banned **{amount}** users.\n**Reason:** ```{reason}```").format(amount=len(user_ids_conv), reason=reason),color=self.bot.embedGreen)
