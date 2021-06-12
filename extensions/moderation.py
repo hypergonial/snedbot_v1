@@ -455,6 +455,58 @@ class Moderation(commands.Cog):
             await ctx.send(embed=embed)
             return
 
+    @commands.command(help="Mass-bans a list of IDs specified.", description="Mass-bans a list of userIDs specified. Reason goes first, then a list of user IDs seperated by spaces.", usage="massban <reason> <userIDs>")
+    @commands.check(has_priviliged)
+    @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
+    @commands.guild_only()
+    async def massban(self, ctx, reason:str, *, user_ids:str):
+        '''
+        Mass-ban takes a list of IDs seperated by spaces,
+        and then attempts to ban each user with the specified reason,
+        then communicates the results to the invoker.
+        '''
+
+        failed = 0
+        errors = [] #Contains error messages in case of any
+
+        user_ids = user_ids.strip().split(" ")
+        user_ids_conv = []
+        for userid in user_ids:
+            try:
+                user_ids_conv.append(int(userid))
+            except ValueError:
+                failed += 1
+                if "Invalid user-ID provided." not in errors:
+                    errors.append("Invalid user-ID provided.")
+
+        await ctx.channel.trigger_typing() #Long operation, so typing is triggered
+        
+        for i, userid in enumerate(user_ids_conv):
+
+            if i < 100:
+                try:
+                    member = ctx.guild.get_member(userid)
+                    await ctx.guild.ban(member, reason=f"Mass-banned by {ctx.author} ({ctx.author.id}): \n{reason}")
+                except:
+                    failed += 1
+                    if "Error banning a user, they may already be banned or have left the server." not in errors:
+                        errors.append("Error banning a user, they may already be banned or have left the server.")
+            else:
+                failed += 1
+                if "Exceeded maximum amount (100) of users bannable by this command." not in errors:
+                    errors.append("Exceeded maximum amount of users bannable by this command.")
+        
+        if failed == 0:
+            embed = discord.Embed(title="🔨 " + self._("Massban successful"), description=self._("Successfully banned **{amount}** users.\n**Reason:** ```{reason}```").format(amount=len(user_ids_conv), reason=reason),color=self.bot.embedGreen)
+            await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(title="🔨 " + self._("Massban concluded with failures"), description=self._("Banned **{amount}/{total}** users.\n**Reason:** ```{reason}```").format(amount=len(user_ids_conv)-failed, total=len(user_ids_conv), reason=reason),color=self.bot.warnColor)
+            await ctx.send(embed=embed)
+            embed = discord.Embed(title="🔨 " + self._("Failures encountered:"), description=self._("Some errors were encountered during the mass-ban: \n```{errors}```").format("\n".join(errors)),color=self.bot.warnColor)
+            await ctx.send(embed=embed)
+
+
     @commands.Cog.listener()
     async def on_tempban_timer_complete(self, timer):
         guild = self.bot.get_guild(timer.guild_id)
