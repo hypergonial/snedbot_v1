@@ -7,6 +7,7 @@ import re
 
 import discord
 from discord.ext import commands
+from discord.ext.commands.cooldowns import BucketType
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
@@ -460,6 +461,7 @@ class Moderation(commands.Cog):
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
     @commands.guild_only()
+    @commands.cooldown(1, 60, type=commands.BucketType.guild)
     async def massban(self, ctx, reason:str, *, user_ids:str):
         '''
         Mass-ban takes a list of IDs seperated by spaces,
