@@ -271,7 +271,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         '''
         blacklist = ["jsk", "jishaku", "shutdown"] #Stuff that I don't want to work
         disabled_list = ["help", "sudo", "leave"] #Stuff that literally does not work
-        disabled_cogs = ["Annoverse", "Matchmaking", "AdminCommands", "Reaction Roles", "Keep On Top", "Setup"] #Entire cogs can be disabled too
+        disabled_cogs = ["Annoverse", "Matchmaking", "AdminCommands", "Moderation", "Reaction Roles", "Keep On Top", "Setup"] #Entire cogs can be disabled too
 
         for cog in disabled_cogs:
             try:
