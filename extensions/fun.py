@@ -196,6 +196,15 @@ class Fun(commands.Cog):
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         embed.set_image(url=dogjson[0]["url"])
         await msg.edit(embed=embed)
+
+    @commands.command(hidden=True, help="Why?...", description="I have no idea why this exists...", usage="catdog", aliases=["randomcatdog", "randomdogcat", "dogcat"])
+    @commands.guild_only()
+    async def catdog(self, ctx):
+        embed=discord.Embed(title="🐱🐶 " + self._("Ahh yes.. the legendary catdog!"), color=self.bot.embedBlue)
+        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        embed.set_image(url="https://tenor.com/view/catdog-nickelodeon-playtime-gif-14284833")
+        await ctx.send(embed=embed)
+
     
     @commands.command(help="Searches Wikipedia for results.", description="Searches Wikipedia and returns the 5 most relevant entries to your query.", usage="wiki <query>")
     @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
