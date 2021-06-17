@@ -202,7 +202,7 @@ class Fun(commands.Cog):
     async def catdog(self, ctx):
         embed=discord.Embed(title="🐱🐶 " + self._("Ahh yes.. the legendary catdog!"), color=self.bot.embedBlue)
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-        embed.set_image(url="https://tenor.com/view/catdog-nickelodeon-playtime-gif-14284833")
+        embed.set_image(url="https://media1.tenor.com/images/203c3c6047b3c905962fc55ac7fa9548/tenor.gif")
         await ctx.send(embed=embed)
 
     
@@ -241,7 +241,7 @@ class Fun(commands.Cog):
     @commands.command(hidden=True, brief = "Hmm...", description="I mean... what did you expect?", usage="die")
     @commands.guild_only()
     async def die(self, ctx):
-        await ctx.send("You died.")
+        await ctx.send(f"{ctx.author.mention} died.")
 
     @commands.group(brief="Repeats what you said.", description="Repeats the provided message, while deleting the command message.", usage="echo <message>", invoke_without_command=True, case_insensitive=True)
     @commands.check(has_priviliged)
