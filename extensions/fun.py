@@ -178,6 +178,24 @@ class Fun(commands.Cog):
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         embed.set_image(url=catjson[0]["url"])
         await msg.edit(embed=embed)
+
+    @commands.command(help="Shows a random dog.", description="Searches the interwebz™️ for a random dog picture.", usage="randomdog", aliases=["dog"])
+    @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
+    @commands.cooldown(1, 30, type=commands.BucketType.member)
+    @commands.guild_only()
+    async def randomdog(self, ctx):
+        embed=discord.Embed(title="🐶 " + self._("Random doggo"), description=self._("Looking for pupper..."), color=self.bot.embedBlue)
+        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        msg=await ctx.send(embed=embed)
+        #Get a json file from thedogapi as response, then take url from dict
+        async with aiohttp.ClientSession() as session:
+            async with session.get('https://api.thedogapi.com/v1/images/search') as response:
+                dogjson = await response.json()
+        #Print doggo to user
+        embed=discord.Embed(title="🐶 " + self._("Random doggo"), description=self._("Found one!"), color=self.bot.embedBlue)
+        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        embed.set_image(url=dogjson[0]["url"])
+        await msg.edit(embed=embed)
     
     @commands.command(help="Searches Wikipedia for results.", description="Searches Wikipedia and returns the 5 most relevant entries to your query.", usage="wiki <query>")
     @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
