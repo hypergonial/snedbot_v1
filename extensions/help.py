@@ -27,7 +27,7 @@ class HelpSource(menus.ListPageSource):
     async def format_page(self, menu, entries):
         self._ = menu.ctx.bot.get_localization('help', menu.ctx.bot.lang)
         offset = menu.current_page * self.per_page
-        embed=discord.Embed(title="⚙️ " + self._("__Available commands:__"), description=self._("**Tip:** You can also type **`{prefix}help [command]`** to get more information about a specific command and see any subcommands a command may have.\nStill lost? [Join our Discord server!](https://discord.gg/kQVNf68W2a)\n\n").format(prefix=menu.ctx.prefix) + ''.join(f'{v}' for i, v in enumerate(entries, start=offset)), color=menu.ctx.bot.embedBlue)
+        embed=discord.Embed(title="⚙️ " + self._("__Available commands:__"), description=self._("**Tip:** You can also type **`{prefix}help [command]`** to get more information about a specific command and see any subcommands a command may have.\n\n").format(prefix=menu.ctx.prefix) + ''.join(f'{v}' for i, v in enumerate(entries, start=offset)), color=menu.ctx.bot.embedBlue)
         embed.set_footer(text=menu.ctx.bot.requestFooter.format(user_name=menu.ctx.author.name, discrim=menu.ctx.author.discriminator) + f"  |  Page {menu.current_page + 1}/{self.get_max_pages()}", icon_url=menu.ctx.author.avatar_url)
         return embed
 

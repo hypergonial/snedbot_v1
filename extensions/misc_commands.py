@@ -102,7 +102,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     @commands.command(help="Displays information about the bot.", description="Displays information about the bot. Takes no arguments.", usage="about", aliases=["info"])
     @commands.guild_only()
     async def about(self, ctx):
-        embed=discord.Embed(title=f"ℹ️ About {self.bot.user.name}", description=f"**Version:** {self.bot.current_version} \n**Language:** {self.bot.lang} \n**Made by:** Hyper#0001\n**Invite:** Type `{ctx.prefix}invite`\n**Support Discord:** [Click to join!](https://discord.gg/kQVNf68W2a)\nBlob emoji is licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)", color=self.bot.embedBlue)
+        embed=discord.Embed(title=f"ℹ️ About {self.bot.user.name}", description=f"**Version:** {self.bot.current_version} \n**Language:** {self.bot.lang} \n**Made by:** Hyper#0001\n**Invite:** Type `{ctx.prefix}invite`\nBlob emoji is licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)", color=self.bot.embedBlue)
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         embed.set_thumbnail(url=self.bot.user.avatar_url)
         embed.add_field(name="CPU utilization", value=f"`{round(psutil.cpu_percent(interval=None))}%`")
