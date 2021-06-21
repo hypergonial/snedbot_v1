@@ -59,7 +59,7 @@ class Fun(commands.Cog):
             draw.text((margin / 2, margin / 2), text, font=font, fill="white") #Draw the text in between the two margins
             img.save(tempimg_path)
             with open(tempimg_path, 'rb') as fp:
-                embed = discord.Embed(description="🏁 " + self._("Type in text from above as fast as you can!"), color=self.bot.embedBlue)
+                embed = discord.Embed(description="🏁 " + self._("Type in the text from above as fast as you can!"), color=self.bot.embedBlue)
                 await ctx.send(embed=embed, file=discord.File(fp, 'snedtyperace.png'))
             os.remove(tempimg_path)
         
