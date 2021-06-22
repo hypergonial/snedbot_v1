@@ -14,6 +14,7 @@ class IpcRoutes(commands.Cog):
     @ipc.server.route()
     async def get_guild_for_ipc(self, data):
         guild = self.bot.get_guild(data.guild_id)
+        logging.info("Dispatching IPC event")
         return guild
 
 
