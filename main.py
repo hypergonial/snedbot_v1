@@ -15,7 +15,7 @@ from pathlib import Path
 
 import asyncpg
 import discord
-from discord.ext import commands, menus
+from discord.ext import commands, ipc
 from dotenv import load_dotenv
 
 #Language
@@ -34,6 +34,7 @@ All extensions that are loaded on boot-up, change these to alter what modules yo
 Note: Without the extension admin_commands, most things will break, so I consider this a must-have. Remove at your own peril.
 Note #2: If you remove the extension "help", then the bot will fall back to the default help command.
 Jishaku is a bot-owner only debug extension, requires 'pip install jishaku'.
+IPC is used for communication with the dashboard website.
 '''
 initial_extensions = (
     'extensions.help',
@@ -49,6 +50,7 @@ initial_extensions = (
     'extensions.fun', 
     'extensions.annoverse',
     'extensions.giveaway',
+    'extensions.ipc',
     'extensions.misc_commands',
     'jishaku'
 )
@@ -92,6 +94,8 @@ class SnedBot(commands.Bot):
         super().__init__(command_prefix=get_prefix, allowed_mentions=allowed_mentions, 
         intents=intents, case_insensitive=True, activity=activity, max_messages=10000)
 
+        self.ipc = ipc.Server(self, secret_key=os.getenv("IPC_SECRET"))
+
         self.EXPERIMENTAL = EXPERIMENTAL
 
         self.DEFAULT_PREFIX = 'sn '
@@ -119,6 +123,12 @@ class SnedBot(commands.Bot):
     
     async def on_ready(self):
         logging.info("Connected to Discord!")
+
+    async def on_ipc_ready(self):
+        logging.info("IPC is connected and ready.")
+
+    async def on_ipc_error(self, endpoint, error):
+        logging.error(f"{endpoint} raised {error}")
 
 
     async def startup(self):
@@ -512,6 +522,7 @@ bot.custom_checks = CustomChecks()
 
 #Run bot with token from .env
 try :
+    bot.ipc.start()
     bot.run(TOKEN)
 except KeyboardInterrupt :
     bot.loop.run_until_complete(bot.pool.close())
