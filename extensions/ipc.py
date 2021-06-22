@@ -1,7 +1,7 @@
 import logging
 
 import discord
-from discord import commands, ipc
+from discord.ext import commands, ipc
 
 class IpcRoutes(commands.Cog):
     '''
