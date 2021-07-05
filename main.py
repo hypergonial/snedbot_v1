@@ -95,7 +95,7 @@ class SnedBot(commands.Bot):
         super().__init__(command_prefix=get_prefix, allowed_mentions=allowed_mentions, 
         intents=intents, case_insensitive=True, activity=activity, max_messages=10000)
 
-        self.ipc = ipc.Server(self, host="0.0.0.0", port=8765, secret_key=os.getenv("IPC_SECRET"))
+        self.ipc = ipc.Server(self, host="0.0.0.0", port=8765, secret_key=os.getenv("IPC_SECRET"), do_multicast=False)
 
         self.EXPERIMENTAL = EXPERIMENTAL
 
