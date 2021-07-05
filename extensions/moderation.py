@@ -948,7 +948,7 @@ class Moderation(commands.Cog):
             if invite_matches:
                 await self.automod_punish(ctx, offender=message.author, offense="invites", reason="posting Discord invites")
             elif link_matches:
-                if len(link_matches > 7):
+                if len(link_matches) > 7:
                     await self.automod_punish(ctx, offender=message.author, offense="link_spam", reason="having too many links in a single message")
                 else:
                     bucket = self.link_spam_cd_mapping.get_bucket(message)
