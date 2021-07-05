@@ -27,11 +27,13 @@ async def can_mute(ctx):
         result = await con.fetch('''SELECT mute_role_id FROM mod_config WHERE guild_id = $1''', ctx.guild.id)
         if len(result) != 0 and result[0]:
             mute_role_id = result[0].get('mute_role_id')
-    mute_role = ctx.guild.get_role(mute_role_id)
-    if mute_role:
-        return True
-    else:
-        return False
+            mute_role = ctx.guild.get_role(mute_role_id)
+            if mute_role:
+                return True
+            else:
+                return False
+        else:
+            return False
 
 @dataclass
 class ModerationSettings():
