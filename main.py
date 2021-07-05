@@ -543,7 +543,8 @@ class CustomChecks():
                 results = await con.fetch('''SELECT role_ids FROM permissions WHERE guild_id = $1 AND ptype = $2''', ctx.guild.id, group_name)
                 if results and len(results) > 0:
                     permitted_roles = results[0].get("role_ids")
-                return any(role in userRoles for role in permitted_roles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
+                    return any(role in userRoles for role in permitted_roles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
+                return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator
 
 bot.custom_checks = CustomChecks()
 
