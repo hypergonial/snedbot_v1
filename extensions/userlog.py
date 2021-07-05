@@ -242,10 +242,12 @@ class Logging(commands.Cog):
     async def on_member_unban(self, guild, user):
         try:
             moderator = "Undefined"
+            reason = "No reason provided"
             async for entry in guild.audit_logs():
                 if entry.target == user and entry.action == discord.AuditLogAction.unban:
                     moderator = entry.user
-                    reason = entry.reason
+                    if entry.reason:
+                        reason = entry.reason
                     break
                 else:
                     break

@@ -114,7 +114,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     @commands.command(help="Provides you with an invite link for the bot!", description="Provides you with an invite link so you can add the bot to your own server!", usage="invite")
     async def invite(self, ctx):
         if not self.bot.EXPERIMENTAL:
-            invite_url = f"https://discord.com/api/oauth2/authorize?client_id={self.bot.user.id}&permissions=4294438614&scope=bot%20applications.commands"
+            invite_url = f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=3691506934&scope=bot%20applications.commands"
             embed=discord.Embed(title="🌟 Yay!", description=self._("[Click here]({invite_url}) for an invite link!").format(invite_url=invite_url), color=self.bot.miscColor)
             embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
             await ctx.channel.send(embed=embed)

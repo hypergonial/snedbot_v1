@@ -21,9 +21,9 @@ from dotenv import load_dotenv
 #Language
 lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
-EXPERIMENTAL = False
+EXPERIMENTAL = True
 #Version of the bot
-current_version = "4.4.1"
+current_version = "5.0.0a"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -38,6 +38,7 @@ IPC is used for communication with the dashboard website.
 '''
 initial_extensions = (
     'extensions.help',
+    'extensions.permissions',
     'extensions.admin_commands', 
     'extensions.moderation',
     'extensions.reaction_roles', 
@@ -94,7 +95,7 @@ class SnedBot(commands.Bot):
         super().__init__(command_prefix=get_prefix, allowed_mentions=allowed_mentions, 
         intents=intents, case_insensitive=True, activity=activity, max_messages=10000)
 
-        self.ipc = ipc.Server(self, secret_key=os.getenv("IPC_SECRET"))
+        self.ipc = ipc.Server(self, port=8765, secret_key=os.getenv("IPC_SECRET"))
 
         self.EXPERIMENTAL = EXPERIMENTAL
 
@@ -188,7 +189,9 @@ class SnedBot(commands.Bot):
     async def on_message(self, message):
         bucket = self.cmd_cd_mapping.get_bucket(message)
         retry_after = bucket.update_rate_limit()
-        if not retry_after: #If not ratelimited
+        if not retry_after and len(message.content) < 1000: #If not ratelimited
+            #Also limits message length to prevent errors originating from insane message
+            #length (Thanks Nitro :) )
             mentions = [f"<@{bot.user.id}>", f"<@!{bot.user.id}>"]
             if mentions[0] == message.content or mentions[1] == message.content:
                 async with self.pool.acquire() as con:
@@ -492,7 +495,9 @@ if __name__ == '__main__':
 
 class CustomChecks():
     '''
-    Custom checks for commands across the bot
+    Custom checks for commands and cogs across the bot
+    Some of these checks are not intended to be implemented directly, as they take arguments,
+    instead, you should wrap them into other functions that give them said arguments.
     '''
 
     async def has_owner(self, ctx):
@@ -507,6 +512,7 @@ class CustomChecks():
 
     async def has_priviliged(self, ctx):
         '''
+        DEPRECATED
         True if invoker is either bot owner, guild owner, administrator, 
         or has a specified priviliged role
         '''
@@ -517,6 +523,27 @@ class CustomChecks():
                 privroles = [result.get('priviliged_role_id') for result in results]
                 return any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
 
+    async def module_is_enabled(self, ctx, module_name:str):
+        '''
+        True if module is enabled, false otherwise. module_name is the extension filename.
+        '''
+        async with ctx.bot.pool.acquire() as con:
+            result = await con.fetch('SELECT is_enabled FROM modules WHERE guild_id = $1 AND module_name = $2', ctx.guild.id, module_name)
+            is_enabled = result[0].get("is_enabled") if result and len(result) > 0 else True
+            return is_enabled
+
+    async def has_permissions(self, ctx, group_name:str):
+        '''
+        Return true if a user is in the specified permission group, 
+        or is an administrator, or is the owner.
+        '''
+        if ctx.guild:
+            userRoles = [x.id for x in ctx.author.roles]
+            async with bot.pool.acquire() as con:
+                results = await con.fetch('''SELECT role_ids FROM permissions WHERE guild_id = $1 AND ptype = $2''', ctx.guild.id, group_name)
+                if results and len(results) > 0:
+                    permitted_roles = results[0].get("role_ids")
+                return any(role in userRoles for role in permitted_roles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
 
 bot.custom_checks = CustomChecks()
 

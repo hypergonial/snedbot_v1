@@ -136,9 +136,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
                 embed=discord.Embed(title="❌ Error: Role already added.", description=f"This role already has priviliged access.", color=self.bot.errorColor)
                 await ctx.channel.send(embed=embed)
             else :
-                #await self.db.execute("INSERT INTO priviliged (guild_id, priviliged_role_id) VALUES (?, ?)", [ctx.guild.id, role.id])
                 await con.execute('''INSERT INTO priviliged (guild_id, priviliged_role_id) VALUES ($1, $2)''', ctx.guild.id, role.id)
-                #await self.db.commit()
                 embed=discord.Embed(title="✅ Priviliged access granted.", description=f"**{role.name}** has been granted bot admin priviliges.", color=self.bot.embedGreen)
                 await ctx.channel.send(embed=embed)
 
