@@ -93,7 +93,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         configure the bot. Note: Some commands may require additional permissions
         '''
         records = await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
-        if len(records["priviliged_role_id"][0]) == 0 :
+        if not records or records and len(records["priviliged_role_id"][0]) == 0 :
             embed=discord.Embed(title="❌ Error: No priviliged roles set.", description=f"You can add a priviliged role via `{ctx.prefix}priviligedrole add <rolename>`.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
@@ -140,7 +140,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             return
         async with self.bot.pool.acquire() as con:
             records = await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
-            if role.id not in records["priviliged_role_id"][0] :
+            if records and role.id not in records["priviliged_role_id"][0] :
                 embed=discord.Embed(title="❌ Error: Role not priviliged.", description=f"This role is not priviliged.", color=self.bot.errorColor)
                 await ctx.channel.send(embed=embed)
             else :
