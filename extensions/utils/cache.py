@@ -51,7 +51,7 @@ class Caching():
         '''
         if guild_id in self.cache[table].keys():
             if kwargs:
-                print("Loading from cache and filtering...")
+                logging.debug("Loading data from cache and filtering...")
                 matches = {}
                 records = self.cache[table][guild_id]
                 if len(records) > 0:
@@ -69,10 +69,11 @@ class Caching():
                                 filtered_records[key].append(value[match]) #Then filter them out
                         return filtered_records #That's it c:
             else:
+                logging.debug("Loading data from cache...")
                 return self.cache[table][guild_id] if len(self.cache[table][guild_id]) > 0 else None
         
         else:
-            print("Loading from database...")
+            logging.debug("Loading data from database and loading into cache...")
             await self.refresh(table, guild_id)
             return await self.get(table, guild_id, **kwargs)
 
@@ -90,7 +91,7 @@ class Caching():
                         self.cache[table][guild_id][field].append(value)
                     else:
                         self.cache[table][guild_id][field] = [value]
-        print("Resynced cache!")
+        logging.debug(f"Refreshed cache for table {table}, guild {guild_id}!")
     
     async def wipe(self, guild_id:int):
         '''
@@ -98,12 +99,3 @@ class Caching():
         '''
         for table in self.cache.keys():
             self.cache[table][guild_id] = {}
-
-    """ async def inject(self, sql_query:str, table:str, guild_id:int, *args):
-
-        try:
-            async with self.bot.pool.acquire() as con:
-                await con.execute(sql_query, *args)
-            await self.bot.caching.refresh(table, guild_id)
-        except:
-            raise """
