@@ -134,7 +134,7 @@ class Fun(commands.Cog):
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
         
-    @funfact.command(hidden=True, help='Shows a random fun fact about Minecraft.', description="Shows a fun fact about Minecraft. Watch out for creepers.\n\nFacts painstakingly gathered by `fusiongames#8748`.", usage="funfact", invoke_without_command=True, case_insensitive=True)
+    @funfact.command(hidden=True, help='Shows a random fun fact about Minecraft.', description="Shows a fun fact about Minecraft. Watch out for creepers.\n\nFacts painstakingly gathered by `fusiongames#8748`.", usage="funfact minecraft", aliases=["mc"], invoke_without_command=True, case_insensitive=True)
     @commands.guild_only()
     async def minecraft(self, ctx):
         fun_path = Path(self.bot.BASE_DIR, 'etc', 'minecraft_funfacts.txt')
