@@ -136,7 +136,7 @@ class Fun(commands.Cog):
         
     @funfact.command(hidden=True, help='Shows a random fun fact about Minecraft.', description="Shows a fun fact about Minecraft. Watch out for creepers.\n\nFacts painstakingly gathered by `fusiongames#8748`.", usage="funfact", invoke_without_command=True, case_insensitive=True)
     @commands.guild_only()
-    async def funfact(self, ctx):
+    async def minecraft(self, ctx):
         fun_path = Path(self.bot.BASE_DIR, 'etc', 'minecraft_funfacts.txt')
         fun_facts = open(fun_path, "r").readlines()
         embed = discord.Embed(title="🤔 Did you know? - Minecraft Edition", description=f"{random.choice(fun_facts)}", color=self.bot.embedBlue)
