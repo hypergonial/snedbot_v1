@@ -92,15 +92,15 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         Members with these roles can execute commands to set up and
         configure the bot. Note: Some commands may require additional permissions
         '''
-        roleIDs = (await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id))["priviliged_role_id"][0]
-        if len(roleIDs) == 0 :
+        records = await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
+        if len(records["priviliged_role_id"][0]) == 0 :
             embed=discord.Embed(title="❌ Error: No priviliged roles set.", description=f"You can add a priviliged role via `{ctx.prefix}priviligedrole add <rolename>`.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
         else :
             roles = []
             roleNames = []
-            for item in roleIDs :
+            for item in records["priviliged_role_id"][0] :
                 roles.append(ctx.guild.get_role(item))
             for item in roles :
                 roleNames.append(item.name)
@@ -118,15 +118,16 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             await ctx.channel.send(embed=embed)
             return
         async with self.bot.pool.acquire() as con:
-            privroles = (await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id))["priviliged_role_id"][0]
-            #privroles = [role for role in roleIDs]
-            if role.id in privroles :
-                embed=discord.Embed(title="❌ Error: Role already added.", description=f"This role already has priviliged access.", color=self.bot.errorColor)
-                await ctx.channel.send(embed=embed)
-            else :
-                await con.execute('''INSERT INTO priviliged (guild_id, priviliged_role_id) VALUES ($1, $2)''', ctx.guild.id, role.id)
-                embed=discord.Embed(title="✅ Priviliged access granted.", description=f"**{role.name}** has been granted bot admin priviliges.", color=self.bot.embedGreen)
-                await ctx.channel.send(embed=embed)
+            records = await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
+            if records and records["priviliged_role_id"][0]:
+                #privroles = [role for role in roleIDs]
+                if role.id in ["priviliged_role_id"][0] :
+                    embed=discord.Embed(title="❌ Error: Role already added.", description=f"This role already has priviliged access.", color=self.bot.errorColor)
+                    await ctx.channel.send(embed=embed)
+                else :
+                    await con.execute('''INSERT INTO priviliged (guild_id, priviliged_role_id) VALUES ($1, $2)''', ctx.guild.id, role.id)
+                    embed=discord.Embed(title="✅ Priviliged access granted.", description=f"**{role.name}** has been granted bot admin priviliges.", color=self.bot.embedGreen)
+                    await ctx.channel.send(embed=embed)
 
 
     @priviligedrole.command(aliases=['rem', 'del', 'delete'], help="Remove role from priviliged roles.", description="Removes a role to the list of priviliged roles, revoking their permission to execute admin commands.", usage=f"priviligedrole remove <rolename>")
@@ -138,8 +139,8 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             await ctx.channel.send(embed=embed)
             return
         async with self.bot.pool.acquire() as con:
-            privroles = (await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id))["priviliged_role_id"][0]
-            if role.id not in privroles :
+            records = await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
+            if role.id not in records["priviliged_role_id"][0] :
                 embed=discord.Embed(title="❌ Error: Role not priviliged.", description=f"This role is not priviliged.", color=self.bot.errorColor)
                 await ctx.channel.send(embed=embed)
             else :
@@ -195,7 +196,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         if prefix == "": return
         records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
 
-        if records or prefix not in records["prefix"][0] and len(["prefix"][0]) <= 5:
+        if not records or prefix not in records["prefix"][0] and len(["prefix"][0]) <= 5:
             async with self.bot.pool.acquire() as con:
                 await con.execute('''
                 UPDATE global_config SET prefix = array_append(prefix,$1) WHERE guild_id = $2
