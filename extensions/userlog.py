@@ -326,7 +326,7 @@ class Logging(commands.Cog):
             elif len(rem_diff) != 0 :
                 embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name}#{after.discriminator} ({after.id})`\n**Moderator:** `{moderator}`\n**Role removed:** `{rem_diff[0]}`", color=self.bot.embedBlue)
             #Role updates are considered elevated due to importance
-            if moderator.id == self.bot.user.id:
+            if isinstance(moderator, discord.User) or isinstance(moderator, discord.Member) and moderator.id == self.bot.user.id:
                 await self.log_standard(embed, after.guild.id)
             else:
                 await self.log_elevated(embed, after.guild.id)
