@@ -15,53 +15,32 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
         self.bot = bot
 
 
-    async def check_rr(self, payload):
-        '''
-        Checks if the reaction was added to a message in the RR cache or not,
-        falls back to the database if no cache entry for the guild was found.
-        Returns the reaction role and the member who reacted
-        '''
-        #WIP TBD
-        if payload.guild_id in self.bot.cache['rr'][payload.guild_id]:
-            pass
-        else:
-            async with self.bot.pool.acquire() as con:
-                results = await con.fetch('''SELECT * FROM reaction_roles WHERE guild_id = $1''', payload.guild_id)
-                for result in results:
-                    if result.get('reactionrole_msg_id') == payload.message_id and result.get('reactionrole_channel_id') == payload.channel_id and result.get('reactionrole_emoji_id') == payload.emoji.id:
-                        guild = self.bot.get_guild(result.get('guild_id'))
-                        member = guild.get_member(payload.user_id)
-                        if not member.bot:
-                            role = guild.get_role(result.get('reactionrole_role_id'))
-                            return member, role
-
-
-
-
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         if payload.guild_id:
-            async with self.bot.pool.acquire() as con:
-                results = await con.fetch('''SELECT * FROM reaction_roles WHERE guild_id = $1''', payload.guild_id)
-                for result in results:
-                    if result.get('reactionrole_msg_id') == payload.message_id and result.get('reactionrole_channel_id') == payload.channel_id and result.get('reactionrole_emoji_id') == payload.emoji.id:
-                        guild = self.bot.get_guild(result.get('guild_id'))
+            records = await self.bot.caching.get(table="reaction_roles", guild_id=payload.guild_id)
+            if records:
+                for i, msg_id in enumerate(records["reactionrole_msg_id"]):
+                    if msg_id == payload.message_id and records["reactionrole_channel_id"][i] == payload.channel_id and records["reactionrole_emoji_id"][i] == payload.emoji.id:
+                        guild = self.bot.get_guild(records["guild_id"][i])
                         member = guild.get_member(payload.user_id)
-                        role = guild.get_role(result.get('reactionrole_role_id'))
-                        await member.add_roles(role, reason=f"Granted by reaction role (ID: {result.get('reactionrole_id')})")
+                        if member.bot: return
+                        role = guild.get_role(records["reactionrole_role_id"][i])
+                        await member.add_roles(role, reason=f"Granted by reaction role (ID: {records['reactionrole_id'][i]}")
                         break #So we do not iterate further pointlessly
     
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
         if payload.guild_id:
-            async with self.bot.pool.acquire() as con:
-                results = await con.fetch('''SELECT * FROM reaction_roles WHERE guild_id = $1''', payload.guild_id)
-                for result in results:
-                    if result.get('reactionrole_msg_id') == payload.message_id and result.get('reactionrole_channel_id') == payload.channel_id and result.get('reactionrole_emoji_id') == payload.emoji.id:
-                        guild = self.bot.get_guild(result.get('guild_id'))
+            records = await self.bot.caching.get(table="reaction_roles", guild_id=payload.guild_id)
+            if records:
+                for i, msg_id in enumerate(records["reactionrole_msg_id"]):
+                    if msg_id == payload.message_id and records["reactionrole_channel_id"][i] == payload.channel_id and records["reactionrole_emoji_id"][i] == payload.emoji.id:
+                        guild = self.bot.get_guild(records["guild_id"][i])
                         member = guild.get_member(payload.user_id)
-                        role = guild.get_role(result.get('reactionrole_role_id'))
-                        await member.remove_roles(role, reason=f"Removed by reaction role (ID: {result.get('reactionrole_id')})")
+                        if member.bot: return
+                        role = guild.get_role(records["reactionrole_role_id"][i])
+                        await member.remove_roles(role, reason=f"Removed by reaction role (ID: {records['reactionrole_id'][i]})")
                         break
     
 
@@ -70,17 +49,16 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
     @commands.guild_only()
     @commands.check(has_priviliged)
     async def reactionrole(self, ctx):
-        async with ctx.bot.pool.acquire() as con:
-            results = await con.fetch('''SELECT * FROM reaction_roles WHERE guild_id = $1''', ctx.guild.id)
-            if results and len(results) != 0:
-                text = ""
-                for result in results:
-                    text = f"{text}**#{result.get('reactionrole_id')}** - {ctx.guild.get_channel(result.get('reactionrole_channel_id')).mention} - {ctx.guild.get_role(result.get('reactionrole_role_id')).mention}\n"
-                embed=discord.Embed(title="Reaction Roles for this server:", description=text, color=self.bot.embedBlue)
-                await ctx.send(embed=embed)
-            else:
-                embed=discord.Embed(title="❌ Error: No reaction roles", description="There are no reaction roles for this server.", color=self.bot.errorColor)
-                await ctx.channel.send(embed=embed)
+        records = await self.bot.caching.get(table="reaction_roles", guild_id=ctx.guild.id)
+        if records:
+            text = ""
+            for i, rr_id in enumerate(records["reactionrole_id"]):
+                text = f"{text}**#{rr_id}** - {ctx.guild.get_channel(records['reactionrole_channel_id'][i]).mention} - {ctx.guild.get_role(records['reactionrole_role_id'][i]).mention}\n"
+            embed=discord.Embed(title="Reaction Roles for this server:", description=text, color=self.bot.embedBlue)
+            await ctx.send(embed=embed)
+        else:
+            embed=discord.Embed(title="❌ Error: No reaction roles", description="There are no reaction roles for this server.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
 
 
     @reactionrole.command(name="delete", aliases=["del", "remove"], help="Removes a reaction role by ID.", description="Removes a reaction role of the specified ID. You can get the ID via the `reactionrole` command.", usage="reactionrole delete <ID>")
@@ -89,14 +67,16 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
     async def rr_delete(self, ctx, id:int):
         async with self.bot.pool.acquire() as con:
             results = await con.fetch('''SELECT * FROM reaction_roles WHERE guild_id = $1 AND reactionrole_id = $2''', ctx.guild.id, id)
-            if results and len(results) != 0:
-                reactchannel = ctx.guild.get_channel(results[0].get('reactionrole_channel_id'))
-                reactmsg = await reactchannel.fetch_message(results[0].get('reactionrole_msg_id'))
+            record = await self.caching.get(table="reaction_roles", guild_id=ctx.guild.id, reactionrole_id = id)
+            if record:
+                reactchannel = ctx.guild.get_channel(record['reactionrole_channel_id'][0])
+                reactmsg = await reactchannel.fetch_message(record['reactionrole_msg_id'][0])
                 try:
-                    await reactmsg.remove_reaction(self.bot.get_emoji(results[0].get('reactionrole_emoji_id')), ctx.guild.me)
+                    await reactmsg.remove_reaction(self.bot.get_emoji(record['reactionrole_emoji_id'][0]), ctx.guild.me)
                 except discord.NotFound:
                     pass
                 await con.execute('''DELETE FROM reaction_roles WHERE guild_id = $1 AND reactionrole_id = $2''', ctx.guild.id, id)
+                await self.bot.caching.refresh(table="reaction_roles", guild_id=ctx.guild.id)
                 embed=discord.Embed(title="✅ Reaction Role deleted", description="Reaction role has been successfully deleted!", color=self.bot.embedGreen)
                 await ctx.channel.send(embed=embed)
             else:
@@ -113,10 +93,9 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
         Here is where end-users would set up a reaction role for their server
         This is not exposed as a command directly, instead it is invoked in setup
         '''
-        async with self.bot.pool.acquire() as con:
-            results = await con.fetch('''SELECT * FROM reaction_roles WHERE guild_id = $1''', ctx.guild.id)
+        records = await self.bot.caching.get(table="reaction_roles", guild_id=ctx.guild.id)
         
-        if results and len(results) >= 10:
+        if records and len(records["reactionrole_id"]) >= 10:
             embed=discord.Embed(title="❌ Error: Too many reaction roles", description="A server can only have up to **10** reaction roles at a time.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
@@ -229,19 +208,17 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
             await ctx.channel.send(embed=embed)
             return
 
+        record = await self.bot.caching.get(table="reaction_roles", guild_id=ctx.guild.id, reactionrole_channel_id=reactchannel.id, reactionrole_msg_id=reactmsg.id, reactionrole_emoji_id=reactemoji.id)
+        if record:
+            embed=discord.Embed(title="❌ Error: Duplicate", description=f"This role reaction already exists. Please remove it first via `{ctx.prefix}rolereaction delete <ID>`", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
+            return
         async with self.bot.pool.acquire() as con:
-            results = await con.fetch('''
-            SELECT * FROM reaction_roles WHERE guild_id = $1 AND reactionrole_channel_id = $2 AND reactionrole_msg_id = $3 AND reactionrole_emoji_id = $4
-            ''', ctx.guild.id, reactchannel.id, reactmsg.id, reactemoji.id)
-            if results and len(results) != 0:
-                embed=discord.Embed(title="❌ Error: Duplicate", description=f"This role reaction already exists. Please remove it first via `{ctx.prefix}rolereaction delete <ID>`", color=self.bot.errorColor)
-                await ctx.channel.send(embed=embed)
-                return
-
             await con.execute('''
             INSERT INTO reaction_roles (guild_id, reactionrole_channel_id, reactionrole_msg_id, reactionrole_emoji_id, reactionrole_role_id)
             VALUES ($1, $2, $3, $4, $5)
             ''', ctx.guild.id, reactchannel.id, reactmsg.id, reactemoji.id, reactionrole.id)
+        await self.bot.caching.refresh(table="reaction_roles", guild_id=ctx.guild.id)
 
         embed=discord.Embed(title="🛠️ Reaction Roles setup", description="✅ Setup completed. Reaction role set up!", color=self.bot.embedGreen)
         await ctx.channel.send(embed=embed)

@@ -160,6 +160,7 @@ class Setup(commands.Cog):
             INSERT INTO log_config (guild_id, log_channel_id, elevated_log_channel_id) VALUES ($1, $2, $3)
             ON CONFLICT (guild_id) DO
             UPDATE SET log_channel_id  = $2, elevated_log_channel_id = $3''', ctx.guild.id, loggingChannel.id, elevated_loggingChannelID)
+            await self.bot.caching.refresh(table="log_config", guild_id=ctx.guild.id)
 
             embed=discord.Embed(title="🛠️ Logging Setup", description=f"✅ Setup completed. Logs will now be recorded!", color=self.bot.embedGreen)
             await ctx.channel.send(embed=embed)

@@ -15,15 +15,17 @@ from pathlib import Path
 
 import asyncpg
 import discord
-from discord.ext import commands, ipc
+from discord.ext import commands, ipc, tasks
 from dotenv import load_dotenv
+
+from extensions.utils import cache
 
 #Language
 lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
 EXPERIMENTAL = False
 #Version of the bot
-current_version = "5.0.0a"
+current_version = "5.0.0b"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -63,18 +65,14 @@ async def get_prefix(bot, message):
     '''
     if message.guild is None:
         return bot.DEFAULT_PREFIX
-    elif message.guild.id in bot.cache['prefix']: #If prefix is cached
-        return bot.cache['prefix'][message.guild.id] #Get from cache
     else:
-        async with bot.pool.acquire() as con: #Else try to find in db
-            results = await con.fetch('''SELECT prefix FROM global_config WHERE guild_id = $1''', message.guild.id)
-            if len(results) !=0 and results[0] and results[0].get('prefix'):
-                prefixes = results[0].get('prefix')
-                bot.cache['prefix'][message.guild.id] = prefixes
-                return prefixes
-            else: #Fallback to default prefix if there is none found
-                bot.cache['prefix'][message.guild.id] = bot.DEFAULT_PREFIX #Cache it
-                return bot.DEFAULT_PREFIX
+        records = await bot.caching.get(table="global_config", guild_id=message.guild.id)
+        if records:
+            prefixes = records["prefix"][0]
+            if len(prefixes) > 0: return prefixes
+            else: return bot.DEFAULT_PREFIX
+        else:
+            return bot.DEFAULT_PREFIX
 
 
 class SnedBot(commands.Bot):
@@ -97,6 +95,8 @@ class SnedBot(commands.Bot):
 
         self.ipc = ipc.Server(self, host="0.0.0.0", port=8765, secret_key=os.getenv("IPC_SECRET"), do_multicast=False)
 
+        self.caching = cache.Caching(self)
+
         self.EXPERIMENTAL = EXPERIMENTAL
 
         self.DEFAULT_PREFIX = 'sn '
@@ -114,8 +114,6 @@ class SnedBot(commands.Bot):
         self.pool = self.loop.run_until_complete(asyncpg.create_pool(dsn="postgres://postgres:{DBPASS}@192.168.1.101:5432/{db_name}".format(DBPASS=DBPASS, db_name=DB_NAME)))
         self.whitelisted_guilds = [372128553031958529, 627876365223591976, 818223666143690783, 836248845268680785]
         self.anno_guilds = (372128553031958529, 627876365223591976, 818223666143690783) #Guilds whitelisted for Anno-related commands
-        self.cache = {}
-        self.cache['prefix'] = {}
         self.cmd_cd_mapping = commands.CooldownMapping.from_cooldown(10, 10, commands.BucketType.channel)
         self.current_version = current_version
 
@@ -149,15 +147,6 @@ class SnedBot(commands.Bot):
                 await con.execute('''
                 INSERT INTO global_config (guild_id) VALUES ($1)
                 ON CONFLICT (guild_id) DO NOTHING''', guild.id)
-            results = await con.fetch('''SELECT * FROM global_config''')
-            logging.info("Initializing cache...")
-            for result in results:
-                if result.get('prefix'):
-                    self.cache['prefix'][result.get('guild_id')] = result.get('prefix')
-                else:
-                    self.cache['prefix'][result.get('guild_id')] = self.DEFAULT_PREFIX
-            logging.info("Cache ready!")
-
 
     def get_localization(self, extension_name:str, lang:str):
         '''
@@ -194,13 +183,12 @@ class SnedBot(commands.Bot):
             #length (Thanks Nitro :) )
             mentions = [f"<@{bot.user.id}>", f"<@!{bot.user.id}>"]
             if mentions[0] == message.content or mentions[1] == message.content:
-                async with self.pool.acquire() as con:
-                    results = await con.fetch('''SELECT prefix FROM global_config WHERE guild_id = $1''', message.guild.id)
-                if results[0].get('prefix'):
-                    prefix = results[0].get('prefix')
-                else:
+                record = (await self.caching.get(table="global_config", guild_id=message.guild.id))
+                if not record:
                     prefix = [self.DEFAULT_PREFIX]
-                embed=discord.Embed(title=_("Beep Boop!"), description=_("My prefixes on this server are the following: `{prefix}`").format(prefix=", ".join(prefix)), color=0xfec01d)
+                else:
+                    prefix = record["prefix"][0]
+                embed=discord.Embed(title=_("Beep Boop!"), description=_("My prefixes on this server are the following: `{prefix}`").format(prefix="`, `".join(prefix)), color=0xfec01d)
                 embed.set_thumbnail(url=self.user.avatar_url)
                 await message.reply(embed=embed)
 
@@ -239,6 +227,7 @@ class SnedBot(commands.Bot):
         '''
         async with bot.pool.acquire() as con:
             await con.execute('''DELETE FROM global_config WHERE guild_id = $1''', guild.id)
+        await self.caching.wipe(guild.id)
         logging.info(f"Bot has been removed from guild {guild.id}, correlating data erased.")
 
 
@@ -414,7 +403,15 @@ class GlobalConfig():
                         ON DELETE CASCADE
                 )''')
         bot.loop.run_until_complete(init_table())
+        self.cleanup_userdata.start()
 
+    @tasks.loop(hours=1.0)
+    async def cleanup_userdata(self):
+        '''Clean up garbage userdata from db'''
+        async with self.bot.pool.acquire() as con:
+            await con.execute('''
+                DELETE FROM users WHERE flags = NULL and warns = 0 AND is_muted = false AND notes = NULL 
+                ''')
 
     async def deletedata(self, guild_id):
         '''
@@ -426,7 +423,9 @@ class GlobalConfig():
             await con.execute('''DELETE FROM global_config WHERE guild_id = $1''', guild_id)
             #This one is necessary so that the list of guilds the bot is in stays accurate
             await con.execute('''INSERT INTO global_config (guild_id) VALUES ($1)''', guild_id)
-        logging.warning(f"Config reset for guild {guild_id}.")
+
+        await self.caching.wipe(guild_id)
+        logging.warning(f"Config reset and cache wiped for guild {guild_id}.")
     
 
     async def update_user(self, user):
@@ -518,19 +517,18 @@ class CustomChecks():
         '''
         if ctx.guild:
             userRoles = [x.id for x in ctx.author.roles]
-            async with bot.pool.acquire() as con:
-                results = await con.fetch('''SELECT priviliged_role_id FROM priviliged WHERE guild_id = $1''', ctx.guild.id)
-                privroles = [result.get('priviliged_role_id') for result in results]
+            records = (await bot.caching.get(table="priviliged", guild_id=ctx.guild.id))
+            if records:
+                privroles = records["priviliged_role_id"][0]
                 return any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
+            return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator
 
     async def module_is_enabled(self, ctx, module_name:str):
         '''
         True if module is enabled, false otherwise. module_name is the extension filename.
         '''
-        async with ctx.bot.pool.acquire() as con:
-            result = await con.fetch('SELECT is_enabled FROM modules WHERE guild_id = $1 AND module_name = $2', ctx.guild.id, module_name)
-            is_enabled = result[0].get("is_enabled") if result and len(result) > 0 else True
-            return is_enabled
+        is_enabled = (await bot.caching.get(table="modules", guild_id=ctx.guild.id, module_name=module_name))["is_enabled"][0]
+        return is_enabled
 
     async def has_permissions(self, ctx, group_name:str):
         '''
@@ -539,12 +537,11 @@ class CustomChecks():
         '''
         if ctx.guild:
             userRoles = [x.id for x in ctx.author.roles]
-            async with bot.pool.acquire() as con:
-                results = await con.fetch('''SELECT role_ids FROM permissions WHERE guild_id = $1 AND ptype = $2''', ctx.guild.id, group_name)
-                if results and len(results) > 0:
-                    permitted_roles = results[0].get("role_ids")
-                    return any(role in userRoles for role in permitted_roles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
-                return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator
+            records = (await bot.caching.get(table="permissions", guild_id=ctx.guild.id, ptype=group_name))
+            if records:
+                permitted_roles = records["role_ids"][0]
+                return any(role in userRoles for role in permitted_roles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
+            return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator
 
 bot.custom_checks = CustomChecks()
 

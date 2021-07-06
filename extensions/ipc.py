@@ -40,12 +40,9 @@ class IpcRoutes(commands.Cog):
         If there is no entry for a given module, then it falls back to True.
 
         '''
-        async with self.bot.pool.acquire() as con:
-            result = await con.fetch('''
-            SELECT is_enabled FROM modules WHERE guild_id = $1 AND module_name = $2
-            ''', guild_id, module_name)
-        if result and len(result) > 0:
-            return result[0].get('is_enabled')
+        record = await self.bot.caching.get(table="modules", guild_id=guild_id, module_name=module_name)
+        if record:
+            return record["is_enabled"][0]
         else:
             return True
 
@@ -135,6 +132,7 @@ class IpcRoutes(commands.Cog):
             ON CONFLICT (guild_id, module_name) DO
             UPDATE SET is_enabled = $3
             ''', guild_id, module_name, is_enabled)
+        await self.bot.caching.refresh(table="modules", guild_id=guild_id)
 
 
     @ipc.server.route()
@@ -145,12 +143,11 @@ class IpcRoutes(commands.Cog):
         all_role_dict = await self.get_role_dict(guild)
         mod_settings_dict = {}
 
-        async with self.bot.pool.acquire() as con:
-            result = await con.fetch('SELECT * FROM mod_config WHERE guild_id = $1', guild.id)
-            mod_settings_dict = {
-                "dm_users_on_punish" : result[0].get("dm_users_on_punish") if result and len(result) > 0 else True,
-                "clean_up_mod_commands" : result[0].get("clean_up_mod_commands") if result and len(result) > 0 else False
-            }
+        record = await self.bot.caching.get(table="mod_config", guild_id=guild.id)
+        mod_settings_dict = {
+            "dm_users_on_punish" : record["dm_users_on_punish"][0] if record else True,
+            "clean_up_mod_commands" : record["clean_up_mod_commands"][0] if record else False
+        }
 
         response = {
             "id": guild.id,
@@ -160,9 +157,9 @@ class IpcRoutes(commands.Cog):
             "mod_permitted": permitted_role_dict,
             "mod_settings": mod_settings_dict,
             "all_roles": all_role_dict,
-            "mute_role_id": str(result[0].get("mute_role_id")) if result and len(result) > 0 else None
+            "mute_role_id": str(record["mute_role_id"][0]) if record else None
             #mute_role_id needs to be converted to str, as ints inside dicts get converted too
-        }
+            }
         return response
 
     @ipc.server.route()
@@ -176,6 +173,7 @@ class IpcRoutes(commands.Cog):
             ON CONFLICT (guild_id) DO
             UPDATE SET dm_users_on_punish = $2, clean_up_mod_commands = $3''',
             guild_id, mod_settings["dm_users_on_punish"], mod_settings["clean_up_mod_commands"])
+        self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
     
     @ipc.server.route()
     async def set_mute_role(self, data):
@@ -187,6 +185,7 @@ class IpcRoutes(commands.Cog):
             ON CONFLICT (guild_id) DO
             UPDATE SET mute_role_id = $2
             ''', guild_id, mute_role_id)
+        self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
 
     @ipc.server.route()
     async def get_automod_settings(self, data):
@@ -196,16 +195,15 @@ class IpcRoutes(commands.Cog):
         all_role_dict = await self.get_role_dict(guild)
         automod_policies_dict = {}
 
-        async with self.bot.pool.acquire() as con:
-            result = await con.fetch('SELECT * FROM mod_config WHERE guild_id = $1', guild.id)
-            automod_policies_dict = {
-                "invites" : result[0].get("policies_invites") if result and len(result) > 0 else "disabled",
-                "spam" : result[0].get("policies_spam") if result and len(result) > 0 else "disabled",
-                "mass_mentions" : result[0].get("policies_mass_mentions") if result and len(result) > 0 else "disabled",
-                "zalgo" : result[0].get("policies_zalgo") if result and len(result) > 0 else "disabled",
-                "attach_spam" : result[0].get("policies_attach_spam") if result and len(result) > 0 else "disabled",
-                "link_spam": result[0].get("policies_link_spam") if result and len(result) > 0 else "disabled",
-                "escalate": result[0].get("policies_escalate") if result and len(result) > 0 else "disabled",
+        record = await self.bot.caching.get(table="mod_config", guild_id=guild.id)
+        automod_policies_dict = {
+            "invites" : record["policies_invites"][0] if record else "disabled",
+            "spam" : record["policies_spam"][0] if record else "disabled",
+            "mass_mentions" : record["policies_mass_mentions"][0] if record else "disabled",
+            "zalgo" : record["policies_zalgo"][0] if record else "disabled",
+            "attach_spam" : record["policies_attach_spam"][0] if record else "disabled",
+            "link_spam": record["policies_link_spam"][0] if record else "disabled",
+            "escalate": record["policies_escalate"][0] if record else "disabled",
             }
 
         response = {
@@ -216,7 +214,7 @@ class IpcRoutes(commands.Cog):
             "automod_excluded": excluded_role_dict,
             "automod_policies": automod_policies_dict,
             "all_roles": all_role_dict,
-            "temp_dur": result[0].get("temp_dur") if result and len(result) > 0 else 15,
+            "temp_dur": record["temp_dur"][0] if record else 15,
 
         }
         return response
@@ -247,6 +245,7 @@ class IpcRoutes(commands.Cog):
                 policies_attach_spam = $6, 
                 policies_link_spam = $7''',
             guild_id, policies["invites"], policies["spam"], policies["mass_mentions"], policies["zalgo"], policies["attach_spam"], policies["link_spam"])
+        await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
 
     @ipc.server.route()
     async def set_automod_temp_dur(self, data):
@@ -260,6 +259,7 @@ class IpcRoutes(commands.Cog):
             ON CONFLICT (guild_id) DO
             UPDATE SET temp_dur = $2
             ''', guild_id, temp_dur)
+        await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
 
     @ipc.server.route()
     async def set_automod_escalate_policy(self, data):
@@ -273,6 +273,7 @@ class IpcRoutes(commands.Cog):
             ON CONFLICT (guild_id) DO
             UPDATE SET policies_escalate = $2
             ''', guild_id, escalate_policy)
+        await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
 
 
 

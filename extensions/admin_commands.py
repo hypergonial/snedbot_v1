@@ -83,15 +83,6 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             await ctx.channel.send(embed=embed)
 
 
-    #Display the current settings for this guild.
-    @commands.command(help="Displays settings.", description="Displays the settings for the current guild.", usage="settings")
-    @commands.check(has_priviliged)
-    @commands.guild_only()
-    async def settings(self, ctx):
-        embed=discord.Embed(title=f"⚙️ Settings for this guild:    ({ctx.guild.id})", description=f"```This command has been deprecated and will be removed in subsequent versions! Database values are no longer directly exposed to the user. Consider using the setup command for configuration.```", color=self.bot.embedBlue)
-        await ctx.channel.send(embed=embed)
-
-
     @commands.group(aliases=['privrole', 'botadmin', 'privroles', 'priviligedroles'],help="List all priviliged roles. Subcommands may add or remove priviliged roles.", description="Returns all priviliged roles on this server. You can optionally set or remove new roles as priviliged roles.", usage=f"priviligedrole", invoke_without_command=True, case_insensitive=True)
     @commands.check(has_owner)
     @commands.guild_only()
@@ -101,9 +92,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         Members with these roles can execute commands to set up and
         configure the bot. Note: Some commands may require additional permissions
         '''
-        async with self.bot.pool.acquire() as con:
-            results = await con.fetch('''SELECT priviliged_role_id FROM priviliged WHERE guild_id = $1''', ctx.guild.id)
-        roleIDs = [result.get('priviliged_role_id') for result in results]
+        roleIDs = (await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id))["priviliged_role_id"][0]
         if len(roleIDs) == 0 :
             embed=discord.Embed(title="❌ Error: No priviliged roles set.", description=f"You can add a priviliged role via `{ctx.prefix}priviligedrole add <rolename>`.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
@@ -129,8 +118,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             await ctx.channel.send(embed=embed)
             return
         async with self.bot.pool.acquire() as con:
-            results = await con.fetch('''SELECT priviliged_role_id FROM priviliged WHERE guild_id = $1''', ctx.guild.id)
-            privroles = [result.get('priviliged_role_id') for result in results]
+            privroles = (await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id))["priviliged_role_id"][0]
             #privroles = [role for role in roleIDs]
             if role.id in privroles :
                 embed=discord.Embed(title="❌ Error: Role already added.", description=f"This role already has priviliged access.", color=self.bot.errorColor)
@@ -150,8 +138,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             await ctx.channel.send(embed=embed)
             return
         async with self.bot.pool.acquire() as con:
-            results = await con.fetch('''SELECT priviliged_role_id FROM priviliged WHERE guild_id = $1''', ctx.guild.id)
-            privroles = [result.get('priviliged_role_id') for result in results]
+            privroles = (await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id))["priviliged_role_id"][0]
             if role.id not in privroles :
                 embed=discord.Embed(title="❌ Error: Role not priviliged.", description=f"This role is not priviliged.", color=self.bot.errorColor)
                 await ctx.channel.send(embed=embed)
@@ -187,10 +174,9 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         '''
         Prefix management commands/features are found here
         '''
-        async with self.bot.pool.acquire() as con:
-            results = await con.fetch('''SELECT prefix FROM global_config WHERE guild_id = $1''', ctx.guild.id)
-        if results[0].get('prefix'):
-            prefixes = results[0].get('prefix')
+        records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
+        if records:
+            prefixes = records["prefix"][0]
             desc = ""
             for prefix in prefixes:
                 desc = f"{desc}**#{prefixes.index(prefix)+1}** - `{prefix}` \n"
@@ -207,29 +193,24 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         prefix = prefix.replace('"', '')
         prefix = prefix.replace("'", "")
         if prefix == "": return
-        async with self.bot.pool.acquire() as con:
-            results = await con.fetch('''SELECT prefix FROM global_config WHERE guild_id = $1''', ctx.guild.id)
+        records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
 
-            if results[0].get('prefix') is None or prefix not in results[0].get('prefix') and len(results[0].get('prefix')) <= 5:
+        if records or prefix not in records["prefix"][0] and len(["prefix"][0]) <= 5:
+            async with self.bot.pool.acquire() as con:
                 await con.execute('''
                 UPDATE global_config SET prefix = array_append(prefix,$1) WHERE guild_id = $2
                 ''', prefix, ctx.guild.id)
-
-                if results[0].get('prefix') is None: #If no prefix is found
-                    self.bot.cache['prefix'][ctx.guild.id] = [prefix]
-                else:
-                    prefixes = results[0].get('prefix')
-                    prefixes.append(prefix)
-                    self.bot.cache['prefix'][ctx.guild.id] = prefixes #Update the cache
+                await self.bot.caching.refresh(table="global_config", guild_id=ctx.guild.id)
 
                 embed = discord.Embed(title="✅ Prefix added", description=f"Prefix **{prefix}** has been added to the list of valid prefixes.\n\n**Note:** Setting a custom prefix disables the default prefix. If you forget your prefix, mention the bot!", color=self.bot.embedGreen)
                 await ctx.send(embed=embed)
-            elif prefix in results[0].get('prefix'):
-                embed=discord.Embed(title="❌ Prefix already added", description=f"This prefix is already added.", color=self.bot.errorColor)
-                await ctx.send(embed=embed)
-            elif len(results[0].get('prefix')) > 5:
-                embed=discord.Embed(title="❌ Too many prefixes", description=f"This server has reached the maximum amount of prefixes.", color=self.bot.errorColor)
-                await ctx.send(embed=embed)
+
+        elif prefix in records["prefix"][0]:
+            embed=discord.Embed(title="❌ Prefix already added", description=f"This prefix is already added.", color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+        elif records["prefix"][0] > 5:
+            embed=discord.Embed(title="❌ Too many prefixes", description=f"This server has reached the maximum amount of prefixes.", color=self.bot.errorColor)
+            await ctx.send(embed=embed)
 
     @prefix.command(name="del", aliases=["remove", "delete"], help="Removes a prefix.", description="Removes a prefix from the list of valid prefixes.", usage="prefix del <prefix>")
     @commands.check(has_priviliged)
@@ -238,23 +219,20 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         prefix = prefix.replace('"', '')
         prefix = prefix.replace("'", "")
         if prefix == "": return
-        async with self.bot.pool.acquire() as con:
-            results = await con.fetch('''SELECT prefix FROM global_config WHERE guild_id = $1''', ctx.guild.id)
-            if results[0].get('prefix') is not None and prefix in results[0].get('prefix'):
+        records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
+        if records and prefix in records["prefix"][0]:
+            async with self.bot.pool.acquire() as con:
                 await con.execute('''
                 UPDATE global_config SET prefix = array_remove(prefix,$1) WHERE guild_id = $2
                 ''', prefix, ctx.guild.id)
-
-                prefixes = results[0].get('prefix')
-                prefixes.remove(prefix)
-                if len(prefixes) == 0: prefixes = self.bot.DEFAULT_PREFIX #Fallback to default if all are deleted
-                self.bot.cache['prefix'][ctx.guild.id] = prefixes #Update the cache
+                await self.bot.caching.refresh(table="global_config", guild_id=ctx.guild.id)
 
                 embed = discord.Embed(title="✅ Prefix removed", description=f"Prefix **{prefix}** has been removed from the list of valid prefixes.\n\n**Note:** Removing all custom prefixes will re-enable the default prefix. If you forget your prefix, mention the bot!", color=self.bot.embedGreen)
                 await ctx.send(embed=embed)
-            elif prefix not in results[0].get('prefix'):
-                embed=discord.Embed(title="❌ Prefix not found", description=f"The specified prefix cannot be removed as it is not found.", color=self.bot.errorColor)
-                await ctx.send(embed=embed)
+
+        elif records and prefix not in records["prefix"][0]:
+            embed=discord.Embed(title="❌ Prefix not found", description=f"The specified prefix cannot be removed as it is not found.", color=self.bot.errorColor)
+            await ctx.send(embed=embed)
 
 
 

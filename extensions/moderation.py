@@ -23,17 +23,15 @@ async def is_automod_excluded(ctx):
 
 async def can_mute(ctx):
     '''A check performed to see if the configuration is correct for muting to be done.'''
-    async with ctx.bot.pool.acquire() as con:
-        result = await con.fetch('''SELECT mute_role_id FROM mod_config WHERE guild_id = $1''', ctx.guild.id)
-        if len(result) != 0 and result[0]:
-            mute_role_id = result[0].get('mute_role_id')
-            mute_role = ctx.guild.get_role(mute_role_id)
-            if mute_role:
-                return True
-            else:
-                return False
-        else:
-            return False
+    record = await ctx.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
+    if record and record["mute_role_id"][0]:
+        mute_role_id = record["mute_role_id"][0]
+        mute_role = ctx.guild.get_role(mute_role_id)
+        if mute_role:
+            return True
+        return False
+    else:
+        return False
 
 @dataclass
 class ModerationSettings():
@@ -60,64 +58,44 @@ class Moderation(commands.Cog):
         self.link_spam_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
         self.escalate_prewarn_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
         self.escalate_cd_mapping = commands.CooldownMapping.from_cooldown(2, 30, commands.BucketType.member)
-
-        self.bot.loop.create_task(self.startup())
     
     async def cog_check(self, ctx):
         return await self.bot.custom_checks.module_is_enabled(ctx, "moderation")
-
-
-    async def startup(self):
-        '''
-        Runs after on_ready has fired, used to initialize the cache for the bot
-        '''
-        await self.bot.wait_until_ready()
-        #self.bot.cache['moderation'] = {}
-        #async with self.bot.pool.acquire() as con:
-        #    results = await con.fetch('''SELECT * FROM mod_config''')
-        #    for result in results:
-        #        self.bot.cache['moderation'][result.get('guild_id')] = {}
-        #        self.bot.cache['moderation'][result.get('guild_id')]['mute_role_id'] = result.get('mute_role_id')
-        #        self.bot.cache['moderation'][result.get('guild_id')]['automod_level'] = result.get('automod_level')
-        #        self.bot.cache['moderation'][result.get('guild_id')]['is_raidmode'] = result.get('is_raidmode')
-                #P.S.: I know this is bad, but I am too dumb to figure out a better solution c:
 
     async def get_settings(self, guild_id:int) -> ModerationSettings:
         '''
         Checks for and returns the moderation settings for a given guild.
         '''
-        async with self.bot.pool.acquire() as con:
-            result = await con.fetch('SELECT * FROM mod_config WHERE guild_id = $1', guild_id)
-            if result and len(result) > 0:
-                mod_settings = ModerationSettings(
-                    dm_users_on_punish=result[0].get("dm_users_on_punish"),
-                    clean_up_mod_commands=result[0].get("clean_up_mod_commands")
-                )
-            else:
-                mod_settings = ModerationSettings(
-                    dm_users_on_punish=True,
-                    clean_up_mod_commands=False
+        record = await self.bot.caching.get(table="mod_config", guild_id=guild_id)
+        if record:
+            mod_settings = ModerationSettings(
+                dm_users_on_punish=record["dm_users_on_punish"][0],
+                clean_up_mod_commands=record["clean_up_mod_commands"][0]
+            )
+        else:
+            mod_settings = ModerationSettings(
+                dm_users_on_punish=True,
+                clean_up_mod_commands=False
 
-                )
-            return mod_settings
+            )
+        return mod_settings
 
     async def get_policies(self, guild_id:int) -> dict:
         '''
         Checks for and returns the auto-moderation policies for the given guild.
         '''
-        async with self.bot.pool.acquire() as con:
-            result = await con.fetch('SELECT * FROM mod_config WHERE guild_id = $1', guild_id)
+        record = await self.bot.caching.get(table="mod_config", guild_id=guild_id)
 
-            policies = {
-                "invites": result[0].get("policies_invites") if result and len(result) > 0 else "disabled",
-                "spam": result[0].get("policies_spam") if result and len(result) > 0 else "disabled",
-                "mass_mentions": result[0].get("policies_zalgo") if result and len(result) > 0 else "disabled",
-                "attach_spam": result[0].get("policies_attach_spam") if result and len(result) > 0 else "disabled",
-                "link_spam": result[0].get("policies_link_spam") if result and len(result) > 0 else "disabled",
-                "escalate": result[0].get("policies_escalate") if result and len(result) > 0 else "disabled"
-            }
+        policies = {
+            "invites": record["policies_invites"][0] if record else "disabled",
+            "spam": record["policies_spam"][0] if record else "disabled",
+            "mass_mentions": record["policies_mass_mentions"][0] if record else "disabled",
+            "attach_spam": record["policies_attach_spam"][0] if record else "disabled",
+            "link_spam": record["policies_link_spam"][0] if record else "disabled",
+            "escalate": record["policies_escalate"][0] if record else "disabled"
+        }
 
-            return policies
+        return policies
 
 
     def mod_punish(func):
@@ -130,7 +108,7 @@ class Moderation(commands.Cog):
             self = args[0]
             ctx = args[1]
             member = args[2]
-            reason = kwargs["reason"]
+            reason = kwargs["reason"] if "reason" in kwargs.keys() else "No reason provided"
 
             if ctx.author.id == member.id:
                 embed=discord.Embed(title="❌ " + self._("You cannot {pwn} yourself.").format(pwn=ctx.command.name), description=self._("You cannot {pwn} your own account.").format(pwn=ctx.command.name), color=self.bot.errorColor)
@@ -146,6 +124,7 @@ class Moderation(commands.Cog):
             types_conj = {
             "warn": "warned in",
             "mute": "muted in",
+            "tempmute": "muted in",
             "kick": "kicked from",
             "ban": "banned from",
             "softban": "soft-banned from",
@@ -227,18 +206,17 @@ class Moderation(commands.Cog):
             raise AlreadyMutedException('This member is already muted.')
         else:
             mute_role_id = 0
-            async with self.bot.pool.acquire() as con:
-                result = await con.fetch('''SELECT mute_role_id FROM mod_config WHERE guild_id = $1''', ctx.guild.id)
-                if len(result) != 0 and result[0]:
-                    mute_role_id = result[0].get('mute_role_id')
+            record = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
+            if record and record["mute_role_id"][0]:
+                mute_role_id = record["mute_role_id"][0]
             mute_role = ctx.guild.get_role(mute_role_id)
             try:
                 await member.add_roles(mute_role, reason=reason)
             except:
                 raise
             else:
-                new_user = self.bot.global_config.User(user_id = db_user.user_id, guild_id = db_user.guild_id, flags=db_user.flags, warns=db_user.warns, is_muted=True, notes=db_user.notes)
-                await self.bot.global_config.update_user(new_user)
+                db_user.is_muted = True
+                await self.bot.global_config.update_user(db_user)
                 dur = None
                 if duration:
                     try:                   
@@ -265,18 +243,17 @@ class Moderation(commands.Cog):
             raise NotMutedException('This member is not muted.')
         else:
             mute_role_id = 0
-            async with self.bot.pool.acquire() as con:
-                result = await con.fetch('''SELECT mute_role_id FROM mod_config WHERE guild_id = $1''', ctx.guild.id)
-                if len(result) != 0 and result[0]:
-                    mute_role_id = result[0].get('mute_role_id')
+            record = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
+            if record and record["mute_role_id"][0]:
+                mute_role_id = record["mute_role_id"][0]
             mute_role = ctx.guild.get_role(mute_role_id)
             try:
                 await member.remove_roles(mute_role)
             except:
                 raise
             else:
-                new_user = self.bot.global_config.User(user_id = db_user.user_id, guild_id = db_user.guild_id, flags=db_user.flags, warns=db_user.warns, is_muted=False, notes=db_user.notes)
-                await self.bot.global_config.update_user(new_user)
+                db_user.is_muted = False
+                await self.bot.global_config.update_user(db_user)
                 try:
                     muteembed=discord.Embed(title="🔉 User unmuted", description=F"**User:** `{member} ({member.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Reason:** ```{reason}```", color=self.bot.embedGreen)
                     await self.bot.get_cog("Logging").log_elevated(muteembed, ctx.guild.id)
@@ -385,8 +362,8 @@ class Moderation(commands.Cog):
         Clears all stored warnings for a specified user.
         '''
         db_user = await self.bot.global_config.get_user(offender.id, ctx.guild.id)
-        new_user = self.bot.global_config.User(user_id = db_user.user_id, guild_id = db_user.guild_id, flags=db_user.flags, warns=0, is_muted=db_user.is_muted, notes=db_user.notes)
-        await self.bot.global_config.update_user(new_user) #Update warns for user by incrementing it
+        db_user.warns = 0
+        await self.bot.global_config.update_user(db_user)
         if reason is None :
             embed=discord.Embed(title="✅ " + self._("Warnings cleared"), description=self._("**{offender}**'s warnings have been cleared.").format(offender=offender), color=self.bot.embedGreen)
             warnembed=discord.Embed(title="⚠️ Warnings cleared.", description=f"{offender.mention}'s warnings have been cleared by {ctx.author.mention}.\n\n[Jump!]({ctx.message.jump_url})", color=self.bot.embedGreen)
@@ -406,18 +383,17 @@ class Moderation(commands.Cog):
         the mute again.
         TL;DR: Mute-persistence
         '''
-        db_user = await self.bot.global_config.get_user(member.id, member.guild.id)
+        db_user = await self.bot.global_config.get_user(member.id, member.guild.id) #Ouch
         if db_user.is_muted == True:
             try:
                 mute_role_id = 0
-                async with self.bot.pool.acquire() as con:
-                    result = await con.fetch('''SELECT mute_role_id FROM mod_config WHERE guild_id = $1''', member.guild.id)
-                    if len(result) != 0 and result[0]:
-                        mute_role_id = result[0].get('mute_role_id')
+                record = await self.bot.caching.get(table="mod_config", guild_id=member.guild.id)
+                if record and record["mute_role_id"][0]:
+                    mute_role_id = record["mute_role_id"][0]
                 mute_role = member.guild.get_role(mute_role_id)
                 await member.add_roles(mute_role, reason="User was muted previously.")
             except AttributeError:
-                return       
+                return
 
 
     @commands.command(name="mute", help="Mutes a user.", description="Mutes a user permanently (until unmuted). Logs the event if logging is set up.", usage="mute <user> [reason]")
@@ -516,14 +492,13 @@ class Moderation(commands.Cog):
         is_muted = db_user.is_muted
         if not is_muted:
             return
-        new_user = self.bot.global_config.User(user_id = db_user.user_id, guild_id = db_user.guild_id, flags=db_user.flags, warns=db_user.warns, is_muted=False, notes=db_user.notes)
-        await self.bot.global_config.update_user(new_user) #Update this here so if the user comes back, they are not perma-muted :pepeLaugh:
+        db_user.is_muted = False
+        await self.bot.global_config.update_user(db_user) #Update this here so if the user comes back, they are not perma-muted :pepeLaugh:
         if guild.get_member(timer.user_id) is not None: #Check if the user is still in the guild
             mute_role_id = 0
-            async with self.bot.pool.acquire() as con:
-                result = await con.fetch('SELECT mute_role_id FROM mod_config WHERE guild_id = $1', timer.guild_id)
-                if len(result) != 0 and result[0]:
-                    mute_role_id = result[0].get('mute_role_id')
+            record = await self.bot.caching.get(table="mod_config", guild_id=timer.guild_id)
+            if record and record["mute_role_id"][0]:
+                mute_role_id = record["mute_role_id"][0]
             mute_role = guild.get_role(mute_role_id)
             try:
                 offender = guild.get_member(timer.user_id)
@@ -810,7 +785,7 @@ class Moderation(commands.Cog):
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
     
-    @commands.command(aliases=['clr'], help="Cleans up the bot's messages.", description="Delete up to 50 of the bot's own responses in this channel. Defaults to 5.", usage="clear [limit]")
+    @commands.command(aliases=['clr', 'cleanup'], help="Cleans up the bot's messages.", description="Delete up to 50 of the bot's own responses in this channel. Defaults to 5.", usage="clear [limit]")
     @commands.check(has_mod_perms)
     @commands.bot_has_permissions(manage_messages=True)
     @mod_command
@@ -849,10 +824,11 @@ class Moderation(commands.Cog):
         policy = policies[offense] #This will decide the type of punishment
 
         if policy.startswith("temp") or policy not in ["delete", "warn", "warn+delete", "escalate"]: #Get temporary punishment duration in minutes
+            record = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
             async with self.bot.pool.acquire() as con:
-                result = await con.fetch('''SELECT * FROM mod_config WHERE guild_id = $1''', ctx.guild.id)
-                temp_dur = result[0].get("temp_dur") if result and len(result) > 0 else 15
-                dm_users_on_punish = result[0].get("dm_users_on_punish") if result and len(result) > 0 else False
+                temp_dur = record["temp_dur"][0] if record else 15
+                #TODO: Implement this
+                dm_users_on_punish = record["dm_users_on_punish"][0] if record else False
 
         if policy == "disabled":
             return
@@ -972,11 +948,6 @@ class Moderation(commands.Cog):
                         count = 0
 
 
-
-
-                            
-
-    
 
 def setup(bot):
     logging.info("Adding cog: Moderation...")

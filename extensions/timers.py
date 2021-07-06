@@ -96,6 +96,7 @@ class Timers(commands.Cog):
         Tries removing the times & dates from the beginning or end of a string, while converting the times to datetime object via converttime()
         Used to create a reminder note
         '''
+        #Yeah this is stupid lol
         time, strings = await self.converttime(timestr)
 
         for string in strings:
