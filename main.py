@@ -176,25 +176,26 @@ class SnedBot(commands.Bot):
         return cogs
 
     async def on_message(self, message):
-        bucket = self.cmd_cd_mapping.get_bucket(message)
-        retry_after = bucket.update_rate_limit()
-        if not retry_after and len(message.content) < 1000: #If not ratelimited
-            #Also limits message length to prevent errors originating from insane message
-            #length (Thanks Nitro :) )
-            mentions = [f"<@{bot.user.id}>", f"<@!{bot.user.id}>"]
-            if mentions[0] == message.content or mentions[1] == message.content:
-                record = (await self.caching.get(table="global_config", guild_id=message.guild.id))
-                if not record:
-                    prefix = [self.DEFAULT_PREFIX]
-                else:
-                    prefix = record["prefix"][0]
-                embed=discord.Embed(title=_("Beep Boop!"), description=_("My prefixes on this server are the following: `{prefix}`").format(prefix="`, `".join(prefix)), color=0xfec01d)
-                embed.set_thumbnail(url=self.user.avatar_url)
-                await message.reply(embed=embed)
+        if self.is_ready():
+            bucket = self.cmd_cd_mapping.get_bucket(message)
+            retry_after = bucket.update_rate_limit()
+            if not retry_after and len(message.content) < 1500: #If not ratelimited
+                #Also limits message length to prevent errors originating from insane message
+                #length (Thanks Nitro :) )
+                mentions = [f"<@{bot.user.id}>", f"<@!{bot.user.id}>"]
+                if mentions[0] == message.content or mentions[1] == message.content:
+                    record = (await self.caching.get(table="global_config", guild_id=message.guild.id))
+                    if not record:
+                        prefix = [self.DEFAULT_PREFIX]
+                    else:
+                        prefix = record["prefix"][0]
+                    embed=discord.Embed(title=_("Beep Boop!"), description=_("My prefixes on this server are the following: `{prefix}`").format(prefix="`, `".join(prefix)), color=0xfec01d)
+                    embed.set_thumbnail(url=self.user.avatar_url)
+                    await message.reply(embed=embed)
 
-            await self.process_commands(message)
-        else:
-            pass #Ignore requests that would exceed rate-limits
+                await self.process_commands(message)
+            else:
+                pass #Ignore requests that would exceed rate-limits
 
     async def on_command(self, ctx):
         logging.info(f"{ctx.author} called command {ctx.message.content} in guild {ctx.guild.id}")
