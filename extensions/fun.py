@@ -125,12 +125,21 @@ class Fun(commands.Cog):
         embed.set_image(url='https://media1.tenor.com/images/ed5f49e5717a642812b019deb19ad264/tenor.gif')
         await ctx.send(embed=embed)
     
-    @commands.command(help='Shows a random fun fact.', description="Shows a fun fact. Why? Why not?\n\nFacts painstakingly gathered by `fusiongames#8748`.", usage="funfact")
+    @commands.group(help='Shows a random fun fact.', description="Shows a fun fact. Why? Why not?\n\nFacts painstakingly gathered by `fusiongames#8748`.", usage="funfact")
     @commands.guild_only()
     async def funfact(self, ctx):
         fun_path = Path(self.bot.BASE_DIR, 'etc', 'funfacts.txt')
         fun_facts = open(fun_path, "r").readlines()
         embed = discord.Embed(title="🤔 Did you know?", description=f"{random.choice(fun_facts)}", color=self.bot.embedBlue)
+        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=embed)
+        
+    @funfact.command(hidden=True, help='Shows a random fun fact about Minecraft.', description="Shows a fun fact about Minecraft. Watch out for creepers.\n\nFacts painstakingly gathered by `fusiongames#8748`.", usage="funfact", invoke_without_command=True, case_insensitive=True)
+    @commands.guild_only()
+    async def funfact(self, ctx):
+        fun_path = Path(self.bot.BASE_DIR, 'etc', 'minecraft_funfacts.txt')
+        fun_facts = open(fun_path, "r").readlines()
+        embed = discord.Embed(title="🤔 Did you know? - Minecraft Edition", description=f"{random.choice(fun_facts)}", color=self.bot.embedBlue)
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
 
