@@ -513,7 +513,6 @@ class CustomChecks():
             records = await bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
             if records:
                 privrole_ids = records["priviliged_role_id"]
-                print(privrole_ids)
                 return any(role_id in user_role_ids for role_id in privrole_ids) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
             return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator
 
