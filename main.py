@@ -509,11 +509,11 @@ class CustomChecks():
         or has a specified priviliged role
         '''
         if ctx.guild:
-            userRoles = [x.id for x in ctx.author.roles]
-            records = (await bot.caching.get(table="priviliged", guild_id=ctx.guild.id))
+            user_role_ids = [x.id for x in ctx.author.roles]
+            records = await bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
             if records:
-                privroles = records["priviliged_role_id"][0]
-                return any(role in userRoles for role in privroles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
+                privrole_ids = records["priviliged_role_id"][0]
+                return any(role_id in user_role_ids for role_id in privrole_ids) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
             return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator
 
     async def module_is_enabled(self, ctx, module_name:str):
@@ -526,15 +526,15 @@ class CustomChecks():
 
     async def has_permissions(self, ctx, group_name:str):
         '''
-        Return true if a user is in the specified permission group, 
+        Returns True if a user is in the specified permission group, 
         or is an administrator, or is the owner.
         '''
         if ctx.guild:
-            userRoles = [x.id for x in ctx.author.roles]
+            user_role_ids = [x.id for x in ctx.author.roles]
             records = (await bot.caching.get(table="permissions", guild_id=ctx.guild.id, ptype=group_name))
             if records:
-                permitted_roles = records["role_ids"][0]
-                return any(role in userRoles for role in permitted_roles) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
+                permitted_role_ids = records["role_ids"][0]
+                return any(role in user_role_ids for role in permitted_role_ids) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
             return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator
 
 bot.custom_checks = CustomChecks()
