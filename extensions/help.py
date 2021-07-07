@@ -63,6 +63,8 @@ class SnedHelp(commands.HelpCommand):
         Navigate via the ◀️ ▶️ reactions, or skip to the end via the ⏮️ ⏭️ reactions.
         You can stop this help session by reacting with ⏹️.
 
+        You can also check out the [documentation](https://sned.hypersden.com/docs/) for more information.
+
         **Command Usage & Syntax**
 
         `<argument>` is a __required__ parameter
