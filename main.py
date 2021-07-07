@@ -520,8 +520,9 @@ class CustomChecks():
         '''
         True if module is enabled, false otherwise. module_name is the extension filename.
         '''
-        is_enabled = (await bot.caching.get(table="modules", guild_id=ctx.guild.id, module_name=module_name))["is_enabled"][0]
-        return is_enabled
+        record = await bot.caching.get(table="modules", guild_id=ctx.guild.id, module_name=module_name)
+        if record and record["is_enabled"][0]:
+            return record["is_enabled"][0]
 
     async def has_permissions(self, ctx, group_name:str):
         '''
