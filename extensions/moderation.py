@@ -53,7 +53,7 @@ class Moderation(commands.Cog):
         self.bot = bot
         self._ = self.bot.get_localization('moderation', self.bot.lang)
 
-        self.spam_cd_mapping = commands.CooldownMapping.from_cooldown(10, 12, commands.BucketType.member)
+        self.spam_cd_mapping = commands.CooldownMapping.from_cooldown(8, 10, commands.BucketType.member)
         self.attach_spam_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
         self.link_spam_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
         self.escalate_prewarn_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)

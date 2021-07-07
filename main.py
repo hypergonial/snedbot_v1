@@ -523,6 +523,8 @@ class CustomChecks():
         record = await bot.caching.get(table="modules", guild_id=ctx.guild.id, module_name=module_name)
         if record and record["is_enabled"][0]:
             return record["is_enabled"][0]
+        else:
+            return True
 
     async def has_permissions(self, ctx, group_name:str):
         '''
