@@ -76,6 +76,7 @@ async def get_prefix(bot, message):
 
 
 class SnedBot(commands.Bot):
+    '''The bot class'''
 
     def __init__(self):
         allowed_mentions = discord.AllowedMentions(everyone=False, users=True, roles=True, replied_user=True)
@@ -98,7 +99,6 @@ class SnedBot(commands.Bot):
         self.caching = cache.Caching(self)
 
         self.EXPERIMENTAL = EXPERIMENTAL
-
         self.DEFAULT_PREFIX = 'sn '
         if self.EXPERIMENTAL == True :
             self.DEFAULT_PREFIX = 'snx '
@@ -138,9 +138,9 @@ class SnedBot(commands.Bot):
 
         logging.info("Initialized as {0.user}".format(self))
         if self.EXPERIMENTAL == True :
-            logging.warning("Experimental mode is enabled.")
+            logging.warning("\n--------------\nExperimental mode is enabled!\n--------------")
             cogs = await self.current_cogs()
-            logging.info(f"Cogs loaded: {cogs}")
+            logging.info(f"Cogs loaded: {', '.join(cogs)}")
         #Insert all guilds the bot is member of into the db global config on startup
         async with self.pool.acquire() as con:
             for guild in self.guilds:
@@ -183,13 +183,13 @@ class SnedBot(commands.Bot):
                 #Also limits message length to prevent errors originating from insane message
                 #length (Thanks Nitro :) )
                 mentions = [f"<@{bot.user.id}>", f"<@!{bot.user.id}>"]
-                if mentions[0] == message.content or mentions[1] == message.content:
-                    record = (await self.caching.get(table="global_config", guild_id=message.guild.id))
+                if message.content in mentions:
+                    record = await self.caching.get(table="global_config", guild_id=message.guild.id)
                     if not record:
                         prefix = [self.DEFAULT_PREFIX]
                     else:
                         prefix = record["prefix"][0]
-                    embed=discord.Embed(title=_("Beep Boop!"), description=_("My prefixes on this server are the following: `{prefix}`").format(prefix="`, `".join(prefix)), color=0xfec01d)
+                    embed=discord.Embed(title=_("Beep Boop!"), description=_("My prefixes on this server are the following: `{prefix}` \nUse the command `{prefix_0}help` to see what I can do!").format(prefix="`, `".join(prefix), prefix_0=prefix[0]), color=0xfec01d)
                     embed.set_thumbnail(url=self.user.avatar_url)
                     await message.reply(embed=embed)
 
@@ -202,12 +202,6 @@ class SnedBot(commands.Bot):
 
 
     async def on_guild_join(self, guild):
-        if guild.id == 336642139381301249: #Discord.py specific join behaviour
-            async with bot.pool.acquire() as con:
-                await con.execute('INSERT INTO global_config (guild_id) VALUES ($1)', guild.id)
-                await con.execute('''UPDATE global_config SET prefix = array_append(prefix,$1) WHERE guild_id = $2''', "sned ", guild.id)
-                logging.info("Joined discord.py! :verycool:")
-                return
         #Generate guild entry for DB
         async with bot.pool.acquire() as con:
             await con.execute('INSERT INTO global_config (guild_id) VALUES ($1)', guild.id)
@@ -244,6 +238,7 @@ class SnedBot(commands.Bot):
             if isinstance(error, commands.BotMissingPermissions):
                 embed=discord.Embed(title="❌ " + _("Bot missing permissions"), description=_("The bot requires additional permissions to execute this command.\n**Error:**```{error}```").format(error=error), color=self.errorColor)
                 return await ctx.send(embed=embed)
+            return
 
         if isinstance(error, commands.CommandInvokeError):
             if isinstance(error.original, asyncio.exceptions.TimeoutError):
@@ -257,7 +252,7 @@ class SnedBot(commands.Bot):
             '''
             This is a fancy suggestion thing that will suggest commands that are similar in case of typos.
             '''
-            logging.info(f"{ctx.author} tried calling a command in but the command was not found. ({ctx.message.content})")
+            logging.info(f"{ctx.author} tried calling a command in {ctx.guild.id} but the command was not found. ({ctx.message.content})")
             
             cmd = ctx.invoked_with.lower()
 
@@ -276,10 +271,6 @@ class SnedBot(commands.Bot):
                 embed=discord.Embed(title=self.unknownCMDstr, description=_("Did you mean `{prefix}{match}`?").format(prefix=ctx.prefix, match=aliasmatches[0]), color=self.unknownColor)
                 embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
                 return await ctx.send(embed=embed)
-            '''else:
-                embed=discord.Embed(title=bot.unknownCMDstr, description=_("Use `{prefix}help` for a list of available commands.").format(prefix=ctx.prefix), color=bot.unknownColor)
-                embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-                await ctx.send(embed=embed)'''
 
         elif isinstance(error, commands.CommandOnCooldown):
             embed=discord.Embed(title=self.errorCooldownTitle, description=_("Please retry in: `{cooldown}`").format(cooldown=datetime.timedelta(seconds=round(error.retry_after))), color=self.errorColor)
@@ -313,7 +304,7 @@ class SnedBot(commands.Bot):
         else :
             #If no known error has been passed, we will print the exception to console as usual
             #IMPORTANT!!! If you remove this, your command errors will not get output to console.
-            print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+            logging.error('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
             traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 
@@ -406,12 +397,13 @@ class GlobalConfig():
         bot.loop.run_until_complete(init_table())
         self.cleanup_userdata.start()
 
-    @tasks.loop(hours=1.0)
+    @tasks.loop(seconds=3600.0)
     async def cleanup_userdata(self):
         '''Clean up garbage userdata from db'''
+        await bot.wait_until_ready()
         async with self.bot.pool.acquire() as con:
             await con.execute('''
-                DELETE FROM users WHERE flags = NULL and warns = 0 AND is_muted = false AND notes = NULL 
+                DELETE FROM users WHERE flags IS NULL and warns = 0 AND is_muted = false AND notes IS NULL 
                 ''')
 
     async def deletedata(self, guild_id):
