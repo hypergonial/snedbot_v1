@@ -176,9 +176,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         Prefix management commands/features are found here
         '''
         records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
-        if records:
-            print(records)
-            print(records["prefix"])
+        if records and records["prefix"]:
             prefixes = records["prefix"][0]
             desc = ""
             for prefix in prefixes:
@@ -198,7 +196,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         if prefix == "": return
         records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
 
-        if records is None or prefix not in records["prefix"][0] and len(["prefix"][0]) <= 5:
+        if not records or not records["prefix"] or prefix not in records["prefix"][0] and len(["prefix"][0]) <= 5:
             async with self.bot.pool.acquire() as con:
                 await con.execute('''
                 UPDATE global_config SET prefix = array_append(prefix,$1) WHERE guild_id = $2
@@ -223,7 +221,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         prefix = prefix.replace("'", "")
         if prefix == "": return
         records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
-        if records and prefix in records["prefix"][0]:
+        if records and records["prefix"] and prefix in records["prefix"][0]:
             async with self.bot.pool.acquire() as con:
                 await con.execute('''
                 UPDATE global_config SET prefix = array_remove(prefix,$1) WHERE guild_id = $2
