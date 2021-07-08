@@ -54,6 +54,7 @@ class Moderation(commands.Cog):
         self._ = self.bot.get_localization('moderation', self.bot.lang)
 
         self.spam_cd_mapping = commands.CooldownMapping.from_cooldown(8, 10, commands.BucketType.member)
+        self.spam_punish_cooldown_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
         self.attach_spam_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
         self.link_spam_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
         self.escalate_prewarn_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
@@ -904,11 +905,9 @@ class Moderation(commands.Cog):
         spam_exceeded = bucket.update_rate_limit()
         if spam_exceeded: #If user exceeded spam limits
             '''General Spam'''
-
-            db_user = await self.bot.global_config.get_user(message.author.id, message.guild.id)
-            ctx = await self.bot.get_context(message)
-
-            if not db_user.is_muted and not message.author.bot:
+            punish_cd_bucket = self.spam_punish_cooldown_cd_mapping.get_bucket(message)
+            if not punish_cd_bucket.update_rate_limit(): # Only try punishing once every 30 seconds
+                ctx = await self.bot.get_context(message)
                 await self.automod_punish(ctx, offender=message.author, offense="spam", reason="spam")
         
         mentions = sum(member.id != message.author.id and not member.bot for member in message.mentions)
