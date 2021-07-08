@@ -196,7 +196,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         if prefix == "": return
         records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
 
-        if not records or prefix not in records["prefix"][0] and len(["prefix"][0]) <= 5:
+        if records is None or prefix not in records["prefix"][0] and len(["prefix"][0]) <= 5:
             async with self.bot.pool.acquire() as con:
                 await con.execute('''
                 UPDATE global_config SET prefix = array_append(prefix,$1) WHERE guild_id = $2
