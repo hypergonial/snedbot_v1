@@ -69,7 +69,7 @@ async def get_prefix(bot, message):
         records = await bot.caching.get(table="global_config", guild_id=message.guild.id)
         if records:
             prefixes = records["prefix"][0]
-            if len(prefixes) > 0: return prefixes
+            if prefixes and len(prefixes) > 0: return prefixes
             else: return bot.DEFAULT_PREFIX
         else:
             return bot.DEFAULT_PREFIX

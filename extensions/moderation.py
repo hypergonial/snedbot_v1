@@ -898,7 +898,7 @@ class Moderation(commands.Cog):
         if message.guild is None:
             return
 
-        if not isinstance(message.author, discord.Member):
+        if not isinstance(message.author, discord.Member) or message.author.bot:
             return
 
         bucket = self.spam_cd_mapping.get_bucket(message)
