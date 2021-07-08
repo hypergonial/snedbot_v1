@@ -177,6 +177,8 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         '''
         records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
         if records:
+            print(records)
+            print(records["prefix"])
             prefixes = records["prefix"][0]
             desc = ""
             for prefix in prefixes:
