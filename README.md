@@ -1,18 +1,19 @@
 # Sned
 
-## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  originally made for matchmaking and other purposes on the Annoverse discord guild.
+## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py).
 
 ### Features:
  - Easy to use commands
  - Setup commands to simplify configuration for administrators
  - Moderation capabilities
- - Auto-Moderation [WIP]
+ - Auto-Moderation
  - Reaction Roles
+ - Tags
  - Logging
  - Fun commands (e.g: coinflipping, cat pictures, typeracing, reminders etc..)
 
 ### Commands & usage:
- - For a full list of commands use `sn help`
+ - For a full list of commands use `sn help` or see the [documentation](https://sned.hypersden.com/docs/).
  - If you changed the prefix of the bot but forgot it, mention the bot. (Default prefix is `sn `)
 
 ### How to set up:
