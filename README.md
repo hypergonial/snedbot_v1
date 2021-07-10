@@ -17,7 +17,7 @@
  - If you changed the prefix of the bot but forgot it, mention the bot. (Default prefix is `sn `)
 
 ### How to set up:
-If you don't absolutely need this bot, I would prefer if you don't create an instance of it. Instead, join the Annoverse discord, or reach out to me directly. Regardless, here is how you set it up:
+If you don't absolutely need this bot, I would prefer if you don't create an instance of it. Instead, invite it via the [dashboard](https://sned.hypersden.com/dashboard). Regardless, here is how you set it up:
 
 Install dependencies from `requirements.txt`, then create a .env in your project folder with your bot token in this format: `TOKEN=yourtokenhere`. The bot should then run correctly.
 
