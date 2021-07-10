@@ -4,7 +4,8 @@
 
 ### Features:
  - Easy to use commands
- - Setup commands to simplify configuration for administrators
+ - Dashboard to simplify configuration for administrators *(Heavy WIP)*
+ - Comprehensive documentation
  - Moderation capabilities
  - Auto-Moderation
  - Reaction Roles
