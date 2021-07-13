@@ -1,7 +1,7 @@
-discord
+discord.py==1.7.3
 git+git://github.com/Rapptz/discord-ext-menus@master
 Levenshtein
 asyncpg
-dotenv
+python-dotenv
 jishaku
 psutil

@@ -1,22 +1,24 @@
 # Sned
 
-## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py)  originally made for matchmaking and other purposes on the Annoverse discord guild.
+## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py).
 
 ### Features:
  - Easy to use commands
- - Setup commands to simplify configuration for administrators
+ - Dashboard to simplify configuration for administrators *(Heavy WIP)*
+ - Comprehensive documentation
  - Moderation capabilities
- - Auto-Moderation [WIP]
+ - Auto-Moderation
  - Reaction Roles
+ - Tags
  - Logging
  - Fun commands (e.g: coinflipping, cat pictures, typeracing, reminders etc..)
 
 ### Commands & usage:
- - For a full list of commands use `sn help`
+ - For a full list of commands use `sn help` or see the [documentation](https://sned.hypersden.com/docs/).
  - If you changed the prefix of the bot but forgot it, mention the bot. (Default prefix is `sn `)
 
 ### How to set up:
-If you don't absolutely need this bot, I would prefer if you don't create an instance of it. Instead, join the Annoverse discord, or reach out to me directly. Regardless, here is how you set it up:
+If you don't absolutely need this bot, I would prefer if you don't create an instance of it. Instead, invite it via the [dashboard](https://sned.hypersden.com/dashboard). Regardless, here is how you set it up:
 
 Install dependencies from `requirements.txt`, then create a .env in your project folder with your bot token in this format: `TOKEN=yourtokenhere`. The bot should then run correctly.
 
