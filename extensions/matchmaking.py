@@ -280,7 +280,7 @@ class Matchmaking(commands.Cog):
                     await ctx.author.send(embed=embed)
                     return -1
             elif qType == "DLC" :
-                embed=discord.Embed(title=self._("Now react with the symbol of **all** the DLCs you want to use! Click the green checkmark ({checkmark}) once done!").format(checkmark= "✅"), description=self._(" {DLC0} - The Anarchist \n {DLC1} - Sunken Treasures \n {DLC2} - Botanica \n {DLC3} - The Passage \n {DLC4} - Seat of Power \n {DLC5} - Bright Harvest \n {DLC6} - Land of Lions \n {DLC7} - Docklands").format(DLC0="🔥", DLC1="🤿", DLC2="🌹", DLC3="❄️", DLC4="🏛️", DLC5="🚜", DLC6="🦁", DLC7="⚓"), color=mpEmbedColor)
+                embed=discord.Embed(title=self._("Now react with the symbol of **all** the DLCs you want to use! Click the green checkmark ({checkmark}) once done!").format(checkmark= "✅"), description=self._(" {DLC0} - The Anarchist \n {DLC1} - Sunken Treasures \n {DLC2} - Botanica \n {DLC3} - The Passage \n {DLC4} - Seat of Power \n {DLC5} - Bright Harvest \n {DLC6} - Land of Lions \n {DLC7} - Docklands \n {DLC8} - Tourist Season").format(DLC0="🔥", DLC1="🤿", DLC2="🌹", DLC3="❄️", DLC4="🏛️", DLC5="🚜", DLC6="🦁", DLC7="⚓", DLC8="🏖️"), color=mpEmbedColor)
                 embed.set_footer(text=self._("Note: If you do not own any DLC, just simply press {check} to continue.").format(check="✅"))
                 msg = await ctx.author.send(embed=embed)
                 #Add to the list of DLC here. Note: the emojies & DLC must be in the same order, & a green tick must be at the end of emojies. 
