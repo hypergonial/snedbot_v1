@@ -284,8 +284,8 @@ class Matchmaking(commands.Cog):
                 embed.set_footer(text=self._("Note: If you do not own any DLC, just simply press {check} to continue.").format(check="✅"))
                 msg = await ctx.author.send(embed=embed)
                 #Add to the list of DLC here. Note: the emojies & DLC must be in the same order, & a green tick must be at the end of emojies. 
-                DLCemojies = ["🔥", "🤿", "🌹", "❄️", "🏛️", "🚜", "🦁", "⚓", "✅"]
-                allDLCs = [self._("The Anarchist"), self._("Sunken Treasures"), self._("Botanica"), self._("The Passage"), self._("Seat of Power"), self._("Bright Harvest"), self._("Land of Lions"), self._("Docklands") ]
+                DLCemojies = ["🔥", "🤿", "🌹", "❄️", "🏛️", "🚜", "🦁", "⚓", "🏖️", "✅"]
+                allDLCs = [self._("The Anarchist"), self._("Sunken Treasures"), self._("Botanica"), self._("The Passage"), self._("Seat of Power"), self._("Bright Harvest"), self._("Land of Lions"), self._("Docklands"), self._("Tourist Season") ]
                 for emoji in DLCemojies :
                     await msg.add_reaction(emoji)
                 DLC = []

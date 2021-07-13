@@ -25,7 +25,7 @@ lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
 EXPERIMENTAL = False
 #Version of the bot
-current_version = "5.0.0c"
+current_version = "5.0.0d"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -122,6 +122,8 @@ class SnedBot(commands.Bot):
     
     async def on_ready(self):
         logging.info("Connected to Discord!")
+        if not hasattr(self, "uptime"):
+            self.uptime = datetime.datetime.utcnow()
 
     async def on_ipc_ready(self):
         logging.info("IPC is connected and ready.")
