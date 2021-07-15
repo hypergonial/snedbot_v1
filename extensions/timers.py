@@ -223,7 +223,7 @@ class Timers(commands.Cog):
         if self.currenttask is None:
             self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
     
-    @commands.command(aliases=["remindme", "remind"], usage="reminder <when>", help="Sets a reminder to the specified time.", description="Sets a reminder with at the specified time, with an optional message.\n\n**Time formatting:**\n`s` or `second(s)`\n`m` or `minute(s)`\n`h` or `hour(s)`\n`d` or `day(s)`\n`w` or `week(s)`\n`M` or `month(s)`\n`Y` or `year(s)`\n\n**Example:** `reminder in 2 hours to go sleep` or `reminder 5d example message`")
+    @commands.command(aliases=["remindme", "remind"], usage="reminder <when>", help="Sets a reminder to the specified time.", description="Sets a reminder to the specified time, with an optional message.\n\n**Time formatting:**\n`s` or `second(s)`\n`m` or `minute(s)`\n`h` or `hour(s)`\n`d` or `day(s)`\n`w` or `week(s)`\n`M` or `month(s)`\n`Y` or `year(s)`\n\n**Example:** `reminder in 2 hours to go sleep` or `reminder 5d example message`")
     @commands.guild_only()
     async def reminder(self, ctx, *, timestr):
         if len(timestr) >= 1000:
