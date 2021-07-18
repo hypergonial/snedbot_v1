@@ -200,10 +200,10 @@ class Moderation(commands.Cog):
         db_user.warns += 1
         await self.bot.global_config.update_user(db_user) #Update warns for user by incrementing it
         if reason is None :
-            embed=discord.Embed(title="⚠️" + self._("Warning issued"), description=self._("**{offender}** has been warned by **{moderator}**.").format(offender=member, moderator=moderator), color=self.bot.warnColor)
+            embed=discord.Embed(title="⚠️ " + self._("Warning issued"), description=self._("**{offender}** has been warned by **{moderator}**.").format(offender=member, moderator=moderator), color=self.bot.warnColor)
             warnembed=discord.Embed(title="⚠️ Warning issued.", description=f"{member.mention} has been warned by {moderator.mention}.\n**Warns:** {db_user.warns}\n\n[Jump!]({ctx.message.jump_url})", color=self.bot.warnColor)
         else :
-            embed=discord.Embed(title="⚠️" + self._("Warning issued"), description=self._("**{offender}** has been warned by **{moderator}**.\n**Reason:** ```{reason}```").format(offender=member, moderator=moderator, reason=reason), color=self.bot.warnColor)
+            embed=discord.Embed(title="⚠️ " + self._("Warning issued"), description=self._("**{offender}** has been warned by **{moderator}**.\n**Reason:** ```{reason}```").format(offender=member, moderator=moderator, reason=reason), color=self.bot.warnColor)
             warnembed=discord.Embed(title="⚠️ Warning issued.", description=f"{member.mention} has been warned by {moderator.mention}.\n**Warns:** {db_user.warns}\n**Reason:** ```{reason}```\n[Jump!]({ctx.message.jump_url})", color=self.bot.warnColor)
         try:
             await self.bot.get_cog("Logging").log_elevated(warnembed, ctx.guild.id)
@@ -366,6 +366,7 @@ class Moderation(commands.Cog):
         '''
         Warn command. Person warning must be in permitted roles.
         '''
+        await ctx.channel.trigger_typing()
         await self.warn(ctx, member=member, moderator=ctx.author, reason=reason)
     
 
