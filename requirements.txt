@@ -5,3 +5,4 @@ asyncpg
 python-dotenv
 jishaku
 psutil
+uwuify

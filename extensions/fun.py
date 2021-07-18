@@ -7,10 +7,11 @@ import os
 import random
 from pathlib import Path
 from textwrap import fill
-import aiohttp
 
+import aiohttp
 import discord
 import Levenshtein as lev
+import uwuify
 from discord.ext import commands, menus
 from PIL import Image, ImageDraw, ImageFont
 
@@ -118,6 +119,11 @@ class Fun(commands.Cog):
         embed = discord.Embed(title="🦆 " + self._("I ducked it for you!"), description=self._("[Click me!]({link})").format(link=link), color=self.bot.embedBlue)
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embed)
+    
+    @commands.command(help="Twanswoms tewt intuwu", description="Twanswoms tewt intuwu... What havew I donuwu...", aliases=["uwuify"], usage="uwuify <text>")
+    @commands.guild_only()
+    async def uwu(self, ctx, *, text:str):
+        await ctx.send(uwuify.uwu(text))
 
     @commands.command(help="Boom!", description="Because who doesn't like blowing stuff up?", usage="boom")
     async def boom(self, ctx):
