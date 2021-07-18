@@ -7,6 +7,7 @@ import re
 from dataclasses import dataclass
 import functools
 import unicodedata
+import json
 
 import discord
 from discord.ext import commands
@@ -59,6 +60,23 @@ class Moderation(commands.Cog):
         self.link_spam_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
         self.escalate_prewarn_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
         self.escalate_cd_mapping = commands.CooldownMapping.from_cooldown(2, 30, commands.BucketType.member)
+
+        #The default set of automoderation policies
+        self.default_automod_policies = {
+            'invites': 'disabled', 
+            'invites_dur': 15, 
+            'spam': 'disabled', 
+            'spam_dur': 15, 
+            'mass_mentions': 'disabled', 
+            'mass_mentions_dur': 15, 
+            'zalgo': 'disabled', 
+            'zalgo_dur': 15, 
+            'attach_spam': 'disabled', 
+            'attach_spam_dur': 15, 
+            'link_spam': 'disabled', 
+            'link_spam_dur': 15, 
+            'escalate': 'disabled', 
+            'escalate_dur': 15}
     
     async def cog_check(self, ctx):
         return await self.bot.custom_checks.module_is_enabled(ctx, "moderation")
@@ -84,18 +102,15 @@ class Moderation(commands.Cog):
     async def get_policies(self, guild_id:int) -> dict:
         '''
         Checks for and returns the auto-moderation policies for the given guild.
+        This function should always be used to retrieve auto-moderation policies.
         '''
         record = await self.bot.caching.get(table="mod_config", guild_id=guild_id)
 
-        policies = {
-            "invites": record["policies_invites"][0] if record else "disabled",
-            "spam": record["policies_spam"][0] if record else "disabled",
-            "mass_mentions": record["policies_mass_mentions"][0] if record else "disabled",
-            "attach_spam": record["policies_attach_spam"][0] if record else "disabled",
-            "link_spam": record["policies_link_spam"][0] if record else "disabled",
-            "escalate": record["policies_escalate"][0] if record else "disabled"
-        }
+        policies = json.loads(record["automod_policies"][0]) if record else self.default_automod_policies
 
+        for key in self.default_automod_policies.keys(): #Ensure that values always exist
+            if key not in policies:
+                policies[key] = self.default_automod_policies[key]
         return policies
 
 
@@ -818,16 +833,19 @@ class Moderation(commands.Cog):
         if not bot_perms.ban_members or not bot_perms.manage_roles or not bot_perms.manage_messages or not bot_perms.kick_members:
             return
 
+        if not await self.bot.custom_checks.module_is_enabled(ctx, "moderation"):
+            return
+
         if await is_automod_excluded(ctx) or await has_mod_perms(ctx):
             return
 
         policies = await self.get_policies(ctx.guild.id)
         policy = policies[offense] #This will decide the type of punishment
+        temp_dur = policies[f"{offense}_dur"] #Get temporary duration
 
-        if policy.startswith("temp") or policy not in ["delete", "warn", "warn+delete", "escalate"]: #Get temporary punishment duration in minutes
+        if policy not in ["delete", "warn", "warn+delete", "escalate"]: #Get temporary punishment duration in minutes
             record = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
             async with self.bot.pool.acquire() as con:
-                temp_dur = record["temp_dur"][0] if record else 15
                 #TODO: Implement this
                 dm_users_on_punish = record["dm_users_on_punish"][0] if record else False
 

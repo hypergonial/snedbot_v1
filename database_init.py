@@ -82,14 +82,7 @@ try:
                     mute_role_id bigint,
                     dm_users_on_punish bool NOT NULL DEFAULT true,
                     clean_up_mod_commands bool NOT NULL DEFAULT false,
-                    temp_dur integer NOT NULL DEFAULT 15,
-                    policies_invites text NOT NULL DEFAULT 'disabled',
-                    policies_spam text NOT NULL DEFAULT 'disabled',
-                    policies_mass_mentions text NOT NULL DEFAULT 'disabled',
-                    policies_zalgo text NOT NULL DEFAULT 'disabled',
-                    policies_attach_spam text NOT NULL DEFAULT 'disabled',
-                    policies_link_spam text NOT NULL DEFAULT 'disabled',
-                    policies_escalate text NOT NULL DEFAULT 'disabled',
+                    automod_policies text NOT NULL DEFAULT '{}',
                     PRIMARY KEY (guild_id),
                     FOREIGN KEY (guild_id)
                         REFERENCES global_config (guild_id)

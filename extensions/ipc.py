@@ -1,4 +1,5 @@
 import logging
+import json
 
 import discord
 from discord.ext import commands, ipc
@@ -173,7 +174,7 @@ class IpcRoutes(commands.Cog):
             ON CONFLICT (guild_id) DO
             UPDATE SET dm_users_on_punish = $2, clean_up_mod_commands = $3''',
             guild_id, mod_settings["dm_users_on_punish"], mod_settings["clean_up_mod_commands"])
-        self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
+        await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
     
     @ipc.server.route()
     async def set_mute_role(self, data):
@@ -185,7 +186,7 @@ class IpcRoutes(commands.Cog):
             ON CONFLICT (guild_id) DO
             UPDATE SET mute_role_id = $2
             ''', guild_id, mute_role_id)
-        self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
+        await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
 
     @ipc.server.route()
     async def get_automod_settings(self, data):
@@ -193,18 +194,9 @@ class IpcRoutes(commands.Cog):
         module_enabled = await self.get_module_status(guild.id, "moderation")
         excluded_role_dict = await self.get_role_dict(guild, "automod_excluded")
         all_role_dict = await self.get_role_dict(guild)
-        automod_policies_dict = {}
 
-        record = await self.bot.caching.get(table="mod_config", guild_id=guild.id)
-        automod_policies_dict = {
-            "invites" : record["policies_invites"][0] if record else "disabled",
-            "spam" : record["policies_spam"][0] if record else "disabled",
-            "mass_mentions" : record["policies_mass_mentions"][0] if record else "disabled",
-            "zalgo" : record["policies_zalgo"][0] if record else "disabled",
-            "attach_spam" : record["policies_attach_spam"][0] if record else "disabled",
-            "link_spam": record["policies_link_spam"][0] if record else "disabled",
-            "escalate": record["policies_escalate"][0] if record else "disabled",
-            }
+        automod_policies = await self.bot.get_cog("Moderation").get_policies(guild.id)
+
 
         response = {
             "id": guild.id,
@@ -212,9 +204,8 @@ class IpcRoutes(commands.Cog):
             "icon_url": str(guild.icon_url),
             "module_enabled": module_enabled,
             "automod_excluded": excluded_role_dict,
-            "automod_policies": automod_policies_dict,
+            "automod_policies": automod_policies,
             "all_roles": all_role_dict,
-            "temp_dur": record["temp_dur"][0] if record else 15,
 
         }
         return response
@@ -223,56 +214,55 @@ class IpcRoutes(commands.Cog):
     async def set_automod_policies(self, data):
         guild_id = data.guild_id
         policies = data.policies
+        existing_policies = await self.bot.get_cog("Moderation").get_policies(guild_id)
+        existing_policies.update(policies)
 
         async with self.bot.pool.acquire() as con:
             await con.execute('''
             INSERT INTO mod_config (
                 guild_id, 
-                policies_invites, 
-                policies_spam, 
-                policies_mass_mentions, 
-                policies_zalgo, 
-                policies_attach_spam, 
-                policies_link_spam
+                automod_policies
                 )
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            ON CONFLICT (guild_id) DO
-            UPDATE SET 
-                policies_invites = $2, 
-                policies_spam = $3, 
-                policies_mass_mentions = $4, 
-                policies_zalgo = $5, 
-                policies_attach_spam = $6, 
-                policies_link_spam = $7''',
-            guild_id, policies["invites"], policies["spam"], policies["mass_mentions"], policies["zalgo"], policies["attach_spam"], policies["link_spam"])
-        await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
-
-    @ipc.server.route()
-    async def set_automod_temp_dur(self, data):
-        guild_id = data.guild_id
-        temp_dur = data.temp_dur
-
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''
-            INSERT INTO mod_config (guild_id, temp_dur)
             VALUES ($1, $2)
             ON CONFLICT (guild_id) DO
-            UPDATE SET temp_dur = $2
-            ''', guild_id, temp_dur)
+            UPDATE SET automod_policies = $2
+            ''',
+            guild_id, json.dumps(existing_policies))
         await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
+
 
     @ipc.server.route()
     async def set_automod_escalate_policy(self, data):
         guild_id = data.guild_id
         escalate_policy = data.policy
 
+        automod_policies = await self.bot.get_cog("Moderation").get_policies(data.guild_id)
+        automod_policies["escalate"] = escalate_policy
+
         async with self.bot.pool.acquire() as con:
             await con.execute('''
-            INSERT INTO mod_config (guild_id, policies_escalate)
+            INSERT INTO mod_config (guild_id, automod_policies)
             VALUES ($1, $2)
             ON CONFLICT (guild_id) DO
-            UPDATE SET policies_escalate = $2
-            ''', guild_id, escalate_policy)
+            UPDATE SET automod_policies = $2
+            ''', guild_id, json.dumps(automod_policies))
+        await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
+
+    @ipc.server.route()
+    async def set_automod_escalate_dur(self, data):
+        guild_id = data.guild_id
+        escalate_dur = data.escalate_dur
+
+        automod_policies = await self.bot.get_cog("Moderation").get_policies(data.guild_id)
+        automod_policies["escalate_dur"] = escalate_dur
+
+        async with self.bot.pool.acquire() as con:
+            await con.execute('''
+            INSERT INTO mod_config (guild_id, automod_policies)
+            VALUES ($1, $2)
+            ON CONFLICT (guild_id) DO
+            UPDATE SET automod_policies = $2
+            ''', guild_id, json.dumps(automod_policies))
         await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
 
 
