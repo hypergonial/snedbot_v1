@@ -28,17 +28,36 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         if user in ctx.guild.members:
             db_user = await self.bot.global_config.get_user(user.id, ctx.guild.id)
             member = ctx.guild.get_member(user.id)
-            rolelist = [role.name for role in member.roles]
-            roleformatted = ", ".join(rolelist)
-            embed=discord.Embed(title=f"User information: {member.name}", description=f"Username: `{member.name}` \nNickname: `{member.display_name}` \nUser ID: `{member.id}`\nBot: `{member.bot}` \nAccount creation date: `{member.created_at}` \nJoin date: `{member.joined_at}`\nWarns: `{db_user.warns}`\nMuted: `{db_user.is_muted}`\nFlags: `{db_user.flags}`\nNotes: `{db_user.notes}` \nRoles: `{roleformatted}`", color=member.colour)
-            embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+            rolelist = [role.mention for role in member.roles]
+            rolelist.pop(0)
+            roleformatted = ", ".join(rolelist) if len(rolelist) > 0 else "`-`"
+            embed=discord.Embed(title=f"User information: {member.name}", description=f"""Username: `{member.name}`
+            Nickname: `{member.display_name if member.display_name != member.name else "-"}`
+            User ID: `{member.id}`
+            Bot: `{member.bot}`
+            Account creation date: <t:{round(member.created_at.timestamp())}> (<t:{round(member.created_at.timestamp())}:R>)
+            Join date: <t:{round(member.joined_at.timestamp())}> (<t:{round(member.joined_at.timestamp())}:R>)
+            Warns: `{db_user.warns}`
+            Muted: `{db_user.is_muted}`
+            Flags: `{db_user.flags}`
+            Notes: `{db_user.notes}`
+            Roles: {roleformatted}""", color=member.colour)
             embed.set_thumbnail(url=member.avatar_url)
-            await ctx.channel.send(embed=embed)
+
         else: #Retrieve limited information about the user if they are not in the guild
-            embed=discord.Embed(title=f"User information: {user.name}", description=f"Username: `{user}` \nNickname: `-` \nUser ID: `{user.id}` \nStatus: `-` \nBot: `{user.bot}` \nAccount creation date: `{user.created_at}` \nJoin date: `-`\nRoles: `-`\n\n*Note: This user is not a member of this server*", color=self.bot.embedBlue)
-            embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+            embed=discord.Embed(title=f"User information: {user.name}", description=f"""Username: `{user}`
+            Nickname: `-` 
+            User ID: `{user.id}` 
+            Status: `-` 
+            Bot: `{user.bot}` 
+            Account creation date: <t:{round(user.created_at.timestamp())}> (<t:{round(user.created_at.timestamp())}:R>) 
+            Join date: `-`
+            Roles: `-`
+            *Note: This user is not a member of this server*""", color=self.bot.embedBlue)
             embed.set_thumbnail(url=user.avatar_url)
-            await ctx.channel.send(embed=embed)
+
+        embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+        await ctx.channel.send(embed=embed)
 
 
     #Command used for deleting a guild settings file
