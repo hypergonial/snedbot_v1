@@ -239,7 +239,7 @@ class Timers(commands.Cog):
             embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Your timeformat is invalid! Type `{prefix}help reminder` to see valid time formatting.").format(prefix=ctx.prefix),color=self.bot.errorColor)
             await ctx.send(embed=embed)
         else:
-            if (time - datetime.datetime.utcnow()).total_seconds() > 31536000*5:
+            if (time - datetime.datetime.utcnow()).total_seconds() >= 31536000*5:
                 embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Sorry, but that's a bit too far in the future.").format(prefix=ctx.prefix),color=self.bot.errorColor)
                 await ctx.send(embed=embed)
             else:
@@ -247,8 +247,8 @@ class Timers(commands.Cog):
                 if timestr is None or len(timestr) == 0:
                     timestr = "..."
                 note = timestr+f"\n\n[Jump to original message!]({ctx.message.jump_url})"
-                embed = discord.Embed(title="✅ " + self._("Reminder set"), description=self._("Reminder set for: `{time_year}-{time_month}-{time_day} {time_hour}:{time_minute} (UTC)`").format(time_year=time.year, time_month=str(time.month).rjust(2, '0'), time_day=str(time.day).rjust(2, '0'), time_hour=str(time.hour).rjust(2, '0'), time_minute=str(time.minute).rjust(2, '0')), timestamp=time, color=self.bot.embedGreen)
-                embed.set_footer(text="In your timezone that is:", icon_url=ctx.author.avatar_url)
+                embed = discord.Embed(title="✅ " + self._("Reminder set"), description=self._("Reminder set for:  {timestamp} ({timestampR})").format(timestamp=f"<t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}>", timestampR=f"<t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>"), color=self.bot.embedGreen)
+                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
                 await self.create_timer(expires=time, event="reminder", guild_id=ctx.guild.id,user_id=ctx.author.id, channel_id=ctx.channel.id, notes=note)
                 await ctx.send(embed=embed)
 
@@ -272,9 +272,9 @@ class Timers(commands.Cog):
             for timer in timers:
                 time = datetime.datetime.fromtimestamp(timer.expires)
                 if timer.notes:
-                    reminderstr = reminderstr + f"**ID: {timer.id}** - **{time.year}-{time.month}-{time.day} {time.hour}:{time.minute} (UTC)**\n{timer.notes}\n"
+                    reminderstr = reminderstr + f"**ID: {timer.id}** - <t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}> (<t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>)\n{timer.notes}\n"
                 else:
-                    reminderstr = reminderstr + f"**ID: {timer.id}** - **{time.year}-{time.month}-{time.day} {time.hour}:{time.minute} (UTC)**\n"
+                    reminderstr = reminderstr + f"**ID: {timer.id}** - <t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}> (<t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>)\n"
         else:
             reminderstr = self._("You have no reminders. You can set one via `{prefix}reminder`!").format(prefix=ctx.prefix)
         embed=discord.Embed(title="✉️ " + self._("Your reminders:"),description=reminderstr, color=self.bot.embedBlue)
@@ -310,7 +310,7 @@ class Timers(commands.Cog):
         channel = await self.bot.fetch_channel(timer.channel_id)
         if guild.get_member(timer.user_id) != None: #Check if user did not leave guild
             user = guild.get_member(timer.user_id)
-            embed=discord.Embed(title="✉️ " + self._("{user}, your reminder:").format(user=user.name), description="{note}".format(user=user.mention, note=timer.notes), color=self.bot.embedBlue)
+            embed=discord.Embed(title="✉️ " + self._("{user}, your reminder:").format(user=user.name), description=f"{timer.notes}", color=self.bot.embedBlue)
             try:
                 await channel.send(embed=embed, content=user.mention)
             except (discord.Forbidden, discord.HTTPException, discord.errors.NotFound) :

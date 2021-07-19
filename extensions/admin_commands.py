@@ -1,8 +1,9 @@
 import asyncio
-import gettext
-import logging
 import copy
+import datetime
+import gettext
 import itertools
+import logging
 
 import asyncpg
 import discord
@@ -35,8 +36,8 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             Nickname: `{member.display_name if member.display_name != member.name else "-"}`
             User ID: `{member.id}`
             Bot: `{member.bot}`
-            Account creation date: <t:{round(member.created_at.timestamp())}> (<t:{round(member.created_at.timestamp())}:R>)
-            Join date: <t:{round(member.joined_at.timestamp())}> (<t:{round(member.joined_at.timestamp())}:R>)
+            Account creation date: <t:{round(member.created_at.replace(tzinfo=datetime.timezone.utc).timestamp())}> (<t:{round(member.created_at.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>)
+            Join date: <t:{round(member.joined_at.replace(tzinfo=datetime.timezone.utc).timestamp())}> (<t:{round(member.joined_at.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>)
             Warns: `{db_user.warns}`
             Muted: `{db_user.is_muted}`
             Flags: `{db_user.flags}`
@@ -50,7 +51,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             User ID: `{user.id}` 
             Status: `-` 
             Bot: `{user.bot}` 
-            Account creation date: <t:{round(user.created_at.timestamp())}> (<t:{round(user.created_at.timestamp())}:R>) 
+            Account creation date: <t:{round(user.created_at.replace(tzinfo=datetime.timezone.utc).timestamp())}> (<t:{round(user.created_at.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>) 
             Join date: `-`
             Roles: `-`
             *Note: This user is not a member of this server*""", color=self.bot.embedBlue)
