@@ -243,7 +243,7 @@ class Moderation(commands.Cog):
                         raise ModuleNotFoundError('timers extension not found')
                 try:
                     if not duration: duration = "Infinite"
-                    else: duration = f"{dur[0]} (UTC)"
+                    else: duration = f"<t:{round(dur[0].replace(tzinfo=datetime.timezone.utc).timestamp())}>"
                     muteembed=discord.Embed(title="🔇 User muted", description=F"**User:** `{member} ({member.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Until:** `{duration}`\n**Reason:** ```{reason}```", color=self.bot.errorColor)
                     await self.bot.get_cog("Logging").log_elevated(muteembed, ctx.guild.id)
                 except:
@@ -277,7 +277,7 @@ class Moderation(commands.Cog):
                 except:
                     pass
 
-    async def ban(self, ctx, member:discord.Member, moderator:discord.Member, duration:str=None, soft:bool=False, reason:str=None):
+    async def ban(self, ctx, member:discord.Member, moderator:discord.Member, duration:str=None, soft:bool=False, days_to_delete:int=1, reason:str=None):
         '''
         Handles the banning of a user, can optionally accept a duration to make it a tempban.
         '''
@@ -288,7 +288,7 @@ class Moderation(commands.Cog):
             try:
                 dur = await self.bot.get_cog("Timers").converttime(duration)
                 dur = dur[0]
-                reason = f"{reason}\nBanned until: {dur}"
+                reason = f"{reason}\nBanned until: {dur} (UTC)"
 
             except ValueError:
                 embed=discord.Embed(title="❌ " + self.bot.errorDataTitle, description=self._("Your entered timeformat is invalid. Type `{prefix}help tempban` for more information.").format(prefix=ctx.prefix), color=self.bot.errorColor)
@@ -298,7 +298,7 @@ class Moderation(commands.Cog):
             raw_reason = reason #Shown to the public
             reason = f"{moderator} ({moderator.id}): \n{reason}"
         else:
-            raw_reason = reason
+            raw_reason = "No reason provided"
             reason = f"{moderator} ({moderator.id}): \nNo reason provided"
 
         if soft:
@@ -307,17 +307,13 @@ class Moderation(commands.Cog):
             raw_reason = f"[TEMPBAN] {raw_reason}"
 
         try:
-            await ctx.guild.ban(member, reason=reason, delete_message_days=1)
-            if raw_reason:
-                embed = discord.Embed(title="🔨 " + self._("User banned"), description=self._("**{offender}** has been banned.\n**Reason:** ```{raw_reason}```").format(offender=member, raw_reason=raw_reason),color=self.bot.errorColor)
-                await ctx.send(embed=embed)
-            else:
-                embed = discord.Embed(title="🔨 " + self._("User banned"), description=self._("**{offender}** has been banned.").format(offender=member),color=self.bot.errorColor)
-                await ctx.send(embed=embed)
+            await ctx.guild.ban(member, reason=reason, delete_message_days=days_to_delete)
+            embed = discord.Embed(title="🔨 " + self._("User banned"), description=self._("**{offender}** has been banned.\n**Reason:** ```{raw_reason}```").format(offender=member, raw_reason=raw_reason),color=self.bot.errorColor)
+            await ctx.send(embed=embed)
 
             if soft:
                 await ctx.guild.unban(member, reason="Automatic unban by softban")
-            elif dur:
+            elif duration and dur:
                 try:
                     await self.bot.get_cog("Timers").create_timer(expires=dur, event="tempban", guild_id=ctx.guild.id, user_id=member.id, channel_id=ctx.channel.id)
                 except AttributeError as error:
@@ -499,7 +495,7 @@ class Moderation(commands.Cog):
             embed=discord.Embed(title="❌ " + self._("Muting failed"), description=self._("This function requires an extension that is not enabled.\n**Error:** ```{error}```").format(error=error), color=self.bot.errorColor)
             await ctx.send(embed=embed)    
         else:
-            embed=discord.Embed(title="🔇 " + self._("User muted"), description=self._("**{offender}** has been muted until `{duration} (UTC)`.\n**Reason:** ```{reason}```").format(offender=member, duration=muted_until, reason=reason), color=self.bot.embedGreen)
+            embed=discord.Embed(title="🔇 " + self._("User muted"), description=self._("**{offender}** has been muted until {duration}.\n**Reason:** ```{reason}```").format(offender=member, duration=f"<t:{round(muted_until.replace(tzinfo=datetime.timezone.utc).timestamp())}>", reason=reason), color=self.bot.embedGreen)
             await ctx.send(embed=embed)
     
 
@@ -540,29 +536,15 @@ class Moderation(commands.Cog):
         '''
         await ctx.channel.trigger_typing()
 
-        if reason:
-            raw_reason = reason #Shown to the public
-            reason = f"{ctx.author} ({ctx.author.id}): \nReason: {reason}"
-        else:
-            raw_reason = reason
-            reason = f"{ctx.author} ({ctx.author.id}): \nNo reason provided"
-
         try:
-            await ctx.guild.ban(member, reason=reason, delete_message_days=1)
-            if raw_reason:
-                embed = discord.Embed(title="🔨 " + self._("User banned"), description=self._("**{offender}** has been banned.\n**Reason:** ```{raw_reason}```").format(offender=member, raw_reason=raw_reason),color=self.bot.errorColor)
-                await ctx.send(embed=embed)
-            else:
-                embed = discord.Embed(title="🔨 " + self._("User banned"), description=self._("**{offender}** User has been banned.").format(offender=member),color=self.bot.errorColor)
-                await ctx.send(embed=embed)
+            await self.ban(ctx, member, ctx.author, duration=None, soft=False, reason=reason)
         except discord.Forbidden:
             embed = discord.Embed(title="❌ " + self._("Bot has insufficient permissions"), description=self._("This user cannot be banned."),color=self.bot.errorColor)
-            await ctx.send(embed=embed)
-            return
+            await ctx.send(embed=embed); return
+
         except discord.HTTPException:
             embed = discord.Embed(title="❌ " + self._("Ban failed"), description=self._("Ban failed, please try again later."),color=self.bot.errorColor)
-            await ctx.send(embed=embed)
-            return
+            await ctx.send(embed=embed); return
 
 
     @commands.command(name="unban", help="Unbans a user.", description="Unbans a user with an optional reason. Deletes the last 7 days worth of messages from the user.", usage="unban <user> [reason]")
@@ -620,22 +602,9 @@ class Moderation(commands.Cog):
         except:
             dur = args
             reason = "No reason provided"
-
-        raw_reason = reason #Shown to the public
-        if reason:
-            reason = f"{ctx.author} ({ctx.author.id}): \n{reason}"
-        else:
-            reason = f"{ctx.author} ({ctx.author.id}): \nNo reason provided"
         
         try:
-
-            await self.ban(ctx, member, ctx.author, dur, reason)
-            if raw_reason:
-                embed = discord.Embed(title="🔨 " + self._("User banned"), description=self._("**{offender}** has been banned.\n**Reason:** ```{raw_reason}```").format(offender=member, raw_reason=raw_reason),color=self.bot.errorColor)
-                await ctx.send(embed=embed)
-            else:
-                embed = discord.Embed(title="🔨 " + self._("User banned"), description=self._("**{offender}** has been banned.").format(offender=member),color=self.bot.errorColor)
-                await ctx.send(embed=embed)
+            await self.ban(ctx, member, ctx.author, duration=dur, reason=reason)
 
         except discord.Forbidden:
             embed = discord.Embed(title="❌ " + self._("Bot has insufficient permissions"), description=self._("The bot has insufficient permissions to perform the ban, or this user cannot be banned."),color=self.bot.errorColor)
@@ -716,7 +685,7 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(ban_members=True)
     @commands.guild_only()
     @mod_punish
-    async def softban(self, ctx, member:discord.Member, deldays:int=1, *, reason:str=None):
+    async def softban(self, ctx, member:discord.Member, days_to_delete:int=1, *, reason:str=None):
         '''
         Soft-bans a user, by banning and un-banning them.
         Removes messages from the last x days.
@@ -725,24 +694,11 @@ class Moderation(commands.Cog):
         '''
         raw_reason = reason #Shown to the public
         await ctx.channel.trigger_typing()
-        if reason:
-            reason = f"[SOFTBAN] {ctx.author} ({ctx.author.id}): \n{reason}"
-        else:
-            reason = f"[SOFTBAN] {ctx.author} ({ctx.author.id}): \nNo reason provided"
 
         try:
-            deldays = int(deldays)
-            await ctx.guild.ban(member, reason=reason, days_to_delete=deldays)
-            await ctx.guild.unban(member, reason="Automatic unban by softban command")
-            if raw_reason:
-                embed = discord.Embed(title="✅ " + self._("User soft-banned"), description=self._("**{offender}** has been soft-banned.\n**Reason:** {raw_reason}").format(offender=member, raw_reason=raw_reason),color=self.bot.errorColor)
-                await ctx.send(embed=embed)
-            else:
-                embed = discord.Embed(title="✅ " + self._("User soft-banned"), description=self._("**{offender}** has been soft-banned.").format(offender=member),color=self.bot.errorColor)
-                await ctx.send(embed=embed)
-        except ValueError:
-            embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Invalid data for argument `days-to-delete` See `{prefix}help softban` for command usage.").format(prefix=ctx.prefix),color=self.bot.errorColor)
-            return await ctx.send(embed=embed)
+            days_to_delete = int(days_to_delete)
+            await self.ban(ctx, member, ctx.author, reason=reason, soft=True, days_to_delete=days_to_delete)
+
         except discord.Forbidden:
             embed = discord.Embed(title="❌ " + self._("Bot has insufficient permissions"), description=self._("The bot has insufficient permissions to perform the ban, or this user cannot be banned."),color=self.bot.errorColor)
             return await ctx.send(embed=embed)

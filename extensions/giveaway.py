@@ -69,9 +69,11 @@ class Giveaway(commands.Cog):
             giveaway_text = message.content
 
             try:
-                embed = discord.Embed(title="🎉 Giveaway!", description=f"**{giveaway_text}**\n\nHosted by: **{ctx.author.mention} ({ctx.author})**", color=0xd76b00)
-                embed.set_footer(text=f"Winners: {winners} | Ends at")
-                embed.timestamp = time
+                embed = discord.Embed(title="🎉 Giveaway!", description=f"""**{giveaway_text}**
+                **-------------**
+                **End date:** <t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}:F>
+                **Number of winners:** `{winners}`""", color=0xd76b00)
+                embed.set_footer(text=f"Hosted by {ctx.author}", icon_url=ctx.author.avatar_url)
                 giveaway_msg = await giveaway_channel.send(embed=embed)
                 await giveaway_msg.add_reaction("🎉")
                 embed = discord.Embed(title="✅ " + "Giveaway created", description="Giveaway created successfully!", color=self.bot.embedGreen)
@@ -107,7 +109,7 @@ class Giveaway(commands.Cog):
             for result in results:
                 time = datetime.datetime.fromtimestamp(result.get('expires'))
                 channel = self.bot.get_channel(result.get('channel_id'))
-                list_str = list_str + f"**ID: {result.get('id')}** - {channel.mention} - Concludes: **{time.year}-{time.month}-{time.day} {time.hour}:{time.minute} (UTC)**\n"
+                list_str = list_str + f"**ID: {result.get('id')}** - {channel.mention} - Concludes: <t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}>\n"
         else:
             list_str = self._("There are currently no running giveaways on this server. You can create one via `{prefix}giveaway create`!").format(prefix=ctx.prefix)
         embed=discord.Embed(title="🎉 " + self._("List of giveaways:"),description=list_str, color=self.bot.embedBlue)
@@ -169,18 +171,13 @@ class Giveaway(commands.Cog):
                         winners.append(random.choice(users))
                         users.remove(winners[len(winners)-1])
                     
-                    winners_str = "\n".join([f"{winner.mention} ({winner.name}#{winner.discriminator})" for winner in winners])
-                    embed.description = f"{embed.description}\n\nWinners:\n **{winners_str}**"
-                    embed.set_footer(text=f"Winners: {winner_count} | Ended at")
-                    embed.timestamp = datetime.datetime.utcnow()
+                    winners_str = "\n".join([f"{winner.mention} `({winner.name}#{winner.discriminator})`" for winner in winners])
+                    embed.description = f"{embed.description}\n\n**Winners:**\n {winners_str}"
                     await message.edit(embed=embed)
 
                     winner_mentions = ", ".join([winner.mention for winner in winners])
                     await channel.send(f"Giveaway was forced to terminate by a moderator.\n{winner_mentions} **won the giveaway!** 🎉")
                 else:
-                    embed.set_footer(text=f"Winners: {winner_count} | Ended at")
-                    await message.edit(embed=embed)
-
                     err_embed=discord.Embed(title="🎉 Not enough participants", description="The giveaway was forced to end by a moderator with insufficient participants.", color=self.bot.errorColor)
                     err_embed.set_footer(text="Hint: You could try lowering the amount of winners.")
                     await channel.send(embed=err_embed)
@@ -214,17 +211,13 @@ class Giveaway(commands.Cog):
                 winners.append(random.choice(users))
                 users.remove(winners[len(winners)-1])
             
-            winners_str = "\n".join([f"{winner.mention} ({winner.name}#{winner.discriminator})" for winner in winners])
-            embed.description = f"{embed.description}\n\nWinners:\n **{winners_str}**"
-            embed.set_footer(text=f"Winners: {winner_count} | Ended at")
+            winners_str = "\n".join([f"{winner.mention} `({winner.name}#{winner.discriminator})`" for winner in winners])
+            embed.description = f"{embed.description}\n\n**Winners:**\n {winners_str}"
             await message.edit(embed=embed)
 
             winner_mentions = ", ".join([winner.mention for winner in winners])
             await channel.send(f"{winner_mentions} **won the giveaway!** 🎉")
         else:
-            embed.set_footer(text=f"Winners: {winner_count} | Ended at")
-            await message.edit(embed=embed)
-
             err_embed=discord.Embed(title="🎉 Not enough participants", description="The giveaway ended with insufficient participants.", color=self.bot.errorColor)
             err_embed.set_footer(text="Hint: You could try lowering the amount of winners.")
             await channel.send(embed=err_embed)
