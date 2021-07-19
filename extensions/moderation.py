@@ -934,6 +934,7 @@ class Moderation(commands.Cog):
         mentions = sum(member.id != message.author.id and not member.bot for member in message.mentions)
         if mentions >= policies["mass_mentions_count"]:
             '''Mention Spams'''
+            ctx = await self.bot.get_context(message)
             await self.automod_punish(ctx, offender=message.author, offense="mass_mentions", reason=f"spamming {mentions} mentions in a single message")
   
         else: #If the obvious stuff didn't work
