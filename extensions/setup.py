@@ -30,8 +30,6 @@ class Setup(commands.Cog):
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def setup (self, ctx):
-        #This is the LFG setup variant, it will set up role reactions on either an existing message or a new one.
-        #More setup variants may be added in the future
         await ctx.send_help(ctx.command)
 
     @setup.command(help="Helps set up matchmaking")
