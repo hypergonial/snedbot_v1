@@ -69,6 +69,7 @@ class Moderation(commands.Cog):
             'spam_dur': 15, 
             'mass_mentions': 'disabled', 
             'mass_mentions_dur': 15, 
+            'mass_mentions_count': 10,
             'zalgo': 'disabled', 
             'zalgo_dur': 15, 
             'attach_spam': 'disabled', 
@@ -929,8 +930,9 @@ class Moderation(commands.Cog):
                 ctx = await self.bot.get_context(message)
                 await self.automod_punish(ctx, offender=message.author, offense="spam", reason="spam")
         
+        policies = self.get_policies(message.guild.id)
         mentions = sum(member.id != message.author.id and not member.bot for member in message.mentions)
-        if mentions > 7:
+        if mentions > policies["mass_mentions_count"]:
             '''Mention Spams'''
             await self.automod_punish(ctx, offender=message.author, offense="mass_mentions", reason=f"spamming {mentions} mentions in a single message")
   
