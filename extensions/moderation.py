@@ -76,6 +76,11 @@ class Moderation(commands.Cog):
             'attach_spam_dur': 15, 
             'link_spam': 'disabled', 
             'link_spam_dur': 15, 
+            'caps': 'disabled',
+            'caps_dur': 15,
+            'bad_words': 'disabled',
+            'bad_words_dur': 15,
+            'bad_words_list': ["motherfucker", "faggot", "cockfucker", "cunt", "nigger", "nigga", "porn", "pornography", "slut", "whore"],
             'escalate': 'disabled', 
             'escalate_dur': 15}
     
@@ -778,14 +783,15 @@ class Moderation(commands.Cog):
         await ctx.send(embed=embed, delete_after=20.0)
 
 
-    async def automod_punish(self, ctx, offender:discord.Member, offense:str, reason:str):
+    async def automod_punish(self, message, offender:discord.Member, offense:str, reason:str):
         '''
         Decides and does the punishment set for the specified offense in the dashboard.
         '''
-
-        valid_offenses = ["invites", "spam", "mass_mentions", "zalgo", "attach_spam", "link_spam", "escalate"]
+        valid_offenses = ["invites", "spam", "mass_mentions", "zalgo", "attach_spam", "link_spam", "caps", "escalate"]
         if offense not in valid_offenses:
             raise ValueError(f"{offense} is not a valid offense-type. Valid types are: {', '.join(valid_offenses)}")
+
+        ctx = await self.bot.get_context(message)
 
         bot_perms = ctx.channel.permissions_for(ctx.guild.me)
         if not bot_perms.ban_members or not bot_perms.manage_roles or not bot_perms.manage_messages or not bot_perms.kick_members:
@@ -801,11 +807,10 @@ class Moderation(commands.Cog):
         policy = policies[offense] #This will decide the type of punishment
         temp_dur = policies[f"{offense}_dur"] #Get temporary duration
 
-        if policy not in ["delete", "warn", "warn+delete", "escalate"]: #Get temporary punishment duration in minutes
+        if policy not in ["disabled", "delete", "warn", "warn+delete", "escalate"]: #Get temporary punishment duration in minutes
             record = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
-            async with self.bot.pool.acquire() as con:
-                #TODO: Implement this
-                dm_users_on_punish = record["dm_users_on_punish"][0] if record else False
+            #TODO: Implement this
+            dm_users_on_punish = record["dm_users_on_punish"][0] if record else False
 
         if policy == "disabled":
             return
@@ -827,7 +832,7 @@ class Moderation(commands.Cog):
 
             if bucket.update_rate_limit():
                 #If user continues ignoring warnings
-                await self.automod_punish(ctx, offender, offense="escalate", reason="previous offenses")
+                await self.automod_punish(message, offender, offense="escalate", reason="previous offenses")
 
             elif bucket_prewarn.update_rate_limit():
                 #Issue warning after notice
@@ -840,6 +845,8 @@ class Moderation(commands.Cog):
                     "zalgo": "using zalgo in your messages",
                     "attach_spam": "spamming attachments",
                     "link_spam": "spamming links",
+                    "caps": "using excessive caps in your message",
+                    "bad_words": "using bad words in your message"
                 }
 
                 embed=discord.Embed(title="💬 Auto-Moderation Notice", description=f"**{offender}**, please refrain from {notices[offense]}!", color=self.bot.warnColor)
@@ -855,13 +862,13 @@ class Moderation(commands.Cog):
             await self.kick(ctx, offender, ctx.guild.me, reason=f"Kicked by auto-moderator for {reason}.")
         
         elif policy == "softban":
-            await self.ban(ctx, offender, ctx.guild.me, None, True, reason=f"Soft-banned by auto-moderator for {reason}.")
+            await self.ban(ctx, offender, ctx.guild.me, soft=True, reason=f"Soft-banned by auto-moderator for {reason}.")
         
         elif policy == "tempban":
-            await self.ban(ctx, offender, ctx.guild.me, f"{temp_dur} minutes", False, reason=f"Temp-banned by auto-moderator for {reason}.")
+            await self.ban(ctx, offender, ctx.guild.me, duration=f"{temp_dur} minutes", reason=f"Temp-banned by auto-moderator for {reason}.")
 
         elif policy == "permaban":
-            await self.ban(ctx, offender, ctx.guild.me, None, False, reason=f"Permanently banned by auto-moderator for {reason}.")
+            await self.ban(ctx, offender, ctx.guild.me, reason=f"Permanently banned by auto-moderator for {reason}.")
 
                 
 
@@ -880,46 +887,56 @@ class Moderation(commands.Cog):
         bucket = self.spam_cd_mapping.get_bucket(message)
         spam_exceeded = bucket.update_rate_limit()
         if spam_exceeded: #If user exceeded spam limits
-            '''General Spam'''
+            '''Spam'''
             punish_cd_bucket = self.spam_punish_cooldown_cd_mapping.get_bucket(message)
             if not punish_cd_bucket.update_rate_limit(): # Only try punishing once every 30 seconds
-                ctx = await self.bot.get_context(message)
-                await self.automod_punish(ctx, offender=message.author, offense="spam", reason="spam")
+                await self.automod_punish(message, offender=message.author, offense="spam", reason="spam")
         
         policies = await self.get_policies(message.guild.id)
         mentions = sum(member.id != message.author.id and not member.bot for member in message.mentions)
         if mentions >= policies["mass_mentions_count"]:
-            '''Mention Spams'''
-            ctx = await self.bot.get_context(message)
-            await self.automod_punish(ctx, offender=message.author, offense="mass_mentions", reason=f"spamming {mentions} mentions in a single message")
+            '''Mass Mentions'''
+            await self.automod_punish(message, offender=message.author, offense="mass_mentions", reason=f"spamming {mentions} mentions in a single message")
   
+        if len(message.content) > 7:
+            '''Caps'''
+            upper = 0
+            for char in message.content:
+                if char.isupper():
+                    upper += 1
+            if upper/len(message.content) > 0.8:
+                await self.automod_punish(message, offender=message.author, offense="caps", reason=f"using excessive caps")
+        
+        for word in message.content.split(" "):
+            if word in policies["bad_words_list"]:
+                await self.automod_punish(message, offender=message.author, offense="bad_words", reason=f"usage of bad words")
+
         else: #If the obvious stuff didn't work
             '''Discord Invites, Links, Attachments & Zalgo'''
             invite_regex = re.compile(r"(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?")
             link_regex = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
             invite_matches = invite_regex.findall(message.content)
             link_matches = link_regex.findall(message.content)
-            ctx = await self.bot.get_context(message)
             if invite_matches:
-                await self.automod_punish(ctx, offender=message.author, offense="invites", reason="posting Discord invites")
+                await self.automod_punish(message, offender=message.author, offense="invites", reason="posting Discord invites")
             elif link_matches:
                 if len(link_matches) > 7:
-                    await self.automod_punish(ctx, offender=message.author, offense="link_spam", reason="having too many links in a single message")
+                    await self.automod_punish(message, offender=message.author, offense="link_spam", reason="having too many links in a single message")
                 else:
                     bucket = self.link_spam_cd_mapping.get_bucket(message)
                     if bucket.update_rate_limit():
-                        await self.automod_punish(ctx, offender=message.author, offense="link_spam", reason="posting links too quickly")
+                        await self.automod_punish(message, offender=message.author, offense="link_spam", reason="posting links too quickly")
             elif len(message.attachments) > 0:
                 bucket = self.attach_spam_cd_mapping.get_bucket(message)
                 if bucket.update_rate_limit():
-                    await self.automod_punish(ctx, offender=message.author, offense="attach_spam", reason="posting images/attachments too quickly")
+                    await self.automod_punish(message, offender=message.author, offense="attach_spam", reason="posting images/attachments too quickly")
             else: #Check zalgo
                 count = 0
                 for char in message.content:
                     if unicodedata.combining(char):
                         count += 1
                         if count > 4:
-                            await self.automod_punish(ctx, offender=message.author, offense="zalgo", reason="using zalgo text")
+                            await self.automod_punish(message, offender=message.author, offense="zalgo", reason="using zalgo text")
                             break
                     else:
                         count = 0
