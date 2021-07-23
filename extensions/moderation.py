@@ -787,7 +787,7 @@ class Moderation(commands.Cog):
         '''
         Decides and does the punishment set for the specified offense in the dashboard.
         '''
-        valid_offenses = ["invites", "spam", "mass_mentions", "zalgo", "attach_spam", "link_spam", "caps", "escalate"]
+        valid_offenses = ["invites", "spam", "mass_mentions", "zalgo", "attach_spam", "link_spam", "caps", "bad_words", "escalate"]
         if offense not in valid_offenses:
             raise ValueError(f"{offense} is not a valid offense-type. Valid types are: {', '.join(valid_offenses)}")
 
