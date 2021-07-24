@@ -20,9 +20,9 @@ from extensions.utils import cache
 #Language
 lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
-EXPERIMENTAL = False
+EXPERIMENTAL = True
 #Version of the bot
-current_version = "5.0.0e"
+current_version = "5.0.0f"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")

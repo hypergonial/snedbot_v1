@@ -78,6 +78,8 @@ class Logging(commands.Cog):
         except discord.Forbidden:
             pass
         contentfield = message.content
+        if contentfield == "":
+            contentfield = "//The message did not contain text."
         if message.attachments:
             contentfield = f"{message.content}\n//The message contained an attachment."
         if message.embeds:
