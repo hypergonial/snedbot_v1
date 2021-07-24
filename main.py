@@ -1,12 +1,9 @@
 import asyncio
 import datetime
 import gettext
-import json
 import logging
 import os
 import sys
-import threading
-import time
 import traceback
 from dataclasses import dataclass
 from difflib import get_close_matches

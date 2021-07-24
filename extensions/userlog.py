@@ -79,7 +79,7 @@ class Logging(commands.Cog):
             pass
         contentfield = message.content
         if message.attachments:
-            contentfield = f"{message.content}\n//The message contained a file."
+            contentfield = f"{message.content}\n//The message contained an attachment."
         if message.embeds:
             contentfield = contentfield + "\n//The message contained an embed."
 
