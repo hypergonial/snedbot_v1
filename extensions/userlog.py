@@ -265,20 +265,17 @@ class Logging(commands.Cog):
                     if entry.target == member :
                         moderator = entry.user
                         reason = entry.reason
-                        type = "kick"
-                    break
-                elif entry.action == discord.AuditLogAction.ban:
+                        type = "kick"; break
+                elif entry.action == discord.AuditLogAction.ban and (datetime.datetime.utcnow() - entry.created_at).total_seconds() < 15:
                     if entry.target == member :
                         moderator = entry.user
                         reason = entry.reason
-                        type = "ban"
+                        type = "ban"; break
                 else :
                     break
         except discord.Forbidden:
             pass
 
-        #If we have not found a kick auditlog
-        #If we did
         if type == "kick" :
             embed = discord.Embed(title=f"🚪👈 User was kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
             await self.log_elevated(embed, member.guild.id)
