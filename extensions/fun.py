@@ -187,12 +187,15 @@ class Fun(commands.Cog):
         #Get a json file from thecatapi as response, then take url from dict
         async with aiohttp.ClientSession() as session:
             async with session.get('https://api.thecatapi.com/v1/images/search') as response:
-                catjson = await response.json()
-        #Print kitten to user
-        embed=discord.Embed(title="🐱 " + self._("Random kitten"), description=self._("Found one!"), color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-        embed.set_image(url=catjson[0]["url"])
-        await msg.edit(embed=embed)
+                if response.status == 200:
+                    catjson = await response.json()
+                    #Print kitten to user
+                    embed=discord.Embed(title="🐱 " + self._("Random kitten"), description=self._("Found one!"), color=self.bot.embedBlue)
+                    embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+                    embed.set_image(url=catjson[0]["url"])
+                    await msg.edit(embed=embed)
+                else:
+                    embed=discord.Embed(title="🐱 " + self._("Random kitten"), description=self._("Oops! Looks like the cat delivery service is unavailable! Check back later."), color=self.bot.errorColor)
 
     @commands.command(help="Shows a random dog.", description="Searches the interwebz™️ for a random dog picture.", usage="randomdog", aliases=["dog"])
     @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
@@ -205,12 +208,15 @@ class Fun(commands.Cog):
         #Get a json file from thedogapi as response, then take url from dict
         async with aiohttp.ClientSession() as session:
             async with session.get('https://api.thedogapi.com/v1/images/search') as response:
-                dogjson = await response.json()
-        #Print doggo to user
-        embed=discord.Embed(title="🐶 " + self._("Random doggo"), description=self._("Found one!"), color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
-        embed.set_image(url=dogjson[0]["url"])
-        await msg.edit(embed=embed)
+                if response.status == 200:
+                    dogjson = await response.json()
+                    #Print doggo to user
+                    embed=discord.Embed(title="🐶 " + self._("Random doggo"), description=self._("Found one!"), color=self.bot.embedBlue)
+                    embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+                    embed.set_image(url=dogjson[0]["url"])
+                    await msg.edit(embed=embed)
+                else:
+                    embed=discord.Embed(title="🐶 " + self._("Random doggo"), description=self._("Oops! Looks like the dog delivery service is unavailable! Check back later."), color=self.bot.errorColor)
 
     @commands.command(hidden=True, help="Why?...", description="I have no idea why this exists...", usage="catdog", aliases=["randomcatdog", "randomdogcat", "dogcat"])
     @commands.guild_only()
