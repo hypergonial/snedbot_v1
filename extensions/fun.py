@@ -196,6 +196,7 @@ class Fun(commands.Cog):
                     await msg.edit(embed=embed)
                 else:
                     embed=discord.Embed(title="🐱 " + self._("Random kitten"), description=self._("Oops! Looks like the cat delivery service is unavailable! Check back later."), color=self.bot.errorColor)
+                    await msg.edit(embed=embed)
 
     @commands.command(help="Shows a random dog.", description="Searches the interwebz™️ for a random dog picture.", usage="randomdog", aliases=["dog"])
     @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
@@ -217,6 +218,7 @@ class Fun(commands.Cog):
                     await msg.edit(embed=embed)
                 else:
                     embed=discord.Embed(title="🐶 " + self._("Random doggo"), description=self._("Oops! Looks like the dog delivery service is unavailable! Check back later."), color=self.bot.errorColor)
+                    await msg.edit(embed=embed)
 
     @commands.command(hidden=True, help="Why?...", description="I have no idea why this exists...", usage="catdog", aliases=["randomcatdog", "randomdogcat", "dogcat"])
     @commands.guild_only()
