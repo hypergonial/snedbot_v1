@@ -248,22 +248,6 @@ class IpcRoutes(commands.Cog):
             ''', guild_id, json.dumps(automod_policies))
         await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
 
-    @ipc.server.route()
-    async def set_automod_escalate_dur(self, data):
-        guild_id = data.guild_id
-        escalate_dur = data.escalate_dur
-
-        automod_policies = await self.bot.get_cog("Moderation").get_policies(data.guild_id)
-        automod_policies["escalate_dur"] = escalate_dur
-
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''
-            INSERT INTO mod_config (guild_id, automod_policies)
-            VALUES ($1, $2)
-            ON CONFLICT (guild_id) DO
-            UPDATE SET automod_policies = $2
-            ''', guild_id, json.dumps(automod_policies))
-        await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
 
 
 

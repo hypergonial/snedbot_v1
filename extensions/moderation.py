@@ -64,25 +64,32 @@ class Moderation(commands.Cog):
         #The default set of automoderation policies
         self.default_automod_policies = {
             'invites': 'disabled', 
-            'invites_dur': 15, 
+            'invites_opt_dur': 15, 
+            'invites_opt_delete': True,
             'spam': 'disabled', 
-            'spam_dur': 15, 
+            'spam_opt_dur': 15, 
             'mass_mentions': 'disabled', 
-            'mass_mentions_dur': 15, 
-            'mass_mentions_count': 10,
+            'mass_mentions_opt_dur': 15, 
+            'mass_mentions_opt_delete': True,
+            'mass_mentions_opt_count': 10,
             'zalgo': 'disabled', 
-            'zalgo_dur': 15, 
+            'zalgo_opt_dur': 15, 
+            'zalgo_opt_delete': True,
             'attach_spam': 'disabled', 
-            'attach_spam_dur': 15, 
+            'attach_spam_opt_dur': 15, 
+            'attach_spam_opt_delete': True,
             'link_spam': 'disabled', 
-            'link_spam_dur': 15, 
+            'link_spam_opt_dur': 15, 
+            'link_spam_opt_delete': True,
             'caps': 'disabled',
-            'caps_dur': 15,
+            'caps_opt_dur': 15,
+            'caps_opt_delete': True,
             'bad_words': 'disabled',
-            'bad_words_dur': 15,
-            'bad_words_list': ["motherfucker", "faggot", "cockfucker", "cunt", "nigger", "nigga", "porn", "pornography", "slut", "whore"],
-            'escalate': 'disabled', 
-            'escalate_dur': 15}
+            'bad_words_opt_dur': 15,
+            'bad_words_opt_delete': True,
+            'bad_words_opt_list': ["motherfucker", "faggot", "cockfucker", "cunt", "nigger", "nigga", "porn", "pornography", "slut", "whore"],
+            'escalate': 'disabled'
+            }
     
     async def cog_check(self, ctx):
         return await self.bot.custom_checks.module_is_enabled(ctx, "moderation")
@@ -117,6 +124,13 @@ class Moderation(commands.Cog):
         for key in self.default_automod_policies.keys(): #Ensure that values always exist
             if key not in policies:
                 policies[key] = self.default_automod_policies[key]
+        invalid = []
+        for key in policies:
+            if key not in self.default_automod_policies.keys(): #Ensure that invalid values don't exist
+                invalid.append(key) #To avoid modifying dict size during iteration
+        for key in invalid:
+            policies.pop(key)
+
         return policies
 
 
@@ -783,9 +797,10 @@ class Moderation(commands.Cog):
         await ctx.send(embed=embed, delete_after=20.0)
 
 
-    async def automod_punish(self, message, offender:discord.Member, offense:str, reason:str):
+    async def automod_punish(self, message, offender:discord.Member, offense:str, reason:str, original_offense:str=None):
         '''
         Decides and does the punishment set for the specified offense in the dashboard.
+        original_offense is only used recursively with escalate
         '''
         valid_offenses = ["invites", "spam", "mass_mentions", "zalgo", "attach_spam", "link_spam", "caps", "bad_words", "escalate"]
         if offense not in valid_offenses:
@@ -803,51 +818,58 @@ class Moderation(commands.Cog):
         if await is_automod_excluded(ctx) or await has_mod_perms(ctx):
             return
 
+        notices = {
+                    "invites": "posting discord invites",
+                    "mass_mentions": "mass mentioning users",
+                    "zalgo": "using zalgo in your messages",
+                    "attach_spam": "spamming attachments",
+                    "link_spam": "posting links too fast",
+                    "caps": "using excessive caps in your message",
+                    "bad_words": "using bad words in your message"
+                }
+
         policies = await self.get_policies(ctx.guild.id)
         policy = policies[offense] #This will decide the type of punishment
-        temp_dur = policies[f"{offense}_dur"] #Get temporary duration
+        if not original_offense:
+            temp_dur = policies[f"{offense}_opt_dur"] #Get temporary duration
+            should_delete = policies[f"{offense}_opt_delete"] if policy not in ["spam", "escalate"] else False
+        else:
+            temp_dur = policies[f"{original_offense}_opt_dur"] #Original offense overrides current, if present
+            should_delete = policies[f"{original_offense}_opt_delete"]
 
-        if policy not in ["disabled", "delete", "warn", "warn+delete", "escalate"]: #Get temporary punishment duration in minutes
+        if policy not in ["disabled", "delete", "warn", "notice", "escalate"]: #Get temporary punishment duration in minutes
             record = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
             #TODO: Implement this
             dm_users_on_punish = record["dm_users_on_punish"][0] if record else False
 
         if policy == "disabled":
             return
-
-        elif  policy == "delete":
+        
+        if should_delete:
             await ctx.message.delete()
+
 
         elif policy == "warn":
             await self.warn(ctx, offender, ctx.guild.me, reason=f"Warned by auto-moderator for {reason}.")
 
-        elif policy == "warn+delete":
-            await ctx.message.delete()
-            await self.warn(ctx, offender, ctx.guild.me, reason=f"Warned by auto-moderator for {reason}.")
+        elif policy == "notice":
+            embed=discord.Embed(title="💬 Auto-Moderation Notice", description=f"**{offender}**, please refrain from {notices[offense]}!", color=self.bot.warnColor)
+            await ctx.send(content=offender.mention, embed=embed)
+
         
         elif policy == "escalate":
-            await ctx.message.delete()
             bucket = self.escalate_cd_mapping.get_bucket(ctx.message)
             bucket_prewarn = self.escalate_prewarn_cd_mapping.get_bucket(ctx.message)
 
             if bucket.update_rate_limit():
                 #If user continues ignoring warnings
-                await self.automod_punish(message, offender, offense="escalate", reason="previous offenses")
+                await self.automod_punish(message, offender, offense="escalate", reason="previous offenses", original_offense=offense)
 
             elif bucket_prewarn.update_rate_limit():
                 #Issue warning after notice
                 await self.warn(ctx, offender, ctx.guild.me, reason=f"Warned by auto-moderator for previous offenses.")
             else:
                 #Issue a notice, not a formal warning first
-                notices = {
-                    "invites": "posting discord invites",
-                    "mass_mentions": "mass mentioning users",
-                    "zalgo": "using zalgo in your messages",
-                    "attach_spam": "spamming attachments",
-                    "link_spam": "spamming links",
-                    "caps": "using excessive caps in your message",
-                    "bad_words": "using bad words in your message"
-                }
 
                 embed=discord.Embed(title="💬 Auto-Moderation Notice", description=f"**{offender}**, please refrain from {notices[offense]}!", color=self.bot.warnColor)
                 await ctx.send(content=offender.mention, embed=embed)
@@ -884,21 +906,22 @@ class Moderation(commands.Cog):
         if not isinstance(message.author, discord.Member) or message.author.bot:
             return
 
-        bucket = self.spam_cd_mapping.get_bucket(message)
-        spam_exceeded = bucket.update_rate_limit()
-        if spam_exceeded: #If user exceeded spam limits
+
+        policies = await self.get_policies(message.guild.id)
+        mentions = sum(member.id != message.author.id and not member.bot for member in message.mentions)
+        if mentions >= policies["mass_mentions_opt_count"]:
+            '''Mass Mentions'''
+            await self.automod_punish(message, offender=message.author, offense="mass_mentions", reason=f"spamming {mentions} mentions in a single message")
+
+
+        elif self.spam_cd_mapping.get_bucket(message).update_rate_limit(): #If user exceeded spam limits
             '''Spam'''
             punish_cd_bucket = self.spam_punish_cooldown_cd_mapping.get_bucket(message)
             if not punish_cd_bucket.update_rate_limit(): # Only try punishing once every 30 seconds
                 await self.automod_punish(message, offender=message.author, offense="spam", reason="spam")
         
-        policies = await self.get_policies(message.guild.id)
-        mentions = sum(member.id != message.author.id and not member.bot for member in message.mentions)
-        if mentions >= policies["mass_mentions_count"]:
-            '''Mass Mentions'''
-            await self.automod_punish(message, offender=message.author, offense="mass_mentions", reason=f"spamming {mentions} mentions in a single message")
   
-        if len(message.content) > 7:
+        elif len(message.content) > 7:
             '''Caps'''
             upper = 0
             for char in message.content:
@@ -908,7 +931,7 @@ class Moderation(commands.Cog):
                 await self.automod_punish(message, offender=message.author, offense="caps", reason=f"using excessive caps")
         
         for word in message.content.split(" "):
-            if word in policies["bad_words_list"]:
+            if word in policies["bad_words_opt_list"]:
                 await self.automod_punish(message, offender=message.author, offense="bad_words", reason=f"usage of bad words")
 
         else: #If the obvious stuff didn't work
