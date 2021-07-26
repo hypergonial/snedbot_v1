@@ -933,6 +933,9 @@ class Moderation(commands.Cog):
         for word in message.content.split(" "):
             if word in policies["bad_words_opt_list"]:
                 await self.automod_punish(message, offender=message.author, offense="bad_words", reason=f"usage of bad words")
+        for bad_word in policies["bad_words_opt_list"]: #Check bad_words with spaces in them
+            if " " in bad_word and bad_word in message.content:
+                await self.automod_punish(message, offender=message.author, offense="bad_words", reason=f"usage of bad words (expression)")
 
         else: #If the obvious stuff didn't work
             '''Discord Invites, Links, Attachments & Zalgo'''
