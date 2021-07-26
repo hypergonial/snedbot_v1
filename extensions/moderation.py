@@ -835,7 +835,7 @@ class Moderation(commands.Cog):
             should_delete = policies[f"{offense}_opt_delete"] if policy not in ["spam"] else False
         else:
             temp_dur = policies[f"{original_offense}_opt_dur"] #Original offense overrides current, if present
-            should_delete = policies[f"{original_offense}_opt_delete"]
+            should_delete = False
 
         if policy not in ["disabled", "delete", "warn", "notice", "escalate"]: #Get temporary punishment duration in minutes
             record = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
