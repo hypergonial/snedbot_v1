@@ -832,7 +832,7 @@ class Moderation(commands.Cog):
         policy = policies[offense] #This will decide the type of punishment
         if not original_offense:
             temp_dur = policies[f"{offense}_opt_dur"] #Get temporary duration
-            should_delete = policies[f"{offense}_opt_delete"] if policy not in ["spam", "escalate"] else False
+            should_delete = policies[f"{offense}_opt_delete"] if policy not in ["spam"] else False
         else:
             temp_dur = policies[f"{original_offense}_opt_dur"] #Original offense overrides current, if present
             should_delete = policies[f"{original_offense}_opt_delete"]
