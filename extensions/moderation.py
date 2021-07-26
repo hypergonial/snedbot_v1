@@ -849,7 +849,7 @@ class Moderation(commands.Cog):
             await ctx.message.delete()
 
 
-        elif policy == "warn":
+        if policy == "warn":
             await self.warn(ctx, offender, ctx.guild.me, reason=f"Warned by auto-moderator for {reason}.")
 
         elif policy == "notice":
