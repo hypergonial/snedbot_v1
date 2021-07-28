@@ -634,7 +634,7 @@ class Matchmaking(commands.Cog):
         #Due to it's performance requirements and complexity, this command is limited to 1 per user
         if isinstance(error, commands.MaxConcurrencyReached):
             embed = discord.Embed(title=self.bot.errorMaxConcurrencyReachedTitle, description=self._("You already have a matchmaking request in progress."), color=self.bot.errorColor)
-            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
             await ctx.channel.send(embed=embed)
 
     

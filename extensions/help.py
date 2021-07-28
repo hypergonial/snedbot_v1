@@ -28,7 +28,7 @@ class HelpSource(menus.ListPageSource):
         self._ = menu.ctx.bot.get_localization('help', menu.ctx.bot.lang)
         offset = menu.current_page * self.per_page
         embed=discord.Embed(title="⚙️ " + self._("__Available commands:__"), description=self._("**Tip:** You can also type **`{prefix}help [command]`** to get more information about a specific command and see any subcommands a command may have.\n\n").format(prefix=menu.ctx.prefix) + ''.join(f'{v}' for i, v in enumerate(entries, start=offset)), color=menu.ctx.bot.embedBlue)
-        embed.set_footer(text=menu.ctx.bot.requestFooter.format(user_name=menu.ctx.author.name, discrim=menu.ctx.author.discriminator) + f"  |  Page {menu.current_page + 1}/{self.get_max_pages()}", icon_url=menu.ctx.author.avatar_url)
+        embed.set_footer(text=menu.ctx.bot.requestFooter.format(user_name=menu.ctx.author.name, discrim=menu.ctx.author.discriminator) + f"  |  Page {menu.current_page + 1}/{self.get_max_pages()}", icon_url=menu.ctx.author.avatar.url)
         return embed
 
 class SnedHelp(commands.HelpCommand):
@@ -75,7 +75,7 @@ class SnedHelp(commands.HelpCommand):
 
         React with ▶️ to see the next page and what commands are available to you!
         ''')
-        help_home_embed.set_footer(text=ctx.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        help_home_embed.set_footer(text=ctx.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
 
         pages = HelpPages(help_home_embed, source=HelpSource(cmdslist), clear_reactions_after=True) #Feed the list of commands into the menu system
         await pages.start(ctx)
@@ -101,7 +101,7 @@ class SnedHelp(commands.HelpCommand):
                 aliases.append(f"**`{self.clean_prefix}{alias}`**")  #Adding some custom formatting to each alias
         if aliases:
             detail_embed.add_field(name=self._("Aliases:"), value=", ".join(aliases), inline=False)   #If any aliases exist, we add those to the embed in new field
-        detail_embed.set_footer(text=ctx.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        detail_embed.set_footer(text=ctx.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
         channel = self.get_destination()   #Send it to destination
         await channel.send(embed=detail_embed)
 
@@ -110,7 +110,7 @@ class SnedHelp(commands.HelpCommand):
         ctx = self.context
         self._ = ctx.bot.get_localization('help', ctx.bot.lang)
         embed=discord.Embed(title=ctx.bot.unknownCMDstr, description=self._("Use `{prefix}help` for a list of available commands.").format(prefix=ctx.prefix), color=ctx.bot.unknownColor)
-        embed.set_footer(text=ctx.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        embed.set_footer(text=ctx.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
         channel = self.get_destination()
         await channel.send(embed=embed)
 
@@ -143,7 +143,7 @@ class SnedHelp(commands.HelpCommand):
         ctx = self.context
         self._ = ctx.bot.get_localization('help', ctx.bot.lang)
         embed=discord.Embed(title=ctx.bot.unknownCMDstr, description=self._("Use `{prefix}help` for a list of available commands.").format(prefix=ctx.prefix), color=ctx.bot.unknownColor)
-        embed.set_footer(text=ctx.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        embed.set_footer(text=ctx.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
         channel = self.get_destination()
         await channel.send(embed=embed)
 

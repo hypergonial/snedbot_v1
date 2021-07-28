@@ -69,7 +69,7 @@ class Logging(commands.Cog):
         moderator = None
         try:
             async for entry in message.guild.audit_logs():
-                if entry.action == discord.AuditLogAction.message_delete and (datetime.datetime.utcnow() - entry.created_at).total_seconds() < 15:
+                if entry.action == discord.AuditLogAction.message_delete and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
                     if entry.target == message.author :
                         moderator = entry.user
                     break
@@ -117,7 +117,7 @@ class Logging(commands.Cog):
             moderator = "Discord" 
             guild = self.bot.get_guild(payload.guild_id)
             async for entry in guild.audit_logs(): #Get the bot that did it
-                if entry.action == discord.AuditLogAction.message_bulk_delete and (datetime.datetime.utcnow() - entry.created_at).total_seconds() < 15:
+                if entry.action == discord.AuditLogAction.message_bulk_delete and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
                     moderator = entry.user
                     break
                 else :
@@ -140,7 +140,7 @@ class Logging(commands.Cog):
             moderator = "Undefined"
             async for entry in role.guild.audit_logs():
                 if entry.action == discord.AuditLogAction.role_delete:
-                    if entry.target == role or entry.target.id == role.id and (datetime.datetime.utcnow() - entry.created_at).total_seconds() < 15:
+                    if entry.target == role or entry.target.id == role.id and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
                         moderator = entry.user
                     break
                 else :
@@ -156,7 +156,7 @@ class Logging(commands.Cog):
             moderator = "Undefined"
             async for entry in channel.guild.audit_logs():
                 if entry.action == discord.AuditLogAction.channel_delete:
-                    if (entry.target == channel or entry.target.id == channel.id) and (datetime.datetime.utcnow() - entry.created_at).total_seconds() < 15:
+                    if (entry.target == channel or entry.target.id == channel.id) and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
                         moderator = entry.user
                     break
                 else :
@@ -173,7 +173,7 @@ class Logging(commands.Cog):
         try:
             moderator = "Undefined"
             async for entry in channel.guild.audit_logs():
-                if entry.action == discord.AuditLogAction.channel_create and (datetime.datetime.utcnow() - entry.created_at).total_seconds() < 15:
+                if entry.action == discord.AuditLogAction.channel_create and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
                     if entry.target == channel or entry.target.id == channel.id :
                         moderator = entry.user
                     break
@@ -189,7 +189,7 @@ class Logging(commands.Cog):
         try:
             moderator = "Undefined"
             async for entry in role.guild.audit_logs():
-                if entry.action == discord.AuditLogAction.role_create and (datetime.datetime.utcnow() - entry.created_at).total_seconds() < 15:
+                if entry.action == discord.AuditLogAction.role_create and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
                     if entry.target == role or entry.target.id == role.id :
                         moderator = entry.user
                     break
@@ -205,7 +205,7 @@ class Logging(commands.Cog):
         try:
             moderator = None
             async for entry in after.guild.audit_logs():
-                if entry.action == discord.AuditLogAction.role_update and (datetime.datetime.utcnow() - entry.created_at).total_seconds() < 15:
+                if entry.action == discord.AuditLogAction.role_update and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
                     if entry.target == after or entry.target.id == after.id :
                         moderator = entry.user
                     break
@@ -222,7 +222,7 @@ class Logging(commands.Cog):
         try:
             moderator = "Undefined"
             async for entry in after.audit_logs():
-                if entry.action == discord.AuditLogAction.guild_update and (datetime.datetime.utcnow() - entry.created_at).total_seconds() < 15:
+                if entry.action == discord.AuditLogAction.guild_update and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
                     moderator = entry.user
                     break
                 else :
@@ -240,7 +240,7 @@ class Logging(commands.Cog):
             moderator = "Undefined"
             reason = "No reason provided"
             async for entry in guild.audit_logs():
-                if entry.target == user and entry.action == discord.AuditLogAction.unban and (datetime.datetime.utcnow() - entry.created_at).total_seconds() < 15:
+                if entry.target == user and entry.action == discord.AuditLogAction.unban and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
                     moderator = entry.user
                     if entry.reason:
                         reason = entry.reason
@@ -263,12 +263,12 @@ class Logging(commands.Cog):
         reason = "Error retrieving data from audit logs!"
         try:
             async for entry in member.guild.audit_logs():
-                if entry.action == discord.AuditLogAction.kick and (datetime.datetime.utcnow() - entry.created_at).total_seconds() < 15:
+                if entry.action == discord.AuditLogAction.kick and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
                     if entry.target == member :
                         moderator = entry.user
                         reason = entry.reason
                         type = "kick"; break
-                elif entry.action == discord.AuditLogAction.ban and (datetime.datetime.utcnow() - entry.created_at).total_seconds() < 15:
+                elif entry.action == discord.AuditLogAction.ban and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
                     if entry.target == member :
                         moderator = entry.user
                         reason = entry.reason
@@ -312,7 +312,7 @@ class Logging(commands.Cog):
             try:
                 moderator = "Undefined"
                 async for entry in after.guild.audit_logs():
-                    if entry.action == discord.AuditLogAction.member_role_update and (datetime.datetime.utcnow() - entry.created_at).total_seconds() < 15:
+                    if entry.action == discord.AuditLogAction.member_role_update and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
                         if entry.target == after :
                             moderator = entry.user
                         break

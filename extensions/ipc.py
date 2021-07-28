@@ -67,7 +67,7 @@ class IpcRoutes(commands.Cog):
                 guild_dict[guild.id] = {
                     "id": guild.id,
                     "name": guild.name,
-                    "icon_url": str(guild.icon_url)
+                    "icon_url": guild.icon.url
                 }
         return guild_dict
 
@@ -83,7 +83,7 @@ class IpcRoutes(commands.Cog):
         response = {
             "id": guild.id,
             "name": guild.name,
-            "icon_url": str(guild.icon_url),
+            "icon_url": guild.icon.url,
             "member_count": guild.member_count,
             "channel_count": len(guild.channels),
             "role_count": len(guild.roles),
@@ -153,7 +153,7 @@ class IpcRoutes(commands.Cog):
         response = {
             "id": guild.id,
             "name": guild.name,
-            "icon_url": str(guild.icon_url),
+            "icon_url": guild.icon.url,
             "module_enabled": module_enabled,
             "mod_permitted": permitted_role_dict,
             "mod_settings": mod_settings_dict,
@@ -201,7 +201,7 @@ class IpcRoutes(commands.Cog):
         response = {
             "id": guild.id,
             "name": guild.name,
-            "icon_url": str(guild.icon_url),
+            "icon_url": guild.icon.url,
             "module_enabled": module_enabled,
             "automod_excluded": excluded_role_dict,
             "automod_policies": automod_policies,

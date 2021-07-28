@@ -85,7 +85,7 @@ class Timers(commands.Cog):
                         break
         logging.debug(f"Time: {time}")
         if time > 0:
-            time = datetime.datetime.utcnow() + datetime.timedelta(seconds=time)
+            time = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=time)
         else: #If time is 0, then we failed to parse or the user indeed provided 0, which makes no sense, so we raise an error.
              raise ValueError("Failed converting time from string.")
         return time, strings
@@ -143,7 +143,7 @@ class Timers(commands.Cog):
         await self.bot.wait_until_ready() #This must be included or you get a lot of NoneType errors while booting up, and timers do not get delivered
         logging.debug("Getting latest timer...")
         async with self.bot.pool.acquire() as con:
-            result = await con.fetch('''SELECT * FROM timers WHERE expires < $1 ORDER BY expires LIMIT 1''', round((datetime.datetime.utcnow() + datetime.timedelta(days=days)).timestamp()))
+            result = await con.fetch('''SELECT * FROM timers WHERE expires < $1 ORDER BY expires LIMIT 1''', round((datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=days)).timestamp()))
             logging.debug(f"Latest timer from db: {result}")
             if len(result) != 0 and result[0]:
                 timer = Timer(id=result[0].get('id'),guild_id=result[0].get('guild_id'),user_id=result[0].get('user_id'),channel_id=result[0].get('channel_id'),event=result[0].get('event'),expires=result[0].get('expires'),notes=result[0].get('notes'))
@@ -179,7 +179,7 @@ class Timers(commands.Cog):
                 logging.debug("Getting timer")
                 timer = await self.get_latest_timer(days=40)
                 self.current_timer=timer
-                now = round(datetime.datetime.utcnow().timestamp())
+                now = round(datetime.datetime.now(datetime.timezone.utc).timestamp())
                 logging.debug(f"Now: {now}")
                 logging.debug(f"Timer: {timer}")
                 logging.debug("Has timer")
@@ -239,7 +239,7 @@ class Timers(commands.Cog):
             embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Your timeformat is invalid! Type `{prefix}help reminder` to see valid time formatting.").format(prefix=ctx.prefix),color=self.bot.errorColor)
             await ctx.send(embed=embed)
         else:
-            if (time - datetime.datetime.utcnow()).total_seconds() >= 31536000*5:
+            if (time - datetime.datetime.now(datetime.timezone.utc)).total_seconds() >= 31536000*5:
                 embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Sorry, but that's a bit too far in the future.").format(prefix=ctx.prefix),color=self.bot.errorColor)
                 await ctx.send(embed=embed)
             else:
@@ -247,8 +247,8 @@ class Timers(commands.Cog):
                 if timestr is None or len(timestr) == 0:
                     timestr = "..."
                 note = timestr+f"\n\n[Jump to original message!]({ctx.message.jump_url})"
-                embed = discord.Embed(title="✅ " + self._("Reminder set"), description=self._("Reminder set for:  {timestamp} ({timestampR})").format(timestamp=f"<t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}>", timestampR=f"<t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>"), color=self.bot.embedGreen)
-                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+                embed = discord.Embed(title="✅ " + self._("Reminder set"), description=self._("Reminder set for:  {timestamp} ({timestampR})").format(timestamp=discord.utils.format_dt(time), timestampR=discord.utils.format_dt(time, style='R'), color=self.bot.embedGreen))
+                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
                 await self.create_timer(expires=time, event="reminder", guild_id=ctx.guild.id,user_id=ctx.author.id, channel_id=ctx.channel.id, notes=note)
                 await ctx.send(embed=embed)
 
@@ -272,13 +272,13 @@ class Timers(commands.Cog):
             for timer in timers:
                 time = datetime.datetime.fromtimestamp(timer.expires)
                 if timer.notes:
-                    reminderstr = reminderstr + f"**ID: {timer.id}** - <t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}> (<t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>)\n{timer.notes}\n"
+                    reminderstr = reminderstr + f"**ID: {timer.id}** - {discord.utils.format_dt(time)} ({discord.utils.format_dt(time, style='R')})\n{timer.notes}\n"
                 else:
-                    reminderstr = reminderstr + f"**ID: {timer.id}** - <t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}> (<t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>)\n"
+                    reminderstr = reminderstr + f"**ID: {timer.id}** - {discord.utils.format_dt(time)} ({discord.utils.format_dt(time, style='R')})\n"
         else:
             reminderstr = self._("You have no reminders. You can set one via `{prefix}reminder`!").format(prefix=ctx.prefix)
         embed=discord.Embed(title="✉️ " + self._("Your reminders:"),description=reminderstr, color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
         await ctx.send(embed=embed)
     
     @commands.command(usage="delreminder <reminder_ID>", help="Deletes a reminder.", description="Deletes a reminder by it's ID, which you can obtain via the `reminders` command.")
@@ -289,7 +289,7 @@ class Timers(commands.Cog):
             if result:
                 await con.execute('''DELETE FROM timers WHERE user_id = $1 AND id = $2''', ctx.author.id, ID)
                 embed = discord.Embed(title="✅ " + self._("Reminder deleted"), description=self._("Reminder **{ID}** has been deleted.").format(ID=ID), color=self.bot.embedGreen)
-                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
                 await ctx.send(embed=embed)
                 #If we just deleted the currently running timer, then we re-evaluate to find the next timer.
                 if self.current_timer and self.current_timer.id == int(ID):
@@ -297,7 +297,7 @@ class Timers(commands.Cog):
                     self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
             else:
                 embed = discord.Embed(title="❌ " + self._("Reminder not found"), description=self._("Cannot find reminder with ID **{ID}**.").format(ID=ID), color=self.bot.errorColor)
-                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
                 await ctx.send(embed=embed)
 
 

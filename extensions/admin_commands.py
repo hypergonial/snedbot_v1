@@ -36,14 +36,14 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             Nickname: `{member.display_name if member.display_name != member.name else "-"}`
             User ID: `{member.id}`
             Bot: `{member.bot}`
-            Account creation date: <t:{round(member.created_at.replace(tzinfo=datetime.timezone.utc).timestamp())}> (<t:{round(member.created_at.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>)
-            Join date: <t:{round(member.joined_at.replace(tzinfo=datetime.timezone.utc).timestamp())}> (<t:{round(member.joined_at.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>)
+            Account creation date: {discord.utils.format_dt(member.created_at)} ({discord.utils.format_dt(member.created_at, style='R')})
+            Join date: {discord.utils.format_dt(member.joined_at)} ({discord.utils.format_dt(member.joined_at, style='R')})
             Warns: `{db_user.warns}`
             Muted: `{db_user.is_muted}`
             Flags: `{db_user.flags}`
             Notes: `{db_user.notes}`
             Roles: {roleformatted}""", color=member.colour)
-            embed.set_thumbnail(url=member.avatar_url)
+            embed.set_thumbnail(url=member.avatar.url)
 
         else: #Retrieve limited information about the user if they are not in the guild
             embed=discord.Embed(title=f"User information: {user.name}", description=f"""Username: `{user}`
@@ -51,13 +51,13 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             User ID: `{user.id}` 
             Status: `-` 
             Bot: `{user.bot}` 
-            Account creation date: <t:{round(user.created_at.replace(tzinfo=datetime.timezone.utc).timestamp())}> (<t:{round(user.created_at.replace(tzinfo=datetime.timezone.utc).timestamp())}:R>) 
+            Account creation date: {discord.utils.format_dt(user.created_at)} ({discord.utils.format_dt(user.created_at, style='R')})
             Join date: `-`
             Roles: `-`
             *Note: This user is not a member of this server*""", color=self.bot.embedBlue)
-            embed.set_thumbnail(url=user.avatar_url)
+            embed.set_thumbnail(url=user.avatar.url)
 
-        embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar_url)
+        embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar.url)
         await ctx.channel.send(embed=embed)
 
 
@@ -113,14 +113,14 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         configure the bot. Note: Some commands may require additional permissions
         '''
         records = await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
-        if not records or records and len(records["priviliged_role_id"][0]) == 0 :
+        if not records or records and len(records["priviliged_role_id"]) == 0 :
             embed=discord.Embed(title="❌ Error: No priviliged roles set.", description=f"You can add a priviliged role via `{ctx.prefix}priviligedrole add <rolename>`.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
         else :
             roles = []
             roleNames = []
-            for item in records["priviliged_role_id"][0] :
+            for item in records["priviliged_role_id"] :
                 roles.append(ctx.guild.get_role(item))
             for item in roles :
                 roleNames.append(item.name)
@@ -133,38 +133,37 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
     @commands.check(has_owner)
     @commands.guild_only()
     async def add(self, ctx, *, role:discord.Role):
-        if role == None:
+        if role is None:
             embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.\n__Note:__ Rolenames are case-sensitive.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed); return
+        records = await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
+        #privroles = [role for role in roleIDs]
+        if records and role.id in records["priviliged_role_id"] :
+            embed=discord.Embed(title="❌ Error: Role already added.", description=f"This role already has priviliged access.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
-            return
-        async with self.bot.pool.acquire() as con:
-            records = await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
-            if records and records["priviliged_role_id"][0]:
-                #privroles = [role for role in roleIDs]
-                if role.id in ["priviliged_role_id"][0] :
-                    embed=discord.Embed(title="❌ Error: Role already added.", description=f"This role already has priviliged access.", color=self.bot.errorColor)
-                    await ctx.channel.send(embed=embed)
-                else :
-                    await con.execute('''INSERT INTO priviliged (guild_id, priviliged_role_id) VALUES ($1, $2)''', ctx.guild.id, role.id)
-                    embed=discord.Embed(title="✅ Priviliged access granted.", description=f"**{role.name}** has been granted bot admin priviliges.", color=self.bot.embedGreen)
-                    await ctx.channel.send(embed=embed)
+        else :
+            async with self.bot.pool.acquire() as con:
+                await con.execute('''INSERT INTO priviliged (guild_id, priviliged_role_id) VALUES ($1, $2)''', ctx.guild.id, role.id)
+                await self.bot.caching.refresh(table="priviliged", guild_id=ctx.guild.id)
+                embed=discord.Embed(title="✅ Priviliged access granted.", description=f"**{role.name}** has been granted bot admin priviliges.", color=self.bot.embedGreen)
+                await ctx.channel.send(embed=embed)
 
 
     @priviligedrole.command(aliases=['rem', 'del', 'delete'], help="Remove role from priviliged roles.", description="Removes a role to the list of priviliged roles, revoking their permission to execute admin commands.", usage=f"priviligedrole remove <rolename>")
     @commands.check(has_owner)
     @commands.guild_only()
     async def remove(self, ctx, *, role:discord.Role):
-        if role == None:
+        if role is None:
             embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.\n__Note:__ Rolenames are case-sensitive.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed); return
+        records = await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
+        if not records or records and role.id not in records["priviliged_role_id"] :
+            embed=discord.Embed(title="❌ Error: Role not priviliged.", description=f"This role is not priviliged.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
-            return
-        async with self.bot.pool.acquire() as con:
-            records = await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
-            if records and role.id not in records["priviliged_role_id"][0] :
-                embed=discord.Embed(title="❌ Error: Role not priviliged.", description=f"This role is not priviliged.", color=self.bot.errorColor)
-                await ctx.channel.send(embed=embed)
-            else :
+        else :
+            async with self.bot.pool.acquire() as con:
                 await con.execute('''DELETE FROM priviliged WHERE guild_id = $1 AND priviliged_role_id = $2''', ctx.guild.id, role.id)
+                await self.bot.caching.refresh(table="priviliged", guild_id=ctx.guild.id)
                 embed=discord.Embed(title="✅ Priviliged access revoked.", description=f"**{role}** has had it's bot admin priviliges revoked.", color=self.bot.embedGreen)
                 await ctx.channel.send(embed=embed)
 
@@ -215,8 +214,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         prefix = prefix.replace("'", "")
         if prefix == "": return
         records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
-
-        if not records or not records["prefix"][0] or prefix not in records["prefix"][0] and len(["prefix"][0]) <= 5:
+        if not records or not records["prefix"][0] or (prefix not in records["prefix"][0] and len(records["prefix"][0]) <= 5):
             async with self.bot.pool.acquire() as con:
                 await con.execute('''
                 UPDATE global_config SET prefix = array_append(prefix,$1) WHERE guild_id = $2
@@ -229,7 +227,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         elif prefix in records["prefix"][0]:
             embed=discord.Embed(title="❌ Prefix already added", description=f"This prefix is already added.", color=self.bot.errorColor)
             await ctx.send(embed=embed)
-        elif records["prefix"][0] > 5:
+        elif len(records["prefix"][0]) > 5:
             embed=discord.Embed(title="❌ Too many prefixes", description=f"This server has reached the maximum amount of prefixes.", color=self.bot.errorColor)
             await ctx.send(embed=embed)
 

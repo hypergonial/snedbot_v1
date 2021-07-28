@@ -20,9 +20,9 @@ from extensions.utils import cache
 #Language
 lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
-EXPERIMENTAL = False
+EXPERIMENTAL = True
 #Version of the bot
-current_version = "5.0.0g"
+current_version = "5.0.0h"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -122,8 +122,8 @@ class SnedBot(commands.Bot):
         if not hasattr(self, "uptime"):
             self.uptime = datetime.datetime.utcnow()
 
-    async def on_ipc_ready(self):
-        logging.info("IPC is connected and ready.")
+    """ async def on_ipc_ready(self):
+        logging.info("IPC is connected and ready.") """ #Borked in 2.0
 
     async def on_ipc_error(self, endpoint, error):
         logging.error(f"{endpoint} raised {error}")
@@ -189,7 +189,7 @@ class SnedBot(commands.Bot):
                     else:
                         prefix = record["prefix"][0]
                     embed=discord.Embed(title=_("Beep Boop!"), description=_("My prefixes on this server are the following: `{prefix}` \nUse the command `{prefix_0}help` to see what I can do!").format(prefix="`, `".join(prefix), prefix_0=prefix[0]), color=0xfec01d)
-                    embed.set_thumbnail(url=self.user.avatar_url)
+                    embed.set_thumbnail(url=self.user.avatar.url)
                     await message.reply(embed=embed)
 
                 await self.process_commands(message)
@@ -207,7 +207,7 @@ class SnedBot(commands.Bot):
         if guild.system_channel != None :
             try:
                 embed=discord.Embed(title=_("Beep Boop!"), description=_("I have been summoned to this server. Use `{prefix}help` to see what I can do!").format(prefix=bot.DEFAULT_PREFIX), color=0xfec01d)
-                embed.set_thumbnail(url=self.user.avatar_url)
+                embed.set_thumbnail(url=self.user.avatar.url)
                 await guild.system_channel.send(embed=embed)
             except discord.Forbidden:
                 pass
@@ -242,7 +242,7 @@ class SnedBot(commands.Bot):
         if isinstance(error, commands.CommandInvokeError):
             if isinstance(error.original, asyncio.exceptions.TimeoutError):
                 embed=discord.Embed(title=self.errorTimeoutTitle, description=self.errorTimeoutDesc, color=self.errorColor)
-                embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+                embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
                 return await ctx.send(embed=embed)
             else:
                 raise error
@@ -264,28 +264,28 @@ class SnedBot(commands.Bot):
 
             if len(matches) > 0:
                 embed=discord.Embed(title=self.unknownCMDstr, description=_("Did you mean `{prefix}{match}`?").format(prefix=ctx.prefix, match=matches[0]), color=self.unknownColor)
-                embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+                embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
                 return await ctx.send(embed=embed)
             elif len(aliasmatches) > 0:
                 embed=discord.Embed(title=self.unknownCMDstr, description=_("Did you mean `{prefix}{match}`?").format(prefix=ctx.prefix, match=aliasmatches[0]), color=self.unknownColor)
-                embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+                embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
                 return await ctx.send(embed=embed)
 
         elif isinstance(error, commands.CommandOnCooldown):
             embed=discord.Embed(title=self.errorCooldownTitle, description=_("Please retry in: `{cooldown}`").format(cooldown=datetime.timedelta(seconds=round(error.retry_after))), color=self.errorColor)
-            embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+            embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
             return await ctx.send(embed=embed)
 
         elif isinstance(error, commands.MissingRequiredArgument):
             embed=discord.Embed(title="❌" + _("Missing argument."), description=_("One or more arguments are missing. \n__Hint:__ You can use `{prefix}help {command_name}` to view command usage.").format(prefix=ctx.prefix, command_name=ctx.command.name), color=self.errorColor)
-            embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+            embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
             logging.info(f"{ctx.author} tried calling a command ({ctx.message.content}) but did not supply sufficient arguments.")
             return await ctx.send(embed=embed)
 
 
         elif isinstance(error, commands.MaxConcurrencyReached):
             embed = discord.Embed(title=self.errorMaxConcurrencyReachedTitle, description=self.errorMaxConcurrencyReachedDesc, color=self.errorColor)
-            embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+            embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
             return await ctx.channel.send(embed=embed)
 
         elif isinstance(error, commands.MemberNotFound):

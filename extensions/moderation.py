@@ -262,7 +262,7 @@ class Moderation(commands.Cog):
                         raise ModuleNotFoundError('timers extension not found')
                 try:
                     if not duration: duration = "Infinite"
-                    else: duration = f"<t:{round(dur[0].replace(tzinfo=datetime.timezone.utc).timestamp())}>"
+                    else: duration = discord.utils.format_dt(dur[0])
                     muteembed=discord.Embed(title="🔇 User muted", description=F"**User:** `{member} ({member.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Until:** `{duration}`\n**Reason:** ```{reason}```", color=self.bot.errorColor)
                     await self.bot.get_cog("Logging").log_elevated(muteembed, ctx.guild.id)
                 except:
@@ -514,7 +514,7 @@ class Moderation(commands.Cog):
             embed=discord.Embed(title="❌ " + self._("Muting failed"), description=self._("This function requires an extension that is not enabled.\n**Error:** ```{error}```").format(error=error), color=self.bot.errorColor)
             await ctx.send(embed=embed)    
         else:
-            embed=discord.Embed(title="🔇 " + self._("User muted"), description=self._("**{offender}** has been muted until {duration}.\n**Reason:** ```{reason}```").format(offender=member, duration=f"<t:{round(muted_until.replace(tzinfo=datetime.timezone.utc).timestamp())}>", reason=reason), color=self.bot.embedGreen)
+            embed=discord.Embed(title="🔇 " + self._("User muted"), description=self._("**{offender}** has been muted until {duration}.\n**Reason:** ```{reason}```").format(offender=member, duration=discord.utils.format_dt(muted_until), reason=reason), color=self.bot.embedGreen)
             await ctx.send(embed=embed)
     
 

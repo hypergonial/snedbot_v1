@@ -71,9 +71,9 @@ class Giveaway(commands.Cog):
             try:
                 embed = discord.Embed(title="🎉 Giveaway!", description=f"""**{giveaway_text}**
                 **-------------**
-                **End date:** <t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}:F>
+                **End date:** {discord.utils.format_dt(time, style='F')}
                 **Number of winners:** `{winners}`""", color=0xd76b00)
-                embed.set_footer(text=f"Hosted by {ctx.author}", icon_url=ctx.author.avatar_url)
+                embed.set_footer(text=f"Hosted by {ctx.author}", icon_url=ctx.author.avatar.url)
                 giveaway_msg = await giveaway_channel.send(embed=embed)
                 await giveaway_msg.add_reaction("🎉")
                 embed = discord.Embed(title="✅ " + "Giveaway created", description="Giveaway created successfully!", color=self.bot.embedGreen)
@@ -109,11 +109,11 @@ class Giveaway(commands.Cog):
             for result in results:
                 time = datetime.datetime.fromtimestamp(result.get('expires'))
                 channel = self.bot.get_channel(result.get('channel_id'))
-                list_str = list_str + f"**ID: {result.get('id')}** - {channel.mention} - Concludes: <t:{round(time.replace(tzinfo=datetime.timezone.utc).timestamp())}>\n"
+                list_str = list_str + f"**ID: {result.get('id')}** - {channel.mention} - Concludes: {discord.utils.format_dt(time)}\n"
         else:
             list_str = self._("There are currently no running giveaways on this server. You can create one via `{prefix}giveaway create`!").format(prefix=ctx.prefix)
         embed=discord.Embed(title="🎉 " + self._("List of giveaways:"),description=list_str, color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
         await ctx.send(embed=embed)
 
     @giveaway.command(name="cancel", aliases=["del", "delete", "remove"], usage="giveaway delete <giveaway_ID>", help="Cancels a running giveaway.", description="Cancels a giveaway by it's ID, which you can obtain via the `giveaway list` command.")
@@ -132,7 +132,7 @@ class Giveaway(commands.Cog):
                     self.bot.get_cog("Timers").currenttask = self.bot.get_cog("Timers").bot.loop.create_task(self.bot.get_cog("Timers").dispatch_timers())
             else:
                 embed = discord.Embed(title="❌ " + self._("Giveaway not found"), description=self._("Cannot find giveaway with ID **{ID}**.").format(ID=ID), color=self.bot.errorColor)
-                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
                 await ctx.send(embed=embed)
 
     @giveaway.command(name="end", aliases=["terminate"], usage="giveaway end <giveaway_ID>", help="Forces a running giveaway to end.", description="Forces a running giveaway to conclude, causing the winners to be calculated immediately.")
@@ -185,7 +185,7 @@ class Giveaway(commands.Cog):
 
             else:
                 embed = discord.Embed(title="❌ " + self._("Giveaway not found"), description=self._("Cannot find giveaway with ID **{ID}**.").format(ID=ID), color=self.bot.errorColor)
-                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar_url)
+                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
                 await ctx.send(embed=embed)
 
 
