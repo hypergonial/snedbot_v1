@@ -1,7 +1,4 @@
-import asyncio
-import json
 import logging
-import gettext
 import aiohttp
 import discord
 from discord.ext import commands

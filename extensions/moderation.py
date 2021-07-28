@@ -1,6 +1,4 @@
 import argparse
-import datetime
-import gettext
 import logging
 import shlex
 import re
@@ -11,7 +9,6 @@ import json
 
 import discord
 from discord.ext import commands
-from discord.ext.commands.cooldowns import BucketType
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)

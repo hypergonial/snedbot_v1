@@ -1,10 +1,8 @@
 import asyncio
 import datetime
-import gettext
 import logging
 import re
 
-import asyncpg
 import discord
 import Levenshtein as lev
 from discord.ext import commands, tasks

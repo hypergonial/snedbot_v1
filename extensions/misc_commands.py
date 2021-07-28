@@ -1,13 +1,7 @@
 import argparse
-import asyncio
-import gettext
 import logging
-import os
-import random
 import shlex
-from pathlib import Path
 
-import aiohttp
 import discord
 import psutil
 from discord.ext import commands

@@ -1,6 +1,4 @@
 import asyncio
-import datetime
-import gettext
 import logging
 import time
 import uuid
