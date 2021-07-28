@@ -1,5 +1,7 @@
 git+https://github.com/Rapptz/discord.py.git
 git+git://github.com/Rapptz/discord-ext-menus@master
+git+https://github.com/oliver-ni/discord-ext-menus-views
+git+https://github.com/Ext-Creators/discord-ext-ipc.git
 Levenshtein
 asyncpg
 python-dotenv
