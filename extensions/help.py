@@ -62,8 +62,8 @@ class SnedHelp(commands.HelpCommand):
         
         help_home_embed=discord.Embed(title="🏠 " + self._("__Help Home__"), color=ctx.bot.embedBlue, description='''**How to navigate this help dialogue**
 
-        Navigate via the ◀️ ▶️ reactions, or skip to the end via the ⏮️ ⏭️ reactions.
-        You can stop this help session by reacting with ⏹️.
+        Navigate via the ◀️ ▶️ buttons, or skip to the end via the ⏮️ ⏭️ buttons.
+        You can stop this help session by pressing ⏹️.
 
         You can also check out the [documentation](https://sned.hypersden.com/docs/) for more information.
 
