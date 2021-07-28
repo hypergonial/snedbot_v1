@@ -12,7 +12,7 @@ import aiohttp
 import discord
 import Levenshtein as lev
 import uwuify
-from discord.ext import commands, menus
+from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
 

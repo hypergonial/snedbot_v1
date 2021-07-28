@@ -6,6 +6,7 @@ from itertools import chain
 
 import discord
 from discord.ext import commands, menus
+from discord.ext.menus.views import ViewMenuPages
 
 
 async def has_owner(ctx):
@@ -418,7 +419,7 @@ class Tags(commands.Cog):
 
         tags = await self.tag_handler.get_all(ctx.guild.id)
         if tags:
-            pages = menus.MenuPages(source=TagSource(sorted([tag.tag_name for tag in tags])), clear_reactions_after=True)
+            pages = ViewMenuPages(source=TagSource(sorted([tag.tag_name for tag in tags])), clear_reactions_after=True)
             await pages.start(ctx)
         else:
             embed = discord.Embed(title="💬 " + self._("Available tags for this guild:"), description=self._("There are currently no tags! You can create one via `{prefix}tag create`").format(prefix=ctx.prefix), color=self.bot.embedBlue)

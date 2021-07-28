@@ -2,9 +2,10 @@ import logging
 
 import discord
 from discord.ext import commands, menus
+from discord.ext.menus.views import ViewMenuPages
 
 
-class HelpPages(menus.MenuPages):
+class HelpPages(ViewMenuPages):
     '''
     Subclassing MenuPages to add an offset for the homepage (so it does not swallow the first page)
     '''
@@ -14,7 +15,8 @@ class HelpPages(menus.MenuPages):
     
     async def send_initial_message(self, _, channel):
         self.current_page = -1
-        return await channel.send(embed=self.initial_message)
+        return await self.send_with_view(channel, embed=self.initial_message)
+        #return await channel.send(embed=self.initial_message)
 
 
 class HelpSource(menus.ListPageSource):
@@ -76,7 +78,6 @@ class SnedHelp(commands.HelpCommand):
         React with ▶️ to see the next page and what commands are available to you!
         ''')
         help_home_embed.set_footer(text=ctx.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
-
         pages = HelpPages(help_home_embed, source=HelpSource(cmdslist), clear_reactions_after=True) #Feed the list of commands into the menu system
         await pages.start(ctx)
 
