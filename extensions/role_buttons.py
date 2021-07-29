@@ -293,5 +293,5 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
 
 
 def setup(bot):
-    logging.info("Adding cog: RoleButtons...")
+    logging.info("Adding cog: Role Buttons...")
     bot.add_cog(RoleButtons(bot))

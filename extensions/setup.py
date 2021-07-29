@@ -174,17 +174,16 @@ class Setup(commands.Cog):
             return
 
 
-    @setup.command(help="Helps you set up a reaction role.", description="Helps you set up a reaction role, the command for managing reaction roles is `reactionrole`.", aliases=["rr"], usage="setup reactionrole")
+    @setup.command(help="Helps you set up a role-button.", description="Helps you set up a role-button, the command for managing reaction roles is `rolebutton`.", aliases=["rb", "rr", "reactionrole"], usage="setup rolebutton")
     @commands.check(has_priviliged)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
-    async def reaction_roles(self, ctx):
+    async def role_buttons(self, ctx):
         try:
-            await ctx.invoke(self.bot.get_command('reactionrole add'))
+            await ctx.invoke(self.bot.get_command('rolebutton add'))
         except AttributeError:
-            embed=discord.Embed(title=self.bot.errorMissingModuleTitle, description="This setup requires the extension `reaction_roles` to be active.", color=self.bot.errorColor)
-            await ctx.channel.send(embed=embed)
-            return
+            embed=discord.Embed(title=self.bot.errorMissingModuleTitle, description="This setup requires the extension `role_buttons` to be active.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed); return
 
 
     @setup.error
