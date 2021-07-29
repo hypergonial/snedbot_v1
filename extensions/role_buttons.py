@@ -29,13 +29,17 @@ class ButtonRoleButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         if interaction.guild_id:
             if self.role in interaction.user.roles:
-                await interaction.user.remove_roles(self.role, reason=f"Removed by button role (ID: {self.entry_id}")
+                await interaction.user.remove_roles(self.role, reason=f"Removed by role-button (ID: {self.entry_id}")
                 await interaction.response.send_message(f'Removed role: {self.role.mention}', ephemeral=True)
             else:
-                await interaction.user.add_roles(self.role, reason=f"Granted by button role (ID: {self.entry_id}")
+                await interaction.user.add_roles(self.role, reason=f"Granted by role-button (ID: {self.entry_id}")
                 await interaction.response.send_message(f'Added role: {self.role.mention}', ephemeral=True)
 
-class ReactionRoles(commands.Cog, name="Reaction Roles"):
+class RoleButtons(commands.Cog, name="Role-Buttons"):
+    '''
+    Create and manage buttons that hand out roles to users.
+    Formerly "reaction roles"
+    '''
     def __init__(self, bot):
         self.bot = bot
         bot.loop.create_task(self.buttonroles_init())
@@ -79,26 +83,26 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
 
         logging.info('Button roles ready!')
 
-    @commands.group(aliases=["rr"], help="Manages reaction roles.", description="Lists all reaction roles set for this guild, if any. Subcommands allow you to remove or set additional ones.", usage="reactionrole", invoke_without_command=True, case_insensitive=True)
+    @commands.group(aliases=["rr", "br", "br", "reactionrole", "buttonrole"], help="Manages role-buttons.", description="Lists all button roles set for this guild, if any. Subcommands allow you to remove or set additional ones.", usage="buttonrole", invoke_without_command=True, case_insensitive=True)
     @commands.guild_only()
     @commands.check(has_priviliged)
-    async def reactionrole(self, ctx):
+    async def rolebutton(self, ctx):
         records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id)
         if records:
             text = ""
             for i, rr_id in enumerate(records["entry_id"]):
                 text = f"{text}**#{rr_id}** - {ctx.guild.get_channel(records['channel_id'][i]).mention} - {ctx.guild.get_role(records['role_id'][i]).mention}\n"
-            embed=discord.Embed(title="Reaction Roles for this server:", description=text, color=self.bot.embedBlue)
+            embed=discord.Embed(title="Role-Buttons for this server:", description=text, color=self.bot.embedBlue)
             await ctx.send(embed=embed)
         else:
-            embed=discord.Embed(title="❌ Error: No reaction roles", description="There are no reaction roles for this server.", color=self.bot.errorColor)
+            embed=discord.Embed(title="❌ Error: No role-buttons", description="There are no role-buttons for this server.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
 
 
-    @reactionrole.command(name="delete", aliases=["del", "remove"], help="Removes a reaction role by ID.", description="Removes a reaction role of the specified ID. You can get the ID via the `reactionrole` command.", usage="reactionrole delete <ID>")
+    @rolebutton.command(name="delete", aliases=["del", "remove"], help="Removes a role-button by ID.", description="Removes a reaction role of the specified ID. You can get the ID via the `reactionrole` command.", usage="reactionrole delete <ID>")
     @commands.guild_only()
     @commands.check(has_priviliged)
-    async def rr_delete(self, ctx, id:int):
+    async def br_delete(self, ctx, id:int):
             record = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id, entry_id = id)
             if record:
                 channel = ctx.guild.get_channel(record['channel_id'][0])
@@ -114,31 +118,31 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
                 async with self.bot.pool.acquire() as con:
                     await con.execute('''DELETE FROM button_roles WHERE guild_id = $1 AND entry_id = $2''', ctx.guild.id, id)
                     await self.bot.caching.refresh(table="button_roles", guild_id=ctx.guild.id)
-                    embed=discord.Embed(title="✅ Reaction Role deleted", description="Reaction role has been successfully deleted!", color=self.bot.embedGreen)
+                    embed=discord.Embed(title="✅ Role-Button deleted", description="Role-Button has been successfully deleted!", color=self.bot.embedGreen)
                     await ctx.channel.send(embed=embed)
             else:
-                embed=discord.Embed(title="❌ Error: Not found", description="There is no reaction role by that ID.", color=self.bot.errorColor)
+                embed=discord.Embed(title="❌ Error: Not found", description="There is no role-button by that ID.", color=self.bot.errorColor)
                 await ctx.channel.send(embed=embed)
 
 
-    @reactionrole.command(name="add", aliases=["new", "setup", "create"], help="Initializes setup to add a new reaction role.", description="Initializes a setup to help you add a new reaction role. You can also access this setup via the `setup` command. Takes no arguments.", usage="reactionrole add")
+    @rolebutton.command(name="add", aliases=["new", "setup", "create"], help="Initializes setup to add a new role-button.", description="Initializes a setup to help you add a new role-button. You can also access this setup via the `setup` command. Takes no arguments.", usage="reactionrole add")
     @commands.guild_only()
     @commands.check(has_priviliged)
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
-    async def rr_setup(self, ctx):
+    async def br_setup(self, ctx):
         '''
-        Here is where end-users would set up a reaction role for their server
+        Here is where end-users would set up a button role for their server
         This is not exposed as a command directly, instead it is invoked in setup
         '''
         records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id)
         
         if records and len(records["entry_id"]) >= 200:
-            embed=discord.Embed(title="❌ Error: Too many reaction roles", description="A server can only have up to **200** button roles at a time.", color=self.bot.errorColor)
+            embed=discord.Embed(title="❌ Error: Too many role-buttons", description="A server can only have up to **200** role-buttons at a time.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
         
 
-        embed=discord.Embed(title="🛠️ Reaction Roles Setup", description="Do you already have an existing message for the role-reaction?\nPlease note that the message must be a message from the bot.", color=self.bot.embedBlue)
+        embed=discord.Embed(title="🛠️ Role-Buttons Setup", description="Do you already have an existing message for the role-button?\nPlease note that the message must be a message from the bot.", color=self.bot.embedBlue)
         has_msg = await ctx.confirm(embed=embed, delete_after=True)
 
         def idcheck(payload):
@@ -154,7 +158,7 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
                 if channel.type in [discord.ChannelType.text, discord.ChannelType.news]:
                     options.append(discord.SelectOption(label=f"#{channel.name}", value=channel.id))
             view.add_item(components.CustomSelect(placeholder="Select a channel!", options=options))
-            embed=discord.Embed(title="🛠️ Reaction Roles setup", description="Please specify the channel where you want the message to be sent!", color=self.bot.embedBlue)
+            embed=discord.Embed(title="🛠️ Role-Buttons setup", description="Please specify the channel where you want the message to be sent!", color=self.bot.embedBlue)
             setup_msg = await ctx.send(embed=embed, view=view)
             await view.wait()
             if view.value:
@@ -163,7 +167,7 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
                 raise asyncio.exceptions.TimeoutError
 
             reactmsg = None
-            embed=discord.Embed(title="🛠️ Reaction Roles setup", description="What should the content of the message be? Type it below!", color=self.bot.embedBlue)
+            embed=discord.Embed(title="🛠️ Role-Buttons setup", description="What should the content of the message be? Type it below!", color=self.bot.embedBlue)
             await setup_msg.edit(embed=embed, view=None)
             message = await self.bot.wait_for('message', timeout = 60.0, check=idcheck)
             msgcontent = message.content
@@ -178,7 +182,7 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
                     if channel.type in [discord.ChannelType.text, discord.ChannelType.news]:
                         options.append(discord.SelectOption(label=f"#{channel.name}", value=channel.id))
                 view.add_item(components.CustomSelect(placeholder="Select a channel!", options=options))
-                embed=discord.Embed(title="🛠️ Reaction Roles setup", description="Please specify the channel where you want the message is located!", color=self.bot.embedBlue)
+                embed=discord.Embed(title="🛠️ Role-Buttons setup", description="Please specify the channel where you want the message is located!", color=self.bot.embedBlue)
                 setup_msg = await ctx.send(embed=embed, view=view)
                 await view.wait()
 
@@ -188,7 +192,7 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
                     raise asyncio.exceptions.TimeoutError
 
                 msgcontent = None
-                embed=discord.Embed(title="🛠️ Reaction Roles setup", description="Please specify the ID of the message. If you don't know how to get the ID of a message, [follow this link!](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-)", color=self.bot.embedBlue)
+                embed=discord.Embed(title="🛠️ Role-Buttons setup", description="Please specify the ID of the message. If you don't know how to get the ID of a message, [follow this link!](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-)", color=self.bot.embedBlue)
                 await setup_msg.edit(embed=embed, view=None)
                 message = await self.bot.wait_for('message', timeout=60.0, check=idcheck)
                 await message.delete()
@@ -212,14 +216,14 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
         else:
             raise asyncio.exceptions.TimeOutError
         
-        embed=discord.Embed(title="🛠️ Reaction Roles setup", description="React **to this message** with the emoji you want to appear on the button! This can be any emoji, be it custom or Discord default!", color=self.bot.embedBlue)
+        embed=discord.Embed(title="🛠️ Role-Buttons setup", description="React **to this message** with the emoji you want to appear on the button! This can be any emoji, be it custom or Discord default!", color=self.bot.embedBlue)
         await setup_msg.edit(embed=embed)
         reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0,check=confirmemoji)
 
         reactemoji = reaction.emoji
         await setup_msg.clear_reactions()
 
-        embed=discord.Embed(title="🛠️ Reaction Roles setup", description="What text should be printed on the button? Type it below! Type `skip` to leave it empty.", color=self.bot.embedBlue)
+        embed=discord.Embed(title="🛠️ Role-Buttons setup", description="What text should be printed on the button? Type it below! Type `skip` to leave it empty.", color=self.bot.embedBlue)
         await setup_msg.edit(embed=embed)
         message = await self.bot.wait_for('message', timeout = 60.0, check=idcheck)
         label = message.content if message.content != "skip" else None
@@ -232,7 +236,7 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
             if role.id != ctx.guild.id:
                 options.append(discord.SelectOption(label=role.name, value=role.id))
         view.add_item(components.CustomSelect(placeholder="Select a Role!", options=options))
-        embed=discord.Embed(title="🛠️ Reaction Roles setup", description="Select the role that will be handed out!", color=self.bot.embedBlue)
+        embed=discord.Embed(title="🛠️ Role-Buttons setup", description="Select the role that will be handed out!", color=self.bot.embedBlue)
         await setup_msg.edit(embed=embed, view=view)
         await view.wait()
         if view.value:
@@ -245,7 +249,7 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
         for name in self.button_styles.keys():
             options.append(discord.SelectOption(label=name))
         view.add_item(components.CustomSelect(placeholder="Select a style!", options=options))
-        embed=discord.Embed(title="🛠️ Reaction Roles setup", description="Select the style/color of the button!", color=self.bot.embedBlue)
+        embed=discord.Embed(title="🛠️ Role-Buttons setup", description="Select the style/color of the button!", color=self.bot.embedBlue)
         await setup_msg.edit(embed=embed, view=view)
         await view.wait()
         if view.value:
@@ -277,10 +281,10 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
             ''',entry_id, ctx.guild.id, reactchannel.id, reactmsg.id, str(reactemoji), label, buttonstyle, reactionrole.id)
         await self.bot.caching.refresh(table="button_roles", guild_id=ctx.guild.id)
 
-        embed=discord.Embed(title="🛠️ Reaction Roles setup", description="✅ Setup completed. Reaction role set up!", color=self.bot.embedGreen)
+        embed=discord.Embed(title="🛠️ Role-Buttons setup", description="✅ Setup completed. Role-Button set up!", color=self.bot.embedGreen)
         await setup_msg.edit(embed=embed, view=None)
 
-        embed=discord.Embed(title="❇️ Reaction Role added", description=f"A reaction role for role {reactionrole.mention} has been created by {ctx.author.mention} in channel {reactchannel.mention}.\n__Note:__ Anyone who can see this channel can now obtain this role!", color=self.bot.embedGreen)
+        embed=discord.Embed(title="❇️ Role-Button was added", description=f"A role-button for role {reactionrole.mention} has been created by {ctx.author.mention} in channel {reactchannel.mention}.\n__Note:__ Anyone who can see this channel can now obtain this role!", color=self.bot.embedGreen)
         try:
             await self.bot.get_cog('Logging').log_elevated(embed, ctx.guild.id)
         except AttributeError:
@@ -289,5 +293,5 @@ class ReactionRoles(commands.Cog, name="Reaction Roles"):
 
 
 def setup(bot):
-    logging.info("Adding cog: ReactionRoles...")
-    bot.add_cog(ReactionRoles(bot))
+    logging.info("Adding cog: RoleButtons...")
+    bot.add_cog(RoleButtons(bot))

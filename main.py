@@ -40,7 +40,7 @@ initial_extensions = (
     'extensions.permissions',
     'extensions.admin_commands', 
     'extensions.moderation',
-    'extensions.reaction_roles', 
+    'extensions.role_buttons', 
     'extensions.ktp', 
     'extensions.matchmaking', 
     'extensions.tags', 
