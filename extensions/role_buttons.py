@@ -250,7 +250,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                     reactchannel = ctx.guild.get_channel(int(value["values"][0]))
                 elif value and asked:
                     try:
-                        reactchannel = commands.GuildChannelConverter().convert(ctx, value)
+                        reactchannel = await commands.GuildChannelConverter().convert(ctx, value)
                         if reactchannel.type not in [discord.ChannelType.news, discord.ChannelType.text]:
                             embed=discord.Embed(title="❌ Error: Invalid channel", description="Channel must be of type `text` or `news`. Operation cancelled.", color=self.bot.errorColor)
                             await setup_msg.edit(embed=embed); return
@@ -310,7 +310,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             reactionrole = ctx.guild.get_role(int(value["values"][0]))
         elif value and asked:
             try:
-                reactionrole = commands.RoleConverter().convert(ctx, value)
+                reactionrole = await commands.RoleConverter().convert(ctx, value)
             except commands.RoleNotFound:
                 embed=discord.Embed(title="❌ Error: Role not found", description="Unable to locate role. Operation cancelled.", color=self.bot.errorColor)
                 await ctx.channel.send(embed=embed); return
