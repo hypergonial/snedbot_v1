@@ -83,7 +83,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
 
         logging.info('Button roles ready!')
 
-    @commands.group(aliases=["rr", "br", "br", "reactionrole", "buttonrole"], help="Manages role-buttons.", description="Lists all button roles set for this guild, if any. Subcommands allow you to remove or set additional ones.", usage="buttonrole", invoke_without_command=True, case_insensitive=True)
+    @commands.group(aliases=["rr", "br", "reactionrole", "buttonrole"], help="Manages role-buttons.", description="Lists all button roles set for this guild, if any. Subcommands allow you to remove or set additional ones.", usage="buttonrole", invoke_without_command=True, case_insensitive=True)
     @commands.guild_only()
     @commands.check(has_priviliged)
     async def rolebutton(self, ctx):
