@@ -15,14 +15,14 @@ import discord
 from discord.ext import commands, ipc, tasks
 from dotenv import load_dotenv
 
-from extensions.utils import cache
+from extensions.utils import cache, context
 
 #Language
 lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
 EXPERIMENTAL = False
 #Version of the bot
-current_version = "5.0.0i"
+current_version = "5.0.0j"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -174,6 +174,18 @@ class SnedBot(commands.Bot):
             cogs.append(cogName)
         return cogs
 
+    async def process_commands(self, message):
+        ctx = await self.get_context(message, cls=context.Context)
+
+        if ctx.command is None:
+            return
+
+        if message.author.bot:
+            return
+
+        await self.invoke(ctx)
+
+
     async def on_message(self, message):
         if self.is_ready():
             bucket = self.cmd_cd_mapping.get_bucket(message)
@@ -184,7 +196,7 @@ class SnedBot(commands.Bot):
                 mentions = [f"<@{bot.user.id}>", f"<@!{bot.user.id}>"]
                 if message.content in mentions:
                     record = await self.caching.get(table="global_config", guild_id=message.guild.id)
-                    if not record:
+                    if not record or len(record["prefix"][0]) == 0:
                         prefix = [self.DEFAULT_PREFIX]
                     else:
                         prefix = record["prefix"][0]

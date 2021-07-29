@@ -143,6 +143,16 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         embed.set_thumbnail(url=user.avatar.url)
         await ctx.send(embed=embed)
 
+    @commands.command(help="Test")
+    @commands.guild_only()
+    async def confirm(self, ctx):
+        confirmed = await ctx.confirm("Confirm meeee!", delete_after=False)
+        print(confirmed)
+        if confirmed:
+            await ctx.send("You confirmed it! Good job!")
+        else:
+            await ctx.send("Stop canceling me! >:(")
+
 def setup(bot):
     logging.info("Adding cog: MiscCommands...")
     bot.add_cog(MiscCommands(bot))

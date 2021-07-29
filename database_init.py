@@ -141,15 +141,17 @@ try:
                             ON DELETE CASCADE
                     )''')
             await con.execute('''
-                    CREATE TABLE IF NOT EXISTS public.reaction_roles
+                    CREATE TABLE IF NOT EXISTS public.button_roles
                     (
                         guild_id bigint NOT NULL,
-                        reactionrole_id serial NOT NULL,
-                        reactionrole_channel_id bigint NOT NULL,
-                        reactionrole_msg_id bigint NOT NULL,
-                        reactionrole_emoji_id bigint NOT NULL,
-                        reactionrole_role_id bigint NOT NULL,
-                        PRIMARY KEY (guild_id, reactionrole_id),
+                        entry_id serial NOT NULL,
+                        channel_id bigint NOT NULL,
+                        msg_id bigint NOT NULL,
+                        emoji text NOT NULL,
+                        buttonlabel text,
+                        buttonstyle text,
+                        role_id bigint NOT NULL,
+                        PRIMARY KEY (guild_id, entry_id),
                         FOREIGN KEY (guild_id)
                             REFERENCES global_config (guild_id)
                             ON DELETE CASCADE
