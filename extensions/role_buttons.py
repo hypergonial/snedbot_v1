@@ -102,7 +102,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     @rolebutton.command(name="delete", aliases=["del", "remove"], help="Removes a role-button by ID.", description="Removes a reaction role of the specified ID. You can get the ID via the `reactionrole` command.", usage="reactionrole delete <ID>")
     @commands.guild_only()
     @commands.check(has_priviliged)
-    async def br_delete(self, ctx, id:int):
+    async def rb_delete(self, ctx, id:int):
             record = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id, entry_id = id)
             if record:
                 channel = ctx.guild.get_channel(record['channel_id'][0])
@@ -129,7 +129,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     @commands.guild_only()
     @commands.check(has_priviliged)
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
-    async def br_setup(self, ctx):
+    async def rb_setup(self, ctx):
         '''
         Here is where end-users would set up a button role for their server
         This is not exposed as a command directly, instead it is invoked in setup
