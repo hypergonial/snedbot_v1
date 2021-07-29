@@ -299,18 +299,20 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         label = message.content if message.content != "skip" else None
         await message.delete()
 
-        options = []
+        role_options = []
         for role in ctx.guild.roles:
             if role.name != "@everyone":
-                options.append(discord.SelectOption(label=role.name, value=role.id))
+                role_options.append(discord.SelectOption(label=role.name, value=role.id))
 
         embed=discord.Embed(title="🛠️ Role-Buttons setup", description="Select the role that will be handed out!", color=self.bot.embedBlue)
-        value, asked = await self.select_or_ask(ctx, options=options, placeholder="Select a role!", embed=embed, message_to_edit=setup_msg)
+        value, asked = await self.select_or_ask(ctx, options=role_options, placeholder="Select a role!", embed=embed, message_to_edit=setup_msg)
         if value and not asked:
             reactionrole = ctx.guild.get_role(int(value["values"][0]))
         elif value and asked:
             try:
                 reactionrole = await commands.RoleConverter().convert(ctx, value)
+                if reactionrole.name == "@everyone":
+                    raise commands.RoleNotFound
             except commands.RoleNotFound:
                 embed=discord.Embed(title="❌ Error: Role not found", description="Unable to locate role. Operation cancelled.", color=self.bot.errorColor)
                 await ctx.channel.send(embed=embed); return
