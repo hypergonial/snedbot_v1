@@ -11,4 +11,3 @@ class CustomSelect(discord.ui.Select):
             await interaction.response.send_message(self.response_msg, ephemeral=True)
         self.view.value = interaction.data
         self.view.stop()
-
