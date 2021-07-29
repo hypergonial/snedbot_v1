@@ -62,9 +62,13 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         '''
         if not embed and not content:
             raise ValueError('Content or embed must not be None!')
-        print(options)
-        print(len(options))
-        if len(options) <= 25:
+            
+        invalid_select = False
+        for option in options:
+            if len(option.label) > 25:
+                invalid_select = True
+
+        if len(options) <= 25 and not invalid_select:
             asked = False
             view = discord.ui.View()
             view.add_item(components.CustomSelect(placeholder=placeholder, options=options))
