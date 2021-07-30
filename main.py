@@ -530,7 +530,7 @@ class CustomChecks():
             user_role_ids = [x.id for x in ctx.author.roles]
             role_ids = await ctx.bot.get_cog("Permissions").get_perms(ctx.guild, perm_node)
             admin_role_ids = await ctx.bot.get_cog("Permissions").get_perms(ctx.guild, "admin_permitted")
-            return any(role in user_role_ids for role in admin_role_ids) or any(role in user_role_ids for role in role_ids) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
+            return any(role in user_role_ids for role in admin_role_ids) or any(role in user_role_ids for role in role_ids) or ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator
 
 bot.custom_checks = CustomChecks()
 
