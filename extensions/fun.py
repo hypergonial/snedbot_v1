@@ -16,13 +16,16 @@ from PIL import Image, ImageDraw, ImageFont
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
-async def has_priviliged(ctx):
-    return await ctx.bot.custom_checks.has_priviliged(ctx)
+async def has_mod_perms(ctx):
+    await ctx.bot.custom_checks.has_permissions(ctx, 'mod_permitted')
 
 class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self._ = self.bot.get_localization('fun', self.bot.lang)
+
+    async def cog_check(self, ctx):
+        return await ctx.bot.custom_checks.has_permissions(ctx, 'fun') or await ctx.bot.custom_checks.has_permissions(ctx, 'mod_permitted')
 
     @commands.command(aliases=["typerace"], help="See who can type the fastest!", description="Starts a typerace where you can see who can type the fastest. You can optionally specify the difficulty and the length of the race.\n\n**Difficulty options:**\n`easy` - 1-4 letter words\n`medium` - 5-8 letter words (Default)\n`hard` 9+ letter words\n\n**Length:**\n`1-20` - (Default: `5`) Specifies the amount of words in the typerace", usage="typeracer [difficulty] [length]")
     @commands.max_concurrency(1, per=commands.BucketType.channel,wait=False)
@@ -252,8 +255,7 @@ class Fun(commands.Cog):
 
     #Fun command, because yes. (Needs mod privilege as it can be abused for spamming)
     #This may or may not have been a test command for testing priviliges & permissions :P
-    @commands.command(brief = "Deploys the duck army.", description="🦆 I am surprised you even need help for this...", usage=f"quack")
-    @commands.check(has_priviliged)
+    @commands.command(hidden=True, brief = "Deploys the duck army.", description="🦆 I am surprised you even need help for this...", usage=f"quack")
     @commands.guild_only()
     async def quack(self, ctx):
         await ctx.channel.send("🦆")
@@ -265,14 +267,14 @@ class Fun(commands.Cog):
         await ctx.send(f"{ctx.author.mention} died.")
 
     @commands.group(brief="Repeats what you said.", description="Repeats the provided message, while deleting the command message.", usage="echo <message>", invoke_without_command=True, case_insensitive=True)
-    @commands.check(has_priviliged)
+    @commands.check(has_mod_perms)
     @commands.bot_has_permissions(manage_messages=True)
     async def echo(self, ctx, *, content:str):
         await ctx.message.delete()
         await ctx.send(content=content)
 
     @echo.command(name="to", help="Repeats what you said in a different channel.", description="Repeats the provided message in a given channel, while deleting the command message.", usage="echo to <channel> <message>")
-    @commands.check(has_priviliged)
+    @commands.check(has_mod_perms)
     @commands.bot_has_permissions(manage_messages=True)
     async def echo_to(self, ctx, channel:discord.TextChannel, *, content:str):
         await ctx.message.delete()

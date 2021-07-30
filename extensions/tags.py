@@ -10,8 +10,8 @@ from discord.ext.menus.views import ViewMenuPages
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
-async def has_priviliged(ctx):
-    return await ctx.bot.custom_checks.has_priviliged(ctx)
+async def has_mod_perms(ctx):
+    return await ctx.bot.custom_checks.has_permissions(ctx, 'mod_permitted')
 
 @dataclass
 class Tag:
@@ -150,6 +150,9 @@ class Tags(commands.Cog):
         self.bot = bot
         self.tag_handler = TagHandler(bot)
         self._ = self.bot.get_localization('tags', self.bot.lang)
+    
+    async def cog_check(self, ctx):
+        return await ctx.bot.custom_checks.has_permissions(ctx, 'tags') or await ctx.bot.custom_checks.has_permissions(ctx, 'mod_permitted')
 
     @commands.group(help="Calls a tag. See subcommands for tag creation & management.", description="Calls a tag that has been previously set. You can use the subcommands to create, delete, view, or list tags.", usage=f"tag <tagname>", invoke_without_command=True, case_insensitive=True)
     @commands.cooldown(1, 20, type=commands.BucketType.member)
@@ -285,7 +288,7 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def transfer(self, ctx, name, receiver : discord.Member):
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
-        if tag and tag.tag_owner_id == ctx.author.id or tag and await has_priviliged(ctx):
+        if tag and tag.tag_owner_id == ctx.author.id or tag and await has_mod_perms(ctx):
             await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
             new_tag = Tag(guild_id=ctx.guild.id, tag_name=tag.tag_name, tag_owner_id=receiver.id, tag_aliases=tag.tag_aliases, tag_content=tag.tag_content)
             await self.tag_handler.create(new_tag)
@@ -344,7 +347,7 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def delete(self, ctx, *, name):
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
-        if tag and tag.tag_owner_id == ctx.author.id or tag and await has_priviliged(ctx): #We only allow deletion if the user owns the tag or is a bot admin
+        if tag and tag.tag_owner_id == ctx.author.id or tag and await has_mod_perms(ctx): #We only allow deletion if the user owns the tag or is a bot admin
             await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
             embed = discord.Embed(title="✅ " + self._("Tag deleted"), description=self._("Tag `{name}` has been deleted.").format(name=name.lower()), color=self.bot.embedGreen)
             embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)

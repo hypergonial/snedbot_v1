@@ -9,8 +9,6 @@ from discord.ext import commands
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
-async def has_priviliged(ctx):
-    return await ctx.bot.custom_checks.has_priviliged(ctx)
 
 
 class Giveaway(commands.Cog):
@@ -22,13 +20,14 @@ class Giveaway(commands.Cog):
         self.bot = bot
         self._ = self.bot.get_localization('giveaway', self.bot.lang)
     
+    async def cog_check(self, ctx):
+        return await ctx.bot.custom_checks.has_permissions(ctx, 'giveaway') or await ctx.bot.custom_checks.has_permissions(ctx, 'mod_permitted')
+
     @commands.group(help="Create and manage giveaways. See sub-commands for more.", description="Create and manage giveaways on this server. See sub-commands below.", usage="giveaway [subcommand]", invoke_without_command=True, case_insensitive=True)
-    @commands.check(has_priviliged)
     async def giveaway(self, ctx):
         await ctx.send_help(ctx.command)
 
     @giveaway.command(name="create", help="Starts the giveaway creation wizard.", description="Starts the giveaway creation wizard to help you set up a new giveaway.", usage="giveaway create")
-    @commands.check(has_priviliged)
     async def giveaway_create(self, ctx):
         cogs = await self.bot.current_cogs()
         if "Timers" not in cogs:
@@ -98,7 +97,6 @@ class Giveaway(commands.Cog):
 
     @giveaway.command(name="list", usage="giveaway list", help="Lists all running giveaways for the server.", description="Lists all running giveaways for this server, and their ID. Displays only up to 10 entries.")
     @commands.guild_only()
-    @commands.check(has_priviliged)
     async def giveaway_list(self, ctx):
         async with self.bot.pool.acquire() as con:
             results = await con.fetch('''SELECT * FROM timers WHERE guild_id = $1 AND user_id = $2 AND event = $3 ORDER BY expires LIMIT 10''', ctx.guild.id, ctx.author.id, "giveaway")
@@ -118,7 +116,6 @@ class Giveaway(commands.Cog):
 
     @giveaway.command(name="cancel", aliases=["del", "delete", "remove"], usage="giveaway delete <giveaway_ID>", help="Cancels a running giveaway.", description="Cancels a giveaway by it's ID, which you can obtain via the `giveaway list` command.")
     @commands.guild_only()
-    @commands.check(has_priviliged)
     async def giveaway_delete(self, ctx, ID : int):
         async with self.bot.pool.acquire() as con:
             result = await con.fetch('''SELECT * FROM timers WHERE event = $1 AND id = $2''', "giveaway", ID)
@@ -137,7 +134,6 @@ class Giveaway(commands.Cog):
 
     @giveaway.command(name="end", aliases=["terminate"], usage="giveaway end <giveaway_ID>", help="Forces a running giveaway to end.", description="Forces a running giveaway to conclude, causing the winners to be calculated immediately.")
     @commands.guild_only()
-    @commands.check(has_priviliged)
     async def giveaway_terminate(self, ctx, ID : int):
         async with self.bot.pool.acquire() as con:
             result = await con.fetch('''SELECT * FROM timers WHERE event = $1 AND id = $2''', "giveaway", ID)

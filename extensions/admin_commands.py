@@ -9,8 +9,8 @@ from discord.ext import commands
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
-async def has_priviliged(ctx):
-    return await ctx.bot.custom_checks.has_priviliged(ctx)
+async def has_admin_perms(ctx):
+    return await ctx.bot.custom_checks.has_permissions(ctx, 'admin_permitted')
 
 class AdminCommands(commands.Cog, name="Admin Commands"):
     def __init__(self, bot):
@@ -18,156 +18,40 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         self.bot = bot
         self._ = self.bot.get_localization('admin_commands', self.bot.lang)
 
-    #Returns basically all information we know about a given member of this guild.
-    @commands.command(help="Get information about a user.", description="Provides information about a specified user. If they are in the server, more detailed information will be provided.\n\n__Note:__ To receive information about users outside this server, you must use their ID.", usage=f"whois <userID|userMention|userName>")
-    @commands.check(has_priviliged)
-    @commands.guild_only()
-    async def whois(self, ctx, *, user : discord.User) :
-        if user in ctx.guild.members:
-            db_user = await self.bot.global_config.get_user(user.id, ctx.guild.id)
-            member = ctx.guild.get_member(user.id)
-            rolelist = [role.mention for role in member.roles]
-            rolelist.pop(0)
-            roleformatted = ", ".join(rolelist) if len(rolelist) > 0 else "`-`"
-            embed=discord.Embed(title=f"User information: {member.name}", description=f"""Username: `{member.name}`
-            Nickname: `{member.display_name if member.display_name != member.name else "-"}`
-            User ID: `{member.id}`
-            Bot: `{member.bot}`
-            Account creation date: {discord.utils.format_dt(member.created_at)} ({discord.utils.format_dt(member.created_at, style='R')})
-            Join date: {discord.utils.format_dt(member.joined_at)} ({discord.utils.format_dt(member.joined_at, style='R')})
-            Warns: `{db_user.warns}`
-            Muted: `{db_user.is_muted}`
-            Flags: `{db_user.flags}`
-            Notes: `{db_user.notes}`
-            Roles: {roleformatted}""", color=member.colour)
-            embed.set_thumbnail(url=member.avatar.url)
-
-        else: #Retrieve limited information about the user if they are not in the guild
-            embed=discord.Embed(title=f"User information: {user.name}", description=f"""Username: `{user}`
-            Nickname: `-` 
-            User ID: `{user.id}` 
-            Status: `-` 
-            Bot: `{user.bot}` 
-            Account creation date: {discord.utils.format_dt(user.created_at)} ({discord.utils.format_dt(user.created_at, style='R')})
-            Join date: `-`
-            Roles: `-`
-            *Note: This user is not a member of this server*""", color=self.bot.embedBlue)
-            embed.set_thumbnail(url=user.avatar.url)
-
-        embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar.url)
-        await ctx.channel.send(embed=embed)
+    async def cog_check(self, ctx):
+            return await ctx.bot.custom_checks.has_permissions(ctx, 'admin_permitted')
 
 
-    #Command used for deleting a guild settings file
     @commands.command(help="Resets all settings for this guild.", description = "Resets all settings for this guild. Requires priviliged access and administrator permissions. Will also erase all tags, reminders, reaction roles and pending moderation actions. Irreversible.", usage="resetsettings")
-    @commands.check(has_priviliged)
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def resetsettings(self, ctx):
-        embed = discord.Embed(title="Are you sure you want to reset all settings?", description="This will also erase any created tags, pending moderation actions (e.g. tempbans), reminders, reaction roles and more.\n**This action is __irreversible__ and may break things!**", color=self.bot.errorColor)
-        msg = await ctx.channel.send(embed=embed)
-        await msg.add_reaction("✅")
-        await msg.add_reaction("❌")
-        def check(payload):
-            return payload.message_id == msg.id and payload.user_id == ctx.author.id
-        try:
-            payload = await self.bot.wait_for('raw_reaction_add', timeout=10.0,check=check)
-            if str(payload.emoji) == "✅":
+        embed = discord.Embed(title="Are you sure you want to reset all settings?", description="This will also **erase** any created tags, pending moderation actions (e.g. tempbans), reminders, role-buttons and more.\n**This action is __irreversible__ and may break things!**", color=self.bot.errorColor)
+        should_delete = await ctx.confirm(embed=embed, delete_after=True)
 
-                def check2(payload):
-                    return payload.channel.id == msg.channel.id and payload.author == ctx.author
-                embed=discord.Embed(title="Confirmation", description="Please type in the name of the server to confirm deletion.", color=self.bot.errorColor)
-                await ctx.channel.send(embed=embed)
-                payload = await self.bot.wait_for('message', timeout=20.0, check=check2)
+        if should_delete == True:
+            def check(payload):
+                return payload.channel.id == ctx.channel.id and payload.author == ctx.author
+            embed=discord.Embed(title="Confirmation", description="Please type in the name of the server to confirm deletion.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
+            message = await self.bot.wait_for('message', timeout=30.0, check=check)
 
-                if payload.content == ctx.guild.name :
-
-                    await self.bot.global_config.deletedata(ctx.guild.id)
-                    embed=discord.Embed(title="✅ Settings reset", description="Goodbye cruel world! 😢", color=self.bot.errorColor)
-                    await ctx.channel.send(embed=embed)
-
-                else :
-                    embed=discord.Embed(title="❌ Error: Incorrect name", description="Settings deletion cancelled.", color=self.bot.errorColor)
-                    await ctx.channel.send(embed=embed)
-            elif str(payload.emoji) == "❌" :
-                embed=discord.Embed(title="❌ Cancelled", description="Settings deletion cancelled by user.", color=self.bot.errorColor)
+            if message.content == ctx.guild.name :
+                await self.bot.global_config.deletedata(ctx.guild.id)
+                embed=discord.Embed(title="✅ Settings reset", description="Goodbye cruel world! 😢", color=self.bot.errorColor)
                 await ctx.channel.send(embed=embed)
             else :
-                embed=discord.Embed(title=self.bot.errorEmojiTitle, description="Settings deletion cancelled.", color=self.bot.errorColor)
+                embed=discord.Embed(title="❌ Error: Incorrect server name", description="Settings deletion cancelled.", color=self.bot.errorColor)
                 await ctx.channel.send(embed=embed)
-        except asyncio.TimeoutError:
-            embed=discord.Embed(title=self.bot.errorTimeoutTitle, description="Settings deletion cancelled.")
-            await ctx.channel.send(embed=embed)
-
-
-    @commands.group(aliases=['privrole', 'botadmin', 'privroles', 'priviligedroles'],help="List all priviliged roles. Subcommands may add or remove priviliged roles.", description="Returns all priviliged roles on this server. You can optionally set or remove new roles as priviliged roles.", usage=f"priviligedrole", invoke_without_command=True, case_insensitive=True)
-    @commands.check(has_owner)
-    @commands.guild_only()
-    async def priviligedrole(self, ctx) :
-        '''
-        This is where bot-admin (AKA priviliged) roles are added.
-        Members with these roles can execute commands to set up and
-        configure the bot. Note: Some commands may require additional permissions
-        '''
-        records = await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
-        if not records or records and len(records["priviliged_role_id"]) == 0 :
-            embed=discord.Embed(title="❌ Error: No priviliged roles set.", description=f"You can add a priviliged role via `{ctx.prefix}priviligedrole add <rolename>`.", color=self.bot.errorColor)
-            await ctx.channel.send(embed=embed)
-            return
-        else :
-            roles = []
-            roleNames = []
-            for item in records["priviliged_role_id"] :
-                roles.append(ctx.guild.get_role(item))
-            for item in roles :
-                roleNames.append(item.name)
-            roleNames = ", ".join(roleNames)
-            embed=discord.Embed(title="Priviliged roles for this guild:", description=f"`{roleNames}`", color=self.bot.embedBlue)
-            await ctx.channel.send(embed=embed)
-
-        #Commands used to add and/or remove other roles from executing potentially unwanted things
-    @priviligedrole.command(aliases=['set'], help="Add role to priviliged roles", description="Adds a role to the list of priviliged roles, allowing them to execute admin commands.", usage="priviligedrole add <rolename>")
-    @commands.check(has_owner)
-    @commands.guild_only()
-    async def add(self, ctx, *, role:discord.Role):
-        if role is None:
-            embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.\n__Note:__ Rolenames are case-sensitive.", color=self.bot.errorColor)
-            await ctx.channel.send(embed=embed); return
-        records = await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
-        #privroles = [role for role in roleIDs]
-        if records and role.id in records["priviliged_role_id"] :
-            embed=discord.Embed(title="❌ Error: Role already added.", description=f"This role already has priviliged access.", color=self.bot.errorColor)
+        elif should_delete == False:
+            embed=discord.Embed(title="❌ Cancelled", description="Settings deletion aborted by user.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
         else :
-            async with self.bot.pool.acquire() as con:
-                await con.execute('''INSERT INTO priviliged (guild_id, priviliged_role_id) VALUES ($1, $2)''', ctx.guild.id, role.id)
-                await self.bot.caching.refresh(table="priviliged", guild_id=ctx.guild.id)
-                embed=discord.Embed(title="✅ Priviliged access granted.", description=f"**{role.name}** has been granted bot admin priviliges.", color=self.bot.embedGreen)
-                await ctx.channel.send(embed=embed)
-
-
-    @priviligedrole.command(aliases=['rem', 'del', 'delete'], help="Remove role from priviliged roles.", description="Removes a role to the list of priviliged roles, revoking their permission to execute admin commands.", usage=f"priviligedrole remove <rolename>")
-    @commands.check(has_owner)
-    @commands.guild_only()
-    async def remove(self, ctx, *, role:discord.Role):
-        if role is None:
-            embed=discord.Embed(title="❌ Error: Role not found.", description=f"Unable to locate role, please make sure typed everything correctly.\n__Note:__ Rolenames are case-sensitive.", color=self.bot.errorColor)
-            await ctx.channel.send(embed=embed); return
-        records = await self.bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
-        if not records or records and role.id not in records["priviliged_role_id"] :
-            embed=discord.Embed(title="❌ Error: Role not priviliged.", description=f"This role is not priviliged.", color=self.bot.errorColor)
+            embed=discord.Embed(title=self.bot.errorTimeoutTitle, description="Timed out. Settings deletion cancelled.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
-        else :
-            async with self.bot.pool.acquire() as con:
-                await con.execute('''DELETE FROM priviliged WHERE guild_id = $1 AND priviliged_role_id = $2''', ctx.guild.id, role.id)
-                await self.bot.caching.refresh(table="priviliged", guild_id=ctx.guild.id)
-                embed=discord.Embed(title="✅ Priviliged access revoked.", description=f"**{role}** has had it's bot admin priviliges revoked.", color=self.bot.embedGreen)
-                await ctx.channel.send(embed=embed)
-
 
 
     @commands.command(help="Sets the bot's nickname.", description="Sets the bot's nickname for this server. Provide `Null` or `None` to reset nickname.", usage="setnick <nickname>")
-    @commands.check(has_priviliged)
     @commands.guild_only()
     async def setnick(self, ctx, *, nick):
         '''
@@ -180,12 +64,11 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(title="✅ Nickname changed", description=f"Bot nickname has been changed to `{nick}`.", color=self.bot.embedGreen)
             await ctx.send(embed=embed)
         except:
-            embed = discord.Embed(title="❌ Error: Unable to change nickname.", description=f"This could be due to a permissions issue.", color=self.bot.errorColor)
+            embed = discord.Embed(title="❌ Error: Unable to change nickname", description=f"This could be due to a permissions issue.", color=self.bot.errorColor)
             await ctx.send(embed=embed)
 
     
     @commands.group(aliases=["prefixes"], help="Check the bot's prefixes. Subcommands of this command allow you to customize your prefix.", description="Check the bot's prefixes. You can also use `add/del` to add or remove a prefix. By adding a prefix you override the default one. The bot can have up to **5** custom prefixes per server. If you forget your prefix, mention the bot!", usage="prefix", invoke_without_command=True, case_insensitive=True)
-    @commands.check(has_priviliged)
     @commands.guild_only()
     async def prefix(self, ctx):
         '''
@@ -204,7 +87,6 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             await ctx.send(embed=embed)
     
     @prefix.command(name="add", aliases=["new"], help="Adds a new prefix.", description="Adds a prefix to the list of valid prefixes.", usage="prefix add <prefix>")
-    @commands.check(has_priviliged)
     @commands.guild_only()
     async def add_prefix(self, ctx, *, prefix:str):
         prefix = prefix.replace('"', '')
@@ -229,7 +111,6 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             await ctx.send(embed=embed)
 
     @prefix.command(name="del", aliases=["remove", "delete"], help="Removes a prefix.", description="Removes a prefix from the list of valid prefixes.", usage="prefix del <prefix>")
-    @commands.check(has_priviliged)
     @commands.guild_only()
     async def del_prefix(self, ctx, *, prefix:str):
         prefix = prefix.replace('"', '')
@@ -253,7 +134,6 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
 
 
     @commands.group(help="Run a command while bypassing checks and cooldowns.", description="Run a specified command while bypassing any checks and cooldowns. Requires server administator permissions for the user to run this command alongside priviliged access.", usage="sudo <command> [arguments]")
-    @commands.check(has_priviliged)
     @commands.has_permissions(administrator=True)
     async def sudo(self, ctx, *, command):
         '''
@@ -263,7 +143,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         '''
         blacklist = ["jsk", "jishaku", "shutdown"] #Stuff that I don't want to work
         disabled_list = ["help", "sudo", "leave"] #Stuff that literally does not work
-        disabled_cogs = ["Annoverse", "Matchmaking", "AdminCommands", "Moderation", "Reaction Roles", "Keep On Top", "Setup"] #Entire cogs can be disabled too
+        disabled_cogs = ["Events", "Permissions", "Annoverse", "Matchmaking", "AdminCommands", "Moderation", "Role-Buttons", "Keep On Top", "Setup"] #Entire cogs can be disabled too
 
         for cog in disabled_cogs:
             try:

@@ -11,8 +11,6 @@ from extensions.utils import components
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
-async def has_priviliged(ctx):
-    return await ctx.bot.custom_checks.has_priviliged(ctx)
 
 class PersistentEventView(discord.ui.View):
     def __init__(self, bot:commands.Bot, buttons:list=None):
@@ -110,6 +108,8 @@ class Events(commands.Cog):
             "Red": discord.ButtonStyle.danger
         }
 
+    async def cog_check(self, ctx):
+        return await ctx.bot.custom_checks.has_permissions(ctx, 'events') or await ctx.bot.custom_checks.has_permissions(ctx, 'mod_permitted')
 
     async def events_init(self):
         '''Re-acquire all persistent buttons'''
@@ -163,16 +163,15 @@ class Events(commands.Cog):
                 except (discord.Forbidden, discord.HTTPException):
                     pass
 
-    @commands.group(help="Manages events.", description="Lists all events created in this guild, if any. Subcommands allow you to remove or set additional ones.", usage="buttonrole", invoke_without_command=True, case_insensitive=True)
+    @commands.group(aliases=["events"], help="Manages events.", description="Lists all events created in this guild, if any. Subcommands allow you to remove or set additional ones.", usage="buttonrole", invoke_without_command=True, case_insensitive=True)
     @commands.guild_only()
-    @commands.check(has_priviliged)
     async def event(self, ctx):
         records = await self.bot.caching.get(table="events", guild_id=ctx.guild.id)
         if records:
             text = ""
             for i, rr_id in enumerate(records["entry_id"]):
                 text = f"{text}**{rr_id}** - {ctx.guild.get_channel(records['channel_id'][i]).mention}\n"
-            embed=discord.Embed(title="Events active in this server:", description=text, color=self.bot.embedBlue)
+            embed=discord.Embed(title="📅 Events active in this server:", description=text, color=self.bot.embedBlue)
             await ctx.send(embed=embed)
         else:
             embed=discord.Embed(title="❌ Error: No active events", description=f"There are no active events in this server. Create one with `{ctx.prefix}event create`", color=self.bot.errorColor)
@@ -181,7 +180,6 @@ class Events(commands.Cog):
 
     @event.command(name="delete", aliases=["del", "remove"], help="Deletes an event by ID.", description="Deletes an event via it's ID. You can get the ID via the `event` command.", usage="event delete <ID>")
     @commands.guild_only()
-    @commands.check(has_priviliged)
     async def event_delete(self, ctx, id:str):
             record = await self.bot.caching.get(table="events", guild_id=ctx.guild.id, entry_id = id)
             if record:
@@ -205,7 +203,6 @@ class Events(commands.Cog):
 
     @event.command(name="create", aliases=["new", "setup", "add"], help="Initializes setup to create and schedule an event.", description="Initializes a setup to help you add a new event. Takes no arguments.", usage="event create")
     @commands.guild_only()
-    @commands.check(has_priviliged)
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def event_setup(self, ctx):
         '''
@@ -377,6 +374,7 @@ class Events(commands.Cog):
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
                 self.skipping = False
+                self.data = None
 
             async def interaction_check(self, interaction: discord.Interaction) -> bool:
                 return ctx.author.id == interaction.user.id
@@ -397,7 +395,7 @@ class Events(commands.Cog):
                 if button.view.data is not None:
                     button.view.stop()
                 else:
-                    interaction.response.send_message('If you want to skip this step, press `Skip`.', ephemeral=True)
+                    await interaction.response.send_message('If you want to skip this step, press `Skip`.', ephemeral=True)
 
         if len(role_options) <= 25:
             embed=discord.Embed(title="🛠️ Event setup", description="Select up to 5 roles that are allowed to sign up to this event! Press `Skip` if you want anyone to be able to sign up!", color=self.bot.embedBlue)
@@ -420,13 +418,14 @@ class Events(commands.Cog):
             event_embed.add_field(name="Allowed roles", value=", ".join([ctx.guild.get_role(role_id).mention for role_id in event_permitted_roles]), inline=False)
         event_embed.add_field(name="Event start", value=f"{discord.utils.format_dt(event_expiry, style='F')} ({discord.utils.format_dt(event_expiry, style='R')})")
         buttons = []
-        first = True
+        event_embed.add_field(name="​", value="​") #Spacer
+        event_embed.add_field(name="​", value="​") #Spacer
         for category, data in categories.items():
             button = SignUpCategoryButton(entry_id=entry_id, category_name=category, emoji=discord.PartialEmoji.from_str(data["emoji"]), style=self.button_styles[data["buttonstyle"]], label=data["buttonlabel"])
             buttons.append(button)
             member_cap = data["member_cap"] if data["member_cap"] else "∞"
             event_embed.add_field(name=f"{category} (0/{member_cap})", value="-", inline=True)
-        event_embed.set_footer(text=f"Event created by {ctx.author}", icon_url=ctx.author.avatar.url)
+        event_embed.set_footer(text=f"Event by {ctx.author}  |  ID: {entry_id}", icon_url=ctx.author.avatar.url)
         #Create message
         view = PersistentEventView(self.bot, buttons)
         event_msg = await event_channel.send(embed=event_embed, view=view)

@@ -22,7 +22,7 @@ lang = "en"
 #Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
 EXPERIMENTAL = False
 #Version of the bot
-current_version = "5.0.0l"
+current_version = "5.0.0m"
 #Loading token from .env file. If this file does not exist, nothing will work.
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -30,15 +30,13 @@ DBPASS = os.getenv("DBPASS")
 
 '''
 All extensions that are loaded on boot-up, change these to alter what modules you want (Note: These refer to filenames NOT cognames)
-Note: Without the extension admin_commands, most things will break, so I consider this a must-have. Remove at your own peril.
-Note #2: If you remove the extension "help", then the bot will fall back to the default help command.
+Please note that the bot was not built for modularity and the absence of any of the extensions may cause fatal errors.
 Jishaku is a bot-owner only debug extension, requires 'pip install jishaku'.
-IPC is used for communication with the dashboard website.
 '''
 initial_extensions = (
-    'extensions.help',
     'extensions.permissions',
-    'extensions.admin_commands', 
+    'extensions.admin_commands',
+    'extensions.help', 
     'extensions.moderation',
     'extensions.role_buttons', 
     'extensions.events',
@@ -513,21 +511,6 @@ class CustomChecks():
         else:
             return ctx.author.id == ctx.bot.owner_id
 
-
-    async def has_priviliged(self, ctx):
-        '''
-        DEPRECATED
-        True if invoker is either bot owner, guild owner, administrator, 
-        or has a specified priviliged role
-        '''
-        if ctx.guild:
-            user_role_ids = [x.id for x in ctx.author.roles]
-            records = await bot.caching.get(table="priviliged", guild_id=ctx.guild.id)
-            if records:
-                privrole_ids = records["priviliged_role_id"]
-                return any(role_id in user_role_ids for role_id in privrole_ids) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
-            return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator
-
     async def module_is_enabled(self, ctx, module_name:str):
         '''
         True if module is enabled, false otherwise. module_name is the extension filename.
@@ -538,18 +521,16 @@ class CustomChecks():
         else:
             return True
 
-    async def has_permissions(self, ctx, group_name:str):
+    async def has_permissions(self, ctx, perm_node:str):
         '''
-        Returns True if a user is in the specified permission group, 
-        or is an administrator, or is the owner.
+        Returns True if a user is in the specified permission node, 
+        or in the administrator node, or is a Discord administrator, or is the owner.
         '''
         if ctx.guild:
             user_role_ids = [x.id for x in ctx.author.roles]
-            records = (await bot.caching.get(table="permissions", guild_id=ctx.guild.id, ptype=group_name))
-            if records:
-                permitted_role_ids = records["role_ids"][0]
-                return any(role in user_role_ids for role in permitted_role_ids) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
-            return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator
+            role_ids = await ctx.bot.get_cog("Permissions").get_perms(ctx.guild, perm_node)
+            admin_role_ids = await ctx.bot.get_cog("Permissions").get_perms(ctx.guild, "admin_permitted")
+            return any(role in user_role_ids for role in admin_role_ids) or any(role in user_role_ids for role in role_ids) or (ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id or ctx.author.guild_permissions.administrator)
 
 bot.custom_checks = CustomChecks()
 

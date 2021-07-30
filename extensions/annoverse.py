@@ -5,8 +5,6 @@ from discord.ext import commands
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
-async def has_priviliged(ctx):
-    return await ctx.bot.custom_checks.has_priviliged(ctx)
 def is_anno_guild(ctx):
     return ctx.guild.id in ctx.bot.anno_guilds
 

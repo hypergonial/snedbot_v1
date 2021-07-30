@@ -16,8 +16,6 @@ I tweaked to to be a bit more generally applicable (and possibly more shit) :ver
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
-async def has_priviliged(ctx):
-    return await ctx.bot.custom_checks.has_priviliged(ctx)
 
 class Timer():
     '''

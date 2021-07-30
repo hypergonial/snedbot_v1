@@ -50,6 +50,9 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             "Red": discord.ButtonStyle.danger
         }
 
+    async def cog_check(self, ctx):
+            return await ctx.bot.custom_checks.has_permissions(ctx, 'role_buttons')
+
 
     async def buttonroles_init(self):
         '''Re-acquire all persistent buttons'''
@@ -85,7 +88,6 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
 
     @commands.group(aliases=["rr", "rb", "reactionrole"], help="Manages role-buttons. See subcommands for more.", description="Lists all button roles set for this guild, if any. Subcommands allow you to remove or set additional ones.", usage="buttonrole", invoke_without_command=True, case_insensitive=True)
     @commands.guild_only()
-    @commands.check(has_priviliged)
     async def rolebutton(self, ctx):
         records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id)
         if records:
@@ -101,7 +103,6 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
 
     @rolebutton.command(name="delete", aliases=["del", "remove"], help="Removes a role-button by ID.", description="Removes a role-button of the specified ID. You can get the ID via the `rolebutton` command.", usage="rolebutton delete <ID>")
     @commands.guild_only()
-    @commands.check(has_priviliged)
     async def rb_delete(self, ctx, id:int):
             record = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id, entry_id = id)
             if record:
@@ -127,7 +128,6 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
 
     @rolebutton.command(name="add", aliases=["new", "setup", "create"], help="Initializes setup to add a new role-button.", description="Initializes a setup to help you add a new role-button. You can also access this setup via the `setup` command. Takes no arguments.", usage="reactionrole add")
     @commands.guild_only()
-    @commands.check(has_priviliged)
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def rb_setup(self, ctx):
         '''

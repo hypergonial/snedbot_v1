@@ -8,8 +8,8 @@ from discord.ext import commands
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
-async def has_priviliged(ctx):
-    return await ctx.bot.custom_checks.has_priviliged(ctx)
+async def has_admin_perms(ctx):
+    return await ctx.bot.custom_checks.has_permissions(ctx, "admin_permitted")
 def is_anno_guild(ctx):
     return ctx.guild.id in ctx.bot.anno_guilds
 def is_whitelisted_guild(ctx):
@@ -21,19 +21,20 @@ class Setup(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    async def cog_check(self, ctx):
+        return await ctx.bot.custom_checks.has_permissions(ctx, 'admin_permitted')
+
     #Ahh yes, the setup command... *instant PTSD*
     #It basically just collects a bunch of values from the user, in this case an admin, and then changes the settings
     #based on that, instead of the admin having to use !modify for every single value
     #TL;DR: fancy setup thing
     @commands.group(help="Starts bot configuration setups.", description = "Used to set up and configure different parts of the bot.", usage="setup <setuptype>", invoke_without_command=True, case_insensitive=True)
-    @commands.check(has_priviliged)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def setup (self, ctx):
         await ctx.send_help(ctx.command)
 
     @setup.command(help="Helps set up matchmaking")
-    @commands.check(has_priviliged)
     @commands.check(is_anno_guild)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
@@ -106,7 +107,6 @@ class Setup(commands.Cog):
             return
 
     @setup.command(help="Helps set up a keep-on-top message, that will sticky a message on top of a channel at all times.", aliases=["keep-on-top"])
-    @commands.check(has_priviliged)
     @commands.check(is_whitelisted_guild)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
@@ -119,7 +119,6 @@ class Setup(commands.Cog):
             return
         
     @setup.command(help="Helps you set up logging, and different logging levels.", aliases=["logs"])
-    @commands.check(has_priviliged)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     async def logging(self, ctx):
@@ -172,19 +171,6 @@ class Setup(commands.Cog):
             embed=discord.Embed(title=self.bot.errorTimeoutTitle, description=self.bot.errorTimeoutDesc, color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
-
-
-    @setup.command(help="Helps you set up a role-button.", description="Helps you set up a role-button, the command for managing reaction roles is `rolebutton`.", aliases=["rb", "rr", "reactionrole"], usage="setup rolebutton")
-    @commands.check(has_priviliged)
-    @commands.guild_only()
-    @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
-    async def role_buttons(self, ctx):
-        try:
-            await ctx.invoke(self.bot.get_command('rolebutton add'))
-        except AttributeError:
-            embed=discord.Embed(title=self.bot.errorMissingModuleTitle, description="This setup requires the extension `role_buttons` to be active.", color=self.bot.errorColor)
-            await ctx.channel.send(embed=embed); return
-
 
     @setup.error
     async def setup_error(self, ctx, error):
