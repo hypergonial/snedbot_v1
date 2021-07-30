@@ -146,23 +146,22 @@ class Events(commands.Cog):
                 return
             else:
                 await message.edit(view=None)
-                response_str = f"Event **'{message.embeds[0].title}'** is starting now!\n"
+                paginator = commands.Paginator(prefix='', suffix='')
+                paginator.add_line(f"Event **'{message.embeds[0].title}'** is starting now!\n")
                 for category, data in json.loads(record["categories"][0]).items():
                     members = [(guild.get_member(member_id)) for member_id in data['members']]
                     members = list(filter(None, members))
-                    response_str=f"{response_str} \n**{category}: {', '.join([member.mention for member in members])}**"
+                    paginator.add_line(f"**{category}: {', '.join([member.mention for member in members])}**")
                 
                 async with self.bot.pool.acquire() as con:
                     await con.execute('''DELETE FROM events WHERE guild_id = $1 AND entry_id = $2''', guild.id, entry_id)
                 await self.bot.caching.refresh(table="events", guild_id=guild.id)
 
-                if len(response_str) > 2000:
-                    raise ValueError(f"So apparently there is a need for pagination, people are using events! response_str: {response_str}")
-                else:
-                    try:
-                        await channel.send(response_str)
-                    except discord.Forbidden:
-                        pass
+                try:
+                    for page in paginator.pages:
+                        await channel.send(page)
+                except (discord.Forbidden, discord.HTTPException):
+                    pass
 
     @commands.group(help="Manages events.", description="Lists all events created in this guild, if any. Subcommands allow you to remove or set additional ones.", usage="buttonrole", invoke_without_command=True, case_insensitive=True)
     @commands.guild_only()

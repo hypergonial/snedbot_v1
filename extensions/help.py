@@ -15,16 +15,17 @@ class HelpPages(ViewMenuPages):
     
     async def send_initial_message(self, _, channel):
         self.current_page = -1
+        print("Sending view...")
         return await self.send_with_view(channel, embed=self.initial_message)
         #return await channel.send(embed=self.initial_message)
 
 
 class HelpSource(menus.ListPageSource):
     '''
-    Takes a list, and puts it into an embed menu, 2 items per page
+    Takes a list, and puts it into an embed menu, 1 item per page
     '''
     def __init__(self, data):
-        super().__init__(data, per_page=2)
+        super().__init__(data, per_page=1)
 
     async def format_page(self, menu, entries):
         self._ = menu.ctx.bot.get_localization('help', menu.ctx.bot.lang)
@@ -50,15 +51,20 @@ class SnedHelp(commands.HelpCommand):
 
         ctx = self.context   #Obtaining ctx
         self._ = ctx.bot.get_localization('help', ctx.bot.lang)
-        cmdslist = []
         #We retrieve all the commands from the mapping of cog,commands
-        for cog, commands in mapping.items(): 
-            filtered = await self.filter_commands(commands, sort=True)   #This will filter commands to those the user can actually execute
+        paginator = commands.Paginator(prefix='', suffix='', max_size=500)
+        for cog, cmds in mapping.items(): 
+            filtered = await self.filter_commands(cmds, sort=True)   #This will filter commands to those the user can actually execute
             command_signatures = [self.get_command_signature(ctx, command) for command in filtered]   #Get command signature in format as specified above
             #If we have any, put them in categories according to cogs, fallback is "Other"
+            """ if command_signatures:
+                cog_name = getattr(cog, "qualified_name", "Other") #Append items into a list of str, one item per cog
+                cmdslist.append("**{cn}**\n{cs}\n".format(cn=cog_name, cs='\n'.join(command_signatures))) """
             if command_signatures:
                 cog_name = getattr(cog, "qualified_name", "Other") #Append items into a list of str, one item per cog
-                cmdslist.append("**{cn}**\n{cs}\n".format(cn=cog_name, cs='\n'.join(command_signatures)))
+                paginator.add_line(f"\n**{cog_name}**")
+                for signature in command_signatures:
+                    paginator.add_line(signature)
         
         help_home_embed=discord.Embed(title="🏠 " + self._("__Help Home__"), color=ctx.bot.embedBlue, description='''**How to navigate this help dialogue**
 
@@ -78,8 +84,8 @@ class SnedHelp(commands.HelpCommand):
         React with ▶️ to see the next page and what commands are available to you!
         ''')
         help_home_embed.set_footer(text=ctx.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
-        pages = HelpPages(help_home_embed, source=HelpSource(cmdslist), clear_reactions_after=True) #Feed the list of commands into the menu system
-        await pages.start(ctx)
+        help_pages = HelpPages(help_home_embed, source=HelpSource(paginator.pages), clear_reactions_after=True) #Feed the list of commands into the menu system
+        await help_pages.start(ctx)
 
     async def send_command_help(self, command):
         ctx = self.context   #Obtaining ctx

@@ -41,7 +41,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
                         break
 
 
-    @commands.group(aliases=["ktp"], help="[BETA] Lists all keep-on-top messages. Subcommands can add/remove them.", description="Helps you list/manage keep-on-top messages. Keep-on-top messages are messages that are always the last message in the given channel, effectively being pinned.", usage="keepontop", invoke_without_command=True, case_insensitive=True)
+    @commands.group(aliases=["ktp"], help="Lists all keep-on-top messages. Subcommands can add/remove them.", description="Helps you list/manage keep-on-top messages. Keep-on-top messages are messages that are always the last message in the given channel, effectively being pinned.", usage="keepontop", invoke_without_command=True, case_insensitive=True)
     @commands.check(has_priviliged)
     async def keepontop(self, ctx):
         '''
@@ -71,7 +71,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
             await ctx.channel.send(embed=embed)
             return
 
-        embed=discord.Embed(title="🛠️ [BETA] Keep-On-Top Setup", description="Specify the channel where you want to keep a message on the top by mentioning it!", color=self.bot.embedBlue)
+        embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description="Specify the channel where you want to keep a message on the top by mentioning it!", color=self.bot.embedBlue)
         await ctx.channel.send(embed=embed)
         try :
             def check(payload):
@@ -86,10 +86,10 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
                         await ctx.channel.send(embed=embed)
                         return
 
-            embed=discord.Embed(title="🛠️ [BETA] Keep-On-Top Setup", description=f"Channel set to {ktp_channel.mention}!", color=self.bot.embedBlue)
+            embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description=f"Channel set to {ktp_channel.mention}!", color=self.bot.embedBlue)
             await ctx.channel.send(embed=embed)
 
-            embed=discord.Embed(title="🛠️ [BETA] Keep-On-Top Setup", description="Now type in the message you want to be kept on top!", color=self.bot.embedBlue)
+            embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description="Now type in the message you want to be kept on top!", color=self.bot.embedBlue)
             await ctx.channel.send(embed=embed)
             payload = await self.bot.wait_for('message', timeout=300.0, check=check)
             ktp_content = payload.content
@@ -102,7 +102,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
                 ''', ctx.guild.id, ktp_channel.id, first_top.id, ktp_content)
             await self.bot.caching.refresh(table="ktp", guild_id=ctx.guild.id)
 
-            embed=discord.Embed(title="🛠️ [BETA] Keep-On-Top Setup", description=f"✅ Setup completed. This message will now be kept on top of {ktp_channel.mention}!", color=self.bot.embedGreen)
+            embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description=f"✅ Setup completed. This message will now be kept on top of {ktp_channel.mention}!", color=self.bot.embedGreen)
             await ctx.channel.send(embed=embed)
 
         except commands.ChannelNotFound:
