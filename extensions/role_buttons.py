@@ -50,62 +50,6 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             "Red": discord.ButtonStyle.danger
         }
 
-    async def select_or_ask(self, ctx, options:list[discord.SelectOption], placeholder:str, embed:discord.Embed=None, content:str=None, message_to_edit:discord.Message=None):
-        '''Helper function to work around limitations of select item length
-
-        Attributes:
-        options: List of options to insert into the select, if possible
-        placeholder: Select placeholder
-        embed: Embed to send via the message
-        content: Message content, if any
-        message_to_edit: A message to edit, if None, a new message will be sent
-        '''
-        if not embed and not content:
-            raise ValueError('Content or embed must not be None!')
-            
-        invalid_select = False
-        for option in options:
-            if len(option.label) > 25:
-                invalid_select = True
-
-        if len(options) <= 25 and not invalid_select:
-            asked = False
-            view = discord.ui.View()
-            view.add_item(components.CustomSelect(placeholder=placeholder, options=options))
-            if not message_to_edit:
-                msg = await ctx.send(content=content, embed=embed, view=view)
-            else:
-                await message_to_edit.edit(content=content, embed=embed, view=view)
-                msg = None
-            await view.wait()
-            if msg:
-                return (view.value, asked, msg)
-            else:
-                return (view.value, asked)
-        else:
-            asked = True
-            if embed:
-                embed.description = f"{embed.description}\nPlease type in your response below!"
-            elif content:
-                content = f"{content}\nPlease type in your response below!"
-
-            def check(message):
-                return message.author == ctx.author and message.channel == ctx.channel
-            if not message_to_edit:
-                msg = await ctx.channel.send(embed=embed, content=content)
-            else:
-                await message_to_edit.edit(embed=embed, content=content)
-                msg = None
-            try:
-                message = await self.bot.wait_for('message', timeout=180.0, check=check)
-                await message.delete()
-                if msg:
-                    return (message.content, asked, msg)
-                else:
-                    return (message.content, asked)
-            except asyncio.exceptions.TimeoutError:
-                return (None, asked)
-
 
     async def buttonroles_init(self):
         '''Re-acquire all persistent buttons'''
@@ -155,7 +99,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             await ctx.channel.send(embed=embed)
 
 
-    @rolebutton.command(name="delete", aliases=["del", "remove"], help="Removes a role-button by ID.", description="Removes a reaction role of the specified ID. You can get the ID via the `reactionrole` command.", usage="reactionrole delete <ID>")
+    @rolebutton.command(name="delete", aliases=["del", "remove"], help="Removes a role-button by ID.", description="Removes a role-button of the specified ID. You can get the ID via the `rolebutton` command.", usage="rolebutton delete <ID>")
     @commands.guild_only()
     @commands.check(has_priviliged)
     async def rb_delete(self, ctx, id:int):
@@ -188,7 +132,6 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     async def rb_setup(self, ctx):
         '''
         Here is where end-users would set up a button role for their server
-        This is not exposed as a command directly, instead it is invoked in setup
         '''
         records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id)
         
@@ -215,7 +158,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
 
             
             embed=discord.Embed(title="🛠️ Role-Buttons setup", description="Please specify the channel where you want the message to be sent!", color=self.bot.embedBlue)
-            value, asked, setup_msg = await self.select_or_ask(ctx, options=options, placeholder="Select a channel", embed=embed)
+            value, asked, setup_msg = await components.select_or_ask(ctx, options=options, placeholder="Select a channel", embed=embed)
             
             if value and not asked:
                 reactchannel = ctx.guild.get_channel(int(value["values"][0]))
@@ -227,7 +170,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                         await setup_msg.edit(embed=embed); return
                 except commands.ChannelNotFound:
                     embed=discord.Embed(title="❌ Error: Channel not found.", description="Unable to locate channel. Operation cancelled.", color=self.bot.errorColor)
-                    await ctx.channel.send(embed=embed);  return          
+                    await setup_msg.edit(embed=embed);  return          
             
             else:
                 raise asyncio.exceptions.TimeoutError
@@ -249,7 +192,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                         options.append(discord.SelectOption(label=f"#{channel.name}", value=channel.id))
 
                 embed=discord.Embed(title="🛠️ Role-Buttons setup", description="Please specify the channel where the message is located!", color=self.bot.embedBlue)
-                value, asked, setup_msg = await self.select_or_ask(ctx, options=options, placeholder="Select a channel", embed=embed)
+                value, asked, setup_msg = await components.select_or_ask(ctx, options=options, placeholder="Select a channel", embed=embed)
                 
                 if value and not asked:
                     reactchannel = ctx.guild.get_channel(int(value["values"][0]))
@@ -310,7 +253,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                 role_options.append(discord.SelectOption(label=role.name, value=role.id))
 
         embed=discord.Embed(title="🛠️ Role-Buttons setup", description="Select the role that will be handed out!", color=self.bot.embedBlue)
-        value, asked = await self.select_or_ask(ctx, options=role_options, placeholder="Select a role!", embed=embed, message_to_edit=setup_msg)
+        value, asked = await components.select_or_ask(ctx, options=role_options, placeholder="Select a role!", embed=embed, message_to_edit=setup_msg)
         if value and not asked:
             reactionrole = ctx.guild.get_role(int(value["values"][0]))
         elif value and asked:

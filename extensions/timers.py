@@ -49,44 +49,66 @@ class Timers(commands.Cog):
         self.wait_for_active_timers.cancel() # pylint: disable=<no-member>
     
     
-    async def converttime(self, timestr : str):
+    async def converttime(self, timestr : str, force_mode:str=None):
         '''
         Tries converting a string to datetime.datetime via regex, returns datetime.datetime and strings it extracted from if successful, otherwise raises ValueError
         Result of 12 hours of pain #remember
         '''
-        logging.debug(f"String passed: {timestr}")
-        #timestr = timestr.replace(' ', '')
-        #Get any pair of <number><word> with a single optional space in between, and return them as a dict (sort of)
-        time_regex = re.compile(r"(\d+(?:[.,]\d+)?)\s{0,1}([a-zA-Z]+)")
-        time_letter_dict = {"h":3600, "s":1, "m":60, "d":86400, "w":86400*7, "M":86400*30, "Y":86400*365, "y":86400*365}
-        time_word_dict = {"hour":3600, "second":1, "minute":60, "day": 86400, "week": 86400*7, "month":86400*30, "year":86400*365, "sec": 1, "min": 60}
-        matches = time_regex.findall(timestr)
-        time = 0
-        strings = [] #Stores all identified times
-        logging.debug(f"Matches: {matches}")
-        for val, category in matches:
-            val = val.replace(',', '.') #Replace commas with periods to correctly register decimal places
-            #If this is a single letter
-            if len(category) == 1:
-                if category in time_letter_dict.keys():
-                    strings.append(val + category)
-                    strings.append(val + " " + category) #Append both with space & without
-                    time += time_letter_dict[category]*float(val)
-            else:
-                #If a partial match is found with any of the keys
-                #Reason for making the same code here is because words are case-insensitive, as opposed to single letters
-                for string in time_word_dict.keys():
-                    if lev.distance(category.lower(), string.lower()) <= 1: #If str has 1 or less different letters (For plural) pylint: disable=<no-member>
-                        time += time_word_dict[string]*float(val)
+
+        logging.debug(f"String passed for time conversion: {timestr}")
+        
+        date_and_time_regex = re.compile(r"\d{4}-[0-1]\d-[0-3]\d [0-2]\d:[0-5]\d")
+        date_regex = re.compile(r"\d{4}-[0-1]\d-[0-3]\d")
+        date_and_time_match = date_and_time_regex.search(timestr)
+        date_match = date_regex.search(timestr)
+        if not force_mode or force_mode == "absolute":
+            if date_and_time_match:
+                time = datetime.datetime.strptime(date_and_time_match.group(), "%Y-%m-%d %H:%M")
+                time = time.replace(tzinfo=datetime.timezone.utc)
+                if time > datetime.datetime.now(datetime.timezone.utc):
+                    return time, [date_and_time_match.group()]
+                else:
+                    raise ValueError("Date is not in the future.")
+            elif date_match:
+                time = datetime.datetime.strptime(date_match.group(), "%Y-%m-%d")
+                time = time.replace(tzinfo=datetime.timezone.utc)
+                if time > datetime.datetime.now(datetime.timezone.utc):
+                    return time, [date_match.group()]
+                else:
+                    raise ValueError("Date is not in the future.")
+        if not force_mode or force_mode == "relative": 
+            #Relative time conversion
+            #Get any pair of <number><word> with a single optional space in between, and return them as a dict (sort of)
+            time_regex = re.compile(r"(\d+(?:[.,]\d+)?)\s{0,1}([a-zA-Z]+)")
+            time_letter_dict = {"h":3600, "s":1, "m":60, "d":86400, "w":86400*7, "M":86400*30, "Y":86400*365, "y":86400*365}
+            time_word_dict = {"hour":3600, "second":1, "minute":60, "day": 86400, "week": 86400*7, "month":86400*30, "year":86400*365, "sec": 1, "min": 60}
+            matches = time_regex.findall(timestr)
+            time = 0
+            strings = [] #Stores all identified times
+            logging.debug(f"Matches: {matches}")
+            for val, category in matches:
+                val = val.replace(',', '.') #Replace commas with periods to correctly register decimal places
+                #If this is a single letter
+                if len(category) == 1:
+                    if category in time_letter_dict.keys():
                         strings.append(val + category)
-                        strings.append(val + " " + category)
-                        break
-        logging.debug(f"Time: {time}")
-        if time > 0:
-            time = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=time)
-        else: #If time is 0, then we failed to parse or the user indeed provided 0, which makes no sense, so we raise an error.
-             raise ValueError("Failed converting time from string.")
-        return time, strings
+                        strings.append(val + " " + category) #Append both with space & without
+                        time += time_letter_dict[category]*float(val)
+                else:
+                    #If a partial match is found with any of the keys
+                    #Reason for making the same code here is because words are case-insensitive, as opposed to single letters
+                    for string in time_word_dict.keys():
+                        if lev.distance(category.lower(), string.lower()) <= 1: #If str has 1 or less different letters (For plural) pylint: disable=<no-member>
+                            time += time_word_dict[string]*float(val)
+                            strings.append(val + category)
+                            strings.append(val + " " + category)
+                            break
+            logging.debug(f"Time: {time}")
+            if time > 0:
+                time = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=time)
+            else: #If time is 0, then we failed to parse or the user indeed provided 0, which makes no sense, so we raise an error.
+                raise ValueError("Failed converting time from string. (Relative conversion)")
+            return time, strings
 
     
     async def remindertime(self, timestr : str):
@@ -95,6 +117,7 @@ class Timers(commands.Cog):
         Used to create a reminder note
         '''
         #Yeah this is stupid lol
+        #TODO: Rework this garbage
         time, strings = await self.converttime(timestr)
 
         for string in strings:
@@ -104,11 +127,11 @@ class Timers(commands.Cog):
             elif timestr.startswith("in " + string + " to"):
                 timestr = timestr.replace("in " + string + " to", "")
             elif timestr.startswith("in " + string):
-                 timestr = timestr.replace("in " + string, "")
+                timestr = timestr.replace("in " + string, "")
             elif timestr.startswith(string + " from now"):
-                 timestr = timestr.replace(string + " from now", "")
+                timestr = timestr.replace(string + " from now", "")
             elif timestr.startswith(string + " later"):
-                 timestr = timestr.replace(string + " later", "")
+                timestr = timestr.replace(string + " later", "")
             elif timestr.startswith("to "):
                 timestr = timestr[3 : len(timestr)]
             elif timestr.startswith("for "):
@@ -135,6 +158,7 @@ class Timers(commands.Cog):
         
         timestr = timestr.capitalize()
         return time, timestr
+
 
     #Gets the first timer that is about to expire in X days, and returns it. Return None if no timers are found in that scope.
     async def get_latest_timer(self, days=7):
@@ -221,7 +245,26 @@ class Timers(commands.Cog):
         if self.currenttask is None:
             self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
     
-    @commands.command(aliases=["remindme", "remind"], usage="reminder <when>", help="Sets a reminder to the specified time.", description="Sets a reminder to the specified time, with an optional message.\n\n**Time formatting:**\n`s` or `second(s)`\n`m` or `minute(s)`\n`h` or `hour(s)`\n`d` or `day(s)`\n`w` or `week(s)`\n`M` or `month(s)`\n`Y` or `year(s)`\n\n**Example:** `reminder in 2 hours to go sleep` or `reminder 5d example message`")
+    @commands.command(aliases=["remindme", "remind"], usage="reminder <when>", help="Sets a reminder to the specified time.", description="""Sets a reminder to the specified time, with an optional message.
+    **Time formatting:**
+
+    __Relative:__
+    `s` or `second(s)`
+    `m` or `minute(s)`
+    `h` or `hour(s)`
+    `d` or `day(s)`
+    `w` or `week(s)`
+    `M` or `month(s)`
+    `Y` or `year(s)`
+    
+    *Examples:* `reminder in 2 hours to go sleep` or `reminder 5d example message`
+    
+    __Absolute:__
+    `YYYY-MM-dd hh-mm` (in UTC)
+    `YYYY-MM-dd` (in UTC)
+
+    *Examples:* `reminder 2021-04-03 12:35 example` or `reminder 2021-04-03 test`
+    """)
     @commands.guild_only()
     async def reminder(self, ctx, *, timestr):
         if len(timestr) >= 1000:
@@ -233,8 +276,8 @@ class Timers(commands.Cog):
             time, timestr = await self.remindertime(timestr)
             logging.debug(f"Received conversion: {time}")
             print(timestr)
-        except ValueError:
-            embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Your timeformat is invalid! Type `{prefix}help reminder` to see valid time formatting.").format(prefix=ctx.prefix),color=self.bot.errorColor)
+        except ValueError as error:
+            embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Your timeformat is invalid! Type `{prefix}help reminder` to see valid time formatting.\n**Error:** {error}").format(prefix=ctx.prefix, error=error),color=self.bot.errorColor)
             await ctx.send(embed=embed)
         else:
             if (time - datetime.datetime.now(datetime.timezone.utc)).total_seconds() >= 31536000*5:

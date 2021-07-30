@@ -157,6 +157,22 @@ try:
                             ON DELETE CASCADE
                     )''')
             await con.execute('''
+                    CREATE TABLE IF NOT EXISTS public.events
+                    (
+                        guild_id bigint NOT NULL,
+                        entry_id text NOT NULL,
+                        channel_id bigint NOT NULL,
+                        msg_id bigint NOT NULL,
+                        recurring_in bigint,
+                        permitted_roles bigint[],
+                        categories json NOT NULL,
+                        PRIMARY KEY (guild_id, entry_id),
+                        FOREIGN KEY (guild_id)
+                            REFERENCES global_config (guild_id)
+                            ON DELETE CASCADE
+                    )
+                    ''')
+            await con.execute('''
                     CREATE TABLE IF NOT EXISTS public.matchmaking_config
                     (
                         guild_id bigint,
