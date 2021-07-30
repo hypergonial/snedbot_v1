@@ -89,9 +89,13 @@ class SignUpCategoryButton(discord.ui.Button):
                 self.entry_id
                 )
             await self.view.bot.caching.refresh(table="events", guild_id=guild.id)
-            webhook = interaction.followup
-            await interaction.response.edit_message(embed=embed)
-            await webhook.send(state_msgs[state], ephemeral=True)
+            
+            if embed.to_dict() != interaction.message.embeds[0]:
+                webhook = interaction.followup
+                await interaction.response.edit_message(embed=embed)
+                await webhook.send(state_msgs[state], ephemeral=True)
+            else:
+                await interaction.response.send_message(state_msgs[state], ephemeral=True)
 
 
 class Events(commands.Cog):
