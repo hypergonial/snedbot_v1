@@ -248,7 +248,7 @@ class SnedBot(commands.Bot):
         print(f'Ignoring exception in {event_method}', file=sys.stderr)
         error_str = traceback.format_exc()
         print(error_str)
-        await self.bot.get_cog("HomeGuild").log_error(error_str, event_method=event_method)
+        await self.get_cog("HomeGuild").log_error(error_str, event_method=event_method)
 
 
     async def on_command_error(self, ctx, error):
@@ -332,7 +332,6 @@ class SnedBot(commands.Bot):
             except Exception as error:
                 logging.error(f"Failed to log to server: {error}")
             logging.error(exception_msg)
-            #traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 
 bot = SnedBot()

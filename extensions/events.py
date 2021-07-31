@@ -148,7 +148,7 @@ class Events(commands.Cog):
         entry_id = timer.notes
         record = await self.bot.caching.get(table="events", guild_id=timer.guild_id, entry_id=entry_id)
         guild = self.bot.get_guild(timer.guild_id); channel=guild.get_channel(timer.channel_id)
-        if guild and channel:
+        if guild and channel and record:
             try:
                 message = await channel.fetch_message(record["msg_id"][0])
             except discord.NotFound:

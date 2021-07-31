@@ -15,12 +15,12 @@ class HomeGuild(commands.Cog):
         error_lines = error_str.split('\n')
         paginator = commands.Paginator(prefix="```py\n")
         if ctx:
-            paginator.add_line(f"Error in guild {ctx.guild.id} during command '{ctx.command}':", empty=True)
+            paginator.add_line(f"Error in guild '{ctx.guild.id}' during command '{ctx.command}' executed by user '{ctx.author}':", empty=True)
         elif event_method:
             paginator.add_line(f"Ignoring exception in {event_method}:", empty=True)
         else:
             paginator.add_line(f"Uncaught exception:", empty=True)
-            
+
         for line in error_lines:
             paginator.add_line(line)
         if "home_guild" in self.bot.config.keys() and "error_logging_channel" in self.bot.config.keys():
