@@ -19,7 +19,7 @@ try:
     Create a postgresql database on the address specified in the DSN,
     and point the postgres_dsn in config.py to it. The database's name 
     must be either 'sned' or 'sned_exp' with default user 'postgres'.
-    Current DSN: {dsn}'''
+    Current DSN: {dsn}''')
 
     while True:
         is_experimental = input("Do you want to initialize the database for the stable or the experimental version? Type 'stable' for stable, 'exp' for experimental.\n> ")
