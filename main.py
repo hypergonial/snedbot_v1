@@ -240,6 +240,11 @@ class SnedBot(commands.Bot):
         logging.info(f"Bot has been removed from guild {guild.id}, correlating data erased.")
 
     async def on_error(self, event_method:str, *args, **kwargs):
+        '''
+        Global Error Handler
+
+        Prints all exceptions and also tries to sends them to the specified error channel, if any.
+        '''
         print(f'Ignoring exception in {event_method}', file=sys.stderr)
         error_str = traceback.format_exc()
         print(error_str)
@@ -248,7 +253,7 @@ class SnedBot(commands.Bot):
 
     async def on_command_error(self, ctx, error):
         '''
-        Global Error Handler
+        Global Command Error Handler
 
         Generic error handling. Will catch all otherwise not handled errors
         '''
