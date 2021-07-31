@@ -285,17 +285,21 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         entry_id = record[0].get('entry_id')+1 if record and record[0] else 1 #Calculate the entry id
 
         button = ButtonRoleButton(entry_id=entry_id, role=reactionrole, label=label, emoji=reactemoji, style=self.button_styles[buttonstyle])
-        if has_msg == False :
-            #Create message
-            view = PersistentRoleView([button])
-            reactmsg = await reactchannel.send(str(msgcontent), view=view)
-        else:
-            if reactmsg.components:
-                view = discord.ui.View.from_message(reactmsg, timeout=None)
-                view.add_item(button)
-            else:
+        try:
+            if has_msg == False :
+                #Create message
                 view = PersistentRoleView([button])
-            await reactmsg.edit(view=view)
+                reactmsg = await reactchannel.send(str(msgcontent), view=view)
+            else:
+                if reactmsg.components:
+                    view = discord.ui.View.from_message(reactmsg, timeout=None)
+                    view.add_item(button)
+                else:
+                    view = PersistentRoleView([button])
+                await reactmsg.edit(view=view)
+        except discord.Forbidden:
+            embed=discord.Embed(title="❌ Error: No permissions", description="The bot has no permissions to create the message. Please check if the bot can send and edit messages in the specified channel. Operation cancelled.", color=self.bot.errorColor)
+            await setup_msg.edit(embed=embed, view=None);  return
 
         async with self.bot.pool.acquire() as con:
             await con.execute('''
