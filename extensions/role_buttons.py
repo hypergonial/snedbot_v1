@@ -36,7 +36,7 @@ class ButtonRoleButton(discord.ui.Button):
                     await interaction.user.add_roles(self.role, reason=f"Granted by role-button (ID: {self.entry_id}")
                     await interaction.response.send_message(f'Added role: {self.role.mention}', ephemeral=True)
             except discord.Forbidden:
-                await interaction.user.response.send_message(f'Failed adding role due to an issue with permissions! Please contact an administrator!', ephemeral=True)
+                await interaction.response.send_message(f'Failed adding role due to an issue with permissions! Please contact an administrator!', ephemeral=True)
 
 class RoleButtons(commands.Cog, name="Role-Buttons"):
     '''
