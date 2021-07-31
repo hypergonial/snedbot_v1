@@ -267,6 +267,7 @@ class Fun(commands.Cog):
         await ctx.send(f"{ctx.author.mention} died.")
 
     @commands.group(brief="Repeats what you said.", description="Repeats the provided message, while deleting the command message.", usage="echo <message>", invoke_without_command=True, case_insensitive=True)
+    @commands.guild_only()
     @commands.check(has_mod_perms)
     @commands.bot_has_permissions(manage_messages=True)
     async def echo(self, ctx, *, content:str):
@@ -274,6 +275,7 @@ class Fun(commands.Cog):
         await ctx.send(content=content)
 
     @echo.command(name="to", help="Repeats what you said in a different channel.", description="Repeats the provided message in a given channel, while deleting the command message.", usage="echo to <channel> <message>")
+    @commands.guild_only()
     @commands.check(has_mod_perms)
     @commands.bot_has_permissions(manage_messages=True)
     async def echo_to(self, ctx, channel:discord.TextChannel, *, content:str):

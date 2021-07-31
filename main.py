@@ -246,7 +246,6 @@ class SnedBot(commands.Bot):
 
         Generic error handling. Will catch all otherwise not handled errors
         '''
-        print(type(error))
         if isinstance(error, commands.CheckFailure):
             logging.info(f"{ctx.author} tried calling a command but did not meet checks.")
             if isinstance(error, commands.BotMissingPermissions):
@@ -318,10 +317,10 @@ class SnedBot(commands.Bot):
             #logging.error('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
             exception_msg = "\n".join(traceback.format_exception(type(error), error, error.__traceback__))
             try:
-                await self.get_cog("HomeGuild").log_error(ctx, exception_msg)
+                await self.get_cog("HomeGuild").log_error(exception_msg, ctx)
             except Exception as error:
                 logging.error(f"Failed to log to server: {error}")
-            print(exception_msg)
+            logging.error(exception_msg)
             #traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 

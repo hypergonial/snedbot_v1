@@ -32,14 +32,19 @@ class SignUpCategoryButton(discord.ui.Button):
         inline = False
         member_cap = member_cap if member_cap else "∞"
         names = [guild.get_member(member_id).display_name for member_id in member_ids]
+        for i, name in enumerate(names):
+            if len(name) > 16:
+                names[i] = name[:16] + ".."
         names = names[: -(len(names)-5) or None] if names else ["-"] #Trim to last 5
-        names = f"{names}`(...)`" if len(names) == 5 else names
+        print(names)
+        names_str = "\n".join(names)
+        names_str = f"{names_str}\n(...)" if len(names) > 5 else names_str
         
         for i, field in enumerate(embed.fields):
             if field.name.startswith(field_name):
                 inline = field.inline
                 insert_at = i; break
-        embed.insert_field_at(insert_at, name=f"{field_name} ({len(member_ids)}/{member_cap})", value="\n".join(names), inline=inline)
+        embed.insert_field_at(insert_at, name=f"{field_name} ({len(member_ids)}/{member_cap})", value=f'>>> {names_str}', inline=inline)
         embed.remove_field(insert_at+1)
         return embed
 

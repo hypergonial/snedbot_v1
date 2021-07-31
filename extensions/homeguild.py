@@ -4,16 +4,20 @@ import discord
 from discord.ext import commands
 
 class HomeGuild(commands.Cog):
+    '''Functionality for the Home server of Sned'''
     def __init__(self, bot):
         self.bot = bot
 
 
-    async def log_error(self, ctx, error_str:str):
+    async def log_error(self, error_str:str, ctx=None):
         '''Send a traceback message to the channel specified in config.'''
-        
+
         error_lines = error_str.split('\n')
         paginator = commands.Paginator(prefix="```py\n")
-        paginator.add_line(f"Error in guild {ctx.guild.id} during command '{ctx.command}':", empty=True)
+        if ctx:
+            paginator.add_line(f"Error in guild {ctx.guild.id} during command '{ctx.command}':", empty=True)
+        else:
+            paginator.add_line(f"Uncaught exception:", empty=True)
         for line in error_lines:
             paginator.add_line(line)
         if "home_guild" in self.bot.config.keys() and "error_logging_channel" in self.bot.config.keys():
