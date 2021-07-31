@@ -35,10 +35,8 @@ class SignUpCategoryButton(discord.ui.Button):
         for i, name in enumerate(names):
             if len(name) > 16:
                 names[i] = name[:16] + ".."
-        names = names[: -(len(names)-5) or None] if names else ["-"] #Trim to last 5
-        print(names)
         names_str = "\n".join(names)
-        names_str = f"{names_str}\n(...)" if len(names) > 5 else names_str
+        names_str = names_str[:1020] + "`..`" if len(names_str) > 1024 else names_str 
         
         for i, field in enumerate(embed.fields):
             if field.name.startswith(field_name):
