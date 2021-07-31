@@ -239,6 +239,12 @@ class SnedBot(commands.Bot):
         await self.caching.wipe(guild.id)
         logging.info(f"Bot has been removed from guild {guild.id}, correlating data erased.")
 
+    async def on_error(self, event_method:str, *args, **kwargs):
+        print(f'Ignoring exception in {event_method}', file=sys.stderr)
+        error_str = traceback.format_exc()
+        print(error_str)
+        await self.bot.get_cog("HomeGuild").log_error(error_str, event_method=event_method)
+
 
     async def on_command_error(self, ctx, error):
         '''

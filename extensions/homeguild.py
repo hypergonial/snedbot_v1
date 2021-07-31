@@ -9,15 +9,18 @@ class HomeGuild(commands.Cog):
         self.bot = bot
 
 
-    async def log_error(self, error_str:str, ctx=None):
+    async def log_error(self, error_str:str, ctx=None, event_method:str=None):
         '''Send a traceback message to the channel specified in config.'''
 
         error_lines = error_str.split('\n')
         paginator = commands.Paginator(prefix="```py\n")
         if ctx:
             paginator.add_line(f"Error in guild {ctx.guild.id} during command '{ctx.command}':", empty=True)
+        elif event_method:
+            paginator.add_line(f"Ignoring exception in {event_method}:", empty=True)
         else:
             paginator.add_line(f"Uncaught exception:", empty=True)
+            
         for line in error_lines:
             paginator.add_line(line)
         if "home_guild" in self.bot.config.keys() and "error_logging_channel" in self.bot.config.keys():
