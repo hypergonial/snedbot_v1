@@ -44,10 +44,10 @@ class Caching():
         Returns a dict in the following structure:
         tablename -> dict(colnames, list(rowvalues))
         So to iterate through each of the row-values, you would do: for value in cache[tablename][colname]
-        Or to address a singular element: cache[tablename][colname][0]
+        Or to address a singular element (if you expect a single value for example): cache[tablename][colname][0]
 
         Example:
-        await get_where(table="mytable", guild_id=1234, my_column=my_value)
+        await get(table="mytable", guild_id=1234, my_column=my_value)
         
         This is practically equivalent to an SQL 'SELECT * FROM table WHERE' statement.
         '''
@@ -69,7 +69,7 @@ class Caching():
                         for match in intersection: #Go through every list, and check the matched positions,
                             for (key, value) in records.items():
                                 filtered_records[key].append(value[match]) #Then filter them out
-                        return filtered_records #That's it c:
+                        return filtered_records if len(filtered_records) > 0 else None #That's it c:
             else:
                 logging.debug("Loading data from cache...")
                 return self.cache[table][guild_id] if len(self.cache[table][guild_id]) > 0 else None
