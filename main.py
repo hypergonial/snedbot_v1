@@ -91,7 +91,8 @@ class SnedBot(commands.Bot):
         super().__init__(command_prefix=get_prefix, allowed_mentions=allowed_mentions, 
         intents=intents, case_insensitive=True, activity=activity, max_messages=10000)
 
-        self.ipc = ipc.Server(self, host="0.0.0.0", port=8765, secret_key=config["ipc_secret"], do_multicast=False)
+        if config["ipc_secret"] and config["ipc_secret"] != "":
+            self.ipc = ipc.Server(self, host="0.0.0.0", port=8765, secret_key=config["ipc_secret"], do_multicast=False)
 
         self.caching = cache.Caching(self)
 
@@ -537,7 +538,8 @@ bot.custom_checks = CustomChecks()
 
 #Run bot with token from .env
 try :
-    bot.ipc.start()
+    if hasattr(bot, 'ipc'):
+        bot.ipc.start()
     bot.run(TOKEN)
 except KeyboardInterrupt :
     bot.loop.run_until_complete(bot.pool.close())
