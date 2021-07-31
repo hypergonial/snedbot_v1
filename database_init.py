@@ -27,9 +27,6 @@ try:
     TOKEN=yourtokenhere
     DBPASS=yourdbpasswordhere\n'''.format(dsn=dsn.format(DBPASS="PASSWORD EXAMPLE", db_name="name example")))
 
-
-    load_dotenv()
-    DBPASS = os.getenv("DBPASS")
     while True:
         is_experimental = input("Do you want to initialize the database for the stable or the experimental version? Type 'stable' for stable, 'exp' for experimental.\n> ")
         if is_experimental in ['stable', 'exp']:
@@ -47,7 +44,7 @@ try:
         Create all tables necessary for the functioning of this bot.
         '''
 
-        pool = await asyncpg.create_pool(dsn=dsn.format(DBPASS=DBPASS, db_name=db_name))
+        pool = await asyncpg.create_pool(dsn=dsn.format(db_name=db_name))
         async with pool.acquire() as con:
             print('Creating tables...')
             await con.execute('''
@@ -71,11 +68,6 @@ try:
                         REFERENCES global_config (guild_id)
                         ON DELETE CASCADE
                 )''')
-            #New:
-            #policies_*
-            #dm_users_on_punish
-            #clean_up_mod_commands
-            #temp_dur
 
             await con.execute("""
                 CREATE TABLE IF NOT EXISTS public.mod_config
@@ -105,8 +97,6 @@ try:
                             REFERENCES global_config (guild_id)
                             ON DELETE CASCADE
                     )''')
-            #New:
-            #All
             await con.execute('''
                     CREATE TABLE IF NOT EXISTS public.permissions
                     (
@@ -118,8 +108,6 @@ try:
                             REFERENCES global_config (guild_id)
                             ON DELETE CASCADE
                     )''')
-            #New:
-            #All
             await con.execute('''
                     CREATE TABLE IF NOT EXISTS public.modules
                     (
