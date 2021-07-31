@@ -16,8 +16,6 @@ from PIL import Image, ImageDraw, ImageFont
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
-async def has_mod_perms(ctx):
-    await ctx.bot.custom_checks.has_permissions(ctx, 'mod_permitted')
 
 class Fun(commands.Cog):
     def __init__(self, bot):
@@ -26,6 +24,16 @@ class Fun(commands.Cog):
 
     async def cog_check(self, ctx):
         return await ctx.bot.custom_checks.has_permissions(ctx, 'fun') or await ctx.bot.custom_checks.has_permissions(ctx, 'mod_permitted')
+
+    @commands.command(help="Displays a user's avatar.", description="Displays a user's avatar for your viewing (or stealing) pleasure.", usage=f"avatar [user]")
+    @commands.cooldown(1, 30, type=commands.BucketType.member)
+    @commands.guild_only()
+    async def avatar(self, ctx, member:discord.Member=None) :
+        if not member: member=ctx.author
+        embed=discord.Embed(title=self._("{member_name}'s avatar:").format(member_name=member.name), color=member.colour)
+        embed.set_image(url=member.avatar.url)
+        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["typerace"], help="See who can type the fastest!", description="Starts a typerace where you can see who can type the fastest. You can optionally specify the difficulty and the length of the race.\n\n**Difficulty options:**\n`easy` - 1-4 letter words\n`medium` - 5-8 letter words (Default)\n`hard` 9+ letter words\n\n**Length:**\n`1-20` - (Default: `5`) Specifies the amount of words in the typerace", usage="typeracer [difficulty] [length]")
     @commands.max_concurrency(1, per=commands.BucketType.channel,wait=False)
@@ -265,22 +273,6 @@ class Fun(commands.Cog):
     @commands.guild_only()
     async def die(self, ctx):
         await ctx.send(f"{ctx.author.mention} died.")
-
-    @commands.group(brief="Repeats what you said.", description="Repeats the provided message, while deleting the command message.", usage="echo <message>", invoke_without_command=True, case_insensitive=True)
-    @commands.guild_only()
-    @commands.check(has_mod_perms)
-    @commands.bot_has_permissions(manage_messages=True)
-    async def echo(self, ctx, *, content:str):
-        await ctx.message.delete()
-        await ctx.send(content=content)
-
-    @echo.command(name="to", help="Repeats what you said in a different channel.", description="Repeats the provided message in a given channel, while deleting the command message.", usage="echo to <channel> <message>")
-    @commands.guild_only()
-    @commands.check(has_mod_perms)
-    @commands.bot_has_permissions(manage_messages=True)
-    async def echo_to(self, ctx, channel:discord.TextChannel, *, content:str):
-        await ctx.message.delete()
-        await channel.send(content=content)
 
     @commands.command(aliases=["bigmoji"],brief="Returns a jumbo-sized emoji.", description="Converts an emoji into it's jumbo-sized variant. Only supports custom emojies. No, the recipe is private.", usage="jumbo <emoji>")
     @commands.guild_only()

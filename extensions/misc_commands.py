@@ -6,6 +6,8 @@ import discord
 import psutil
 from discord.ext import commands
 
+async def has_mod_perms(ctx):
+    return await ctx.bot.custom_checks.has_permissions(ctx, 'mod_permitted')
 
 class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     def __init__(self, bot):
@@ -13,15 +15,6 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         self._ = self.bot.get_localization('misc_commands', self.bot.lang)
         psutil.cpu_percent(interval=1) #We need to do this here so that subsequent CPU % calls will be non-blocking
 
-    @commands.command(help="Displays a user's avatar.", description="Displays a user's avatar for your viewing (or stealing) pleasure.", usage=f"avatar [user]")
-    @commands.cooldown(1, 30, type=commands.BucketType.member)
-    @commands.guild_only()
-    async def avatar(self, ctx, member:discord.Member=None) :
-        if not member: member=ctx.author
-        embed=discord.Embed(title=self._("{member_name}'s avatar:").format(member_name=member.name), color=member.colour)
-        embed.set_image(url=member.avatar.url)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
-        await ctx.channel.send(embed=embed)
 
         #Gets the ping of the bot.
     @commands.command(help="Displays bot ping.", description="Displays the current ping of the bot in miliseconds. Takes no arguments.", usage="ping")
@@ -142,6 +135,22 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         embed = discord.Embed(title=self._("{user}'s warnings").format(user=user), description=self._("**Warnings:** `{warns}`").format(warns=warns), color=self.bot.warnColor)
         embed.set_thumbnail(url=user.avatar.url)
         await ctx.send(embed=embed)
+
+    @commands.group(brief="Repeats what you said.", description="Repeats the provided message, while deleting the command message.", usage="echo <message>", invoke_without_command=True, case_insensitive=True)
+    @commands.guild_only()
+    @commands.check(has_mod_perms)
+    @commands.bot_has_permissions(manage_messages=True)
+    async def echo(self, ctx, *, content:str):
+        await ctx.message.delete()
+        await ctx.send(content=content)
+
+    @echo.command(name="to", help="Repeats what you said in a different channel.", description="Repeats the provided message in a given channel, while deleting the command message.", usage="echo to <channel> <message>")
+    @commands.guild_only()
+    @commands.check(has_mod_perms)
+    @commands.bot_has_permissions(manage_messages=True)
+    async def echo_to(self, ctx, channel:discord.TextChannel, *, content:str):
+        await ctx.message.delete()
+        await channel.send(content=content)
 
 
 def setup(bot):
