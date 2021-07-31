@@ -9,4 +9,6 @@ config = {
     'postgres_dsn': 'postgres://postgres:my_password_here@1.2.3.4:5432/{db_name}', 
     'ipc_secret': 'oh no I leaked my ipc secret', #IPC secret (optional)
     'experimental': False, #Controls debugging mode
+    'home_guild': 123456789, #ID of guild to send debug info to (optional)
+    'error_logging_channel': 123456789 #Sends tracebacks of command errors here (optional)
 }

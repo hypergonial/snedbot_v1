@@ -143,6 +143,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         embed.set_thumbnail(url=user.avatar.url)
         await ctx.send(embed=embed)
 
+
 def setup(bot):
     logging.info("Adding cog: MiscCommands...")
     bot.add_cog(MiscCommands(bot))

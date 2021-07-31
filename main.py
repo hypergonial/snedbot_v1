@@ -38,6 +38,7 @@ initial_extensions = (
     'extensions.permissions',
     'extensions.admin_commands',
     'extensions.help', 
+    'extensions.homeguild',
     'extensions.moderation',
     'extensions.role_buttons', 
     'extensions.events',
@@ -95,6 +96,7 @@ class SnedBot(commands.Bot):
             self.ipc = ipc.Server(self, host="0.0.0.0", port=8765, secret_key=config["ipc_secret"], do_multicast=False)
 
         self.caching = cache.Caching(self)
+        self.config = config
 
         self.EXPERIMENTAL = config["experimental"]
         self.DEFAULT_PREFIX = 'sn '
@@ -244,7 +246,7 @@ class SnedBot(commands.Bot):
 
         Generic error handling. Will catch all otherwise not handled errors
         '''
-
+        print(type(error))
         if isinstance(error, commands.CheckFailure):
             logging.info(f"{ctx.author} tried calling a command but did not meet checks.")
             if isinstance(error, commands.BotMissingPermissions):
@@ -252,13 +254,10 @@ class SnedBot(commands.Bot):
                 return await ctx.send(embed=embed)
             return
 
-        if isinstance(error, commands.CommandInvokeError):
-            if isinstance(error.original, asyncio.exceptions.TimeoutError):
-                embed=discord.Embed(title=self.errorTimeoutTitle, description=self.errorTimeoutDesc, color=self.errorColor)
-                embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
-                return await ctx.send(embed=embed)
-            else:
-                raise error
+        elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, asyncio.exceptions.TimeoutError):
+            embed=discord.Embed(title=self.errorTimeoutTitle, description=self.errorTimeoutDesc, color=self.errorColor)
+            embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+            return await ctx.send(embed=embed)
 
         elif isinstance(error, commands.CommandNotFound):
             '''
@@ -316,8 +315,14 @@ class SnedBot(commands.Bot):
         else :
             #If no known error has been passed, we will print the exception to console as usual
             #IMPORTANT!!! If you remove this, your command errors will not get output to console.
-            logging.error('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
-            traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+            #logging.error('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+            exception_msg = "\n".join(traceback.format_exception(type(error), error, error.__traceback__))
+            try:
+                await self.get_cog("HomeGuild").log_error(ctx, exception_msg)
+            except Exception as error:
+                logging.error(f"Failed to log to server: {error}")
+            print(exception_msg)
+            #traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 
 bot = SnedBot()

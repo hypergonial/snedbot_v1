@@ -935,7 +935,7 @@ class Moderation(commands.Cog):
         Auto-Moderation
         '''
 
-        if not self.bot.ready() or not self.bot.caching.is_ready:
+        if not self.bot.is_ready() or not self.bot.caching.is_ready:
             return
 
         if message.guild is None:
