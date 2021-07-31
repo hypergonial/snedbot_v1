@@ -28,12 +28,15 @@ class ButtonRoleButton(discord.ui.Button):
     #Called whenever the button is called
     async def callback(self, interaction: discord.Interaction):
         if interaction.guild_id:
-            if self.role in interaction.user.roles:
-                await interaction.user.remove_roles(self.role, reason=f"Removed by role-button (ID: {self.entry_id}")
-                await interaction.response.send_message(f'Removed role: {self.role.mention}', ephemeral=True)
-            else:
-                await interaction.user.add_roles(self.role, reason=f"Granted by role-button (ID: {self.entry_id}")
-                await interaction.response.send_message(f'Added role: {self.role.mention}', ephemeral=True)
+            try:
+                if self.role in interaction.user.roles:
+                    await interaction.user.remove_roles(self.role, reason=f"Removed by role-button (ID: {self.entry_id}")
+                    await interaction.response.send_message(f'Removed role: {self.role.mention}', ephemeral=True)
+                else:
+                    await interaction.user.add_roles(self.role, reason=f"Granted by role-button (ID: {self.entry_id}")
+                    await interaction.response.send_message(f'Added role: {self.role.mention}', ephemeral=True)
+            except discord.Forbidden:
+                await interaction.user.response.send_message(f'Failed adding role due to an issue with permissions! Please contact an administrator!', ephemeral=True)
 
 class RoleButtons(commands.Cog, name="Role-Buttons"):
     '''
@@ -129,6 +132,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     @rolebutton.command(name="add", aliases=["new", "setup", "create"], help="Initializes setup to add a new role-button.", description="Initializes a setup to help you add a new role-button. You can also access this setup via the `setup` command. Takes no arguments.", usage="reactionrole add")
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
+    @commands.bot_has_permissions(manage_roles=True)
     async def rb_setup(self, ctx):
         '''
         Here is where end-users would set up a button role for their server
