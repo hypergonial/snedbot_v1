@@ -432,7 +432,12 @@ class Events(commands.Cog):
         event_embed.set_footer(text=f"Event by {ctx.author}  |  ID: {entry_id}", icon_url=ctx.author.avatar.url)
         #Create message
         view = PersistentEventView(self.bot, buttons)
-        event_msg = await event_channel.send(embed=event_embed, view=view)
+        
+        try:
+            event_msg = await event_channel.send(embed=event_embed, view=view)
+        except discord.Forbidden:
+            embed=discord.Embed(title="❌ Error: No permissions", description="The bot has no permissions to create the message. Please check if the bot can send messages & embeds in the specified channel. Operation cancelled.", color=self.bot.errorColor)
+            await setup_msg.edit(embed=embed);  return
 
 
         async with self.bot.pool.acquire() as con:
