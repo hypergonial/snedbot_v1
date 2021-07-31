@@ -13,20 +13,21 @@ from pathlib import Path
 import asyncpg
 import discord
 from discord.ext import commands, ipc, tasks
-from dotenv import load_dotenv
 
 from extensions.utils import cache, context
 
+try:
+    from config import config
+except ImportError:
+    logging.error("Failed loading configuration. Please make sure 'config.py' exists in the root directory of the project and contains valid data.")
+    exit()
+
 #Language
 lang = "en"
-#Is this build experimental? Enable for additional debugging. Also writes to a different database to prevent conflict issues.
-EXPERIMENTAL = False
 #Version of the bot
 current_version = "5.0.0m"
-#Loading token from .env file. If this file does not exist, nothing will work.
-load_dotenv()
-TOKEN = os.getenv("TOKEN")
-DBPASS = os.getenv("DBPASS")
+
+TOKEN = config["token"]
 
 '''
 All extensions that are loaded on boot-up, change these to alter what modules you want (Note: These refer to filenames NOT cognames)
@@ -90,11 +91,11 @@ class SnedBot(commands.Bot):
         super().__init__(command_prefix=get_prefix, allowed_mentions=allowed_mentions, 
         intents=intents, case_insensitive=True, activity=activity, max_messages=10000)
 
-        self.ipc = ipc.Server(self, host="0.0.0.0", port=8765, secret_key=os.getenv("IPC_SECRET"), do_multicast=False)
+        self.ipc = ipc.Server(self, host="0.0.0.0", port=8765, secret_key=config["ipc_secret"], do_multicast=False)
 
         self.caching = cache.Caching(self)
 
-        self.EXPERIMENTAL = EXPERIMENTAL
+        self.EXPERIMENTAL = config["experimental"]
         self.DEFAULT_PREFIX = 'sn '
         if self.EXPERIMENTAL == True :
             self.DEFAULT_PREFIX = 'snx '
@@ -107,7 +108,7 @@ class SnedBot(commands.Bot):
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
         self.lang = lang
-        self.pool = self.loop.run_until_complete(asyncpg.create_pool(dsn="postgres://postgres:{DBPASS}@192.168.1.101:5432/{db_name}".format(DBPASS=DBPASS, db_name=DB_NAME)))
+        self.pool = self.loop.run_until_complete(asyncpg.create_pool(dsn=config["postgres_dsn"].format(db_name=DB_NAME)))
         self.whitelisted_guilds = [372128553031958529, 627876365223591976, 818223666143690783, 836248845268680785]
         self.anno_guilds = (372128553031958529, 627876365223591976, 818223666143690783) #Guilds whitelisted for Anno-related commands
         self.cmd_cd_mapping = commands.CooldownMapping.from_cooldown(10, 10, commands.BucketType.channel)

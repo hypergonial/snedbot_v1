@@ -4,10 +4,12 @@ import os
 import asyncpg
 from dotenv import load_dotenv
 
+from config import config
+
 #Modify this line & change it to your PSQL DB address
 #Do not modify the variables, DBPASS is retrieved from .env,
 #while db_name is decided on runtime.
-dsn="postgres://postgres:{DBPASS}@192.168.1.101:5432/{db_name}"
+dsn=config["postgres_dsn"]
 
 try:
     print('''Sned-Bot Database Initialization
@@ -15,7 +17,7 @@ try:
     The following steps need to be taken BEFORE running this script:
 
     1) Create a postgresql database on the address specified in the DSN,
-    and/or change the DSN in line 10 of this script. The database's name 
+    and point the postgres_dsn in config.py to it. The database's name 
     must be either 'sned' or 'sned_exp' with default user 'postgres'.
     Current DSN: {dsn}
 
