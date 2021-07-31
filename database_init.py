@@ -16,16 +16,10 @@ try:
 
     The following steps need to be taken BEFORE running this script:
 
-    1) Create a postgresql database on the address specified in the DSN,
+    Create a postgresql database on the address specified in the DSN,
     and point the postgres_dsn in config.py to it. The database's name 
     must be either 'sned' or 'sned_exp' with default user 'postgres'.
-    Current DSN: {dsn}
-
-    2) Create a .env file which contains the bot's token and the database's password in the same
-    directory as this script.
-    Example .env:
-    TOKEN=yourtokenhere
-    DBPASS=yourdbpasswordhere\n'''.format(dsn=dsn.format(DBPASS="PASSWORD EXAMPLE", db_name="name example")))
+    Current DSN: {dsn}'''
 
     while True:
         is_experimental = input("Do you want to initialize the database for the stable or the experimental version? Type 'stable' for stable, 'exp' for experimental.\n> ")
