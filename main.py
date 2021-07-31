@@ -188,7 +188,7 @@ class SnedBot(commands.Bot):
 
 
     async def on_message(self, message):
-        if self.is_ready():
+        if self.is_ready() and self.caching.is_ready:
             bucket = self.cmd_cd_mapping.get_bucket(message)
             retry_after = bucket.update_rate_limit()
             if not retry_after and len(message.content) < 1500: #If not ratelimited

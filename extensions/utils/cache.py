@@ -8,6 +8,7 @@ class Caching():
     def __init__(self, bot):
         self.bot = bot
         self.cache = {}
+        self.is_ready = False
         self.bot.loop.create_task(self.startup())
 
     async def startup(self):
@@ -24,6 +25,7 @@ class Caching():
         for record in records:
             self.cache[record.get("tablename")] = {}
         logging.info("Cache initialized!")
+        self.is_ready = True
 
 
     '''
