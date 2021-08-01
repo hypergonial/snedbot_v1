@@ -151,6 +151,12 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     async def echo_to(self, ctx, channel:discord.TextChannel, *, content:str):
         await ctx.message.delete()
         await channel.send(content=content)
+    
+    @commands.command(hep="aa")
+    async def cache(self, ctx):
+        records = await self.bot.caching.get(table="permissions", guild_id=ctx.guild.id)
+        print(records)
+
 
 
 def setup(bot):

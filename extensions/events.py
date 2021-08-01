@@ -49,8 +49,8 @@ class SignUpCategoryButton(discord.ui.Button):
     #Called whenever the button is called
     async def callback(self, interaction: discord.Interaction):
         if interaction.guild_id:
-            record = await self.view.bot.caching.get(table="events", guild_id=interaction.guild_id, msg_id=interaction.message.id, channel_id=interaction.channel.id)
-            categories = json.loads(record["categories"][0])
+            records = await self.view.bot.caching.get(table="events", guild_id=interaction.guild_id, msg_id=interaction.message.id, channel_id=interaction.channel.id)
+            categories = json.loads(records[0]["categories"])
             embed = interaction.message.embeds[0]
             remove_from = None
             state = "added"
@@ -71,7 +71,7 @@ class SignUpCategoryButton(discord.ui.Button):
                     if category == self.category_name:
                         if data["member_cap"] and data["member_cap"] <= len(data["members"]):
                             return await interaction.response.send_message('This category is full!', ephemeral=True)
-                        elif record["permitted_roles"][0] and not any(role_id in [role.id for role in interaction.user.roles] for role_id in record["permitted_roles"][0]):
+                        elif records[0]["permitted_roles"] and not any(role_id in [role.id for role in interaction.user.roles] for role_id in records[0]["permitted_roles"]):
                             return await interaction.response.send_message('You do not have permission to sign up to this event.', ephemeral=True)
                         else:  
                             categories[self.category_name]["members"].append(interaction.user.id)
@@ -150,14 +150,14 @@ class Events(commands.Cog):
         guild = self.bot.get_guild(timer.guild_id); channel=guild.get_channel(timer.channel_id)
         if guild and channel and record:
             try:
-                message = await channel.fetch_message(record["msg_id"][0])
+                message = await channel.fetch_message(record[0]["msg_id"])
             except discord.NotFound:
                 return
             else:
                 await message.edit(view=None)
                 paginator = commands.Paginator(prefix='', suffix='')
                 paginator.add_line(f"Event **'{message.embeds[0].title}'** is starting now!\n")
-                for category, data in json.loads(record["categories"][0]).items():
+                for category, data in json.loads(record[0]["categories"]).items():
                     members = [(guild.get_member(member_id)) for member_id in data['members']]
                     members = list(filter(None, members))
                     paginator.add_line(f"**{category}: {', '.join([member.mention for member in members])}**")
@@ -178,8 +178,8 @@ class Events(commands.Cog):
         records = await self.bot.caching.get(table="events", guild_id=ctx.guild.id)
         if records:
             text = ""
-            for i, rr_id in enumerate(records["entry_id"]):
-                text = f"{text}**{rr_id}** - {ctx.guild.get_channel(records['channel_id'][i]).mention}\n"
+            for record in records:
+                text = f"{text}**{record['entry_id']}** - {ctx.guild.get_channel(record['channel_id']).mention}\n"
             embed=discord.Embed(title="📅 Events active in this server:", description=text, color=self.bot.embedBlue)
             await ctx.send(embed=embed)
         else:
@@ -190,11 +190,11 @@ class Events(commands.Cog):
     @event.command(name="delete", aliases=["del", "remove"], help="Deletes an event by ID.", description="Deletes an event via it's ID. You can get the ID via the `event` command.", usage="event delete <ID>")
     @commands.guild_only()
     async def event_delete(self, ctx, id:str):
-            record = await self.bot.caching.get(table="events", guild_id=ctx.guild.id, entry_id = id)
-            if record:
-                channel = ctx.guild.get_channel(record['channel_id'][0])
+            records = await self.bot.caching.get(table="events", guild_id=ctx.guild.id, entry_id = id)
+            if records:
+                channel = ctx.guild.get_channel(records[0]['channel_id'])
                 try:
-                    message = await channel.fetch_message(record['msg_id'][0]) if channel else None
+                    message = await channel.fetch_message(records[0]['msg_id']) if channel else None
                     if message: #Remove button if the message still exists
                         await message.delete()
                 except discord.NotFound:
@@ -219,7 +219,7 @@ class Events(commands.Cog):
         '''
         records = await self.bot.caching.get(table="events", guild_id=ctx.guild.id)
         
-        if records and len(records["entry_id"]) >= 10:
+        if records and len(records) >= 10:
             embed=discord.Embed(title="❌ Error: Too many events", description="A server can only have up to **10** running events at a time.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed); return
 

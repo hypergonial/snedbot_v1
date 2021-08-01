@@ -25,7 +25,7 @@ except ImportError:
 #Language
 lang = "en"
 #Version of the bot
-current_version = "5.0.0m"
+current_version = "5.0.0o"
 
 TOKEN = config["token"]
 
@@ -66,7 +66,7 @@ async def get_prefix(bot, message):
     else:
         records = await bot.caching.get(table="global_config", guild_id=message.guild.id)
         if records:
-            prefixes = records["prefix"][0]
+            prefixes = records[0]["prefix"]
             if prefixes and len(prefixes) > 0: return prefixes
             else: return bot.DEFAULT_PREFIX
         else:
@@ -198,11 +198,11 @@ class SnedBot(commands.Bot):
                 #length (Thanks Nitro :) )
                 mentions = [f"<@{bot.user.id}>", f"<@!{bot.user.id}>"]
                 if message.content in mentions:
-                    record = await self.caching.get(table="global_config", guild_id=message.guild.id)
-                    if not record or len(record["prefix"][0]) == 0:
+                    records = await self.caching.get(table="global_config", guild_id=message.guild.id)
+                    if not records:
                         prefix = [self.DEFAULT_PREFIX]
                     else:
-                        prefix = record["prefix"][0]
+                        prefix = records[0]["prefix"] if records[0]["prefix"] and len(records[0]["prefix"]) > 0 else self.DEFAULT_PREFIX 
                     embed=discord.Embed(title=_("Beep Boop!"), description=_("My prefixes on this server are the following: `{prefix}` \nUse the command `{prefix_0}help` to see what I can do!").format(prefix="`, `".join(prefix), prefix_0=prefix[0]), color=0xfec01d)
                     embed.set_thumbnail(url=self.user.avatar.url)
                     await message.reply(embed=embed)
@@ -531,9 +531,9 @@ class CustomChecks():
         '''
         True if module is enabled, false otherwise. module_name is the extension filename.
         '''
-        record = await bot.caching.get(table="modules", guild_id=ctx.guild.id, module_name=module_name)
-        if record and record["is_enabled"][0]:
-            return record["is_enabled"][0]
+        records = await bot.caching.get(table="modules", guild_id=ctx.guild.id, module_name=module_name)
+        if records and records[0]["is_enabled"]:
+            return records[0]["is_enabled"]
         else:
             return True
 

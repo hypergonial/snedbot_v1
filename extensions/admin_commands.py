@@ -75,8 +75,8 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         Prefix management commands/features are found here
         '''
         records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
-        if records and records["prefix"][0]:
-            prefixes = records["prefix"][0]
+        if records and records[0]["prefix"] and len(records[0]["prefix"]) > 0:
+            prefixes = records[0]["prefix"]
             desc = ""
             for prefix in prefixes:
                 desc = f"{desc}**#{prefixes.index(prefix)+1}** - `{prefix}` \n"
@@ -93,7 +93,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         prefix = prefix.replace("'", "")
         if prefix == "": return
         records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
-        if not records or not records["prefix"][0] or (prefix not in records["prefix"][0] and len(records["prefix"][0]) <= 5):
+        if not records or not records[0]["prefix"] or (prefix not in records[0]["prefix"] and len(records[0]["prefix"]) <= 5):
             async with self.bot.pool.acquire() as con:
                 await con.execute('''
                 UPDATE global_config SET prefix = array_append(prefix,$1) WHERE guild_id = $2
@@ -117,7 +117,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         prefix = prefix.replace("'", "")
         if prefix == "": return
         records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
-        if records and records["prefix"][0] and prefix in records["prefix"][0]:
+        if records and records[0]["prefix"] and prefix in records[0]["prefix"]:
             async with self.bot.pool.acquire() as con:
                 await con.execute('''
                 UPDATE global_config SET prefix = array_remove(prefix,$1) WHERE guild_id = $2
@@ -127,7 +127,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
                 embed = discord.Embed(title="✅ Prefix removed", description=f"Prefix **{prefix}** has been removed from the list of valid prefixes.\n\n**Note:** Removing all custom prefixes will re-enable the default prefix. If you forget your prefix, mention the bot!", color=self.bot.embedGreen)
                 await ctx.send(embed=embed)
 
-        elif records and prefix not in records["prefix"][0]:
+        elif records and prefix not in records[0]["prefix"]:
             embed=discord.Embed(title="❌ Prefix not found", description=f"The specified prefix cannot be removed as it is not found.", color=self.bot.errorColor)
             await ctx.send(embed=embed)
 

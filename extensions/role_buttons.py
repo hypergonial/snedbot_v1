@@ -95,8 +95,8 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id)
         if records:
             text = ""
-            for i, rr_id in enumerate(records["entry_id"]):
-                text = f"{text}**#{rr_id}** - {ctx.guild.get_channel(records['channel_id'][i]).mention} - {ctx.guild.get_role(records['role_id'][i]).mention}\n"
+            for record in records:
+                text = f"{text}**#{record['entry_id']}** - {ctx.guild.get_channel(record['channel_id']).mention} - {ctx.guild.get_role(record['role_id']).mention}\n"
             embed=discord.Embed(title="Role-Buttons for this server:", description=text, color=self.bot.embedBlue)
             await ctx.send(embed=embed)
         else:
@@ -107,14 +107,14 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     @rolebutton.command(name="delete", aliases=["del", "remove"], help="Removes a role-button by ID.", description="Removes a role-button of the specified ID. You can get the ID via the `rolebutton` command.", usage="rolebutton delete <ID>")
     @commands.guild_only()
     async def rb_delete(self, ctx, id:int):
-            record = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id, entry_id = id)
-            if record:
-                channel = ctx.guild.get_channel(record['channel_id'][0])
-                message = await channel.fetch_message(record['msg_id'][0]) if channel else None
+            records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id, entry_id = id)
+            if records:
+                channel = ctx.guild.get_channel(records[0]['channel_id'])
+                message = await channel.fetch_message(records[0]['msg_id']) if channel else None
                 if message: #Remove button if the message still exists
                     view = discord.ui.View.from_message(message)
                     for item in view.children:
-                        if item.custom_id == f"{record['entry_id'][0]}:{record['role_id'][0]}":
+                        if item.custom_id == f"{records[0]['entry_id']}:{records[0]['role_id']}":
                             remove_me = item; break
                     view.remove_item(remove_me)
                     await message.edit(view=view)
@@ -139,7 +139,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         '''
         records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id)
         
-        if records and len(records["entry_id"]) >= 200:
+        if records and len(records) >= 200:
             embed=discord.Embed(title="❌ Error: Too many role-buttons", description="A server can only have up to **200** role-buttons at a time.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return

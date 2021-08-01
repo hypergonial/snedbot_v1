@@ -1,9 +1,20 @@
 import asyncio
 import logging
+from typing import Type
 
 import asyncpg
+from sql_metadata import Parser
+
+
+class SQLParsingError(Exception):
+    pass
 
 class Caching():
+    '''
+    A class aimed squarely at making caching of values easier to handle, and
+    centralize it. It tries lazy-loading a dict whenever requesting data,
+    or setting it.
+    '''
 
     def __init__(self, bot):
         self.bot = bot
@@ -27,27 +38,33 @@ class Caching():
         logging.info("Cache initialized!")
         self.is_ready = True
 
-
-    '''
-    A class aimed squarely at making caching of values easier to handle, and
-    centralize it. It tries lazy-loading a dict whenever requesting data,
-    or setting it.
-    '''
     
-    async def get(self, table:str, guild_id, **kwargs):
+    async def format_records(self, records:dict) -> list[dict]:
+        '''
+        Helper function that transforms a record into an easier to use format.
+        Returns a list of dicts, each representing a row in the database.
+        '''
+        first_key = list(records.keys())[0]
+        records_fmt = []
+        for i, value in enumerate(records[first_key]):
+            record = {}
+            for key in records.keys():
+                record[key] = records[key][i]
+            records_fmt.append(record)
+        return records_fmt
+                
+
+    async def get(self, table:str, guild_id:int, **kwargs) -> list[dict]:
         '''
         Finds a value based on criteria provided as keyword arguments.
-        If no keyword arguments are present, returns the entire table.
+        If no keyword arguments are present, returns all values for that guild_id.
         Tries getting the value from cache, if it is not present, 
-        goes to the database & retrieve it. Lazy-loads the cache.
+        goes to the database & retrieves it. Lazy-loads the cache.
 
-        Returns a dict in the following structure:
-        tablename -> dict(colnames, list(rowvalues))
-        So to iterate through each of the row-values, you would do: for value in cache[tablename][colname]
-        Or to address a singular element (if you expect a single value for example): cache[tablename][colname][0]
+        Returns a list of dicts with each dict being a row, and the dict-keys being the columns.
 
         Example:
-        await get(table="mytable", guild_id=1234, my_column=my_value)
+        await Caching.get(table="mytable", guild_id=1234, my_column=my_value)
         
         This is practically equivalent to an SQL 'SELECT * FROM table WHERE' statement.
         '''
@@ -69,20 +86,50 @@ class Caching():
                         for match in intersection: #Go through every list, and check the matched positions,
                             for (key, value) in records.items():
                                 filtered_records[key].append(value[match]) #Then filter them out
-                        return filtered_records if len(filtered_records) > 0 else None #That's it c:
+                        if len(filtered_records) > 0:
+                            return self.format_records(filtered_records)
             else:
                 logging.debug("Loading data from cache...")
-                return self.cache[table][guild_id] if len(self.cache[table][guild_id]) > 0 else None
+                if len(self.cache[table][guild_id]) > 0:
+                    return self.format_records(self.cache[table][guild_id])
         
         else:
             logging.debug("Loading data from database and loading into cache...")
             await self.refresh(table, guild_id)
             return await self.get(table, guild_id, **kwargs)
 
+    async def update(self, sql_query:str, guild_id:int, *args):
+        '''
+        Takes an SQL query and arguments, one of which must be the guild_id, and tries
+        executing it. Refreshes the cache afterwards with the new values.
+        '''
+        parser = Parser(sql_query)
+
+        if parser.query_type == 'SELECT':
+            raise TypeError('SELECT queries are not supported.')
+
+        tables = parser.tables
+        for table in tables:
+            if table not in self.cache.keys(): #Verify tablenames
+                tables.remove(table)
+        if len(tables) == 0: raise SQLParsingError("Failed parsing tables from query!")
+
+        if len(parser.columns) == 0: raise SQLParsingError("Failed parsing columns from query!")
+        if "guild_id" != parser.columns[0]:
+            return SQLParsingError('guild_id must be the first column in query!')
+
+        async with self.bot.pool.acquire() as con:
+            await con.execute(sql_query, guild_id, *args)
+        for table in tables:
+            await self.refresh(table=table, guild_id=guild_id)
+
+
     #TODO: Add more granular options for refresh, by including a 'key' variable, that further narrows scope
     async def refresh(self, table:str, guild_id:int):
         '''
-        Discards and reloads a specific part of the cache, should be called after modifying database values
+        Discards and reloads a specific part of the cache, should be called after modifying database values.
+        Please use update() unless your query is too complex for it to be parsed by the function, as it
+        automatically calls this function.
         '''
         self.cache[table][guild_id] = {}
         async with self.bot.pool.acquire() as con:

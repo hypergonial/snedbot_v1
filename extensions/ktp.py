@@ -24,17 +24,17 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
         if message.guild and message.guild.id in self.bot.whitelisted_guilds:
             records = await self.bot.caching.get(table="ktp", guild_id=message.guild.id)
             if records:
-                for i, ktp_id in enumerate(records["ktp_id"]):
-                    if records['ktp_channel_id'][i] == message.channel.id and records['ktp_content'][i] != message.content and records['ktp_msg_id'][i] != message.id:
+                for record in records:
+                    if record['ktp_channel_id'] == message.channel.id and record['ktp_content'] != message.content and record['ktp_msg_id'] != message.id:
                         channel = message.channel
-                        previous_top = channel.get_partial_message(records['ktp_msg_id'][i])
+                        previous_top = channel.get_partial_message(record['ktp_msg_id'])
                         try:
                             await previous_top.delete() #Necessary to put in a try/except otherwise on a spammy channel this might spam the console to hell
                         except discord.errors.NotFound:
                             return
-                        new_top = await channel.send(content=records['ktp_content'][i])
+                        new_top = await channel.send(content=record['ktp_content'])
                         async with self.bot.pool.acquire() as con:
-                            await con.execute('''UPDATE ktp SET ktp_msg_id = $1 WHERE guild_id = $2 AND ktp_id = $3''', new_top.id, message.guild.id, records['ktp_id'][i])
+                            await con.execute('''UPDATE ktp SET ktp_msg_id = $1 WHERE guild_id = $2 AND ktp_id = $3''', new_top.id, message.guild.id, record['ktp_id'])
                         await self.bot.caching.refresh(table="ktp", guild_id=message.guild.id)
                         break
 
@@ -49,8 +49,8 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
         records = await self.bot.caching.get(table="ktp", guild_id=ctx.guild.id)
         if records:
             text = ""
-            for i, ktp_id in enumerate(records["ktp_id"]):
-                text = f"{text}**#{ktp_id}** - {ctx.guild.get_channel(records['ktp_channel_id'][i]).mention}\n"
+            for record in records:
+                text = f"{text}**#{record['ktp_id']}** - {ctx.guild.get_channel(record['ktp_channel_id']).mention}\n"
             embed=discord.Embed(title="Keep-On-Top messages for this server:", description=text, color=self.bot.embedBlue)
             await ctx.send(embed=embed)
         else:
@@ -62,7 +62,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
 
         records = await self.bot.caching.get(table="ktp", guild_id=ctx.guild.id)
         
-        if records and len(records["ktp_id"]) >= 5:
+        if records and len(records) >= 5:
             embed=discord.Embed(title="❌ Error: Too many keep-on-top messages", description="A server can only have up to **5** keep-on-top message(s) at a time.\n__Note:__ If you deleted the keep-on-top message before deleting the entry, make sure to also delete the entry!", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             return
@@ -76,8 +76,8 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
             ktp_channel = await commands.TextChannelConverter().convert(ctx, payload.content)
 
             if records:
-                for channel_id in records["ktp_channel_id"]:
-                    if channel_id == ktp_channel.id:
+                for record in records:
+                    if record["ktp_channel_id"] == ktp_channel.id:
                         embed=discord.Embed(title="❌ Error: Duplicate entry", description="You cannot have two keep-on-top messages in the same channel!", color=self.bot.errorColor)
                         await ctx.channel.send(embed=embed)
                         return
@@ -109,8 +109,8 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
     @keepontop.command(name="delete", aliases=["del", "remove"], help="Removes a keep-on-top message.", description="Removes a keep-on-top message entry, stopping the bot from keeping it on top anymore. You can get the keep-on-top entry ID via the `keepontop` command.", usage="keepontop delete <ID>")
     async def ktp_delete(self, ctx, id:int):
         async with self.bot.pool.acquire() as con:
-            record = await self.bot.caching.get(table="ktp", guild_id=ctx.guild.id, ktp_id=id)
-            if record:
+            records = await self.bot.caching.get(table="ktp", guild_id=ctx.guild.id, ktp_id=id)
+            if records:
                 await con.execute('''DELETE FROM ktp WHERE guild_id = $1 AND ktp_id = $2''', ctx.guild.id, id)
                 await self.bot.caching.refresh(table="ktp", guild_id=ctx.guild.id)
                 embed=discord.Embed(title="✅ Keep-on-top message deleted", description="Keep-on-top message entry deleted and will no longer be kept in top!", color=self.bot.embedGreen)

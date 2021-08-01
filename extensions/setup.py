@@ -24,10 +24,6 @@ class Setup(commands.Cog):
     async def cog_check(self, ctx):
         return await ctx.bot.custom_checks.has_permissions(ctx, 'admin_permitted')
 
-    #Ahh yes, the setup command... *instant PTSD*
-    #It basically just collects a bunch of values from the user, in this case an admin, and then changes the settings
-    #based on that, instead of the admin having to use !modify for every single value
-    #TL;DR: fancy setup thing
     @commands.group(help="Starts bot configuration setups.", description = "Used to set up and configure different parts of the bot.", usage="setup <setuptype>", invoke_without_command=True, case_insensitive=True)
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)

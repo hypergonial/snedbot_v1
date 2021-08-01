@@ -23,11 +23,11 @@ class Logging(commands.Cog):
     '''
 
     async def log_standard(self, logcontent, guild_id):
-        record = await self.bot.caching.get(table="log_config", guild_id=guild_id)
+        records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
 
-        if record and record["log_channel_id"][0]:
+        if records and records[0]["log_channel_id"]:
             guild = self.bot.get_guild(guild_id)
-            loggingchannel = guild.get_channel(record["log_channel_id"][0])
+            loggingchannel = guild.get_channel(records[0]["log_channel_id"])
             if loggingchannel is None: return
             try:
                 if isinstance(logcontent, discord.Embed):
@@ -40,10 +40,10 @@ class Logging(commands.Cog):
 
     async def log_elevated(self, logcontent, guild_id):
         async with self.bot.pool.acquire() as con:
-            record = await self.bot.caching.get(table="log_config", guild_id=guild_id)
-            if record and record["elevated_log_channel_id"][0]:
+            records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
+            if records and records[0]["elevated_log_channel_id"]:
                 guild = self.bot.get_guild(guild_id)
-                elevated_loggingchannel = guild.get_channel(record["elevated_log_channel_id"][0])
+                elevated_loggingchannel = guild.get_channel(records[0]["elevated_log_channel_id"])
                 if elevated_loggingchannel is None: await self.log_standard(logcontent, guild_id)
                 try:
                     if isinstance(logcontent, discord.Embed):

@@ -43,7 +43,7 @@ class IpcRoutes(commands.Cog):
         '''
         record = await self.bot.caching.get(table="modules", guild_id=guild_id, module_name=module_name)
         if record:
-            return record["is_enabled"][0]
+            return record[0]["is_enabled"]
         else:
             return True
 
@@ -144,10 +144,10 @@ class IpcRoutes(commands.Cog):
         all_role_dict = await self.get_role_dict(guild)
         mod_settings_dict = {}
 
-        record = await self.bot.caching.get(table="mod_config", guild_id=guild.id)
+        records = await self.bot.caching.get(table="mod_config", guild_id=guild.id)
         mod_settings_dict = {
-            "dm_users_on_punish" : record["dm_users_on_punish"][0] if record else True,
-            "clean_up_mod_commands" : record["clean_up_mod_commands"][0] if record else False
+            "dm_users_on_punish" : records[0]["dm_users_on_punish"] if records else True,
+            "clean_up_mod_commands" : records[0]["clean_up_mod_commands"][0] if records else False
         }
 
         response = {
@@ -158,7 +158,7 @@ class IpcRoutes(commands.Cog):
             "mod_permitted": permitted_role_dict,
             "mod_settings": mod_settings_dict,
             "all_roles": all_role_dict,
-            "mute_role_id": str(record["mute_role_id"][0]) if record else None
+            "mute_role_id": str(records[0]["mute_role_id"]) if records else None
             #mute_role_id needs to be converted to str, as ints inside dicts get converted too
             }
         return response

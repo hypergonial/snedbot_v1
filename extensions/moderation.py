@@ -19,15 +19,11 @@ async def is_automod_excluded(ctx):
 
 async def can_mute(ctx):
     '''A check performed to see if the configuration is correct for muting to be done.'''
-    record = await ctx.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
-    if record and record["mute_role_id"][0]:
-        mute_role_id = record["mute_role_id"][0]
-        mute_role = ctx.guild.get_role(mute_role_id)
+    records = await ctx.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
+    if records and records[0]["mute_role_id"]:
+        mute_role = ctx.guild.get_role(records[0]["mute_role_id"])
         if mute_role:
             return True
-        return False
-    else:
-        return False
 
 @dataclass
 class ModerationSettings():
@@ -93,11 +89,11 @@ class Moderation(commands.Cog):
         '''
         Checks for and returns the moderation settings for a given guild.
         '''
-        record = await self.bot.caching.get(table="mod_config", guild_id=guild_id)
-        if record:
+        records = await self.bot.caching.get(table="mod_config", guild_id=guild_id)
+        if records:
             mod_settings = ModerationSettings(
-                dm_users_on_punish=record["dm_users_on_punish"][0],
-                clean_up_mod_commands=record["clean_up_mod_commands"][0]
+                dm_users_on_punish=records[0]["dm_users_on_punish"],
+                clean_up_mod_commands=records[0]["clean_up_mod_commands"]
             )
         else:
             mod_settings = ModerationSettings(
@@ -112,9 +108,9 @@ class Moderation(commands.Cog):
         Checks for and returns the auto-moderation policies for the given guild.
         This function should always be used to retrieve auto-moderation policies.
         '''
-        record = await self.bot.caching.get(table="mod_config", guild_id=guild_id)
+        records = await self.bot.caching.get(table="mod_config", guild_id=guild_id)
 
-        policies = json.loads(record["automod_policies"][0]) if record else self.default_automod_policies
+        policies = json.loads(records[0]["automod_policies"]) if records else self.default_automod_policies
 
         for key in self.default_automod_policies.keys(): #Ensure that values always exist
             if key not in policies:
@@ -237,9 +233,9 @@ class Moderation(commands.Cog):
             raise AlreadyMutedException('This member is already muted.')
         else:
             mute_role_id = 0
-            record = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
-            if record and record["mute_role_id"][0]:
-                mute_role_id = record["mute_role_id"][0]
+            records = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
+            if records and records[0]["mute_role_id"]:
+                mute_role_id = records[0]["mute_role_id"]
             mute_role = ctx.guild.get_role(mute_role_id)
             try:
                 await member.add_roles(mute_role, reason=reason)
@@ -274,9 +270,9 @@ class Moderation(commands.Cog):
             raise NotMutedException('This member is not muted.')
         else:
             mute_role_id = 0
-            record = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
-            if record and record["mute_role_id"][0]:
-                mute_role_id = record["mute_role_id"][0]
+            records = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
+            if records and records[0]["mute_role_id"]:
+                mute_role_id = records[0]["mute_role_id"]
             mute_role = ctx.guild.get_role(mute_role_id)
             try:
                 await member.remove_roles(mute_role)
@@ -416,10 +412,9 @@ class Moderation(commands.Cog):
             try:
                 mute_role_id = 0
                 record = await self.bot.caching.get(table="mod_config", guild_id=member.guild.id)
-                if record and record["mute_role_id"][0]:
-                    mute_role_id = record["mute_role_id"][0]
-                mute_role = member.guild.get_role(mute_role_id)
-                await member.add_roles(mute_role, reason="User was muted previously.")
+                if record and record[0]["mute_role_id"]:
+                    mute_role = member.guild.get_role(record[0]["mute_role_id"])
+                    await member.add_roles(mute_role, reason="User was muted previously.")
             except AttributeError:
                 return
 
@@ -524,9 +519,9 @@ class Moderation(commands.Cog):
         await self.bot.global_config.update_user(db_user) #Update this here so if the user comes back, they are not perma-muted :pepeLaugh:
         if guild.get_member(timer.user_id) is not None: #Check if the user is still in the guild
             mute_role_id = 0
-            record = await self.bot.caching.get(table="mod_config", guild_id=timer.guild_id)
-            if record and record["mute_role_id"][0]:
-                mute_role_id = record["mute_role_id"][0]
+            records = await self.bot.caching.get(table="mod_config", guild_id=timer.guild_id)
+            if records and records[0]["mute_role_id"]:
+                mute_role_id = records[0]["mute_role_id"]
             mute_role = guild.get_role(mute_role_id)
             try:
                 offender = guild.get_member(timer.user_id)
@@ -873,9 +868,9 @@ class Moderation(commands.Cog):
             should_delete = False
 
         if policy not in ["disabled", "delete", "warn", "notice", "escalate"]: #Get temporary punishment duration in minutes
-            record = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
+            records = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
             #TODO: Implement this
-            dm_users_on_punish = record["dm_users_on_punish"][0] if record else False
+            dm_users_on_punish = records[0]["dm_users_on_punish"] if records else False
 
         if policy == "disabled":
             return

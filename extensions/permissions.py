@@ -51,9 +51,9 @@ class Permissions(commands.Cog):
     async def get_perms(self, guild:discord.Guild, ptype:str):
         '''Get a permission node's roles'''
         if ptype in self.VALID_TYPES.keys():
-            record = await self.bot.caching.get(table="permissions", guild_id=guild.id, ptype=ptype)
-            if record and record["role_ids"][0] and len(record["role_ids"][0]) > 0:
-                return record["role_ids"][0]
+            records = await self.bot.caching.get(table="permissions", guild_id=guild.id, ptype=ptype)
+            if records and records[0]["role_ids"] and len(records[0]["role_ids"]) > 0:
+                return records[0]["role_ids"]
             else:
                 if self.DEFAULT_PERMS[ptype] == "@everyone":
                     return [guild.id] 
@@ -85,8 +85,8 @@ class Permissions(commands.Cog):
 
     async def add_perms(self, guild:discord.Guild, ptype:str, role_id:int):
         role = guild.get_role(role_id)
-        record = await self.bot.caching.get(table="permissions", guild_id=guild.id, ptype=ptype)
-        role_ids = record["role_ids"][0] if record and record["role_ids"][0] else []
+        records = await self.bot.caching.get(table="permissions", guild_id=guild.id, ptype=ptype)
+        role_ids = records[0]["role_ids"] if records and records[0]["role_ids"] else []
         if role_id not in role_ids:
             role_ids.append(role_id)
 
@@ -101,9 +101,8 @@ class Permissions(commands.Cog):
             raise ValueError('Role already added to permission node.')
 
     async def del_perms(self, guild:discord.Guild, ptype:str, role_id:int):
-        role = guild.get_role(role_id)
-        record = await self.bot.caching.get(table="permissions", guild_id=guild.id, ptype=ptype)
-        role_ids = record["role_ids"][0] if record and record["role_ids"][0] else []
+        records = await self.bot.caching.get(table="permissions", guild_id=guild.id, ptype=ptype)
+        role_ids = records[0]["role_ids"] if records and records[0]["role_ids"] else []
         if role_id in role_ids:
             role_ids.remove(role_id)
 
@@ -126,16 +125,16 @@ class Permissions(commands.Cog):
         To get more information about a node, use `{ctx.prefix}permission info <node>`
 
         *Hint: To add @everyone to a node, you can copy the ID of the server!*\n""", color=self.bot.embedBlue)
-        perms = await self.bot.caching.get(table="permissions", guild_id=ctx.guild.id)
-        if perms:
+        records = await self.bot.caching.get(table="permissions", guild_id=ctx.guild.id)
+        if records:
             ptypes = list(self.VALID_TYPES.keys())
-            for i, ptype in enumerate(perms["ptype"]):
-                role_ids = perms["role_ids"][i]
+            for record in records:
+                role_ids = record["role_ids"]
                 if role_ids and len(role_ids) > 0:
-                    embed.add_field(name=self.VALID_TYPES[ptype], value=', '.join([ctx.guild.get_role(role_id).mention for role_id in role_ids]))
+                    embed.add_field(name=self.VALID_TYPES[record["ptype"]], value=', '.join([ctx.guild.get_role(role_id).mention for role_id in role_ids]))
                 else:
-                    embed.add_field(name=self.VALID_TYPES[ptype], value=str(self.DEFAULT_PERMS[ptype]))
-                ptypes.remove(ptype)
+                    embed.add_field(name=self.VALID_TYPES[record["ptype"]], value=str(self.DEFAULT_PERMS[record["ptype"]]))
+                ptypes.remove(record["ptype"])
             for ptype in ptypes:
                 embed.add_field(name=self.VALID_TYPES[ptype], value=str(self.DEFAULT_PERMS[ptype]))
         else:
