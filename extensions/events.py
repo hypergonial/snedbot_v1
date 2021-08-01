@@ -28,6 +28,7 @@ class SignUpCategoryButton(discord.ui.Button):
         self.category_name = category_name
     
     async def refresh_embed_field(self, guild:discord.Guild, member_ids:list[int], embed:discord.Embed, field_name:str, member_cap:int=None) -> discord.Embed:
+        '''Refresh an embed field to accurately depict current participants'''
         insert_at = None
         inline = False
         member_cap = member_cap if member_cap else "∞"
@@ -48,6 +49,7 @@ class SignUpCategoryButton(discord.ui.Button):
 
     #Called whenever the button is called
     async def callback(self, interaction: discord.Interaction):
+        '''Add, remove, or move to/from the category that this button is configured for'''
         if interaction.guild_id:
             records = await self.view.bot.caching.get(table="events", guild_id=interaction.guild_id, msg_id=interaction.message.id, channel_id=interaction.channel.id)
             categories = json.loads(records[0]["categories"])
