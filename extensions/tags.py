@@ -42,6 +42,7 @@ class TagHandler():
     '''
     A class for common database operations regarding tags
     '''
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -146,6 +147,8 @@ class TagHandler():
     
 
 class Tags(commands.Cog):
+    '''All commands relating to tags'''
+
     def __init__(self, bot):
         self.bot = bot
         self.tag_handler = TagHandler(bot)

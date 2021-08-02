@@ -21,6 +21,7 @@ class Timer():
     '''
     Represents a timer object.
     '''
+
     def __init__(self, id, guild_id, user_id,event, channel_id=None, expires=None, notes=None):
         self.id = id
         self.guild_id = guild_id
@@ -31,6 +32,10 @@ class Timer():
         self.notes = notes
 
 class Timers(commands.Cog):
+    '''
+    All timer-related functionality, including time conversion from strings,
+    creation, scheduling & dispatching of timers.
+    '''
 
     def __init__(self, bot):
 

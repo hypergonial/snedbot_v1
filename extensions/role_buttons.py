@@ -43,6 +43,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     Create and manage buttons that hand out roles to users.
     Formerly "reaction roles"
     '''
+    
     def __init__(self, bot):
         self.bot = bot
         bot.loop.create_task(self.buttonroles_init())

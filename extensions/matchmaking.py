@@ -9,6 +9,7 @@ from discord.ext import commands
 from discord.ext import tasks
 '''
 Disclaimer: This extension is proprietary to Annoverse, and should not be used elsewhere without heavy modifications!
+It is also really old & may need a rewrite to properly handle buttons, and just a general code cleanup.
 '''
 #Check to see if matchmaking is set up or not
 async def is_setup(ctx):

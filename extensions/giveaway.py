@@ -16,6 +16,7 @@ class Giveaway(commands.Cog):
     Miscellanious featureset to create giveaways. It 100% uses the existing timer structure,
     with no additional database/storage features. I wrote it in like 3 hours so it might suck. :)
     '''
+
     def __init__(self, bot):
         self.bot = bot
         self._ = self.bot.get_localization('giveaway', self.bot.lang)

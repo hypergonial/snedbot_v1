@@ -5,9 +5,10 @@ import logging
 import discord
 from discord.ext import commands
 
-
-#Main user-facing logging
+#TODO: Move logging setup here from extensions/setup
 class Logging(commands.Cog):
+    '''User-facing logging support for important server events'''
+
     def __init__(self, bot):
         self.bot = bot
         self.recently_edited = []

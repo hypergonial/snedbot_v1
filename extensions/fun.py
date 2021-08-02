@@ -18,6 +18,8 @@ async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
 
 class Fun(commands.Cog):
+    '''All the fun!'''
+
     def __init__(self, bot):
         self.bot = bot
         self._ = self.bot.get_localization('fun', self.bot.lang)

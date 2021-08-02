@@ -109,6 +109,7 @@ class Events(commands.Cog):
     '''
     Create and manage events that users can sign up to.
     '''
+    #TODO: Add support for editing events
     def __init__(self, bot):
         self.bot = bot
         bot.loop.create_task(self.events_init())

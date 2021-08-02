@@ -156,6 +156,8 @@ class SnedHelp(commands.HelpCommand):
 
 
 class Help(commands.Cog):
+    '''Cog that implements a custom help command'''
+
     def __init__(self, bot):
         bot.help_command = SnedHelp()
         self.bot = bot

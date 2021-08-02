@@ -5,6 +5,7 @@ from discord.ext import commands
 
 class HomeGuild(commands.Cog):
     '''Functionality for the Home server of Sned'''
+    
     def __init__(self, bot):
         self.bot = bot
 

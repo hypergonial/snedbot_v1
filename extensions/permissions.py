@@ -48,7 +48,7 @@ class Permissions(commands.Cog):
             "events": "Allows creation and management of events. This permission node is not necessary to sign up for them.",
         }
     
-    async def get_perms(self, guild:discord.Guild, ptype:str):
+    async def get_perms(self, guild:discord.Guild, ptype:str) -> list[int]:
         '''Get a permission node's roles'''
         if ptype in self.VALID_TYPES.keys():
             records = await self.bot.caching.get(table="permissions", guild_id=guild.id, ptype=ptype)
@@ -62,7 +62,7 @@ class Permissions(commands.Cog):
         else:
             raise ValueError("Invalid permission-node specified.")
 
-    async def set_perms(self, guild:discord.Guild, ptype:str, role_ids:list):
+    async def set_perms(self, guild:discord.Guild, ptype:str, role_ids:list) -> None:
         '''Override a list of roles with a new set. Used by the dashboard.'''
         if not role_ids: role_ids = []
         guild_role_ids = [role.id for role in guild.roles]
@@ -83,7 +83,7 @@ class Permissions(commands.Cog):
             raise ValueError("Invalid permission type specified.")
 
 
-    async def add_perms(self, guild:discord.Guild, ptype:str, role_id:int):
+    async def add_perms(self, guild:discord.Guild, ptype:str, role_id:int) -> None:
         role = guild.get_role(role_id)
         records = await self.bot.caching.get(table="permissions", guild_id=guild.id, ptype=ptype)
         role_ids = records[0]["role_ids"] if records and records[0]["role_ids"] else []
@@ -100,7 +100,7 @@ class Permissions(commands.Cog):
         else:
             raise ValueError('Role already added to permission node.')
 
-    async def del_perms(self, guild:discord.Guild, ptype:str, role_id:int):
+    async def del_perms(self, guild:discord.Guild, ptype:str, role_id:int) -> None:
         records = await self.bot.caching.get(table="permissions", guild_id=guild.id, ptype=ptype)
         role_ids = records[0]["role_ids"] if records and records[0]["role_ids"] else []
         if role_id in role_ids:
@@ -150,10 +150,13 @@ class Permissions(commands.Cog):
         if node.lower() not in self.VALID_TYPES.values():
             embed=discord.Embed(title="❌ Error: Invalid node", description=f"Invalid permission node provided! See `{ctx.prefix}permissions` for valid node-types.", color=self.bot.errorColor)
             return await ctx.send(embed=embed)
+
         for key, value in self.VALID_TYPES.items():
+
             if value.lower() == node.lower():
                 info = self.PERM_INFO[key]
                 role_ids = await self.get_perms(ctx.guild, key)
+
                 if role_ids and len(role_ids) > 0:
                     roles = ", ".join([ctx.guild.get_role(role_id).mention for role_id in role_ids])
                 else:
@@ -169,15 +172,18 @@ class Permissions(commands.Cog):
     async def perm_add(self, ctx, node:str, role:discord.Role):
         try:
             ptype = [key for key, value in self.VALID_TYPES.items() if value==node]
+
             if len(ptype) != 0:
                 await self.add_perms(ctx.guild, ptype=ptype[0], role_id=role.id)
                 embed=discord.Embed(title="✅ Role added", description=f"Role {role.mention} was added to `{node}`!", color=self.bot.embedGreen)
                 await ctx.send(embed=embed)
             else:
                 raise KeyError
+
         except KeyError:
             embed=discord.Embed(title="❌ Error: Invalid node", description=f"Invalid permission node provided See `{ctx.prefix}permissions` for valid node-types.", color=self.bot.errorColor)
             return await ctx.send(embed=embed)
+
         except ValueError:
             embed=discord.Embed(title="❌ Error: Invalid role", description=f"This role is already added to this node.", color=self.bot.errorColor)
             return await ctx.send(embed=embed)
@@ -188,15 +194,18 @@ class Permissions(commands.Cog):
     async def perm_del(self, ctx, node:str, role:discord.Role):
         try:
             ptype = [key for key, value in self.VALID_TYPES.items() if value==node]
+
             if len(ptype) != 0:
                 await self.del_perms(ctx.guild, ptype=ptype[0], role_id=role.id)
                 embed=discord.Embed(title="✅ Role removed", description=f"Role {role.mention} was removed from `{node}`!", color=self.bot.embedGreen)
                 await ctx.send(embed=embed)
             else:
                 raise KeyError
+
         except KeyError:
             embed=discord.Embed(title="❌ Error: Invalid node", description=f"Invalid permission node provided! See `{ctx.prefix}permissions` for valid node-types.", color=self.bot.errorColor)
             return await ctx.send(embed=embed)
+            
         except ValueError:
             embed=discord.Embed(title="❌ Error: Invalid role", description=f"This role is not present on the permission-node.", color=self.bot.errorColor)
             return await ctx.send(embed=embed)

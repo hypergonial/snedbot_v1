@@ -3,6 +3,7 @@ import asyncio
 
 class AuthorOnlyView(discord.ui.View):
     '''A view that only responds to the author of the passed context'''
+
     def __init__(self, ctx, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ctx = ctx
@@ -11,7 +12,8 @@ class AuthorOnlyView(discord.ui.View):
         return self.ctx.author.id == interaction.user.id
 
 async def select_or_ask(ctx, options:list[discord.SelectOption], placeholder:str, embed:discord.Embed=None, content:str=None, message_to_edit:discord.Message=None):
-    '''Helper function to work around limitations of select item length
+    '''
+    Helper function to work around limitations of select item length
 
     Attributes:
     options: List of options to insert into the select, if possible
@@ -22,6 +24,7 @@ async def select_or_ask(ctx, options:list[discord.SelectOption], placeholder:str
 
     Used mostly in the interactive setup commands across the bot.
     '''
+
     if not embed and not content:
         raise ValueError('Content or embed must not be None!')
         
@@ -71,6 +74,7 @@ async def select_or_ask(ctx, options:list[discord.SelectOption], placeholder:str
 
 class CustomSelect(discord.ui.Select):
     '''Select that returns it's data to the view'''
+    
     def __init__(self, placeholder:str, options=[discord.SelectOption], min_values:int=1, max_values:int=1, response_msg:str=None):
         super().__init__(placeholder=placeholder, options=options, min_values=min_values, max_values=max_values)
         self.response_msg = response_msg

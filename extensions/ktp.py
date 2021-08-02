@@ -7,6 +7,10 @@ async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
 
 class KeepOnTop(commands.Cog, name="Keep On Top"):
+    '''
+    Keep-On-Top message functionality, currently only available
+    to whitelisted guilds
+    '''
     
     def __init__(self, bot):
         self.bot = bot

@@ -153,20 +153,14 @@ class SnedBot(commands.Bot):
 
     def get_localization(self, extension_name:str, lang:str):
         '''
+        DEPRECATED
         Installs the proper localization for a given extension
         '''
-        LOCALE_PATH = Path(self.BASE_DIR, 'locale')
+        #LOCALE_PATH = Path(self.BASE_DIR, 'locale')
 
-        if lang == "de":
-            de = gettext.translation('main', localedir=LOCALE_PATH, languages=['de'])
-            de.install()
-            _ = de.gettext
-            return _
-        #Fallback to English
-        else :
-            lang = "en"
-            _ = gettext.gettext
-            return _
+        lang = "en"
+        _ = gettext.gettext
+        return _
 
     
     async def current_cogs(self):
@@ -174,11 +168,13 @@ class SnedBot(commands.Bot):
         Simple function that just gets all currently loaded cog/extension names
         '''
         cogs = []
-        for cogName,cogClass in bot.cogs.items(): # pylint: disable=<unused-variable>
-            cogs.append(cogName)
+        for cog_name, cog_cls in bot.cogs.items(): # pylint: disable=<unused-variable>
+            cogs.append(cog_name)
         return cogs
 
     async def process_commands(self, message):
+        '''Inject custom context'''
+
         ctx = await self.get_context(message, cls=context.Context)
 
         if ctx.command is None:
@@ -191,6 +187,8 @@ class SnedBot(commands.Bot):
 
 
     async def on_message(self, message):
+        '''Catch bot mentions & implement limts'''
+
         if self.is_ready() and self.caching.is_ready:
             bucket = self.cmd_cd_mapping.get_bucket(message)
             retry_after = bucket.update_rate_limit()
@@ -217,7 +215,8 @@ class SnedBot(commands.Bot):
 
 
     async def on_guild_join(self, guild):
-        #Generate guild entry for DB
+        '''Generate guild entry for DB'''
+
         async with bot.pool.acquire() as con:
             await con.execute('INSERT INTO global_config (guild_id) VALUES ($1)', guild.id)
         if guild.system_channel != None :
@@ -235,6 +234,7 @@ class SnedBot(commands.Bot):
         Erase all settings for this guild on removal to keep the db tidy.
         The reason this does not use GlobalConfig.deletedata() is to not recreate the entry for the guild
         '''
+
         async with bot.pool.acquire() as con:
             await con.execute('''DELETE FROM global_config WHERE guild_id = $1''', guild.id)
         await self.caching.wipe(guild.id)
@@ -246,6 +246,7 @@ class SnedBot(commands.Bot):
 
         Prints all exceptions and also tries to sends them to the specified error channel, if any.
         '''
+
         print(f'Ignoring exception in {event_method}', file=sys.stderr)
         error_str = traceback.format_exc()
         print(error_str)
@@ -258,6 +259,7 @@ class SnedBot(commands.Bot):
 
         Generic error handling. Will catch all otherwise not handled errors
         '''
+
         if isinstance(error, commands.CheckFailure):
             logging.info(f"{ctx.author} tried calling a command but did not meet checks.")
             if isinstance(error, commands.BotMissingPermissions):
@@ -273,7 +275,9 @@ class SnedBot(commands.Bot):
         elif isinstance(error, commands.CommandNotFound):
             '''
             This is a fancy suggestion thing that will suggest commands that are similar in case of typos.
+            Completely unknown commands are ignored.
             '''
+
             logging.info(f"{ctx.author} tried calling a command in {ctx.guild.id} but the command was not found. ({ctx.message.content})")
             
             cmd = ctx.invoked_with.lower()
@@ -324,10 +328,12 @@ class SnedBot(commands.Bot):
             return await ctx.send(embed=embed)
 
         else :
-            #If no known error has been passed, we will print the exception to console as usual
-            #IMPORTANT!!! If you remove this, your command errors will not get output to console.
-            #logging.error('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+            '''If no known error has been passed, we will print the exception to console as usual
+            IMPORTANT!!! If you remove this, your command errors will not get output to console.'''
+
+            logging.error('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
             exception_msg = "\n".join(traceback.format_exception(type(error), error, error.__traceback__))
+
             try:
                 await self.get_cog("HomeGuild").log_error(exception_msg, ctx)
             except Exception as error:
@@ -344,6 +350,7 @@ _ = bot.get_localization('main', lang)
 
 This contains strings for common error/warn msgs.
 '''
+#TODO: Remove this mess & move to a seperate file
 #Errors:
 bot.errorColor = 0xff0000
 bot.errorTimeoutTitle = "🕘 " + _("Error: Timed out")
@@ -427,6 +434,7 @@ class GlobalConfig():
     @tasks.loop(seconds=3600.0)
     async def cleanup_userdata(self):
         '''Clean up garbage userdata from db'''
+
         await bot.wait_until_ready()
         async with self.bot.pool.acquire() as con:
             await con.execute('''
@@ -438,6 +446,7 @@ class GlobalConfig():
         Deletes all data related to a specific guild, including but not limited to: all settings, priviliged roles, stored tags, stored multiplayer listings etc...
         Warning! This also erases any stored warnings & other moderation actions for the guild!
         '''
+
         #The nuclear option c:
         async with self.bot.pool.acquire() as con:
             await con.execute('''DELETE FROM global_config WHERE guild_id = $1''', guild_id)
@@ -452,6 +461,7 @@ class GlobalConfig():
         '''
         Takes an instance of GlobalConfig.User and tries to either update or create a new user entry if one does not exist already
         '''
+
         async with bot.pool.acquire() as con:
             try:
                 await con.execute('''
@@ -467,6 +477,7 @@ class GlobalConfig():
         Gets an instance of GlobalConfig.User that contains basic information about the user in relation to a guild
         Returns None if not found
         '''
+
         async with bot.pool.acquire() as con:
             result = await con.fetch('''SELECT * FROM users WHERE user_id = $1 AND guild_id = $2''', user_id, guild_id)
         if result:
@@ -484,6 +495,7 @@ class GlobalConfig():
         Returns all users related to a specific guild as a list of GlobalConfig.User
         Return None if no users are contained in the database
         '''
+
         async with bot.pool.acquire() as con:
             results = await con.fetch('''SELECT * FROM users WHERE guild_id = $1''', guild_id)
         if results:
@@ -498,12 +510,14 @@ bot.global_config = GlobalConfig(bot)
 
 '''
 Loading extensions, has to be AFTER global_config is initialized so global_config already exists
+All extensions that access the db depend on global_config.
 '''
 
 if __name__ == '__main__':
     '''
     Loading extensions from the list of extensions defined in initial_extensions
     '''
+
     for extension in initial_extensions:
         try:
             bot.load_extension(extension)
@@ -532,6 +546,7 @@ class CustomChecks():
         '''
         True if module is enabled, false otherwise. module_name is the extension filename.
         '''
+
         records = await bot.caching.get(table="modules", guild_id=ctx.guild.id, module_name=module_name)
         if records and records[0]["is_enabled"]:
             return records[0]["is_enabled"]
@@ -543,6 +558,7 @@ class CustomChecks():
         Returns True if a user is in the specified permission node, 
         or in the administrator node, or is a Discord administrator, or is the owner.
         '''
+
         if ctx.guild:
             user_role_ids = [x.id for x in ctx.author.roles]
             role_ids = await ctx.bot.get_cog("Permissions").get_perms(ctx.guild, perm_node)
@@ -556,7 +572,7 @@ try :
     if hasattr(bot, 'ipc'):
         bot.ipc.start()
     else:
-        logging.warn('IPC secret was not found!')
+        logging.warn('IPC was not found, or configured correctly!')
     bot.run(TOKEN)
 except KeyboardInterrupt :
     bot.loop.run_until_complete(bot.pool.close())

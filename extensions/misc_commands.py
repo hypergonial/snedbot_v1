@@ -10,6 +10,8 @@ async def has_mod_perms(ctx):
     return await ctx.bot.custom_checks.has_permissions(ctx, 'mod_permitted')
 
 class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
+    '''Commands that do not belong in any other category'''
+
     def __init__(self, bot):
         self.bot = bot
         self._ = self.bot.get_localization('misc_commands', self.bot.lang)

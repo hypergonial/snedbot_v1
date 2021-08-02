@@ -9,6 +9,9 @@ def is_anno_guild(ctx):
     return ctx.guild.id in ctx.bot.anno_guilds
 
 class Annoverse(commands.Cog):
+    '''
+    Commands & functionality related to Anno-discords
+    '''
     def __init__(self, bot):
         self.bot = bot
         self.annowiki_color = discord.Color.from_rgb(218, 166, 100)

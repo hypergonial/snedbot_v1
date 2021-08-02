@@ -18,6 +18,11 @@ def is_whitelisted_guild(ctx):
 #This is an entirely optional extension, but you are masochistic if you are not using it :D
 
 class Setup(commands.Cog):
+    '''
+    DEPRECATED
+    Cog that was designed to hold setups, but an interactive dashboard is being developed in it's place.
+    '''
+
     def __init__(self, bot):
         self.bot = bot
 

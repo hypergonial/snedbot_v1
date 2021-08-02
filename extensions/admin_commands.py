@@ -13,6 +13,8 @@ async def has_admin_perms(ctx):
     return await ctx.bot.custom_checks.has_permissions(ctx, 'admin_permitted')
 
 class AdminCommands(commands.Cog, name="Admin Commands"):
+    '''All commands relating to the administration of the server'''
+
     def __init__(self, bot):
 
         self.bot = bot

@@ -8,10 +8,11 @@ class IpcRoutes(commands.Cog):
     '''
     A cog handling all IPC for the website.
     '''
+
     def __init__(self, bot):
         self.bot = bot
 
-    async def get_role_dict(self, guild:discord.Guild, ptype:str=None):
+    async def get_role_dict(self, guild:discord.Guild, ptype:str=None) -> dict:
         '''
         Helper function
         Transforms the output of get_perms into a dict of roles, for easier
@@ -34,7 +35,7 @@ class IpcRoutes(commands.Cog):
                 role_dict[role.id] = role.name
             return role_dict
 
-    async def get_module_status(self, guild_id, module_name):
+    async def get_module_status(self, guild_id:int, module_name:str) -> bool:
         '''
         Helper function
         Returns a boolean indicating if a module is enabled or not.
@@ -49,7 +50,9 @@ class IpcRoutes(commands.Cog):
 
 
     @ipc.server.route()
-    async def check_for_guild(self, data):
+    async def check_for_guild(self, data) -> bool:
+        '''Determine if a guild exists'''
+
         guild = self.bot.get_guild(data.guild_id)
         if guild:
             return True
@@ -58,7 +61,7 @@ class IpcRoutes(commands.Cog):
 
 
     @ipc.server.route()
-    async def get_dash_noguild_info(self, data):
+    async def get_dash_noguild_info(self, data) -> dict:
         guild_ids = data.guild_ids
         guild_dict = {}
         for guild_id in guild_ids:
@@ -73,7 +76,7 @@ class IpcRoutes(commands.Cog):
 
 
     @ipc.server.route()
-    async def get_dash_homescreen_info(self, data):
+    async def get_dash_homescreen_info(self, data) -> dict:
         '''
         Contains basic information to be displayed in the
         dashboard home-page like membercount, channelcount,
@@ -93,7 +96,7 @@ class IpcRoutes(commands.Cog):
 
 
     @ipc.server.route()
-    async def change_basic_settings(self, data):
+    async def change_basic_settings(self, data) -> None:
         '''
         data must contain the following:
         data.guild_id - the guild's ID affected
@@ -106,7 +109,7 @@ class IpcRoutes(commands.Cog):
             logging.error(f"Error occured applying settings received from IPC: {e}")
 
     @ipc.server.route()
-    async def set_permissions(self, data):
+    async def set_permissions(self, data) -> None:
         '''
         Function to set permissions for a specific ptype over IPC.
         Gets a guild_id, a ptype, and a list of role_ids to set.
@@ -118,7 +121,7 @@ class IpcRoutes(commands.Cog):
         await self.bot.get_cog("Permissions").set_perms(guild, ptype, role_ids)
 
     @ipc.server.route()
-    async def set_module(self, data):
+    async def set_module(self, data) -> None:
         '''
         Function to toggle a module over IPC.
         '''
@@ -137,7 +140,7 @@ class IpcRoutes(commands.Cog):
 
 
     @ipc.server.route()
-    async def get_moderation_settings(self, data):
+    async def get_moderation_settings(self, data) -> dict:
         guild = self.bot.get_guild(data.guild_id)
         module_enabled = await self.get_module_status(guild.id, "moderation")
         permitted_role_dict = await self.get_role_dict(guild, "mod_permitted")
@@ -159,12 +162,11 @@ class IpcRoutes(commands.Cog):
             "mod_settings": mod_settings_dict,
             "all_roles": all_role_dict,
             "mute_role_id": str(records[0]["mute_role_id"]) if records else None
-            #mute_role_id needs to be converted to str, as ints inside dicts get converted too
             }
         return response
 
     @ipc.server.route()
-    async def set_moderation_settings(self, data):
+    async def set_moderation_settings(self, data) -> None:
         guild_id = data.guild_id
         mod_settings = data.mod_settings
         async with self.bot.pool.acquire() as con:
@@ -177,7 +179,7 @@ class IpcRoutes(commands.Cog):
         await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
     
     @ipc.server.route()
-    async def set_mute_role(self, data):
+    async def set_mute_role(self, data) -> None:
         guild_id = data.guild_id
         mute_role_id = data.mute_role_id
         async with self.bot.pool.acquire() as con:
@@ -189,7 +191,7 @@ class IpcRoutes(commands.Cog):
         await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
 
     @ipc.server.route()
-    async def get_automod_settings(self, data):
+    async def get_automod_settings(self, data) -> dict:
         guild = self.bot.get_guild(data.guild_id)
         module_enabled = await self.get_module_status(guild.id, "moderation")
         excluded_role_dict = await self.get_role_dict(guild, "automod_excluded")
@@ -211,7 +213,7 @@ class IpcRoutes(commands.Cog):
         return response
 
     @ipc.server.route()
-    async def set_automod_policies(self, data):
+    async def set_automod_policies(self, data) -> None:
         guild_id = data.guild_id
         policies = data.policies
         existing_policies = await self.bot.get_cog("Moderation").get_policies(guild_id)
@@ -232,7 +234,7 @@ class IpcRoutes(commands.Cog):
 
 
     @ipc.server.route()
-    async def set_automod_escalate_policy(self, data):
+    async def set_automod_escalate_policy(self, data) -> None:
         guild_id = data.guild_id
         escalate_policy = data.policy
 
@@ -247,9 +249,6 @@ class IpcRoutes(commands.Cog):
             UPDATE SET automod_policies = $2
             ''', guild_id, json.dumps(automod_policies))
         await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
-
-
-
 
 
 def setup(bot):

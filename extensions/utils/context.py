@@ -7,8 +7,8 @@ from discord.ext import commands
 class Confirm(discord.ui.View):
     '''Confirmation view
     verbose:bool - Decides if a response should be given
-    confirm_msg - If verbose, confirmation message contents
-    cancel_msg - If verbose, cancelation message contents'''
+    confirm_msg:str - If verbose, confirmation message contents
+    cancel_msg:str - If verbose, cancelation message contents'''
 
     def __init__(self, ctx, verbose:bool=False, confirm_msg:str=None, cancel_msg:str=None):
         super().__init__()
@@ -61,6 +61,7 @@ class Context(commands.Context):
             try:
                 await message.delete()
             except discord.Forbidden:
-                logging.debug('Failed to delete_after in ctx.confirm. (discord.Forbidden)')
+                pass
+            
         return view.value
         
