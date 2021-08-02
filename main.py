@@ -97,6 +97,7 @@ class SnedBot(commands.Bot):
 
         self.caching = cache.Caching(self)
         self.config = config
+        self.config.pop["token"]
 
         self.EXPERIMENTAL = config["experimental"]
         self.DEFAULT_PREFIX = 'sn '

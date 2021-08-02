@@ -152,10 +152,10 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         await ctx.message.delete()
         await channel.send(content=content)
     
-    @commands.command(hep="aa")
-    async def cache(self, ctx):
-        records = await self.bot.caching.get(table="permissions", guild_id=ctx.guild.id)
-        print(records)
+    @commands.command(help="Shows a link to the documentation.", description="Shows a link to the documentation", usage="docs")
+    async def docs(self, ctx):
+        embed = discord.Embed(title="📖 Documentation", description="[Click here](https://sned.hypersden.com/docs/) to see the documentation!", color=self.bot.embedBlue)
+        await ctx.send(embed=embed)
 
 
 
