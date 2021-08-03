@@ -98,11 +98,12 @@ class Caching():
             await self.refresh(table, guild_id)
             return await self.get(table, guild_id, **kwargs)
 
-    async def update(self, sql_query:str, guild_id:int, *args):
+    async def update(self, sql_query:str, *args):
         '''
         Takes an SQL query and arguments, one of which must be the guild_id, and tries
         executing it. Refreshes the cache afterwards with the new values.
         '''
+        #Note: DELETE FROM crashes the whole thing, I dunno why :/ seems to be a lib issue
         parser = Parser(sql_query)
 
         if parser.query_type == 'SELECT':
@@ -115,11 +116,15 @@ class Caching():
         if len(tables) == 0: raise SQLParsingError("Failed parsing tables from query!")
 
         if len(parser.columns) == 0: raise SQLParsingError("Failed parsing columns from query!")
-        if "guild_id" != parser.columns[0]:
-            return SQLParsingError('guild_id must be the first column in query!')
+        if "guild_id" not in parser.columns:
+            return SQLParsingError('guild_id must be in the query!')
+        else:
+            for i, col in enumerate(parser.columns):
+                if col == "guild_id":
+                    guild_id = args[i]
 
         async with self.bot.pool.acquire() as con:
-            await con.execute(sql_query, guild_id, *args)
+            await con.execute(sql_query, *args)
         for table in tables:
             await self.refresh(table=table, guild_id=guild_id)
 

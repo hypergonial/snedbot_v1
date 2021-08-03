@@ -5,8 +5,9 @@ import uuid
 
 import discord
 from discord.ext import commands
+from discord.ext.commands.errors import UserInputError
 
-from extensions.utils import components
+from extensions.utils import components, exceptions
 
 
 async def has_owner(ctx):
@@ -38,12 +39,13 @@ class SignUpCategoryButton(discord.ui.Button):
                 names[i] = name[:16] + ".."
         names_str = "\n".join(names)
         names_str = names_str[:1020] + "`..`" if len(names_str) > 1024 else names_str 
+        names_str = f">>> {names_str}" if len(names_str) > 0 else '-'
         
         for i, field in enumerate(embed.fields):
             if field.name.startswith(field_name):
                 inline = field.inline
                 insert_at = i; break
-        embed.insert_field_at(insert_at, name=f"{field_name} ({len(member_ids)}/{member_cap})", value=f'>>> {names_str}', inline=inline)
+        embed.insert_field_at(insert_at, name=f"{field_name} ({len(member_ids)}/{member_cap})", value=names_str, inline=inline)
         embed.remove_field(insert_at+1)
         return embed
 
@@ -105,11 +107,62 @@ class SignUpCategoryButton(discord.ui.Button):
                 await interaction.response.send_message('Failed to register event due to a permissions issue. Please contact an administrator!', ephemeral=True)
 
 
+class EditMainView(discord.ui.View):
+    '''Main View for edit menu'''
+    def __init__(self, ctx):
+        super().__init__()
+        self.value = None
+        self.ctx = ctx
+    
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return self.ctx.author.id == interaction.user.id
+
+    @discord.ui.button(emoji='#️⃣', label="Title", style=discord.ButtonStyle.blurple, row=0)
+    async def title(self, button:discord.ui.Button, interaction:discord.Interaction):
+        self.value = "title"
+        await interaction.response.defer()
+        self.stop()
+    
+    @discord.ui.button(emoji='📚', label="Description", style=discord.ButtonStyle.blurple, row=0)
+    async def desc(self, button:discord.ui.Button, interaction:discord.Interaction):
+        self.value = "description"
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(emoji='🕘', label="Timestamp", style=discord.ButtonStyle.blurple, row=0)
+    async def timestamp(self, button:discord.ui.Button, interaction:discord.Interaction):
+        self.value = "timestamp"
+        await interaction.response.defer()
+        self.stop()
+    
+    @discord.ui.button(emoji='➕', label="Category", style=discord.ButtonStyle.green, row=1)
+    async def add_category(self, button:discord.ui.Button, interaction:discord.Interaction):
+        self.value = "add_category"
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(emoji='➖', label="Category", style=discord.ButtonStyle.red, row=1)
+    async def del_category(self, button:discord.ui.Button, interaction:discord.Interaction):
+        self.value = "del_category"
+        await interaction.response.defer()
+        self.stop()
+
+    @discord.ui.button(emoji='🗑️', label="Delete", style=discord.ButtonStyle.red, row=1)
+    async def delete(self, button:discord.ui.Button, interaction:discord.Interaction):
+        self.value = "delete"
+        await interaction.response.defer()
+        self.stop()
+    
+    @discord.ui.button(emoji='🚪', label="Exit", style=discord.ButtonStyle.grey, row=2)
+    async def exit_menu(self, button:discord.ui.Button, interaction:discord.Interaction):
+        self.value = "exit"
+        await interaction.response.defer()
+        self.stop()
+
 class Events(commands.Cog):
     '''
     Create and manage events that users can sign up to.
     '''
-    #TODO: Add support for editing events
     def __init__(self, bot):
         self.bot = bot
         bot.loop.create_task(self.events_init())
@@ -175,6 +228,91 @@ class Events(commands.Cog):
                 except (discord.Forbidden, discord.HTTPException):
                     pass
 
+    async def add_category(self, ctx:commands.Context, invoke_msg:discord.Message, categories:dict=None, first:bool=False, loop:bool=False) -> dict:
+        '''
+        Helper function that interactively adds a new category to an event
+
+        invoke_msg - Message that this was invoked from, will be edited to reflect current state
+        categories - Dict of all current categories - do not pass this directly!!
+        first - If user should be greeted on start as a first-time user or not
+        loop - If true, will continue to add categories until the user interrupts
+
+        Raises UserInputError when invalid values are passed by a user.
+        '''
+        if not categories: categories = {}
+
+        def idcheck(payload):
+            return payload.author == ctx.author and payload.channel.id == ctx.channel.id
+        def confirmemoji(reaction, user):
+            return reaction.message.id == invoke_msg.id and user.id == ctx.author.id
+
+        if first:
+            embed=discord.Embed(title="🛠️ Event Categories setup", description="Excellent! Now we will begin setting up the first category for this event! Please type the category's name below!\nMaximum **25** characters!\nExamples: `Red Team` or `Attackers`", color=self.bot.embedBlue)
+        else:
+            embed=discord.Embed(title="🛠️ Event Categories setup", description="Type the name of the category below!\nMaximum **25** characters!", color=self.bot.embedBlue)
+        await invoke_msg.edit(embed=embed, view=None)
+        message = await self.bot.wait_for('message', timeout = 180.0, check=idcheck)
+        if len(message.content) <= 25 or message.content not in categories.keys():
+            category_name = message.content 
+        elif message.content in categories.keys():
+            embed=discord.Embed(title="❌ Error: Duplicate key", description="You already have a category with the same name. Operation cancelled.", color=self.bot.errorColor)
+            await invoke_msg.edit(embed=embed);  raise exceptions.UserInputError("Duplicate key!")
+        else:
+            embed=discord.Embed(title="❌ Error: Title too long", description="Category name cannot exceed **25** characters. Operation cancelled.", color=self.bot.errorColor)
+            await invoke_msg.edit(embed=embed);  raise exceptions.UserInputError("Title too long!")
+        await message.delete()
+
+        embed=discord.Embed(title="🛠️ Event Categories setup", description="React **to this message** with the emoji you want to appear on the sign-up button! This can be any emoji, be it custom or Discord default!", color=self.bot.embedBlue)
+        await invoke_msg.edit(embed=embed)
+        reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0,check=confirmemoji)
+        emoji = reaction.emoji
+        await invoke_msg.clear_reactions()
+
+        view = components.AuthorOnlyView(ctx)
+        options = []
+        for name in self.button_styles.keys():
+            options.append(discord.SelectOption(label=name))
+        view.add_item(components.CustomSelect(placeholder="Select a style!", options=options))
+        embed=discord.Embed(title="🛠️ Event Categories setup", description="Select the style of the sign-up button!", color=self.bot.embedBlue)
+        await invoke_msg.edit(embed=embed, view=view)
+        await view.wait()
+        if view.value:
+            buttonstyle = view.value["values"][0]
+        else:
+            raise asyncio.exceptions.TimeoutError
+
+        embed=discord.Embed(title="🛠️ Event Categories setup", description="Type in how many people should be able to join this category as a positive integer! If you do not wish to limit this, type `skip`.", color=self.bot.embedBlue)
+        await invoke_msg.edit(embed=embed, view=None)
+        message = await self.bot.wait_for('message', timeout = 180.0, check=idcheck)
+        await message.delete()
+        try:
+            member_cap = int(message.content) if message.content.lower() != "skip" else None
+            if member_cap and (member_cap <= 0 or member_cap > 100):
+                raise ValueError
+        except ValueError:
+            embed=discord.Embed(title="❌ Error: Invalid value", description="Value must be positive integer below 100. Operation cancelled.", color=self.bot.errorColor)
+            await invoke_msg.edit(embed=embed);  raise exceptions.UserInputError("Invalid value for member_cap!")
+
+        categories[category_name] = {
+            "emoji": str(emoji),
+            "buttonlabel": category_name,
+            "buttonstyle": buttonstyle,
+            "member_cap": member_cap,
+            "members": []
+        }
+        if len(categories) < 9 and loop:
+            embed=discord.Embed(title="🛠️ Event Categories setup", description="Category added! Would you like to add another?", color=self.bot.embedBlue)
+            create_another = await ctx.confirm(embed=embed, delete_after=True)
+            if create_another == True:
+                return await self.add_category(ctx, invoke_msg, categories, first=False, loop=True)
+            elif create_another == False:
+                return categories
+            else:
+                raise asyncio.exception.TimeoutError
+        else:
+            return categories
+
+
     @commands.group(aliases=["events"], help="Manages events.", description="Lists all events created in this guild, if any. Subcommands allow you to remove or set additional ones.", usage="buttonrole", invoke_without_command=True, case_insensitive=True)
     @commands.guild_only()
     async def event(self, ctx):
@@ -198,7 +336,7 @@ class Events(commands.Cog):
                 channel = ctx.guild.get_channel(records[0]['channel_id'])
                 try:
                     message = await channel.fetch_message(records[0]['msg_id']) if channel else None
-                    if message: #Remove button if the message still exists
+                    if message:
                         await message.delete()
                 except discord.NotFound:
                     pass
@@ -211,6 +349,149 @@ class Events(commands.Cog):
             else:
                 embed=discord.Embed(title="❌ Error: Not found", description="There is no event by that ID.", color=self.bot.errorColor)
                 await ctx.channel.send(embed=embed)
+
+
+    @event.command(name="edit", aliases=["modify"], help="Modifies an event by ID.", description="Modifies the event by the provided ID. You can get the ID via the `event` command.")
+    @commands.guild_only()
+    @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
+    async def event_edit(self, ctx, id:str):
+
+        def check(payload):
+            return payload.author == ctx.author and payload.channel.id == ctx.channel.id
+
+        records = await self.bot.caching.get(table="events", guild_id=ctx.guild.id, entry_id = id)
+        if records:
+            channel = ctx.guild.get_channel(records[0]["channel_id"])
+            try:
+                event_message = await channel.fetch_message(records[0]["msg_id"])
+            except discord.NotFound:
+                async with self.bot.pool.acquire() as con:
+                    await con.execute('''DELETE FROM events WHERE guild_id = $1 AND entry_id = $2''', ctx.guild.id, records[0]['entry_id'])
+
+                await self.bot.caching.refresh(table="events", guild_id=ctx.guild.id)
+
+                embed=discord.Embed(title="❌ Error: Not found", description="There is no event by that ID.", color=self.bot.errorColor)
+                await ctx.channel.send(embed=embed)
+            else:
+                event_embed = event_message.embeds[0]
+                embed = discord.Embed(title=f"🛠️ Editing {event_embed.title}", description="Please select below what you would like to change!", color=self.bot.embedBlue)
+
+                view = EditMainView(ctx)
+                setup_msg = await ctx.send(embed=embed, view=view)
+
+                await view.wait()
+                if view.value:
+                    if view.value == "title":
+                        embed=discord.Embed(title=f"🛠️ Editing {event_embed.title}", description="Enter a new title! Please note that your title cannot exceed **100** characters.", color=self.bot.embedBlue)
+                        await setup_msg.edit(embed=embed, view=None)
+                        message = await self.bot.wait_for('message', timeout = 180.0, check=check)
+                        if len(message.content) <= 100:
+                            event_embed.title = message.content
+                        else:
+                            embed=discord.Embed(title="❌ Error: Title too long", description="Title cannot exceed **100** characters. Operation cancelled.", color=self.bot.errorColor)
+                            await setup_msg.edit(embed=embed);  return   
+                        await message.delete()
+                        await event_message.edit(embed=event_embed)
+                        embed=discord.Embed(title=f"🛠️ Editing {event_embed.title}", description="✅ Title edited successfully!", color=self.bot.embedGreen)
+                        await setup_msg.edit(embed=embed, view=None)
+
+                    elif view.value == "description":
+                        embed=discord.Embed(title=f"🛠️ Editing {event_embed.title}", description="Enter a new description! Please note it cannot exceed **2500** characters.", color=self.bot.embedBlue)
+                        await setup_msg.edit(embed=embed, view=None)
+                        message = await self.bot.wait_for('message', timeout = 300.0, check=check)
+                        if len(message.content) <= 2500:
+                            event_embed.description = message.content
+                        else:
+                            embed=discord.Embed(title="❌ Error: Title too long", description="Title cannot exceed **2500** characters. Operation cancelled.", color=self.bot.errorColor)
+                            await setup_msg.edit(embed=embed);  return   
+                        await message.delete()
+                        await event_message.edit(embed=event_embed)
+                        embed=discord.Embed(title=f"🛠️ Editing {event_embed.title}", description="✅ Description edited successfully!", color=self.bot.embedGreen)
+                        await setup_msg.edit(embed=embed, view=None)
+                    
+                    elif view.value == "add_category":
+                        categories = json.loads(records[0]['categories'])
+                        if len(categories) <= 9:
+                            try:
+                                new_categories = await self.add_category(ctx, setup_msg)
+                                categories.update(new_categories)
+                            except exceptions.UserInputError:
+                                return
+                            else:
+                                first = list(new_categories.keys())[0] #lol
+                                event_embed.add_field(name=f"{new_categories[first]['buttonlabel']} (0/{new_categories[first]['member_cap']})", value="-", inline=True)
+
+                                buttons = []
+                                for category, data in categories.items():
+                                    button = SignUpCategoryButton(entry_id=records[0]['entry_id'], category_name=category, emoji=discord.PartialEmoji.from_str(data["emoji"]), style=self.button_styles[data["buttonstyle"]], label=data["buttonlabel"])
+                                    buttons.append(button)
+                                event_view = PersistentEventView(self.bot, buttons)
+
+                                await event_message.edit(embed=event_embed, view=event_view)
+
+                                await self.bot.caching.update('''UPDATE events SET categories = $1 WHERE guild_id = $2 AND entry_id = $3''',
+                                json.dumps(categories), ctx.guild.id, records[0]['entry_id'])
+
+                                embed=discord.Embed(title=f"🛠️ Editing {event_embed.title}", description="✅ Category added!", color=self.bot.embedGreen)
+                                await setup_msg.edit(embed=embed, view=None)
+                                
+                        else:
+                            embed=discord.Embed(title="❌ Error: Category limit exceeded", description="The amount of categories cannot exceed **9**. Operation cancelled.", color=self.bot.errorColor)
+                            await setup_msg.edit(embed=embed, view=None);  return  
+
+                    elif view.value == "del_category":
+                        categories = json.loads(records[0]['categories'])
+                        if len(categories) > 1:
+                            view = components.AuthorOnlyView(ctx)
+                            options = []
+                            for category in categories:
+                                options.append(discord.SelectOption(label=category))
+                            view.add_item(components.CustomSelect(placeholder="Select a category!", options=options))
+                            embed=discord.Embed(title=f"🛠️ Editing {event_embed.title}", description="Select which category you would like to delete! Please note this will also remove all users who signed up for this category.", color=self.bot.embedBlue)
+                            await setup_msg.edit(embed=embed, view=view)
+                            await view.wait()
+                            value = view.value['values'][0] if view.value else None
+                            if value:
+                                categories.pop(value)
+                                for i, field in enumerate(event_embed.fields):
+                                    if field.name.startswith(value):
+                                        event_embed.remove_field(i)
+                                
+                                buttons = []
+                                for category, data in categories.items():
+                                    button = SignUpCategoryButton(entry_id=records[0]['entry_id'], category_name=category, emoji=discord.PartialEmoji.from_str(data["emoji"]), style=self.button_styles[data["buttonstyle"]], label=data["buttonlabel"])
+                                    buttons.append(button)
+                                event_view = PersistentEventView(self.bot, buttons)
+
+                                await event_message.edit(embed=event_embed, view=event_view)
+                                await self.bot.caching.update('''UPDATE events SET categories = $1 WHERE guild_id = $2 AND entry_id = $3''',
+                                json.dumps(categories), ctx.guild.id, records[0]['entry_id'])
+                                embed=discord.Embed(title=f"🛠️ Editing {event_embed.title}", description="✅ Category removed!", color=self.bot.embedGreen)
+                                await setup_msg.edit(embed=embed, view=None)
+
+                            else:
+                                raise asyncio.exceptions.TimeoutError
+
+                        else:
+                            embed=discord.Embed(title="❌ Error: Too few categories", description="An event needs to have at least **1** category. Operation cancelled.", color=self.bot.errorColor)
+                            await setup_msg.edit(embed=embed, view=None);  return  
+                    
+                    elif view.value == 'delete':
+                        await event_message.delete()
+                        async with self.bot.pool.acquire() as con:
+                            await con.execute('''DELETE FROM events WHERE guild_id = $1 AND entry_id = $2''', ctx.guild.id, records[0]['entry_id'])
+                        await self.bot.caching.refresh(table="events", guild_id=ctx.guild.id)
+                    else:
+                        await setup_msg.delete()
+                        
+
+                    
+                else:
+                    raise asyncio.exceptions.TimeoutError
+                
+        else:
+            embed=discord.Embed(title="❌ Error: Not found", description="There is no event by that ID.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
 
 
     @event.command(name="create", aliases=["new", "setup", "add"], help="Initializes setup to create and schedule an event.", description="Initializes a setup to help you add a new event. Takes no arguments.", usage="event create")
@@ -302,79 +583,12 @@ class Events(commands.Cog):
 
 
         '''Category adding'''
-        categories = {}
-        async def add_category(first:bool=False):
-            if first:
-                embed=discord.Embed(title="🛠️ Event Categories setup", description="Excellent! Now we will begin setting up the first category for this event! Please type the category's name below!\nMaximum **25** characters!\nExamples: `Red Team` or `Attackers`", color=self.bot.embedBlue)
-            else:
-                embed=discord.Embed(title="🛠️ Event Categories setup", description="Type the name of the category below!\nMaximum **25** characters!", color=self.bot.embedBlue)
-            await setup_msg.edit(embed=embed, view=None)
-            message = await self.bot.wait_for('message', timeout = 180.0, check=idcheck)
-            if len(message.content) <= 25 or message.content not in categories.keys():
-                category_name = message.content 
-            elif message.content in categories.keys():
-                embed=discord.Embed(title="❌ Error: Duplicate key", description="You already have a category with the same name. Operation cancelled.", color=self.bot.errorColor)
-                await setup_msg.edit(embed=embed);  return 1
-            else:
-                embed=discord.Embed(title="❌ Error: Title too long", description="Category name cannot exceed **25** characters. Operation cancelled.", color=self.bot.errorColor)
-                await setup_msg.edit(embed=embed);  return 1
-            await message.delete()
-
-            embed=discord.Embed(title="🛠️ Event Categories setup", description="React **to this message** with the emoji you want to appear on the sign-up button! This can be any emoji, be it custom or Discord default!", color=self.bot.embedBlue)
-            await setup_msg.edit(embed=embed)
-            reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0,check=confirmemoji)
-            emoji = reaction.emoji
-            await setup_msg.clear_reactions()
-
-            view = discord.ui.View()
-            options = []
-            for name in self.button_styles.keys():
-                options.append(discord.SelectOption(label=name))
-            view.add_item(components.CustomSelect(placeholder="Select a style!", options=options))
-            embed=discord.Embed(title="🛠️ Event Categories setup", description="Select the style of the sign-up button!", color=self.bot.embedBlue)
-            await setup_msg.edit(embed=embed, view=view)
-            await view.wait()
-            if view.value:
-                buttonstyle = view.value["values"][0]
-            else:
-                raise asyncio.exceptions.TimeoutError
-
-
-            embed=discord.Embed(title="🛠️ Event Categories setup", description="Type in how many people should be able to join this category as a positive integer! If you do not wish to limit this, type `skip`.", color=self.bot.embedBlue)
-            await setup_msg.edit(embed=embed, view=None)
-            message = await self.bot.wait_for('message', timeout = 180.0, check=idcheck)
-            await message.delete()
-            try:
-                member_cap = int(message.content) if message.content.lower() != "skip" else None
-                if member_cap and (member_cap <= 0 or member_cap > 100):
-                    raise ValueError
-            except ValueError:
-                embed=discord.Embed(title="❌ Error: Invalid value", description="Value must be positive integer below 100. Operation cancelled.", color=self.bot.errorColor)
-                await setup_msg.edit(embed=embed);  return 1
-
-            categories[category_name] = {
-                "emoji": str(emoji),
-                "buttonlabel": category_name,
-                "buttonstyle": buttonstyle,
-                "member_cap": member_cap,
-                "members": []
-            }
-            if len(categories) < 9:
-                embed=discord.Embed(title="🛠️ Event Categories setup", description="Category added! Would you like to add another?", color=self.bot.embedBlue)
-                create_another = await ctx.confirm(embed=embed, delete_after=True)
-                if create_another == True:
-                    return await add_category(first=False)
-                elif create_another == False:
-                    return 0
-                else:
-                    raise asyncio.exception.TimeoutError
-            else:
-                return 0
-
-        exit_code = await add_category(first=True)
-        if exit_code != 0:
+        try:
+            categories = await self.add_category(ctx, setup_msg, first=True, loop=True)
+        except exceptions.UserInputError:
             return
 
+        '''Role restrictions adding'''
         role_options = []
         for role in ctx.guild.roles:
             if role.name != "@everyone":

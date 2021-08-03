@@ -97,7 +97,7 @@ class SnedBot(commands.Bot):
 
         self.caching = cache.Caching(self)
         self.config = config
-        self.config.pop["token"]
+        self.config.pop("token")
 
         self.EXPERIMENTAL = config["experimental"]
         self.DEFAULT_PREFIX = 'sn '
@@ -331,7 +331,7 @@ class SnedBot(commands.Bot):
             '''If no known error has been passed, we will print the exception to console as usual
             IMPORTANT!!! If you remove this, your command errors will not get output to console.'''
 
-            logging.error('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+            logging.error('Ignoring exception in command {}:'.format(ctx.command))
             exception_msg = "\n".join(traceback.format_exception(type(error), error, error.__traceback__))
 
             try:
