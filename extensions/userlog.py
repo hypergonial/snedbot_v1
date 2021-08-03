@@ -103,8 +103,10 @@ class Logging(commands.Cog):
         #Add it to the recently deleted so on_raw_message_edit will ignore this
         self.recently_edited.append(after.id)
         #Then do info collection & dump
+        before_content = before.content if len(before.content) < 1800 else before.content[:1800] + "..."
+        after_content = after.content if len(after.content) < 1800 else after.content[:1800] + "..."
         if not after.author.bot:
-            embed = discord.Embed(title=f"🖊️ Message edited", description=f"**Message author:** `{after.author} ({after.author.id})`\n**Channel:** {after.channel.mention}\n**Before:** ```{before.content}``` \n**After:** ```{after.content}```\n[Jump!]({after.jump_url})", color=self.bot.embedBlue)
+            embed = discord.Embed(title=f"🖊️ Message edited", description=f"**Message author:** `{after.author} ({after.author.id})`\n**Channel:** {after.channel.mention}\n**Before:** ```{before_content}``` \n**After:** ```{after_content}```\n[Jump!]({after.jump_url})", color=self.bot.embedBlue)
             await self.log_standard(embed, after.guild.id)
 
 
