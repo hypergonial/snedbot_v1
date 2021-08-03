@@ -4,6 +4,7 @@ import gettext
 import logging
 import os
 import sys
+import time
 import traceback
 from dataclasses import dataclass
 from difflib import get_close_matches
@@ -21,6 +22,13 @@ try:
 except ImportError:
     logging.error("Failed loading configuration. Please make sure 'config.py' exists in the root directory of the project and contains valid data.")
     exit()
+
+try:
+    import uvloop
+    uvloop.install()
+except ModuleNotFoundError:
+    logging.warn('Failed to import uvloop, expect degraded performance!\nFor best performance, please "pip install uvloop"!')
+    time.sleep(3)
 
 #Language
 lang = "en"
