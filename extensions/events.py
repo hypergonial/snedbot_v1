@@ -785,6 +785,68 @@ class Events(commands.Cog):
                         await self.bot.caching.refresh(
                             table="events", guild_id=ctx.guild.id
                         )
+                        embed = discord.Embed(
+                            title=f"🛠️ Editing {event_embed.title}",
+                            description="✅ Event deleted!",
+                            color=self.bot.embedGreen,
+                                )
+                        await setup_msg.edit(embed=embed, view=None)
+
+                    elif view.value == "timestamp":
+                        embed = discord.Embed(
+                            title=f"🛠️ Editing {event_embed.title}",
+                            description="""Type in a new end date! Formatting help:
+                        
+                            **Absolute:**
+                            `YYYY-MM-dd hh:mm`
+                            `YYYY-MM-dd`
+                            **Note:** Absolute times must be in UTC. [This website](https://www.timeanddate.com/worldclock/timezone/utc) may be of assistance.
+
+                            **Relative:**
+                            Examples:
+                            `in 5 days`
+                            `1 week`
+                            `2M`
+
+                            For more information about time and date formatting, please refer to the [documentation](https://sned.hypersden.com/docs/modules/reminders.html).
+                            """,
+                            color=self.bot.embedBlue,
+                            )
+                        await setup_msg.edit(embed=embed, view=None)
+                        message = await self.bot.wait_for("message", timeout=300.0, check=check)
+                        try:
+                            new_expiry, string = await self.bot.get_cog("Timers").converttime(
+                                message.content
+                            )
+                        except ValueError as error:
+                            embed = discord.Embed(
+                                title="❌ Error: Date formatting error",
+                                description=f"Failed reading date. Operation cancelled.\n**Error:** ```{error}```",
+                                color=self.bot.errorColor)
+
+                            await setup_msg.edit(embed=embed); return
+                        else:
+                            await message.delete()
+                            async with self.bot.pool.acquire() as con:
+                                timer_records = await con.fetch('''
+                                SELECT id FROM timers 
+                                WHERE event = 'event' AND guild_id = $1 AND channel_id = $2 AND notes = $3''',
+                                ctx.guild.id, records[0]['channel_id'], str(records[0]['entry_id']))
+                            if timer_records:
+                                await self.bot.get_cog("Timers").update_timer(new_expiry, timer_records[0].get('id'), ctx.guild.id)
+                                for i, field in enumerate(event_embed.fields):
+                                    if field.name == "Event start":
+                                        insert_at = i; break
+                                event_embed.insert_field_at(insert_at, name="Event start", value=f"{discord.utils.format_dt(new_expiry, style='F')} ({discord.utils.format_dt(new_expiry, style='R')})")
+                                event_embed.remove_field(insert_at+1)
+                                await event_message.edit(embed=event_embed)
+                                embed = discord.Embed(
+                                    title=f"🛠️ Editing {event_embed.title}",
+                                    description="✅ Timestamp updated!",
+                                    color=self.bot.embedGreen,
+                                )
+                                await setup_msg.edit(embed=embed)
+
                     else:
                         await setup_msg.delete()
 

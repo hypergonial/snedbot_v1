@@ -226,7 +226,20 @@ class Timers(commands.Cog):
             self.currenttask.cancel()
             self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
 
+    async def update_timer(self, expires:datetime.datetime, entry_id:int, guild_id:int):
+        '''Update a timer's expiry'''
+
+        expires = round(expires.timestamp())
+        async with self.bot.pool.acquire() as con:
+            await con.execute('''UPDATE timers SET expires = $1 WHERE id = $2 AND guild_id = $3''', expires, entry_id, guild_id)
+        if self.current_timer and self.current_timer.id == entry_id:
+            logging.debug("Updating timers resulted in reshuffling.")
+            self.currenttask.cancel()
+            self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
+
     async def create_timer(self, expires:datetime.datetime, event:str, guild_id:int, user_id:int, channel_id:int=None, *, notes:str=None):
+        '''Create a new timer, will dispatch on_<event>_timer_complete when finished.'''
+
         logging.debug(f"Expiry: {expires}")
         expires=round(expires.timestamp()) #Converting it to time since epoch
         async with self.bot.pool.acquire() as con:
