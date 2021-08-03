@@ -99,12 +99,12 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             '''
             Role-Button list page source
             '''
-            def __init__(self, data):
-                super().__init__(data, per_page=1)
+            def __init__(self, entries:list):
+                super().__init__(entries, per_page=1)
 
-            async def format_page(self, menu, entries):
-                offset = menu.current_page * self.per_page
-                embed = discord.Embed(title='Role-Buttons on this server', description=(f'{v}' for i, v in enumerate(entries, start=offset)), color=ctx.bot.embedBlue)
+            async def format_page(self, menu, entries:list):
+                print(entries)
+                embed = discord.Embed(title='Role-Buttons on this server', description=entries[menu.current_page],color=menu.ctx.bot.embedBlue)
                 embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
                 return embed
 
@@ -114,7 +114,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             for record in records:
                 paginator.add_line(f"**#{record['entry_id']}** - {ctx.guild.get_channel(record['channel_id']).mention} - {ctx.guild.get_role(record['role_id']).mention}")
             
-            pages = ViewMenuPages(source=RbSource(paginator.pages), clear_reactions_after=True)
+            pages = ViewMenuPages(source=RbSource([paginator.pages]), clear_reactions_after=True)
             await pages.start(ctx)
         else:
             embed=discord.Embed(title="❌ Error: No role-buttons", description="There are no role-buttons for this server.", color=self.bot.errorColor)
