@@ -427,7 +427,7 @@ class Tags(commands.Cog):
             pages = ViewMenuPages(source=TagSource(sorted([tag.tag_name for tag in tags])), clear_reactions_after=True)
             await pages.start(ctx)
         else:
-            embed = discord.Embed(title="💬 " + self._("Available tags for this guild:"), description=self._("There are currently no tags! You can create one via `{prefix}tag create`").format(prefix=ctx.prefix), color=self.bot.embedBlue)
+            embed = discord.Embed(title="💬 " + self._("Available tags for this server:"), description=self._("There are currently no tags! You can create one via `{prefix}tag create`").format(prefix=ctx.prefix), color=self.bot.embedBlue)
             await ctx.send(embed=embed)
 
     @tag.command(name="search", help="Tries to search for a specified tag.", description="Tries searching for a specified tag in the list of this server's tags.", usage="tag search <name>")
