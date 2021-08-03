@@ -87,11 +87,11 @@ class Caching():
                             for (key, value) in records.items():
                                 filtered_records[key].append(value[match]) #Then filter them out
                         if len(filtered_records) > 0:
-                            return self.format_records(filtered_records)
+                            return await self.format_records(filtered_records)
             else:
                 logging.debug("Loading data from cache...")
                 if len(self.cache[table][guild_id]) > 0:
-                    return self.format_records(self.cache[table][guild_id])
+                    return await self.format_records(self.cache[table][guild_id])
         
         else:
             logging.debug("Loading data from database and loading into cache...")
