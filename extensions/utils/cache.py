@@ -27,7 +27,10 @@ class Caching():
         Creates an empty dict for every table in the database
         '''
         await self.bot.wait_until_ready()
-        records = self.bot.pool.fetch('''SELECT * FROM pg_catalog.pg_tables WHERE schemaname='public' ''')
+        records = await self.bot.pool.fetch('''
+        SELECT * FROM pg_catalog.pg_tables 
+        WHERE schemaname='public'
+        ''')
         for record in records:
             self.cache[record.get("tablename")] = {}
         logging.info("Cache initialized!")

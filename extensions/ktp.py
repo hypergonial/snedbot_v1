@@ -25,21 +25,22 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
         Check if the message is no longer on top, delete the old, and move it to the "top" again
         Also update the message ID so we know which one to delete next time
         '''
-        if message.guild and message.guild.id in self.bot.whitelisted_guilds:
-            records = await self.bot.caching.get(table="ktp", guild_id=message.guild.id)
-            if records:
-                for record in records:
-                    if record['ktp_channel_id'] == message.channel.id and record['ktp_content'] != message.content and record['ktp_msg_id'] != message.id:
-                        channel = message.channel
-                        previous_top = channel.get_partial_message(record['ktp_msg_id'])
-                        try:
-                            await previous_top.delete() #Necessary to put in a try/except otherwise on a spammy channel this might spam the console to hell
-                        except discord.errors.NotFound:
-                            return
-                        new_top = await channel.send(content=record['ktp_content'])
-                        await self.bot.pool.execute('''UPDATE ktp SET ktp_msg_id = $1 WHERE guild_id = $2 AND ktp_id = $3''', new_top.id, message.guild.id, record['ktp_id'])
-                        await self.bot.caching.refresh(table="ktp", guild_id=message.guild.id)
-                        break
+        if self.bot.is_ready() and self.bot.caching.is_ready:
+            if message.guild and message.guild.id in self.bot.whitelisted_guilds:
+                records = await self.bot.caching.get(table="ktp", guild_id=message.guild.id)
+                if records:
+                    for record in records:
+                        if record['ktp_channel_id'] == message.channel.id and record['ktp_content'] != message.content and record['ktp_msg_id'] != message.id:
+                            channel = message.channel
+                            previous_top = channel.get_partial_message(record['ktp_msg_id'])
+                            try:
+                                await previous_top.delete() #Necessary to put in a try/except otherwise on a spammy channel this might spam the console to hell
+                            except discord.errors.NotFound:
+                                return
+                            new_top = await channel.send(content=record['ktp_content'])
+                            await self.bot.pool.execute('''UPDATE ktp SET ktp_msg_id = $1 WHERE guild_id = $2 AND ktp_id = $3''', new_top.id, message.guild.id, record['ktp_id'])
+                            await self.bot.caching.refresh(table="ktp", guild_id=message.guild.id)
+                            break
 
 
     @commands.group(aliases=["ktp"], help="Lists all keep-on-top messages. Subcommands can add/remove them.", description="Helps you list/manage keep-on-top messages. Keep-on-top messages are messages that are always the last message in the given channel, effectively being pinned.", usage="keepontop", invoke_without_command=True, case_insensitive=True)
