@@ -71,12 +71,11 @@ class Permissions(commands.Cog):
                 if role_id not in guild_role_ids:
                     raise ValueError("One of the role_ids specified is invalid, or not found in the current guild.")
 
-            async with self.bot.pool.acquire() as con:
-                await con.execute('''
-                INSERT INTO permissions (guild_id, ptype, role_ids)
-                VALUES ($1, $2, $3) 
-                ON CONFLICT (guild_id, ptype) DO
-                UPDATE SET role_ids = $3''', guild.id, ptype, role_ids)
+            await self.bot.pool.execute('''
+            INSERT INTO permissions (guild_id, ptype, role_ids)
+            VALUES ($1, $2, $3) 
+            ON CONFLICT (guild_id, ptype) DO
+            UPDATE SET role_ids = $3''', guild.id, ptype, role_ids)
             await self.bot.caching.refresh(table="permissions", guild_id=guild.id)
             
         else:
@@ -90,12 +89,11 @@ class Permissions(commands.Cog):
         if role_id not in role_ids:
             role_ids.append(role_id)
 
-            async with self.bot.pool.acquire() as con:
-                    await con.execute('''
-                    INSERT INTO permissions (guild_id, ptype, role_ids)
-                    VALUES ($1, $2, $3) 
-                    ON CONFLICT (guild_id, ptype) DO
-                    UPDATE SET role_ids = $3''', guild.id, ptype, role_ids)
+            await self.bot.pool.execute('''
+            INSERT INTO permissions (guild_id, ptype, role_ids)
+            VALUES ($1, $2, $3) 
+            ON CONFLICT (guild_id, ptype) DO
+            UPDATE SET role_ids = $3''', guild.id, ptype, role_ids)
             await self.bot.caching.refresh(table="permissions", guild_id=guild.id)
         else:
             raise ValueError('Role already added to permission node.')
@@ -106,12 +104,11 @@ class Permissions(commands.Cog):
         if role_id in role_ids:
             role_ids.remove(role_id)
 
-            async with self.bot.pool.acquire() as con:
-                    await con.execute('''
-                    INSERT INTO permissions (guild_id, ptype, role_ids)
-                    VALUES ($1, $2, $3) 
-                    ON CONFLICT (guild_id, ptype) DO
-                    UPDATE SET role_ids = $3''', guild.id, ptype, role_ids)
+            await self.bot.pool.execute('''
+            INSERT INTO permissions (guild_id, ptype, role_ids)
+            VALUES ($1, $2, $3) 
+            ON CONFLICT (guild_id, ptype) DO
+            UPDATE SET role_ids = $3''', guild.id, ptype, role_ids)
             await self.bot.caching.refresh(table="permissions", guild_id=guild.id)
         else:
             raise ValueError('Role not in permission node.')

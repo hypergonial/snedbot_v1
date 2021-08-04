@@ -40,21 +40,20 @@ class Logging(commands.Cog):
         
 
     async def log_elevated(self, logcontent, guild_id):
-        async with self.bot.pool.acquire() as con:
-            records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
-            if records and records[0]["elevated_log_channel_id"]:
-                guild = self.bot.get_guild(guild_id)
-                elevated_loggingchannel = guild.get_channel(records[0]["elevated_log_channel_id"])
-                if elevated_loggingchannel is None: await self.log_standard(logcontent, guild_id)
-                try:
-                    if isinstance(logcontent, discord.Embed):
-                        await elevated_loggingchannel.send(embed=logcontent)
-                    elif isinstance(logcontent, str):
-                        await elevated_loggingchannel.send(content=logcontent)
-                except discord.Forbidden:
-                    await self.log_standard(logcontent, guild_id)
-            else:
-                await self.log_standard(logcontent, guild_id) #Fallback to standard logging channel
+        records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
+        if records and records[0]["elevated_log_channel_id"]:
+            guild = self.bot.get_guild(guild_id)
+            elevated_loggingchannel = guild.get_channel(records[0]["elevated_log_channel_id"])
+            if elevated_loggingchannel is None: await self.log_standard(logcontent, guild_id)
+            try:
+                if isinstance(logcontent, discord.Embed):
+                    await elevated_loggingchannel.send(embed=logcontent)
+                elif isinstance(logcontent, str):
+                    await elevated_loggingchannel.send(content=logcontent)
+            except discord.Forbidden:
+                await self.log_standard(logcontent, guild_id)
+        else:
+            await self.log_standard(logcontent, guild_id) #Fallback to standard logging channel
 
 
     #Message deletion logging
@@ -183,7 +182,7 @@ class Logging(commands.Cog):
                     break
         except discord.Forbidden:
             return
-        embed = discord.Embed(title=f"#️⃣ Channel created", description=f"**Channel:** {channel.mention} `({channel.type})`\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.embedGreen)
+        embed = discord.Embed(title=f"#️⃣ Channel created", description=f"**Channel:** {channel.mention} `({channel.type})`\n**Moderator:** `{moderator}`", color=self.bot.embedGreen)
         await self.log_elevated(embed, channel.guild.id)
 
     @commands.Cog.listener()

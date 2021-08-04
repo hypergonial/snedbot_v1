@@ -53,7 +53,7 @@ class TagHandler():
         Will try to find aliases too.
         '''
         async with self.bot.pool.acquire() as con:
-            result = await con.fetch('''SELECT * FROM tags WHERE tag_name = $1 AND guild_id = $2''', tag_name.lower(), guild_id)
+            result = await self.bot.pool.fetch('''SELECT * FROM tags WHERE tag_name = $1 AND guild_id = $2''', tag_name.lower(), guild_id)
             if len(result) != 0:
                 tag = Tag(guild_id=result[0].get('guild_id'), tag_name=result[0].get('tag_name'), tag_owner_id=result[0].get('tag_owner_id'), 
                 tag_aliases=result[0].get('tag_aliases'), tag_content=result[0].get('tag_content'))
@@ -68,28 +68,25 @@ class TagHandler():
         '''
         Creates a new tag based on an instance of a Tag.
         '''
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''
-            INSERT INTO tags (guild_id, tag_name, tag_owner_id, tag_aliases, tag_content)
-            VALUES ($1, $2, $3, $4, $5)''', tag.guild_id, tag.tag_name, tag.tag_owner_id, tag.tag_aliases, tag.tag_content)
+        await self.bot.pool.execute('''
+        INSERT INTO tags (guild_id, tag_name, tag_owner_id, tag_aliases, tag_content)
+        VALUES ($1, $2, $3, $4, $5)''', tag.guild_id, tag.tag_name, tag.tag_owner_id, tag.tag_aliases, tag.tag_content)
     
     async def get_all(self, guild_id : int):
         '''
         Returns a list of all tags for the specified guild.
         '''
-        async with self.bot.pool.acquire() as con:
-            results = await con.fetch('''SELECT * FROM tags WHERE guild_id = $1''', guild_id)
-            if len(results) != 0:
-                tags = []
-                for result in results:
-                    tag = Tag(guild_id=result.get('guild_id'), tag_name=result.get('tag_name'), tag_owner_id=result.get('tag_owner_id'), 
-                    tag_aliases=result.get('tag_aliases'), tag_content=result.get('tag_content'))
-                    tags.append(tag)
-                return tags
+        results = await self.bot.pool.fetch('''SELECT * FROM tags WHERE guild_id = $1''', guild_id)
+        if len(results) != 0:
+            tags = []
+            for result in results:
+                tag = Tag(guild_id=result.get('guild_id'), tag_name=result.get('tag_name'), tag_owner_id=result.get('tag_owner_id'), 
+                tag_aliases=result.get('tag_aliases'), tag_content=result.get('tag_content'))
+                tags.append(tag)
+            return tags
     
     async def delete(self, tag_name : str, guild_id : int):
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''DELETE FROM tags WHERE tag_name = $1 AND guild_id = $2''', tag_name, guild_id)
+        await self.bot.pool.execute('''DELETE FROM tags WHERE tag_name = $1 AND guild_id = $2''', tag_name, guild_id)
     
     async def migrate(self, origin_id:int, destination_id:int, invoker_id:int, tag_name:str):
         '''

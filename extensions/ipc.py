@@ -129,13 +129,12 @@ class IpcRoutes(commands.Cog):
         module_name = data.module_name
         is_enabled = data.is_enabled
 
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''
-            INSERT INTO modules (guild_id, module_name, is_enabled)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (guild_id, module_name) DO
-            UPDATE SET is_enabled = $3
-            ''', guild_id, module_name, is_enabled)
+        await self.bot.pool.execute('''
+        INSERT INTO modules (guild_id, module_name, is_enabled)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (guild_id, module_name) DO
+        UPDATE SET is_enabled = $3
+        ''', guild_id, module_name, is_enabled)
         await self.bot.caching.refresh(table="modules", guild_id=guild_id)
 
 
@@ -169,25 +168,25 @@ class IpcRoutes(commands.Cog):
     async def set_moderation_settings(self, data) -> None:
         guild_id = data.guild_id
         mod_settings = data.mod_settings
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''
-            INSERT INTO mod_config (guild_id, dm_users_on_punish, clean_up_mod_commands)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (guild_id) DO
-            UPDATE SET dm_users_on_punish = $2, clean_up_mod_commands = $3''',
-            guild_id, mod_settings["dm_users_on_punish"], mod_settings["clean_up_mod_commands"])
+
+        await self.bot.pool.execute('''
+        INSERT INTO mod_config (guild_id, dm_users_on_punish, clean_up_mod_commands)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (guild_id) DO
+        UPDATE SET dm_users_on_punish = $2, clean_up_mod_commands = $3''',
+        guild_id, mod_settings["dm_users_on_punish"], mod_settings["clean_up_mod_commands"])
         await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
     
     @ipc.server.route()
     async def set_mute_role(self, data) -> None:
         guild_id = data.guild_id
         mute_role_id = data.mute_role_id
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''INSERT INTO mod_config (guild_id, mute_role_id)
-            VALUES ($1, $2)
-            ON CONFLICT (guild_id) DO
-            UPDATE SET mute_role_id = $2
-            ''', guild_id, mute_role_id)
+
+        await self.bot.pool.execute('''INSERT INTO mod_config (guild_id, mute_role_id)
+        VALUES ($1, $2)
+        ON CONFLICT (guild_id) DO
+        UPDATE SET mute_role_id = $2
+        ''', guild_id, mute_role_id)
         await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
 
     @ipc.server.route()
@@ -219,17 +218,17 @@ class IpcRoutes(commands.Cog):
         existing_policies = await self.bot.get_cog("Moderation").get_policies(guild_id)
         existing_policies.update(policies)
 
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''
-            INSERT INTO mod_config (
-                guild_id, 
-                automod_policies
-                )
-            VALUES ($1, $2)
-            ON CONFLICT (guild_id) DO
-            UPDATE SET automod_policies = $2
-            ''',
-            guild_id, json.dumps(existing_policies))
+
+        await self.bot.pool.execute('''
+        INSERT INTO mod_config (
+            guild_id, 
+            automod_policies
+            )
+        VALUES ($1, $2)
+        ON CONFLICT (guild_id) DO
+        UPDATE SET automod_policies = $2
+        ''',
+        guild_id, json.dumps(existing_policies))
         await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
 
 
@@ -241,13 +240,12 @@ class IpcRoutes(commands.Cog):
         automod_policies = await self.bot.get_cog("Moderation").get_policies(data.guild_id)
         automod_policies["escalate"] = escalate_policy
 
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''
-            INSERT INTO mod_config (guild_id, automod_policies)
-            VALUES ($1, $2)
-            ON CONFLICT (guild_id) DO
-            UPDATE SET automod_policies = $2
-            ''', guild_id, json.dumps(automod_policies))
+        await self.bot.pool.execute('''
+        INSERT INTO mod_config (guild_id, automod_policies)
+        VALUES ($1, $2)
+        ON CONFLICT (guild_id) DO
+        UPDATE SET automod_policies = $2
+        ''', guild_id, json.dumps(automod_policies))
         await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
 
 

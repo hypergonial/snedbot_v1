@@ -26,7 +26,7 @@ except ImportError:
 try:
     import uvloop
     uvloop.install()
-except ModuleNotFoundError:
+except (ModuleNotFoundError, ImportError):
     logging.warn('Failed to import uvloop, expect degraded performance!\nFor best performance, please "pip install uvloop"!')
     time.sleep(3)
 
@@ -225,9 +225,8 @@ class SnedBot(commands.Bot):
     async def on_guild_join(self, guild):
         '''Generate guild entry for DB'''
 
-        async with bot.pool.acquire() as con:
-            await con.execute('INSERT INTO global_config (guild_id) VALUES ($1)', guild.id)
-        if guild.system_channel != None :
+        await self.bot.pool.execute('INSERT INTO global_config (guild_id) VALUES ($1)', guild.id)
+        if guild.system_channel is not None:
             try:
                 embed=discord.Embed(title=_("Beep Boop!"), description=_("I have been summoned to this server. Use `{prefix}help` to see what I can do!").format(prefix=bot.DEFAULT_PREFIX), color=0xfec01d)
                 embed.set_thumbnail(url=self.user.avatar.url)
@@ -243,8 +242,7 @@ class SnedBot(commands.Bot):
         The reason this does not use GlobalConfig.deletedata() is to not recreate the entry for the guild
         '''
 
-        async with bot.pool.acquire() as con:
-            await con.execute('''DELETE FROM global_config WHERE guild_id = $1''', guild.id)
+        await self.bot.pool.execute('''DELETE FROM global_config WHERE guild_id = $1''', guild.id)
         await self.caching.wipe(guild.id)
         logging.info(f"Bot has been removed from guild {guild.id}, correlating data erased.")
 
@@ -412,31 +410,7 @@ class GlobalConfig():
         notes:str=None
 
     def __init__(self, bot):
-        async def init_table():
-            self.bot = bot
-            async with bot.pool.acquire() as con:
-                await con.execute('''
-                CREATE TABLE IF NOT EXISTS public.global_config
-                (
-                    guild_id bigint NOT NULL,
-                    prefix text[],
-                    PRIMARY KEY (guild_id)
-                )''')
-                await con.execute('''
-                CREATE TABLE IF NOT EXISTS public.users
-                (
-                    user_id bigint NOT NULL,
-                    guild_id bigint NOT NULL,
-                    flags text[],
-                    warns integer NOT NULL DEFAULT 0,
-                    is_muted bool NOT NULL DEFAULT false,
-                    notes text,
-                    PRIMARY KEY (user_id, guild_id),
-                    FOREIGN KEY (guild_id)
-                        REFERENCES global_config (guild_id)
-                        ON DELETE CASCADE
-                )''')
-        bot.loop.run_until_complete(init_table())
+        self.bot = bot
         self.cleanup_userdata.start()
 
     @tasks.loop(seconds=3600.0)
@@ -444,10 +418,7 @@ class GlobalConfig():
         '''Clean up garbage userdata from db'''
 
         await bot.wait_until_ready()
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''
-                DELETE FROM users WHERE flags IS NULL and warns = 0 AND is_muted = false AND notes IS NULL 
-                ''')
+        await self.bot.pool.execute('DELETE FROM users WHERE flags IS NULL and warns = 0 AND is_muted = false AND notes IS NULL')
 
     async def deletedata(self, guild_id):
         '''
@@ -470,24 +441,21 @@ class GlobalConfig():
         Takes an instance of GlobalConfig.User and tries to either update or create a new user entry if one does not exist already
         '''
 
-        async with bot.pool.acquire() as con:
-            try:
-                await con.execute('''
-                INSERT INTO users (user_id, guild_id, flags, warns, is_muted, notes) 
-                VALUES ($1, $2, $3, $4, $5, $6)
-                ON CONFLICT (user_id, guild_id) DO
-                UPDATE SET flags = $3, warns = $4, is_muted = $5, notes = $6''', user.user_id, user.guild_id, user.flags, user.warns, user.is_muted, user.notes)
-            except asyncpg.exceptions.ForeignKeyViolationError:
-                logging.warn('Trying to update a guild db_user whose guild no longer exists. This could be due to pending timers.')
+        try:
+            await self.bot.pool.execute('''
+            INSERT INTO users (user_id, guild_id, flags, warns, is_muted, notes) 
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (user_id, guild_id) DO
+            UPDATE SET flags = $3, warns = $4, is_muted = $5, notes = $6''', user.user_id, user.guild_id, user.flags, user.warns, user.is_muted, user.notes)
+        except asyncpg.exceptions.ForeignKeyViolationError:
+            logging.warn('Trying to update a guild db_user whose guild no longer exists. This could be due to pending timers.')
 
     async def get_user(self, user_id, guild_id): 
         '''
         Gets an instance of GlobalConfig.User that contains basic information about the user in relation to a guild
         Returns None if not found
         '''
-
-        async with bot.pool.acquire() as con:
-            result = await con.fetch('''SELECT * FROM users WHERE user_id = $1 AND guild_id = $2''', user_id, guild_id)
+        result = await self.bot.pool.fetch('''SELECT * FROM users WHERE user_id = $1 AND guild_id = $2''', user_id, guild_id)
         if result:
             user = self.User(user_id = result[0].get('user_id'), guild_id=result[0].get('guild_id'), flags=result[0].get('flags'), 
             warns=result[0].get('warns'), is_muted=result[0].get('is_muted'), notes=result[0].get('notes'))
@@ -503,9 +471,7 @@ class GlobalConfig():
         Returns all users related to a specific guild as a list of GlobalConfig.User
         Return None if no users are contained in the database
         '''
-
-        async with bot.pool.acquire() as con:
-            results = await con.fetch('''SELECT * FROM users WHERE guild_id = $1''', guild_id)
+        results = await self.bot.pool.fetch('''SELECT * FROM users WHERE guild_id = $1''', guild_id)
         if results:
             users = []
             for result in results:

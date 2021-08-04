@@ -13,12 +13,11 @@ It is also really old & may need a rewrite to properly handle buttons, and just 
 '''
 #Check to see if matchmaking is set up or not
 async def is_setup(ctx):
-    async with ctx.bot.pool.acquire() as con:
-        result = await con.fetch('''SELECT * FROM matchmaking_config WHERE guild_id = $1''', ctx.guild.id)
-        if len(result) != 0 and result[0]:
-            if result[0].get('announce_channel_id'):
-                return True
-        return False
+    result = await ctx.bot.pool.fetch('''SELECT * FROM matchmaking_config WHERE guild_id = $1''', ctx.guild.id)
+    if len(result) != 0 and result[0]:
+        if result[0].get('announce_channel_id'):
+            return True
+    return False
 
 def is_anno_guild(ctx):
     return ctx.guild.id in ctx.bot.anno_guilds
@@ -30,18 +29,16 @@ class Matchmaking_Config():
 
     
     async def load(self, data : str, guild_id : int):
-        async with self.bot.pool.acquire() as con:
-            result = await con.fetch('''SELECT * FROM matchmaking_config WHERE guild_id = $1''', guild_id)
-            if len(result) != 0 and result[0]:
-                return result[0].get(data)
+        result = await self.bot.pool.fetch('''SELECT * FROM matchmaking_config WHERE guild_id = $1''', guild_id)
+        if len(result) != 0 and result[0]:
+            return result[0].get(data)
     
     #This one is actually not used anywhere currently, but I thought I would include it for completeness's sake
     async def save(self, data : str, value : int, guild_id : int):
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''
-            INSERT INTO matchmaking_config (guild_id, $1) VALUES ($2, $3)
-            ON CONFLICT (guild_id) DO
-            UPDATE SET $1 = $3''')
+        await self.bot.pool.execute('''
+        INSERT INTO matchmaking_config (guild_id, $1) VALUES ($2, $3)
+        ON CONFLICT (guild_id) DO
+        UPDATE SET $1 = $3''')
 
 
 @dataclass
@@ -69,44 +66,40 @@ class Listings():
 
     
     async def retrieve(self, id):
-        async with self.bot.pool.acquire() as con:
-            result = await con.fetch('''SELECT * FROM matchmaking_listings WHERE id = $1''', id)
-            if len(result) != 0 and result[0]:
-                listing = Listing(id=result[0].get('id'), ubiname=result[0].get('ubiname'), host_id=result[0].get('host_id'), 
-                gamemode=result[0].get('gamemode'), playercount=result[0].get('playercount'), DLC=result[0].get('DLC'), mods=result[0].get('mods'), 
-                timezone=result[0].get('timezone'), additional_info=result[0].get('additional_info'), timestamp=result[0].get('timestamp'), 
-                guild_id=result[0].get('guild_id'))
+        result = await self.bot.pool.fetch('''SELECT * FROM matchmaking_listings WHERE id = $1''', id)
+        if len(result) != 0 and result[0]:
+            listing = Listing(id=result[0].get('id'), ubiname=result[0].get('ubiname'), host_id=result[0].get('host_id'), 
+            gamemode=result[0].get('gamemode'), playercount=result[0].get('playercount'), DLC=result[0].get('DLC'), mods=result[0].get('mods'), 
+            timezone=result[0].get('timezone'), additional_info=result[0].get('additional_info'), timestamp=result[0].get('timestamp'), 
+            guild_id=result[0].get('guild_id'))
 
-                return listing
+            return listing
     
     async def retrieve_all(self):
-        async with self.bot.pool.acquire() as con:
-            results = await con.fetch('''SELECT * FROM matchmaking_listings ORDER BY timestamp''')
+        results = await self.bot.pool.fetch('''SELECT * FROM matchmaking_listings ORDER BY timestamp''')
 
-            if len(results) != 0:
-                listings = []
-                for result in results:
-                    listing = Listing(id=result.get('id'), ubiname=result.get('ubiname'), host_id=result.get('host_id'), 
-                    gamemode=result.get('gamemode'), playercount=result.get('playercount'), DLC=result.get('DLC'), mods=result.get('mods'), 
-                    timezone=result.get('timezone'), additional_info=result.get('additional_info'), timestamp=result.get('timestamp'), 
-                    guild_id=result.get('guild_id'))
-                    
-                    listings.append(listing)
-                return listings
+        if len(results) != 0:
+            listings = []
+            for result in results:
+                listing = Listing(id=result.get('id'), ubiname=result.get('ubiname'), host_id=result.get('host_id'), 
+                gamemode=result.get('gamemode'), playercount=result.get('playercount'), DLC=result.get('DLC'), mods=result.get('mods'), 
+                timezone=result.get('timezone'), additional_info=result.get('additional_info'), timestamp=result.get('timestamp'), 
+                guild_id=result.get('guild_id'))
+                
+                listings.append(listing)
+            return listings
     
     async def create(self, listing):
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''
-            INSERT INTO matchmaking_listings (id, ubiname, host_id, gamemode, playercount, DLC, mods, timezone, additional_info, timestamp, guild_id) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)''', 
-            listing.id, listing.ubiname, listing.host_id, listing.gamemode, listing.playercount, listing.DLC, listing.mods, listing.timezone, 
-            listing.additional_info, listing.timestamp, listing.guild_id)
+        await self.bot.pool.execute('''
+        INSERT INTO matchmaking_listings (id, ubiname, host_id, gamemode, playercount, DLC, mods, timezone, additional_info, timestamp, guild_id) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)''', 
+        listing.id, listing.ubiname, listing.host_id, listing.gamemode, listing.playercount, listing.DLC, listing.mods, listing.timezone, 
+        listing.additional_info, listing.timestamp, listing.guild_id)
     
     async def delete(self, id):
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''
-            DELETE FROM matchmaking_listings WHERE id = $1
-            ''', id)
+        await self.bot.pool.execute('''
+        DELETE FROM matchmaking_listings WHERE id = $1
+        ''', id)
 
 
 

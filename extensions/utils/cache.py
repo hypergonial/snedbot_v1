@@ -27,12 +27,7 @@ class Caching():
         Creates an empty dict for every table in the database
         '''
         await self.bot.wait_until_ready()
-        async with self.bot.pool.acquire() as con:
-            records = await con.fetch('''
-            SELECT *
-            FROM pg_catalog.pg_tables
-            WHERE schemaname='public'
-            ''')
+        records = self.bot.pool.fetch('''SELECT * FROM pg_catalog.pg_tables WHERE schemaname='public' ''')
         for record in records:
             self.cache[record.get("tablename")] = {}
         logging.info("Cache initialized!")
@@ -98,7 +93,7 @@ class Caching():
             await self.refresh(table, guild_id)
             return await self.get(table, guild_id, **kwargs)
 
-    async def update(self, sql_query:str, *args):
+    async def execute(self, sql_query:str, *args):
         '''
         Takes an SQL query and arguments, one of which must be the guild_id, and tries
         executing it. Refreshes the cache afterwards with the new values.
@@ -123,8 +118,7 @@ class Caching():
                 if col == "guild_id":
                     guild_id = args[i]
 
-        async with self.bot.pool.acquire() as con:
-            await con.execute(sql_query, *args)
+        await self.bot.pool.execute(sql_query, *args)
         for table in tables:
             await self.refresh(table=table, guild_id=guild_id)
 
@@ -137,14 +131,13 @@ class Caching():
         automatically calls this function.
         '''
         self.cache[table][guild_id] = {}
-        async with self.bot.pool.acquire() as con:
-            records = await con.fetch(f'''SELECT * FROM {table} WHERE guild_id = $1''', guild_id)
-            for record in records:
-                for (field, value) in record.items():
-                    if field in self.cache[table][guild_id].keys():
-                        self.cache[table][guild_id][field].append(value)
-                    else:
-                        self.cache[table][guild_id][field] = [value]
+        records = await self.bot.pool.fetch(f'''SELECT * FROM {table} WHERE guild_id = $1''', guild_id)
+        for record in records:
+            for (field, value) in record.items():
+                if field in self.cache[table][guild_id].keys():
+                    self.cache[table][guild_id][field].append(value)
+                else:
+                    self.cache[table][guild_id][field] = [value]
         logging.debug(f"Refreshed cache for table {table}, guild {guild_id}!")
     
     async def wipe(self, guild_id:int):

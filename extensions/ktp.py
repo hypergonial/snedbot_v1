@@ -37,8 +37,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
                         except discord.errors.NotFound:
                             return
                         new_top = await channel.send(content=record['ktp_content'])
-                        async with self.bot.pool.acquire() as con:
-                            await con.execute('''UPDATE ktp SET ktp_msg_id = $1 WHERE guild_id = $2 AND ktp_id = $3''', new_top.id, message.guild.id, record['ktp_id'])
+                        await self.bot.pool.execute('''UPDATE ktp SET ktp_msg_id = $1 WHERE guild_id = $2 AND ktp_id = $3''', new_top.id, message.guild.id, record['ktp_id'])
                         await self.bot.caching.refresh(table="ktp", guild_id=message.guild.id)
                         break
 
@@ -95,11 +94,10 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
             ktp_content = payload.content
             first_top = await ktp_channel.send(ktp_content)
 
-            async with self.bot.pool.acquire() as con:
-                await con.execute('''
-                INSERT INTO ktp (guild_id, ktp_channel_id, ktp_msg_id, ktp_content)
-                VALUES ($1, $2, $3, $4)
-                ''', ctx.guild.id, ktp_channel.id, first_top.id, ktp_content)
+            await self.bot.pool.execute('''
+            INSERT INTO ktp (guild_id, ktp_channel_id, ktp_msg_id, ktp_content)
+            VALUES ($1, $2, $3, $4)
+            ''', ctx.guild.id, ktp_channel.id, first_top.id, ktp_content)
             await self.bot.caching.refresh(table="ktp", guild_id=ctx.guild.id)
 
             embed=discord.Embed(title="🛠️ Keep-On-Top Setup", description=f"✅ Setup completed. This message will now be kept on top of {ktp_channel.mention}!", color=self.bot.embedGreen)
@@ -112,16 +110,15 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
     
     @keepontop.command(name="delete", aliases=["del", "remove"], help="Removes a keep-on-top message.", description="Removes a keep-on-top message entry, stopping the bot from keeping it on top anymore. You can get the keep-on-top entry ID via the `keepontop` command.", usage="keepontop delete <ID>")
     async def ktp_delete(self, ctx, id:int):
-        async with self.bot.pool.acquire() as con:
-            records = await self.bot.caching.get(table="ktp", guild_id=ctx.guild.id, ktp_id=id)
-            if records:
-                await con.execute('''DELETE FROM ktp WHERE guild_id = $1 AND ktp_id = $2''', ctx.guild.id, id)
-                await self.bot.caching.refresh(table="ktp", guild_id=ctx.guild.id)
-                embed=discord.Embed(title="✅ Keep-on-top message deleted", description="Keep-on-top message entry deleted and will no longer be kept in top!", color=self.bot.embedGreen)
-                await ctx.channel.send(embed=embed)
-            else:
-                embed=discord.Embed(title="❌ Error: Not found", description="There is no keep-on-top entry by that ID.", color=self.bot.errorColor)
-                await ctx.channel.send(embed=embed)
+        records = await self.bot.caching.get(table="ktp", guild_id=ctx.guild.id, ktp_id=id)
+        if records:
+            await self.bot.pool.execute('''DELETE FROM ktp WHERE guild_id = $1 AND ktp_id = $2''', ctx.guild.id, id)
+            await self.bot.caching.refresh(table="ktp", guild_id=ctx.guild.id)
+            embed=discord.Embed(title="✅ Keep-on-top message deleted", description="Keep-on-top message entry deleted and will no longer be kept in top!", color=self.bot.embedGreen)
+            await ctx.channel.send(embed=embed)
+        else:
+            embed=discord.Embed(title="❌ Error: Not found", description="There is no keep-on-top entry by that ID.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
 
 
 

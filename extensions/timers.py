@@ -167,35 +167,33 @@ class Timers(commands.Cog):
     async def get_latest_timer(self, days=7):
         await self.bot.wait_until_ready() #This must be included or you get a lot of NoneType errors while booting up, and timers do not get delivered
         logging.debug("Getting latest timer...")
-        async with self.bot.pool.acquire() as con:
-            result = await con.fetch('''SELECT * FROM timers WHERE expires < $1 ORDER BY expires LIMIT 1''', round((datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=days)).timestamp()))
-            logging.debug(f"Latest timer from db: {result}")
-            if len(result) != 0 and result[0]:
-                timer = Timer(id=result[0].get('id'),guild_id=result[0].get('guild_id'),user_id=result[0].get('user_id'),channel_id=result[0].get('channel_id'),event=result[0].get('event'),expires=result[0].get('expires'),notes=result[0].get('notes'))
-                #self.current_timer = timer
-                logging.debug(f"Timer class created for latest: {timer}")
-                return timer
+        result = await self.bot.pool.fetch('''SELECT * FROM timers WHERE expires < $1 ORDER BY expires LIMIT 1''', round((datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=days)).timestamp()))
+        logging.debug(f"Latest timer from db: {result}")
+        if len(result) != 0 and result[0]:
+            timer = Timer(id=result[0].get('id'),guild_id=result[0].get('guild_id'),user_id=result[0].get('user_id'),channel_id=result[0].get('channel_id'),event=result[0].get('event'),expires=result[0].get('expires'),notes=result[0].get('notes'))
+            #self.current_timer = timer
+            logging.debug(f"Timer class created for latest: {timer}")
+            return timer
     
 
     #The actual calling of the timer, deletes it from the db & dispatches the event
     async def call_timer(self, timer : Timer):
         logging.debug("Deleting timer entry {timerid}".format(timerid=timer.id))
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''DELETE FROM timers WHERE id = $1''', timer.id)
-            #Set the currently evaluated timer to None
-            self.current_timer = None
-            logging.debug("Deleted")
-            '''
-            Dispatch an event named eventname_timer_complete, which will cause all listeners 
-            for this event to fire. This function is not documented, so if anything breaks, it
-            is probably in here. It passes on the Timer
-            '''
-            logging.debug("Dispatching..")
-            event = timer.event
-            event_name = f'{event}_timer_complete'
-            logging.debug(event_name)
-            self.bot.dispatch(event_name, timer)
-            logging.debug("Dispatched.")
+        await self.bot.pool.execute('''DELETE FROM timers WHERE id = $1''', timer.id)
+        #Set the currently evaluated timer to None
+        self.current_timer = None
+        logging.debug("Deleted")
+        '''
+        Dispatch an event named eventname_timer_complete, which will cause all listeners 
+        for this event to fire. This function is not documented, so if anything breaks, it
+        is probably in here. It passes on the Timer
+        '''
+        logging.debug("Dispatching..")
+        event = timer.event
+        event_name = f'{event}_timer_complete'
+        logging.debug(event_name)
+        self.bot.dispatch(event_name, timer)
+        logging.debug("Dispatched.")
 
     async def dispatch_timers(self):
         logging.debug("Dispatching timers.")
@@ -230,8 +228,7 @@ class Timers(commands.Cog):
         '''Update a timer's expiry'''
 
         expires = round(expires.timestamp())
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''UPDATE timers SET expires = $1 WHERE id = $2 AND guild_id = $3''', expires, entry_id, guild_id)
+        await self.bot.pool.execute('''UPDATE timers SET expires = $1 WHERE id = $2 AND guild_id = $3''', expires, entry_id, guild_id)
         if self.current_timer and self.current_timer.id == entry_id:
             logging.debug("Updating timers resulted in reshuffling.")
             self.currenttask.cancel()
@@ -242,8 +239,7 @@ class Timers(commands.Cog):
 
         logging.debug(f"Expiry: {expires}")
         expires=round(expires.timestamp()) #Converting it to time since epoch
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''INSERT INTO timers (guild_id, channel_id, user_id, event, expires, notes) VALUES ($1, $2, $3, $4, $5, $6)''', guild_id, channel_id, user_id, event, expires, notes)
+        await self.bot.pool.execute('''INSERT INTO timers (guild_id, channel_id, user_id, event, expires, notes) VALUES ($1, $2, $3, $4, $5, $6)''', guild_id, channel_id, user_id, event, expires, notes)
         logging.debug("Saved to database.")
         #If there is already a timer in queue, and it has an expiry that is further than the timer we just created
         #Then we reboot the dispatch_timers() function to re-check for the latest timer.
@@ -313,8 +309,7 @@ class Timers(commands.Cog):
     @commands.command(usage="reminders", help="Lists all reminders you have pending.", description="Lists all your pending reminders, you can get a reminder's ID here to delete it.", aliases=["myreminders", "listreminders"])
     @commands.guild_only()
     async def reminders(self, ctx):
-        async with self.bot.pool.acquire() as con:
-            results = await con.fetch('''SELECT * FROM timers WHERE guild_id = $1 AND user_id = $2 ORDER BY expires LIMIT 10''', ctx.guild.id, ctx.author.id)
+        results = await self.bot.pool.fetch('''SELECT * FROM timers WHERE guild_id = $1 AND user_id = $2 ORDER BY expires LIMIT 10''', ctx.guild.id, ctx.author.id)
         timers = []
         reminderstr = ""
         for result in results :

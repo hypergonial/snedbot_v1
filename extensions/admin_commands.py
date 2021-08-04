@@ -96,14 +96,13 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         if prefix == "": return
         records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
         if not records or not records[0]["prefix"] or (prefix not in records[0]["prefix"] and len(records[0]["prefix"]) <= 5):
-            async with self.bot.pool.acquire() as con:
-                await con.execute('''
-                UPDATE global_config SET prefix = array_append(prefix,$1) WHERE guild_id = $2
-                ''', prefix, ctx.guild.id)
-                await self.bot.caching.refresh(table="global_config", guild_id=ctx.guild.id)
+            await self.bot.pool.execute('''
+            UPDATE global_config SET prefix = array_append(prefix,$1) WHERE guild_id = $2
+            ''', prefix, ctx.guild.id)
+            await self.bot.caching.refresh(table="global_config", guild_id=ctx.guild.id)
 
-                embed = discord.Embed(title="✅ Prefix added", description=f"Prefix **{prefix}** has been added to the list of valid prefixes.\n\n**Note:** Setting a custom prefix disables the default prefix. If you forget your prefix, mention the bot!", color=self.bot.embedGreen)
-                await ctx.send(embed=embed)
+            embed = discord.Embed(title="✅ Prefix added", description=f"Prefix **{prefix}** has been added to the list of valid prefixes.\n\n**Note:** Setting a custom prefix disables the default prefix. If you forget your prefix, mention the bot!", color=self.bot.embedGreen)
+            await ctx.send(embed=embed)
 
         elif prefix in records["prefix"][0]:
             embed=discord.Embed(title="❌ Prefix already added", description=f"This prefix is already added.", color=self.bot.errorColor)
@@ -120,14 +119,13 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         if prefix == "": return
         records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
         if records and records[0]["prefix"] and prefix in records[0]["prefix"]:
-            async with self.bot.pool.acquire() as con:
-                await con.execute('''
-                UPDATE global_config SET prefix = array_remove(prefix,$1) WHERE guild_id = $2
-                ''', prefix, ctx.guild.id)
-                await self.bot.caching.refresh(table="global_config", guild_id=ctx.guild.id)
+            await self.bot.pool.execute('''
+            UPDATE global_config SET prefix = array_remove(prefix,$1) WHERE guild_id = $2
+            ''', prefix, ctx.guild.id)
+            await self.bot.caching.refresh(table="global_config", guild_id=ctx.guild.id)
 
-                embed = discord.Embed(title="✅ Prefix removed", description=f"Prefix **{prefix}** has been removed from the list of valid prefixes.\n\n**Note:** Removing all custom prefixes will re-enable the default prefix. If you forget your prefix, mention the bot!", color=self.bot.embedGreen)
-                await ctx.send(embed=embed)
+            embed = discord.Embed(title="✅ Prefix removed", description=f"Prefix **{prefix}** has been removed from the list of valid prefixes.\n\n**Note:** Removing all custom prefixes will re-enable the default prefix. If you forget your prefix, mention the bot!", color=self.bot.embedGreen)
+            await ctx.send(embed=embed)
 
         elif records and prefix not in records[0]["prefix"]:
             embed=discord.Embed(title="❌ Prefix not found", description=f"The specified prefix cannot be removed as it is not found.", color=self.bot.errorColor)

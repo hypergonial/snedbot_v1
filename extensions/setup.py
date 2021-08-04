@@ -83,11 +83,11 @@ class Setup(commands.Cog):
 
             #Executing based on info
 
-            async with self.bot.pool.acquire() as con:
-                await con.execute('''
-                INSERT INTO matchmaking_config (guild_id, init_channel_id, announce_channel_id, lfg_role_id) VALUES ($1, $2, $3, $4)
-                ON CONFLICT (guild_id) DO
-                UPDATE SET init_channel_id = $2, announce_channel_id = $3, lfg_role_id = $4''', ctx.guild.id, cmdchannel_id, announcechannel.id, lfg_role_id)
+
+            await self.bot.pool.execute('''
+            INSERT INTO matchmaking_config (guild_id, init_channel_id, announce_channel_id, lfg_role_id) VALUES ($1, $2, $3, $4)
+            ON CONFLICT (guild_id) DO
+            UPDATE SET init_channel_id = $2, announce_channel_id = $3, lfg_role_id = $4''', ctx.guild.id, cmdchannel_id, announcechannel.id, lfg_role_id)
 
             embed=discord.Embed(title="🛠️ Matchmaking setup", description="✅ Setup completed. Matchmaking set up!", color=self.bot.embedGreen)
             await ctx.channel.send(embed=embed)
@@ -153,8 +153,8 @@ class Setup(commands.Cog):
                 embed=discord.Embed(title="🛠️ Logging Setup", description=f"No elevated logging channel set.", color=self.bot.embedBlue)
                 await ctx.send(embed=embed)
             
-            async with self.bot.pool.acquire() as con:
-                await con.execute('''
+
+            await self.bot.pool.execute('''
             INSERT INTO log_config (guild_id, log_channel_id, elevated_log_channel_id) VALUES ($1, $2, $3)
             ON CONFLICT (guild_id) DO
             UPDATE SET log_channel_id  = $2, elevated_log_channel_id = $3''', ctx.guild.id, loggingChannel.id, elevated_loggingChannelID)

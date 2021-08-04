@@ -683,7 +683,7 @@ class Events(commands.Cog):
                                     embed=event_embed, view=event_view
                                 )
 
-                                await self.bot.caching.update(
+                                await self.bot.caching.execute(
                                     """UPDATE events SET categories = $1 WHERE guild_id = $2 AND entry_id = $3""",
                                     json.dumps(categories),
                                     ctx.guild.id,
@@ -749,7 +749,7 @@ class Events(commands.Cog):
                                 await event_message.edit(
                                     embed=event_embed, view=event_view
                                 )
-                                await self.bot.caching.update(
+                                await self.bot.caching.execute(
                                     """UPDATE events SET categories = $1 WHERE guild_id = $2 AND entry_id = $3""",
                                     json.dumps(categories),
                                     ctx.guild.id,

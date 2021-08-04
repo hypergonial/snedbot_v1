@@ -63,19 +63,18 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         '''Re-acquire all persistent buttons'''
         await self.bot.wait_until_ready()
         logging.info("Adding persistent views to button roles...")
-        async with self.bot.pool.acquire() as con:
-            records = await con.fetch('''
-            SELECT 
-            guild_id, 
-            entry_id, 
-            msg_id, 
-            role_id, 
-            emoji, 
-            buttonlabel, 
-            buttonstyle 
-            FROM button_roles''')
+        records = await self.bot.pool.fetch('''
+        SELECT 
+        guild_id, 
+        entry_id, 
+        msg_id, 
+        role_id, 
+        emoji, 
+        buttonlabel, 
+        buttonstyle 
+        FROM button_roles''')
 
-            add_to_persistent_views = {}
+        add_to_persistent_views = {}
 
         for record in records:
             guild = self.bot.get_guild(record.get('guild_id'))
@@ -136,11 +135,10 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                     view.remove_item(remove_me)
                     await message.edit(view=view)
 
-                async with self.bot.pool.acquire() as con:
-                    await con.execute('''DELETE FROM button_roles WHERE guild_id = $1 AND entry_id = $2''', ctx.guild.id, id)
-                    await self.bot.caching.refresh(table="button_roles", guild_id=ctx.guild.id)
-                    embed=discord.Embed(title="✅ Role-Button deleted", description="Role-Button has been successfully deleted!", color=self.bot.embedGreen)
-                    await ctx.channel.send(embed=embed)
+                await self.bot.pool.execute('''DELETE FROM button_roles WHERE guild_id = $1 AND entry_id = $2''', ctx.guild.id, id)
+                await self.bot.caching.refresh(table="button_roles", guild_id=ctx.guild.id)
+                embed=discord.Embed(title="✅ Role-Button deleted", description="Role-Button has been successfully deleted!", color=self.bot.embedGreen)
+                await ctx.channel.send(embed=embed)
             else:
                 embed=discord.Embed(title="❌ Error: Not found", description="There is no role-button by that ID.", color=self.bot.errorColor)
                 await ctx.channel.send(embed=embed)
@@ -301,8 +299,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         else:
             raise asyncio.exceptions.TimeoutError
         #entry_id is assigned manually because the button needs it before it is in the db
-        async with self.bot.pool.acquire() as con: 
-            record = await con.fetch('''SELECT entry_id FROM button_roles ORDER BY entry_id DESC LIMIT 1''')
+        record = await self.bot.pool.fetch('''SELECT entry_id FROM button_roles ORDER BY entry_id DESC LIMIT 1''')
         entry_id = record[0].get('entry_id')+1 if record and record[0] else 1 #Calculate the entry id
 
         button = ButtonRoleButton(entry_id=entry_id, role=reactionrole, label=label, emoji=reactemoji, style=self.button_styles[buttonstyle])
@@ -322,11 +319,10 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             embed=discord.Embed(title="❌ Error: No permissions", description="The bot has no permissions to create the message. Please check if the bot can send and edit messages in the specified channel. Operation cancelled.", color=self.bot.errorColor)
             await setup_msg.edit(embed=embed, view=None);  return
 
-        async with self.bot.pool.acquire() as con:
-            await con.execute('''
-            INSERT INTO button_roles (entry_id, guild_id, channel_id, msg_id, emoji, buttonlabel, buttonstyle, role_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            ''',entry_id, ctx.guild.id, reactchannel.id, reactmsg.id, str(reactemoji), label, buttonstyle, reactionrole.id)
+        await self.bot.pool.execute('''
+        INSERT INTO button_roles (entry_id, guild_id, channel_id, msg_id, emoji, buttonlabel, buttonstyle, role_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        ''',entry_id, ctx.guild.id, reactchannel.id, reactmsg.id, str(reactemoji), label, buttonstyle, reactionrole.id)
         await self.bot.caching.refresh(table="button_roles", guild_id=ctx.guild.id)
 
         embed=discord.Embed(title="🛠️ Role-Buttons setup", description="✅ Setup completed. Role-Button set up!", color=self.bot.embedGreen)

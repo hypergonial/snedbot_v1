@@ -99,8 +99,8 @@ class Giveaway(commands.Cog):
     @giveaway.command(name="list", usage="giveaway list", help="Lists all running giveaways for the server.", description="Lists all running giveaways for this server, and their ID. Displays only up to 10 entries.")
     @commands.guild_only()
     async def giveaway_list(self, ctx):
-        async with self.bot.pool.acquire() as con:
-            results = await con.fetch('''SELECT * FROM timers WHERE guild_id = $1 AND user_id = $2 AND event = $3 ORDER BY expires LIMIT 10''', ctx.guild.id, ctx.author.id, "giveaway")
+
+        results = await self.bot.pool.fetch('''SELECT * FROM timers WHERE guild_id = $1 AND user_id = $2 AND event = $3 ORDER BY expires LIMIT 10''', ctx.guild.id, ctx.author.id, "giveaway")
         giveaways = []
         list_str = ""
 
