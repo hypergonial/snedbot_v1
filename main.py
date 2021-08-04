@@ -225,7 +225,7 @@ class SnedBot(commands.Bot):
     async def on_guild_join(self, guild):
         '''Generate guild entry for DB'''
 
-        await self.bot.pool.execute('INSERT INTO global_config (guild_id) VALUES ($1)', guild.id)
+        await self.pool.execute('INSERT INTO global_config (guild_id) VALUES ($1)', guild.id)
         if guild.system_channel is not None:
             try:
                 embed=discord.Embed(title=_("Beep Boop!"), description=_("I have been summoned to this server. Use `{prefix}help` to see what I can do!").format(prefix=bot.DEFAULT_PREFIX), color=0xfec01d)
@@ -242,7 +242,7 @@ class SnedBot(commands.Bot):
         The reason this does not use GlobalConfig.deletedata() is to not recreate the entry for the guild
         '''
 
-        await self.bot.pool.execute('''DELETE FROM global_config WHERE guild_id = $1''', guild.id)
+        await self.pool.execute('''DELETE FROM global_config WHERE guild_id = $1''', guild.id)
         await self.caching.wipe(guild.id)
         logging.info(f"Bot has been removed from guild {guild.id}, correlating data erased.")
 
