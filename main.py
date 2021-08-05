@@ -334,7 +334,7 @@ class SnedBot(commands.Bot):
             return await ctx.send(embed=embed)
 
         elif isinstance(error, discord.Forbidden):
-            embed=discord.Embed(title="❌ " + _("Permissions error"), description=_("This action has failed to a lack of permissions.\n**Error:** {error}").format(error=error), color=self.errorColor)
+            embed=discord.Embed(title="❌ " + _("Permissions error"), description=_("This action has failed due to a lack of permissions.\n**Error:** {error}").format(error=error), color=self.errorColor)
             return await ctx.send(embed=embed)
 
         else :
