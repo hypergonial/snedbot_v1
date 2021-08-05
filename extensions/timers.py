@@ -300,7 +300,7 @@ class Timers(commands.Cog):
                 if timestr is None or len(timestr) == 0:
                     timestr = "..."
                 note = timestr+f"\n\n[Jump to original message!]({ctx.message.jump_url})"
-                embed = discord.Embed(title="✅ " + self._("Reminder set"), description=self._("Reminder set for:  {timestamp} ({timestampR})").format(timestamp=discord.utils.format_dt(time), timestampR=discord.utils.format_dt(time, style='R'), color=self.bot.embedGreen))
+                embed = discord.Embed(title="✅ " + self._("Reminder set"), description=self._("Reminder set for:  {timestamp} ({timestampR})").format(timestamp=discord.utils.format_dt(time), timestampR=discord.utils.format_dt(time, style='R')), color=self.bot.embedGreen)
                 embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
                 await self.create_timer(expires=time, event="reminder", guild_id=ctx.guild.id,user_id=ctx.author.id, channel_id=ctx.channel.id, notes=note)
                 await ctx.send(embed=embed)

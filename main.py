@@ -333,6 +333,10 @@ class SnedBot(commands.Bot):
             embed=discord.Embed(title="❌ " + _("Too many arguments"), description=_("You have provided more arguments than what `{prefix}{command_name}` can take. Check `{prefix}help {command_name}` for more information.").format(prefix=ctx.prefix, command_name=ctx.command.name), color=self.errorColor)
             return await ctx.send(embed=embed)
 
+        elif isinstance(error, discord.Forbidden):
+            embed=discord.Embed(title="❌ " + _("Permissions error"), description=_("This action has failed to a lack of permissions.\n**Error:** {error}").format(error=error), color=self.errorColor)
+            return await ctx.send(embed=embed)
+
         else :
             '''If no known error has been passed, we will print the exception to console as usual
             IMPORTANT!!! If you remove this, your command errors will not get output to console.'''
