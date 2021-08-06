@@ -696,7 +696,7 @@ class Matchmaking(commands.Cog):
                     if len(interestedPlayers) >= playerCount :
                         embed=discord.Embed(title="📝 " + self._("Your listing reached your set playercap!"), description=self._("Hello! Just letting you know that your multiplayer listing on **{guild_name}** has reached {player_count} or more interested players.\nPlayers who want to play with you in this match: {interested_mentions}").format(guild_name=guild.name, player_count=playerCount, interested_mentions=interestedMentions), color=self.bot.embedGreen)
                         embed.set_footer(text=self._("If you believe that this feature was abused, contact a moderator immediately!"))
-                        await host.send(embed=embed)
+                        await host.send(embed=embed, content=f"Players that want to play with you: {interestedMentions}")
                         #Add a little emoji as feedback that the listing has reached max subscriber cap
                         if "🎉" not in str(listing.reactions):
                             await listing.add_reaction("🎉")
