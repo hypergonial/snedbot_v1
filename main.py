@@ -350,6 +350,11 @@ class SnedBot(commands.Bot):
                 logging.error(f"Failed to log to server: {error}")
             logging.error(exception_msg)
 
+            embed=discord.Embed(title="❌ " + _("Unhandled exception"), description=_("An error happened that should not have happened. Please contact us with a screenshot of this message!\n**Error:** {error}").format(error=error), color=self.errorColor)
+            embed.set_footer(text=f"Guild: {ctx.guild.id}")
+            return await ctx.send(embed=embed)
+
+
 
 bot = SnedBot()
 _ = bot.get_localization('main', lang)
