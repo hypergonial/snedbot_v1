@@ -149,7 +149,7 @@ class IpcRoutes(commands.Cog):
         records = await self.bot.caching.get(table="mod_config", guild_id=guild.id)
         mod_settings_dict = {
             "dm_users_on_punish" : records[0]["dm_users_on_punish"] if records else True,
-            "clean_up_mod_commands" : records[0]["clean_up_mod_commands"][0] if records else False
+            "clean_up_mod_commands" : records[0]["clean_up_mod_commands"] if records else False
         }
 
         response = {
