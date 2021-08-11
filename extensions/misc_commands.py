@@ -115,7 +115,29 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     @commands.cooldown(1, 60, type=commands.BucketType.member)
     async def serverinfo(self, ctx):
         guild = ctx.guild
-        embed=discord.Embed(title="ℹ️ " + self._("Server information"), description=self._("**Name:** `{guild_name}`\n**ID:** `{guild_id}`\n**Owner:** `{owner}`\n**Created at:** `{creation_date}`\n**Member count:** `{member_count}`\n**Region:** `{region}`\n**Filesize limit:** `{filecap}`\n**Nitro Boost count:** `{premium_sub_count}`\n**Nitro Boost level:** `{premium_tier}`").format(guild_name=guild.name, guild_id=guild.id, owner=guild.owner, creation_date=guild.created_at, member_count=guild.member_count, region=guild.region, filecap=f"{guild.filesize_limit/1048576}MB", premium_sub_count=guild.premium_subscription_count, premium_tier=guild.premium_tier), color=self.bot.embedBlue)
+        embed=discord.Embed(title="ℹ️ " + self._("Server information"), description=self._("""**Name:** `{guild_name}`
+        **ID:** `{guild_id}`
+        **Owner:** `{owner}`
+        **Created at:** {creation_date}
+        **Member count:** `{member_count}`
+        **Channels:** `{channel_count}`
+        **Roles:** `{role_count}`
+        **Region:** `{region}`
+        **Filesize limit:** `{filecap}`
+        **Nitro Boost count:** `{premium_sub_count}`
+        **Nitro Boost level:** `{premium_tier}`""").format(guild_name=guild.name, 
+        guild_id=guild.id, 
+        owner=guild.owner, 
+        creation_date=f"{discord.utils.format_dt(guild.created_at)} ({discord.utils.format_dt(guild.created_at, style='R')})", 
+        member_count=guild.member_count, 
+        channel_count=len(guild.channels),
+        role_count=len(guild.roles),
+        region=guild.region, 
+        filecap=f"{guild.filesize_limit/1048576}MB", 
+        premium_sub_count=guild.premium_subscription_count, 
+        premium_tier=guild.premium_tier), 
+        color=self.bot.embedBlue)
+
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
         embed.set_thumbnail(url=guild.icon.url)
         if guild.discovery_splash: #If the server has a discovery splash/invite background, we put it as an embed image for extra fancyTM
