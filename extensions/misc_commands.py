@@ -128,7 +128,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         **Nitro Boost level:** `{premium_tier}`""").format(guild_name=guild.name, 
         guild_id=guild.id, 
         owner=guild.owner, 
-        creation_date=f"{discord.utils.format_dt(guild.created_at)} ({discord.utils.format_dt(guild.created_at, style='R')})", 
+        creation_date=discord.utils.format_dt(guild.created_at), 
         member_count=guild.member_count, 
         channel_count=len(guild.channels),
         role_count=len(guild.roles),
