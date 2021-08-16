@@ -131,6 +131,43 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed=discord.Embed(title="❌ Prefix not found", description=f"The specified prefix cannot be removed as it is not found.", color=self.bot.errorColor)
             await ctx.send(embed=embed)
 
+    @commands.command(help="Edits one of the bot's messages.", description="Edits one of the bot's messages via the specified channel and message ID.", usage="edit <channel_ID> <message_ID> <new_content>")
+    @commands.guild_only()
+    async def edit(self, ctx, channel_id:int, msg_id:int, *, content:str):
+        channel = ctx.guild.get_channel(channel_id)
+        if channel:
+            try:
+                message = await channel.fetch_message(msg_id)
+            except discord.NotFound:
+                embed=discord.Embed(title="❌ Message not found", description=f"Could not find this message.", color=self.bot.errorColor)
+                await ctx.send(embed=embed)
+            else:
+                if message.author.id == self.bot.user.id:
+                    await message.edit(content=content)
+                    embed = discord.Embed(title="✅ Message edited", description=f"Message `{msg_id}`` has been edited in {channel.mention}!", color=self.bot.embedGreen)
+                    await ctx.send(embed=embed)
+                else:
+                    embed=discord.Embed(title="❌ Message not owned by bot", description=f"This message was not posted by the bot, and cannot be edited by it.", color=self.bot.errorColor)
+                    await ctx.send(embed=embed)
+        else:
+            embed=discord.Embed(title="❌ Channel not found", description=f"Could not find this channel.", color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+
+    @commands.command(help="Copies a message to the current channel.", description="Edits one of the bot's messages via the specified channel and message ID.", usage="edit <channel_ID> <message_ID>")
+    @commands.guild_only()
+    async def copy(self, ctx, channel_id:int, msg_id:int):
+        channel = ctx.guild.get_channel(channel_id)
+        if channel:
+            try:
+                message = await channel.fetch_message(msg_id)
+            except discord.NotFound:
+                embed=discord.Embed(title="❌ Message not found", description=f"Could not find this message.", color=self.bot.errorColor)
+                await ctx.send(embed=embed)
+            else:
+                await ctx.send(content=message.content, embed=message.embeds[0])
+        else:
+            embed=discord.Embed(title="❌ Channel not found", description=f"Could not find this channel.", color=self.bot.errorColor)
+            await ctx.send(embed=embed)
 
 
     @commands.group(help="Run a command while bypassing checks and cooldowns.", description="Run a specified command while bypassing any checks and cooldowns. Requires server administator permissions for the user to run this command alongside priviliged access.", usage="sudo <command> [arguments]")
