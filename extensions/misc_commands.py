@@ -96,7 +96,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         **Language:** {self.bot.lang} 
         **Made by:** Hyper#0001
         **Invite:** [Invite me!](https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=3691506934&scope=bot%20applications.commands)
-        **Documentation:** [Click here!] (https://sned.hypersden.com/docs/)
+        **Documentation:** [Click here!](https://sned.hypersden.com/docs/)
         **Support:** [Click here!](https://discord.gg/KNKr8FPmJa)
         Blob emoji is licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)""", color=self.bot.embedBlue)
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
