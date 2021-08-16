@@ -144,7 +144,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             else:
                 if message.author.id == self.bot.user.id:
                     await message.edit(content=content)
-                    embed = discord.Embed(title="✅ Message edited", description=f"Message `{msg_id}`` has been edited in {channel.mention}!", color=self.bot.embedGreen)
+                    embed = discord.Embed(title="✅ Message edited", description=f"Message `{msg_id}` has been edited in {channel.mention}!", color=self.bot.embedGreen)
                     await ctx.send(embed=embed)
                 else:
                     embed=discord.Embed(title="❌ Message not owned by bot", description=f"This message was not posted by the bot, and cannot be edited by it.", color=self.bot.errorColor)
@@ -164,7 +164,8 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
                 embed=discord.Embed(title="❌ Message not found", description=f"Could not find this message.", color=self.bot.errorColor)
                 await ctx.send(embed=embed)
             else:
-                await ctx.send(content=message.content, embed=message.embeds[0])
+                embed = message.embeds[0] if message.embeds and message.embeds[0] else None
+                await ctx.send(content=message.content, embed=embed)
         else:
             embed=discord.Embed(title="❌ Channel not found", description=f"Could not find this channel.", color=self.bot.errorColor)
             await ctx.send(embed=embed)
