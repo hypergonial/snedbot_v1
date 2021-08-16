@@ -72,6 +72,7 @@ class SnedHelp(commands.HelpCommand):
         You can stop this help session by pressing ⏹️.
 
         You can also check out the [documentation](https://sned.hypersden.com/docs/) for more information.
+        If you need support, please join the [support server](https://discord.gg/KNKr8FPmJa)!
 
         **Command Usage & Syntax**
 

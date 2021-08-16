@@ -49,12 +49,12 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         try: 
             args = parser.parse_args(shlex.split(str(args)))
         except Exception as e:
-            embed = discord.Embed(title="❌ " + self._("Failed parsing arguments"), description=self._("**Exception:** ```{exception}```").format(exception=str(e)), color=self.bot.errorColor)
+            embed = discord.Embed(title="❌ " + self._("Failed parsing arguments"), description=self._("Please see `{prefix}help embed` for argument formatting!\n**Exception:** ```{exception}```").format(prefix=ctx.prefix, exception=str(e)), color=self.bot.errorColor)
             embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
             await ctx.send(embed=embed)
             return
-        except SystemExit as s:
-            embed = discord.Embed(title="❌ " + self._("Failed parsing arguments"), description=self._("**Exception:** ```SystemExit: {exception}```\n**Note:** If you are trying to pass multiple words as an argument, wrap them in quotation marks.").format(exception=str(s)), color=self.bot.errorColor)
+        except SystemExit as s: #god this is dumb
+            embed = discord.Embed(title="❌ " + self._("Failed parsing arguments"), description=self._("Please see `{prefix}help embed` for argument formatting!\n**Exception:** ```SystemExit: {exception}```\n**Note:** If you are trying to pass multiple words as an argument, wrap them in quotation marks.").format(prefix=ctx.prefix, exception=str(s)), color=self.bot.errorColor)
             embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
             await ctx.send(embed=embed)
             return
@@ -92,7 +92,13 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     @commands.command(help="Displays information about the bot.", description="Displays information about the bot. Takes no arguments.", usage="about", aliases=["info"])
     @commands.guild_only()
     async def about(self, ctx):
-        embed=discord.Embed(title=f"ℹ️ About {self.bot.user.name}", description=f"**Version:** {self.bot.current_version} \n**Language:** {self.bot.lang} \n**Made by:** Hyper#0001\n**Invite:** Type `{ctx.prefix}invite`\nBlob emoji is licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)", color=self.bot.embedBlue)
+        embed=discord.Embed(title=f"ℹ️ About {self.bot.user.name}", description=f"""**Version:** {self.bot.current_version} 
+        **Language:** {self.bot.lang} 
+        **Made by:** Hyper#0001
+        **Invite:** [Invite me!](https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=3691506934&scope=bot%20applications.commands)
+        **Documentation:** [Click here!] (https://sned.hypersden.com/docs/)
+        **Support:** [Click here!](https://discord.gg/KNKr8FPmJa)
+        Blob emoji is licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)""", color=self.bot.embedBlue)
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
         embed.set_thumbnail(url=self.bot.user.avatar.url)
         embed.add_field(name="CPU utilization", value=f"`{round(psutil.cpu_percent(interval=None))}%`")
@@ -109,6 +115,14 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
             embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
             await ctx.channel.send(embed=embed)
 
+    @commands.command(help="Provides a link to the support Discord.", description="Provides a link to the support Discord, where you can ask for help or provide feedback!", usage="support")
+    async def support(self, ctx):
+        await ctx.send("https://discord.gg/KNKr8FPmJa")
+    
+    @commands.command(help="Provides a link to source-code.", description="Provides a link to the GitHub repository where the bot's source-code is hosted.", usage="source")
+    async def source(self, ctx):
+        await ctx.send("<https://github.com/HyperGH/SnedBot>")
+    
     #Retrieves info about the current guild for the end-user
     @commands.command(help="Get information about the server.", description="Provides detailed information about this server.", usage="serverinfo")
     @commands.guild_only()
