@@ -47,7 +47,6 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     
     def __init__(self, bot):
         self.bot = bot
-        bot.loop.create_task(self.buttonroles_init())
         self.button_styles = {
             "Blurple": discord.ButtonStyle.primary,
             "Grey": discord.ButtonStyle.secondary,
@@ -58,6 +57,11 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     async def cog_check(self, ctx):
             return await ctx.bot.custom_checks.has_permissions(ctx, 'role_buttons')
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        #READY clears state, including persistent views
+        #Thus views must be re-added
+        await self.buttonroles_init()
 
     async def buttonroles_init(self):
         '''Re-acquire all persistent buttons'''

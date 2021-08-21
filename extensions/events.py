@@ -244,7 +244,6 @@ class Events(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        bot.loop.create_task(self.events_init())
         self.button_styles = {
             "Blurple": discord.ButtonStyle.primary,
             "Grey": discord.ButtonStyle.secondary,
@@ -256,6 +255,10 @@ class Events(commands.Cog):
         return await ctx.bot.custom_checks.has_permissions(
             ctx, "events"
         ) or await ctx.bot.custom_checks.has_permissions(ctx, "mod_permitted")
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.events_init()
 
     async def events_init(self):
         """Re-acquire all persistent buttons"""
