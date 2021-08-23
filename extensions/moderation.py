@@ -256,7 +256,7 @@ class Moderation(commands.Cog):
                 try:
                     if not duration: duration = "Infinite"
                     else: duration = discord.utils.format_dt(dur[0])
-                    muteembed=discord.Embed(title="🔇 User muted", description=F"**User:** `{member} ({member.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Until:** `{duration}`\n**Reason:** ```{reason}```", color=self.bot.errorColor)
+                    muteembed=discord.Embed(title="🔇 User muted", description=F"**User:** `{member} ({member.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Until:** {duration}\n**Reason:** ```{reason}```", color=self.bot.errorColor)
                     await self.bot.get_cog("Logging").log_elevated(muteembed, ctx.guild.id)
                 except:
                     pass
@@ -864,7 +864,7 @@ class Moderation(commands.Cog):
         policy = policies[offense] #This will decide the type of punishment
         if not original_offense:
             temp_dur = policies[f"{offense}_opt_dur"] #Get temporary duration
-            should_delete = policies[f"{offense}_opt_delete"] if policy != "spam" else False
+            should_delete = policies[f"{offense}_opt_delete"] if offense != "spam" else False
         else:
             temp_dur = policies[f"{original_offense}_opt_dur"] #Original offense overrides current, if present
             should_delete = False
