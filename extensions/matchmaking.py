@@ -724,7 +724,7 @@ class Matchmaking(commands.Cog):
                     listingFooter = listingContent[0].footer
                     listingID = listingFooter.text.split("ID: ")[1]
                     db_listing = await self.listings.retrieve(listingID)
-                    if listing == None :
+                    if db_listing == None :
                         logging.info(f"{member} tried to unsubscribe from an expired listing.")
                         return
                     host = ctx.guild.get_member(db_listing.host_id)
