@@ -553,7 +553,8 @@ bot.custom_checks = CustomChecks()
 #Run bot with token from .env
 try :
     if hasattr(bot, 'ipc'):
-        bot.ipc.start()
+        logging.info('IPC was disabled.')
+        #bot.ipc.start()
     else:
         logging.warn('IPC was not found, or configured correctly!')
     bot.run(TOKEN)
