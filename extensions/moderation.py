@@ -810,7 +810,8 @@ class Moderation(commands.Cog):
             Flags: `{db_user.flags}`
             Notes: `{db_user.notes}`
             Roles: {roleformatted}""", color=member.colour)
-            embed.set_thumbnail(url=member.avatar.url)
+            if member.avatar.url:
+                embed.set_thumbnail(url=member.avatar.url)
 
         else: #Retrieve limited information about the user if they are not in the guild
             embed=discord.Embed(title=f"User information: {user.name}", description=f"""Username: `{user}`
@@ -822,7 +823,8 @@ class Moderation(commands.Cog):
             Join date: `-`
             Roles: `-`
             *Note: This user is not a member of this server*""", color=self.bot.embedBlue)
-            embed.set_thumbnail(url=user.avatar.url)
+            if user.avatar.url:
+                embed.set_thumbnail(url=user.avatar.url)
 
         embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar.url)
         await ctx.channel.send(embed=embed)
