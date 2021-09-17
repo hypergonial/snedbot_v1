@@ -718,7 +718,7 @@ class Moderation(commands.Cog):
             return await ctx.send(embed=embed)
 
     
-    @commands.command(help="Kicks a user.", description="Kicks a user with an optional reason. Deletes the last 7 days worth of messages from the user.", usage="kick <user> [reason]")
+    @commands.command(help="Kicks a user.", description="Kicks a user from the server with an optional reason.", usage="kick <user> [reason]")
     @commands.check(has_mod_perms)
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(kick_members=True)
