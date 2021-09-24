@@ -209,7 +209,7 @@ class SnedBot(commands.Bot):
                     if not records:
                         prefix = [self.DEFAULT_PREFIX]
                     else:
-                        prefix = records[0]["prefix"] if records[0]["prefix"] and len(records[0]["prefix"]) > 0 else self.DEFAULT_PREFIX 
+                        prefix = records[0]["prefix"] if records[0]["prefix"] and len(records[0]["prefix"]) > 0 else [self.DEFAULT_PREFIX] 
                     embed=discord.Embed(title=_("Beep Boop!"), description=_("My prefixes on this server are the following: `{prefix}` \nUse the command `{prefix_0}help` to see what I can do!").format(prefix="`, `".join(prefix), prefix_0=prefix[0]), color=0xfec01d)
                     embed.set_thumbnail(url=self.user.avatar.url)
                     await message.reply(embed=embed)
@@ -288,7 +288,7 @@ class SnedBot(commands.Bot):
             
             cmd = ctx.invoked_with.lower()
 
-            cmds = [cmd.name for cmd in bot.commands if not cmd.hidden]
+            cmds = [cmd.qualified_name for cmd in bot.commands if not cmd.hidden]
             allAliases = [cmd.aliases for cmd in bot.commands if not cmd.hidden]
             aliases = list(chain(*allAliases))
 
@@ -310,7 +310,7 @@ class SnedBot(commands.Bot):
             return await ctx.send(embed=embed)
 
         elif isinstance(error, commands.MissingRequiredArgument):
-            embed=discord.Embed(title="❌" + _("Missing argument."), description=_("One or more arguments are missing. \n__Hint:__ You can use `{prefix}help {command_name}` to view command usage.").format(prefix=ctx.prefix, command_name=ctx.command.name), color=self.errorColor)
+            embed=discord.Embed(title="❌" + _("Missing argument."), description=_("One or more arguments are missing. \n__Hint:__ You can use `{prefix}help {command_name}` to view command usage.").format(prefix=ctx.prefix, command_name=ctx.command.qualified_name), color=self.errorColor)
             embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
             logging.info(f"{ctx.author} tried calling a command ({ctx.message.content}) but did not supply sufficient arguments.")
             return await ctx.send(embed=embed)
@@ -326,11 +326,11 @@ class SnedBot(commands.Bot):
             return await ctx.send(embed=embed)
 
         elif isinstance(error, commands.errors.BadArgument):
-            embed=discord.Embed(title="❌ " + _("Bad argument"), description=_("Invalid data entered! Check `{prefix}help {command_name}` for more information.\n**Error:**```{error}```").format(prefix=ctx.prefix, command_name=ctx.command.name, error=error), color=self.errorColor)
+            embed=discord.Embed(title="❌ " + _("Bad argument"), description=_("Invalid data entered! Check `{prefix}help {command_name}` for more information.\n**Error:**```{error}```").format(prefix=ctx.prefix, command_name=ctx.command.qualified_name, error=error), color=self.errorColor)
             return await ctx.send(embed=embed)
 
         elif isinstance(error, commands.TooManyArguments):
-            embed=discord.Embed(title="❌ " + _("Too many arguments"), description=_("You have provided more arguments than what `{prefix}{command_name}` can take. Check `{prefix}help {command_name}` for more information.").format(prefix=ctx.prefix, command_name=ctx.command.name), color=self.errorColor)
+            embed=discord.Embed(title="❌ " + _("Too many arguments"), description=_("You have provided more arguments than what `{prefix}{command_name}` can take. Check `{prefix}help {command_name}` for more information.").format(prefix=ctx.prefix, command_name=ctx.command.qualified_name), color=self.errorColor)
             return await ctx.send(embed=embed)
 
         elif isinstance(error, discord.Forbidden):
