@@ -37,7 +37,7 @@ class ButtonRoleButton(discord.ui.Button):
                     await interaction.user.add_roles(self.role, reason=f"Granted by role-button (ID: {self.entry_id}")
                     await interaction.response.send_message(f'Added role: {self.role.mention}', ephemeral=True)
             except discord.Forbidden:
-                await interaction.response.send_message(f'Failed adding role due to an issue with permissions! Please contact an administrator!', ephemeral=True)
+                await interaction.response.send_message(f'Failed adding role due to an issue with permissions and/or role hierarchy! Please contact an administrator!', ephemeral=True)
 
 class RoleButtons(commands.Cog, name="Role-Buttons"):
     '''
@@ -106,7 +106,6 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                 super().__init__(entries, per_page=1)
 
             async def format_page(self, menu, entries:list):
-                print(entries)
                 embed = discord.Embed(title='Role-Buttons on this server', description=entries[menu.current_page],color=menu.ctx.bot.embedBlue)
                 embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
                 return embed
@@ -130,17 +129,18 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id, entry_id = id)
             if records:
                 channel = ctx.guild.get_channel(records[0]['channel_id'])
-                message = await channel.fetch_message(records[0]['msg_id']) if channel else None
-                if message: #Remove button if the message still exists
-                    view = discord.ui.View.from_message(message)
-                    for item in view.children:
-                        if item.custom_id == f"{records[0]['entry_id']}:{records[0]['role_id']}":
-                            remove_me = item; break
-                    view.remove_item(remove_me)
-                    await message.edit(view=view)
-
                 await self.bot.pool.execute('''DELETE FROM button_roles WHERE guild_id = $1 AND entry_id = $2''', ctx.guild.id, id)
                 await self.bot.caching.refresh(table="button_roles", guild_id=ctx.guild.id)
+                message = await channel.fetch_message(records[0]['msg_id']) if channel else None
+                if message: #Re-sync buttons if message still exists
+                    records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id, msg_id=message.id)
+                    buttons = []
+                    for record in records:
+                        emoji = discord.PartialEmoji.from_str(record.get('emoji'))
+                        buttons.append(ButtonRoleButton(record.get('entry_id'), ctx.guild.get_role(record.get('role_id')), label=record.get('buttonlabel'), style=self.button_styles[record.get('buttonstyle')], emoji=emoji))
+                    view = PersistentRoleView(buttons) if len(buttons) > 0 else None
+                    await message.edit(view=view)
+
                 embed=discord.Embed(title="✅ Role-Button deleted", description="Role-Button has been successfully deleted!", color=self.bot.embedGreen)
                 await ctx.channel.send(embed=embed)
             else:
@@ -272,7 +272,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
 
         role_options = []
         for role in ctx.guild.roles:
-            if role.name != "@everyone":
+            if role.name != "@everyone" and role < ctx.guild.me.top_role:
                 role_options.append(discord.SelectOption(label=role.name, value=role.id))
 
         embed=discord.Embed(title="🛠️ Role-Buttons setup", description="Select the role that will be handed out!", color=self.bot.embedBlue)
@@ -314,8 +314,20 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                 reactmsg = await reactchannel.send(str(msgcontent), view=view)
             else:
                 if reactmsg.components:
-                    view = discord.ui.View.from_message(reactmsg, timeout=None)
-                    view.add_item(button)
+                    #Reconstruct all buttons from db to keep them working
+                    embed=discord.Embed(title="⚠️ Role-Buttons Setup", description="This message already has buttons or other components attached. Any components that are not role-buttons will be **removed** from this message. (e.g. components from other bots) If you are trying to add multiple role-buttons to this message, ignore this warning.\n\n**Are you sure you want to proceed?**", color=self.bot.warnColor)
+                    ignore_warning = await ctx.confirm(embed=embed, delete_after=True)
+                    if ignore_warning:
+                        records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id, msg_id=reactmsg.id)
+                        buttons = []
+                        for record in records:
+                            emoji = discord.PartialEmoji.from_str(record.get('emoji'))
+                            buttons.append(ButtonRoleButton(record.get('entry_id'), ctx.guild.get_role(record.get('role_id')), label=record.get('buttonlabel'), style=self.button_styles[record.get('buttonstyle')], emoji=emoji))
+
+                        buttons.append(button)
+                        view = PersistentRoleView(buttons)
+                    else:
+                        return
                 else:
                     view = PersistentRoleView([button])
                 await reactmsg.edit(view=view)
