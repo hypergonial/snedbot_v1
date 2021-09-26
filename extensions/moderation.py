@@ -831,7 +831,7 @@ class Moderation(commands.Cog):
         if await self.bot.is_owner(ctx.author):
             records = await self.bot.caching.get(table="blacklist", guild_id=0, user_id=user.id)
             is_blacklisted = True if records and records[0]["user_id"] == user.id else False
-            embed.description = f"{embed.description}\nBlacklisted: ` {is_blacklisted}`"
+            embed.description = f"{embed.description}\nBlacklisted: `{is_blacklisted}`"
 
         embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar.url)
         await ctx.channel.send(embed=embed)

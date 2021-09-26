@@ -238,15 +238,17 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
     
     @commands.group(help="Blacklists a member from using the bot.", description="Blacklists a member from using any of the bot's commands. To query a user's blacklisted status, use the `whois` command.", usage="blacklist <user>", invoke_without_command=True, case_insensitive=True)
     @commands.is_owner()
-    async def blacklist(self, ctx, user:discord.User):
+    async def blacklist(self, ctx):
         await ctx.send_help(ctx.command)
 
     @blacklist.command(name="add", help="Adds a member to the blacklist.", usage="blacklist add <user>")
     @commands.is_owner()
     async def blacklist_add(self, ctx, user:discord.User):
         records = await self.bot.caching.get(table="blacklist", guild_id=0, user_id=user.id)
-        if not records or len(records) > 0:
+        print(records)
+        if not records or len(records) == 0:
             await self.bot.pool.execute('''INSERT INTO blacklist (user_id) VALUES ($1)''', user.id)
+            await self.bot.caching.refresh(table="blacklist", guild_id=0)
             embed = discord.Embed(title="✅ User blacklisted", description=f"User has been blacklisted!", color=self.bot.embedGreen)
             await ctx.send(embed=embed)
         else:
@@ -259,6 +261,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         records = await self.bot.caching.get(table="blacklist", guild_id=0, user_id=user.id)
         if records and records[0]["user_id"] == user.id:
             await self.bot.pool.execute('''DELETE FROM blacklist WHERE user_id = $1''', user.id)
+            await self.bot.caching.refresh(table="blacklist", guild_id=0)
             embed = discord.Embed(title="✅ User removed from blacklist", description=f"User has been removed from the blacklist!", color=self.bot.embedGreen)
             await ctx.send(embed=embed)
         else:
