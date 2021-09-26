@@ -793,6 +793,8 @@ class Moderation(commands.Cog):
     @commands.check(has_mod_perms)
     @commands.guild_only()
     async def whois(self, ctx, *, user : discord.User) :
+
+
         if user in ctx.guild.members:
             db_user = await self.bot.global_config.get_user(user.id, ctx.guild.id)
             member = ctx.guild.get_member(user.id)
@@ -825,6 +827,11 @@ class Moderation(commands.Cog):
             *Note: This user is not a member of this server*""", color=self.bot.embedBlue)
             if user.avatar:
                 embed.set_thumbnail(url=user.avatar.url)
+
+        if await self.bot.is_owner(ctx.author):
+            records = await self.bot.caching.get(table="blacklist", guild_id=0, user_id=user.id)
+            is_blacklisted = True if records and records[0]["user_id"] == user.id else False
+            embed.description = f"{embed.description}\nBlacklisted: ` {is_blacklisted}`"
 
         embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar.url)
         await ctx.channel.send(embed=embed)

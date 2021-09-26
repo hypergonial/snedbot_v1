@@ -171,7 +171,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             await ctx.send(embed=embed)
 
 
-    @commands.group(help="Run a command while bypassing checks and cooldowns.", description="Run a specified command while bypassing any checks and cooldowns. Requires server administator permissions for the user to run this command alongside priviliged access.", usage="sudo <command> [arguments]")
+    @commands.command(help="Run a command while bypassing checks and cooldowns.", description="Run a specified command while bypassing any checks and cooldowns. Requires server administator permissions for the user to run this command alongside priviliged access.", usage="sudo <command> [arguments]")
     @commands.has_permissions(administrator=True)
     async def sudo(self, ctx, *, command):
         '''
@@ -235,6 +235,36 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         else:
             embed = discord.Embed(title="Leaving aborted", description="The bot will stay in this server.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
+    
+    @commands.group(help="Blacklists a member from using the bot.", description="Blacklists a member from using any of the bot's commands. To query a user's blacklisted status, use the `whois` command.", usage="blacklist <user>", invoke_without_command=True, case_insensitive=True)
+    @commands.is_owner()
+    async def blacklist(self, ctx, user:discord.User):
+        await ctx.send_help(ctx.command)
+
+    @blacklist.command(name="add", help="Adds a member to the blacklist.", usage="blacklist add <user>")
+    @commands.is_owner()
+    async def blacklist_add(self, ctx, user:discord.User):
+        records = await self.bot.caching.get(table="blacklist", guild_id=0, user_id=user.id)
+        if not records or len(records) > 0:
+            await self.bot.pool.execute('''INSERT INTO blacklist (user_id) VALUES ($1)''', user.id)
+            embed = discord.Embed(title="✅ User blacklisted", description=f"User has been blacklisted!", color=self.bot.embedGreen)
+            await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(title="❌ User already blacklisted", description=f"User is already present in the blacklist!", color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+    
+    @blacklist.command(name="del", aliases=["delete", "remove"], help="Removes a member from the blacklist.", usage="blacklist del <user>")
+    @commands.is_owner()
+    async def blacklist_del(self, ctx, user:discord.User):
+        records = await self.bot.caching.get(table="blacklist", guild_id=0, user_id=user.id)
+        if records and records[0]["user_id"] == user.id:
+            await self.bot.pool.execute('''DELETE FROM blacklist WHERE user_id = $1''', user.id)
+            embed = discord.Embed(title="✅ User removed from blacklist", description=f"User has been removed from the blacklist!", color=self.bot.embedGreen)
+            await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(title="❌ User is not in blacklist", description=f"User is not present in the blacklist!", color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+
 
 
 def setup(bot):

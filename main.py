@@ -191,6 +191,12 @@ class SnedBot(commands.Bot):
         if message.author.bot:
             return
 
+        records = await self.bot.caching.get(table="blacklist", guild_id=0, user_id=ctx.author.id)
+        is_blacklisted = True if records and records[0]["user_id"] == ctx.author.id else False
+        
+        if is_blacklisted:
+            return
+
         await self.invoke(ctx)
 
 

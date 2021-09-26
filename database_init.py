@@ -62,6 +62,21 @@ try:
                         REFERENCES global_config (guild_id)
                         ON DELETE CASCADE
                 )''')
+            #guild_id is always needed in table, so I just hacked it in c:
+            #the table is not guild-specific though
+            await con.execute('''
+                CREATE TABLE IF NOT EXISTS public.blacklist
+                (
+                    guild_id integer NOT NULL DEFAULT 0,
+                    user_id bigint NOT NULL,
+                    PRIMARY KEY (user_id)
+                )
+            ''')
+            await con.execute('''
+                CREATE TABLE IF NOT EXISTS public.guild_blacklist
+                (
+                    guild_id bigint NOT NULL
+                )''')
 
             await con.execute("""
                 CREATE TABLE IF NOT EXISTS public.mod_config
