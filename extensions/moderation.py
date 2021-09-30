@@ -1,14 +1,16 @@
 import argparse
-import logging
-import shlex
-import re
-from dataclasses import dataclass
 import functools
-import unicodedata
 import json
+import logging
+import re
+import shlex
+import unicodedata
+from dataclasses import dataclass
+from typing import TypeVar, Union
 
 import discord
 from discord.ext import commands
+
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
@@ -289,7 +291,7 @@ class Moderation(commands.Cog):
                 except:
                     pass
 
-    async def ban(self, ctx, member:discord.Member, moderator:discord.Member, duration:str=None, soft:bool=False, days_to_delete:int=1, reason:str=None):
+    async def ban(self, ctx, user:Union[discord.User, discord.Member], moderator:discord.Member, duration:str=None, soft:bool=False, days_to_delete:int=1, reason:str=None):
         '''
         Handles the banning of a user, can optionally accept a duration to make it a tempban.
         '''
@@ -319,15 +321,15 @@ class Moderation(commands.Cog):
             raw_reason = f"[TEMPBAN] {raw_reason}"
 
         try:
-            await ctx.guild.ban(member, reason=reason, delete_message_days=days_to_delete)
-            embed = discord.Embed(title="🔨 " + self._("User banned"), description=self._("**{offender}** has been banned.\n**Reason:** ```{raw_reason}```").format(offender=member, raw_reason=raw_reason),color=self.bot.errorColor)
+            await ctx.guild.ban(user, reason=reason, delete_message_days=days_to_delete)
+            embed = discord.Embed(title="🔨 " + self._("User banned"), description=self._("**{offender}** has been banned.\n**Reason:** ```{raw_reason}```").format(offender=user, raw_reason=raw_reason),color=self.bot.errorColor)
             await ctx.send(embed=embed)
 
             if soft:
-                await ctx.guild.unban(member, reason="Automatic unban by softban")
+                await ctx.guild.unban(user, reason="Automatic unban by softban")
             elif duration and dur:
                 try:
-                    await self.bot.get_cog("Timers").create_timer(expires=dur, event="tempban", guild_id=ctx.guild.id, user_id=member.id, channel_id=ctx.channel.id)
+                    await self.bot.get_cog("Timers").create_timer(expires=dur, event="tempban", guild_id=ctx.guild.id, user_id=user.id, channel_id=ctx.channel.id)
                 except AttributeError as error:
                     embed=discord.Embed(title="❌ " + self._("Tempbanning failed."), description=self._("This function requires an extension that is not enabled.\n**Error:** ```{error}```").format(error=error), color=self.bot.errorColor)
                     return await ctx.send(embed=embed)
@@ -540,7 +542,7 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(ban_members=True)
     @commands.guild_only()
     @mod_punish
-    async def ban_cmd(self, ctx, member:discord.Member, *, reason:str=None):
+    async def ban_cmd(self, ctx, user:discord.User, *, reason:str=None):
         '''
         Bans a member from the server.
         Banner must be priviliged and have ban_members perms.
@@ -548,7 +550,7 @@ class Moderation(commands.Cog):
         await ctx.channel.trigger_typing()
 
         try:
-            await self.ban(ctx, member, ctx.author, duration=None, soft=False, reason=reason)
+            await self.ban(ctx, user, ctx.author, duration=None, soft=False, reason=reason)
         except discord.Forbidden:
             embed = discord.Embed(title="❌ " + self._("Bot has insufficient permissions"), description=self._("This user cannot be banned."),color=self.bot.errorColor)
             await ctx.send(embed=embed); return
