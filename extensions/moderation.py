@@ -138,15 +138,15 @@ class Moderation(commands.Cog):
         async def inner(*args, **kwargs):
             self = args[0]
             ctx = args[1]
-            member = args[2]
+            user = args[2]
             reason = kwargs["reason"] if "reason" in kwargs.keys() else "No reason provided"
 
-            if ctx.author.id == member.id:
+            if ctx.author.id == user.id:
                 embed=discord.Embed(title="❌ " + self._("You cannot {pwn} yourself.").format(pwn=ctx.command.name), description=self._("You cannot {pwn} your own account.").format(pwn=ctx.command.name), color=self.bot.errorColor)
                 await ctx.send(embed=embed)
                 return
             
-            if member.bot:
+            if user.bot:
                 embed=discord.Embed(title="❌ " + self._("Cannot execute on bots."), description=self._("This command cannot be executed on bots."), color=self.bot.errorColor)
                 await ctx.send(embed=embed)
                 return
@@ -165,10 +165,10 @@ class Moderation(commands.Cog):
             #This is a weird one, but it has to do this before actually
             #punishing the user, because if the user leaves the guild,
             #you can no longer DM them
-            if settings.dm_users_on_punish:
+            if settings.dm_users_on_punish and isinstance(user, discord.Member):
                 embed = discord.Embed(title="❗ " + "You have been {pwned} {guild}".format(pwned=types_conj[ctx.command.name], guild=ctx.guild.name), description=self._("You have been {pwned} **{guild}**.\n**Reason:** ```{reason}```").format(pwned=types_conj[ctx.command.name], guild=ctx.guild.name, reason=reason),color=self.bot.errorColor)
                 try:
-                    await member.send(embed=embed)
+                    await user.send(embed=embed)
                 except discord.Forbidden:
                     pass
 
