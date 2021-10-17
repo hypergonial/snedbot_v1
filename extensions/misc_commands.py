@@ -152,7 +152,8 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         color=self.bot.embedBlue)
 
         embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
-        embed.set_thumbnail(url=guild.icon.url)
+        if guild.icon:
+            embed.set_thumbnail(url=guild.icon.url)
         if guild.discovery_splash: #If the server has a discovery splash/invite background, we put it as an embed image for extra fancyTM
             embed.set_image(url=guild.discovery_splash.url)
         await ctx.send(embed=embed)

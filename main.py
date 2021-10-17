@@ -27,8 +27,7 @@ try:
     import uvloop
     uvloop.install()
 except (ModuleNotFoundError, ImportError):
-    logging.warn('Failed to import uvloop, expect degraded performance!\nFor best performance, please "pip install uvloop"!')
-    time.sleep(3)
+    logging.warning('Failed to import uvloop, expect degraded performance!\nFor best performance, please "pip install uvloop"!')
 
 #Language
 lang = "en"
