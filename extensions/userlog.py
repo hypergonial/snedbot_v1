@@ -32,6 +32,7 @@ class Logging(commands.Cog):
             if loggingchannel is None: return
             try:
                 if isinstance(logcontent, discord.Embed):
+                    logcontent.timestamp = discord.utils.utcnow()
                     await loggingchannel.send(embed=logcontent)
                 elif isinstance(logcontent, str):
                     await loggingchannel.send(content=logcontent)
@@ -47,6 +48,7 @@ class Logging(commands.Cog):
             if elevated_loggingchannel is None: await self.log_standard(logcontent, guild_id)
             try:
                 if isinstance(logcontent, discord.Embed):
+                    logcontent.timestamp = discord.utils.utcnow()
                     await elevated_loggingchannel.send(embed=logcontent)
                 elif isinstance(logcontent, str):
                     await elevated_loggingchannel.send(content=logcontent)
@@ -289,6 +291,8 @@ class Logging(commands.Cog):
 
         elif type == "standard":
             embed = discord.Embed(title=f"🚪 User left", description=f"**User:** `{member} ({member.id})`\n**User count:** `{member.guild.member_count}`", color=self.bot.errorColor)
+            if member.avatar:
+                embed.set_thumbnail(url=member.avatar.url)
             await self.log_standard(embed, member.guild.id)
 
                 
@@ -296,6 +300,9 @@ class Logging(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         embed = discord.Embed(title=f"🚪 User joined", description=f"**User:** `{member} ({member.id})`\n**User count:** `{member.guild.member_count}`", color=self.bot.embedGreen)
+        embed.add_field(name="Account created", value=f"{discord.utils.format_dt(member.created_at)} ({discord.utils.format_dt(member.created_at, style='R')})", inline=False)
+        if member.avatar:
+            embed.set_thumbnail(url=member.avatar.url)
         await self.log_standard(embed, member.guild.id)
     
     
