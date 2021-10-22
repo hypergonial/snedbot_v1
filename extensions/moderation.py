@@ -10,6 +10,7 @@ from typing import TypeVar, Union
 import discord
 from discord.ext import commands
 
+logger = logging.getLogger(__name__)
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
@@ -783,5 +784,5 @@ class Moderation(commands.Cog):
 
 
 def setup(bot):
-    logging.info("Adding cog: Moderation...")
+    logger.info("Adding cog: Moderation...")
     bot.add_cog(Moderation(bot))

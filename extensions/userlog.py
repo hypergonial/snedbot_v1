@@ -5,6 +5,8 @@ import logging
 import discord
 from discord.ext import commands
 
+logger = logging.getLogger(__name__)
+
 #TODO: Move logging setup here from extensions/setup
 class Logging(commands.Cog):
     '''User-facing logging support for important server events'''
@@ -339,5 +341,5 @@ class Logging(commands.Cog):
                 await self.log_elevated(embed, after.guild.id)
 
 def setup(bot):
-    logging.info("Adding cog: Logging...")
+    logger.info("Adding cog: Logging...")
     bot.add_cog(Logging(bot))

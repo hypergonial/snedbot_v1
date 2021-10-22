@@ -10,6 +10,8 @@ from discord.ext import commands
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
 
+logger = logging.getLogger(__name__)
+
 
 class Giveaway(commands.Cog):
     '''
@@ -221,5 +223,5 @@ class Giveaway(commands.Cog):
 
 
 def setup(bot):
-    logging.info('Adding cog: Giveaway...')
+    logger.info('Adding cog: Giveaway...')
     bot.add_cog(Giveaway(bot))

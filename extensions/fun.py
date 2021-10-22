@@ -17,6 +17,8 @@ from PIL import Image, ImageDraw, ImageFont
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
 
+logger = logging.getLogger(__name__)
+
 class Fun(commands.Cog):
     '''All the fun!'''
 
@@ -286,5 +288,5 @@ class Fun(commands.Cog):
         
 
 def setup(bot):
-    logging.info("Adding cog: Fun...")
+    logger.info("Adding cog: Fun...")
     bot.add_cog(Fun(bot))

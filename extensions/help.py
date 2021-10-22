@@ -4,6 +4,7 @@ import discord
 from discord.ext import commands, menus
 from discord.ext.menus.views import ViewMenuPages
 
+logger = logging.getLogger(__name__)
 
 class HelpPages(ViewMenuPages):
     '''
@@ -163,5 +164,5 @@ class Help(commands.Cog):
         self.bot = bot
 
 def setup(bot):
-    logging.info("Adding cog: Help...")
+    logger.info("Adding cog: Help...")
     bot.add_cog(Help(bot))

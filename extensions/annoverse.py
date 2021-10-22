@@ -8,6 +8,8 @@ async def has_owner(ctx):
 def is_anno_guild(ctx):
     return ctx.guild.id in ctx.bot.anno_guilds
 
+logger = logging.getLogger(__name__)
+
 class Annoverse(commands.Cog):
     '''
     Commands & functionality related to Anno-discords
@@ -131,5 +133,5 @@ class Annoverse(commands.Cog):
 
 
 def setup(bot):
-    logging.info("Adding cog: Annoverse...")
+    logger.info("Adding cog: Annoverse...")
     bot.add_cog(Annoverse(bot))

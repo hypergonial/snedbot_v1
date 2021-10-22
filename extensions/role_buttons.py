@@ -12,6 +12,8 @@ async def has_owner(ctx):
 async def has_priviliged(ctx):
     return await ctx.bot.custom_checks.has_priviliged(ctx)
 
+logger = logging.getLogger(__name__)
+
 
 class PersistentRoleView(discord.ui.View):
     def __init__(self, buttons:list=None):
@@ -66,7 +68,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     async def buttonroles_init(self):
         '''Re-acquire all persistent buttons'''
         await self.bot.wait_until_ready()
-        logging.info("Adding persistent views to button roles...")
+        logger.info("Adding persistent views to button roles...")
         records = await self.bot.pool.fetch('''
         SELECT 
         guild_id, 
@@ -92,7 +94,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         for msg_id, buttons in add_to_persistent_views.items():
             self.bot.add_view(PersistentRoleView(buttons), message_id=msg_id)
 
-        logging.info('Button roles ready!')
+        logger.info('Button roles ready!')
 
     @commands.group(aliases=["rr", "rb", "reactionrole", "rolebuttons"], help="Manages role-buttons. See subcommands for more.", description="Lists all button roles set for this guild, if any. Subcommands allow you to remove or set additional ones.", usage="buttonrole", invoke_without_command=True, case_insensitive=True)
     @commands.guild_only()
@@ -353,5 +355,5 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
 
 
 def setup(bot):
-    logging.info("Adding cog: Role Buttons...")
+    logger.info("Adding cog: Role Buttons...")
     bot.add_cog(RoleButtons(bot))

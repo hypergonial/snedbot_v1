@@ -7,6 +7,8 @@ from dataclasses import dataclass
 import discord
 from discord.ext import commands
 from discord.ext import tasks
+
+logger = logging.getLogger(__name__)
 '''
 Disclaimer: This extension is proprietary to Annoverse, and should not be used elsewhere without heavy modifications!
 It is also really old & may need a rewrite to properly handle buttons, and just a general code cleanup.
@@ -133,7 +135,6 @@ class Matchmaking(commands.Cog):
         #Performs check if the command is executed in the right channel, if this is None, this feature is disabled.
         if cmdchannel:
             if cmdchannel != ctx.channel.id :
-                logging.info(f"User {ctx.author} tried to initialize matchmaking in disabled channel.")
                 ctx.command.reset_cooldown(ctx)
                 return
         mpsessiondata = []
@@ -457,7 +458,7 @@ class Matchmaking(commands.Cog):
                             embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted.\nID: {listing_id}".format(listing_id=listingID))
                             posting = await channel.send(embed=embed)
                             await posting.add_reaction("⏫")
-                            logging.info(f"{ctx.author} User created new multiplayer listing with ID {listingID}. Session data dump: {mpsessiondata}")
+                            logger.info(f"{ctx.author} User created new multiplayer listing with ID {listingID}. Session data dump: {mpsessiondata}")
                         else :
                             lfgrole = ctx.guild.get_role(lfgrole_id)
                             embed=discord.Embed(title=self._("**__Looking for Players: Anno 1800__**"), description=self._("**Ubisoft Connect Username: ** {name} \n **Gamemode: ** {gamemode} \n **Players: ** {playercount} \n **DLC: ** {DLC} \n **Mods:** {mods} \n **Timezone:** {timezone} \n **Additional info:** {additional_info} \n \n Contact {author} in DMs if you are interested, or subscribe by reacting with {arrow}! This will notify the host when {subcap} players have subscribed! (including the host)").format(name=mpsessiondata[0], gamemode=mpsessiondata[1], playercount=mpsessiondata[2], DLC=mpsessiondata[3], mods=mpsessiondata[4], timezone=mpsessiondata[5], additional_info=mpsessiondata[6], author=ctx.author.mention, arrow="⏫", subcap=mpsessiondata[2]), color=mpEmbedColor)
@@ -465,12 +466,12 @@ class Matchmaking(commands.Cog):
                             embed.set_footer(text="Note: This listing is valid for 7 days, after that, no more subscriptions can be submitted.\nID: {listing_id}".format(listing_id=listingID))
                             posting = await channel.send(embed=embed,content=lfgrole.mention)
                             await posting.add_reaction("⏫")
-                            logging.info(f"{ctx.author} User created new multiplayer listing with ID {listingID}. Session data dump: {mpsessiondata}")
+                            logger.info(f"{ctx.author} User created new multiplayer listing with ID {listingID}. Session data dump: {mpsessiondata}")
                         listing = Listing(str(listingID), mpsessiondata[0], ctx.author.id, mpsessiondata[1], mpsessiondata[2], mpsessiondata[3], mpsessiondata[4], mpsessiondata[5], mpsessiondata[6], listing_timestamp, ctx.guild.id)
                         await self.listings.create(listing)
                     except Exception as error:
                             #If for whatever reason the message cannot be made, we message the user about it.
-                            logging.error(f"Could not create listing for {ctx.author} due to unhandled exception. Did you set up matchmaking?")
+                            logger.error(f"Could not create listing for {ctx.author} due to unhandled exception. Did you set up matchmaking?")
                             embed=discord.Embed(title="❌ " + self._("Error: Exception encountered."), description=self._("Failed to generated listing. Contact an administrator! Operation cancelled.\n**Exception:** ```{exception}```").format(exception=error), color=self.bot.errorColor)
                             await ctx.author.send(embed=embed)
                             return -1
@@ -547,14 +548,14 @@ class Matchmaking(commands.Cog):
                         else :
                             embed=discord.Embed(title="❌ " + self._("Modification failed."), description=self._("If you have found a bug or want to give feedback, please contact `Hyper#0001`!"), color=self.bot.errorColor)
                             await ctx.author.send(embed=embed)
-                            logging.info(f"{ctx.author} User failed modification.")
+                            logger.info(f"{ctx.author} User failed modification.")
                             return -1
 
 
                     elif str(payload.emoji) == "❌":
                         embed=discord.Embed(title="❌ " + self._("Submission cancelled."), description=self._("If you have found a bug or want to give feedback, please contact `Hyper#0001`!"), color=self.bot.errorColor)
                         await ctx.author.send(embed=embed)
-                        logging.info(f"{ctx.author} User cancelled matchmaking.")
+                        logger.info(f"{ctx.author} User cancelled matchmaking.")
                         return -1
                     else :
                         await msg.delete()
@@ -603,7 +604,7 @@ class Matchmaking(commands.Cog):
                 if edits == 6:
                     embed=discord.Embed(title="❌ " + self._("Exceeded edit limit."), description=self._("You cannot make more edits to your submission. Please try executing the command again."),color=self.bot.errorColor)
                     await ctx.author.send(embed=embed)
-                    logging.info(f"{ctx.author} exceeded listing edit limit in matchmaking.")
+                    logger.info(f"{ctx.author} exceeded listing edit limit in matchmaking.")
                     ctx.command.reset_cooldown(ctx)
                     return
                 else :
@@ -613,12 +614,12 @@ class Matchmaking(commands.Cog):
                 if warns == 4:
                     embed=discord.Embed(title="❌ " + self._("Exceeded error limit."), description=self._("You have made too many errors. Please retry your submission."), color=self.bot.errorColor)
                     await ctx.author.send(embed=embed)
-                    logging.info(f"{ctx.author} exceeded listing error limit in matchmaking.")
+                    logger.info(f"{ctx.author} exceeded listing error limit in matchmaking.")
                     ctx.command.reset_cooldown(ctx)
                     return
                 else:
                     warns += 1
-        logging.info(f"Matchmaking command executed successfully. Generated listing for {ctx.author}!")
+        logger.info(f"Matchmaking command executed successfully. Generated listing for {ctx.author}!")
 
 
     @matchmaking.error
@@ -639,7 +640,7 @@ class Matchmaking(commands.Cog):
             for listing in listings:
                 if (int(round(time.time())) - listing.timestamp) > 604800:
                     await self.listings.delete(listing.id)
-                    logging.info("Deleted listing {ID} from database.".format(ID=listing.id))
+                    logger.info("Deleted listing {ID} from database.".format(ID=listing.id))
 
 
     @commands.Cog.listener()
@@ -666,7 +667,7 @@ class Matchmaking(commands.Cog):
                     db_listing = await self.listings.retrieve(listingID)
                     #Detect missing data
                     if db_listing == None :
-                        logging.info(f"{member} tried to subscribe to an expired listing.")
+                        logger.info(f"{member} tried to subscribe to an expired listing.")
                         return
                     #The second line contains information about playercount
                     playerCount = db_listing.playercount
@@ -688,9 +689,9 @@ class Matchmaking(commands.Cog):
                     if member.id != host.id :
                         embed=discord.Embed(title="📝 " + self._("You have subscribed to {hostname}'s game!").format(hostname=host.name), description=self._("They will receive a notification when their desired playercap has been reached."), color=self.bot.embedGreen)
                         await member.send(embed=embed)
-                        logging.info(f"{member.name}#{member.discriminator} expressed interest to join {host.name}#{host.discriminator}'s game.")
+                        logger.info(f"{member.name}#{member.discriminator} expressed interest to join {host.name}#{host.discriminator}'s game.")
                     else :
-                        logging.info(f"{host.name} tried to subscribe to their own listing.")
+                        logger.info(f"{host.name} tried to subscribe to their own listing.")
                         return #Return so that the host can't ping themselves lol
                     #If we have reached the desired playercount, we will message to the host. This message will get every time a new player reacts.
                     if len(interestedPlayers) >= playerCount :
@@ -700,7 +701,7 @@ class Matchmaking(commands.Cog):
                         #Add a little emoji as feedback that the listing has reached max subscriber cap
                         if "🎉" not in str(listing.reactions):
                             await listing.add_reaction("🎉")
-                        logging.info(f"{host.name}#{host.discriminator}'s listing reached cap. Host notified.")
+                        logger.info(f"{host.name}#{host.discriminator}'s listing reached cap. Host notified.")
                     return
 
 
@@ -725,17 +726,14 @@ class Matchmaking(commands.Cog):
                     listingID = listingFooter.text.split("ID: ")[1]
                     db_listing = await self.listings.retrieve(listingID)
                     if db_listing == None :
-                        logging.info(f"{member} tried to unsubscribe from an expired listing.")
                         return
                     host = ctx.guild.get_member(db_listing.host_id)
                     if member.id != host.id :
-                        logging.info(f"{member.name}#{member.discriminator} removed themselves from a listing.")
+                        logger.info(f"{member.name}#{member.discriminator} removed themselves from a listing.")
                         embed=discord.Embed(title=f"📝 " + self._("You have unsubscribed from {hostname}'s listing.").format(hostname=host.name), description=self._("The host will no longer see you signed up to this listing."), color=self.bot.errorColor)
                         await member.send(embed=embed)
                         return
-                    else :
-                        logging.info(f"{host.name} tried to unsubscribe from their own listing.")
 
 def setup(bot):
-    logging.info("Adding cog: Matchmaking...")
+    logger.info("Adding cog: Matchmaking...")
     bot.add_cog(Matchmaking(bot))

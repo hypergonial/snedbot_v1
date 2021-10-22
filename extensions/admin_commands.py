@@ -12,6 +12,8 @@ async def has_owner(ctx):
 async def has_admin_perms(ctx):
     return await ctx.bot.custom_checks.has_permissions(ctx, 'admin_permitted')
 
+logger = logging.getLogger(__name__)
+
 class AdminCommands(commands.Cog, name="Admin Commands"):
     '''All commands relating to the administration of the server'''
 
@@ -214,7 +216,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         await ctx.send(embed=embed)
         await self.bot.pool.close()
         await self.bot.close()
-        logging.info("Bot shut down successfully!")
+        logger.info("Bot shut down successfully via shutdown command!")
 
 
     @commands.command(help="Forces the bot to leave this server.", description="Forces the bot to leave this server. Takes no arguments.", usage="leave")
@@ -271,5 +273,5 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
 
 
 def setup(bot):
-    logging.info("Adding cog: AdminCommands...")
+    logger.info("Adding cog: AdminCommands...")
     bot.add_cog(AdminCommands(bot))

@@ -5,6 +5,8 @@ import asyncpg
 import discord
 from discord.ext import commands
 
+logger = logging.getLogger(__name__)
+
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
@@ -91,7 +93,6 @@ class Setup(commands.Cog):
 
             embed=discord.Embed(title="🛠️ Matchmaking setup", description="✅ Setup completed. Matchmaking set up!", color=self.bot.embedGreen)
             await ctx.channel.send(embed=embed)
-            logging.info(f"Setup for matchmaking concluded successfully on guild {ctx.guild.id}.")
             return
 
         except commands.ChannelNotFound:
@@ -184,5 +185,5 @@ class Setup(commands.Cog):
             return
 
 def setup(bot):
-    logging.info("Adding cog: Setup...")
+    logger.info("Adding cog: Setup...")
     bot.add_cog(Setup(bot))

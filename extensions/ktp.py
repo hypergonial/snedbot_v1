@@ -6,6 +6,8 @@ from discord.ext import commands
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
 
+logger = logging.getLogger(__name__)
+
 class KeepOnTop(commands.Cog, name="Keep On Top"):
     '''
     Keep-On-Top message functionality, currently only available
@@ -127,5 +129,5 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
 
 
 def setup(bot):
-    logging.info("Adding cog: KeepOnTop...")
+    logger.info("Adding cog: KeepOnTop...")
     bot.add_cog(KeepOnTop(bot))

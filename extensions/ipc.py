@@ -4,6 +4,8 @@ import json
 import discord
 from discord.ext import commands, ipc
 
+logger = logging.getLogger(__name__)
+
 class IpcRoutes(commands.Cog):
     '''
     A cog handling all IPC for the website.
@@ -106,7 +108,7 @@ class IpcRoutes(commands.Cog):
             guild = self.bot.get_guild(data.guild_id)
             await guild.me.edit(nick=data.nickname)
         except Exception as e:
-            logging.error(f"Error occured applying settings received from IPC: {e}")
+            logger.error(f"Error occured applying settings received from IPC: {e}")
 
     @ipc.server.route()
     async def set_permissions(self, data) -> None:
@@ -250,5 +252,5 @@ class IpcRoutes(commands.Cog):
 
 
 def setup(bot):
-    logging.info("Adding cog: IpcRoutes...")
+    logger.info("Adding cog: IpcRoutes...")
     bot.add_cog(IpcRoutes(bot))

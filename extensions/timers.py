@@ -7,6 +7,8 @@ import discord
 import Levenshtein as lev
 from discord.ext import commands, tasks
 
+logger = logging.getLogger(__name__)
+
 '''
 The repo https://github.com/Rapptz/RoboDanny was massive help when writing this code,
 and I used the same general structure as seen in /cogs/reminder.py there.
@@ -58,7 +60,7 @@ class Timers(commands.Cog):
         Result of 12 hours of pain #remember
         '''
 
-        logging.debug(f"String passed for time conversion: {timestr}")
+        logger.debug(f"String passed for time conversion: {timestr}")
         
         date_and_time_regex = re.compile(r"\d{4}-[0-1]\d-[0-3]\d [0-2]\d:[0-5]\d")
         date_regex = re.compile(r"\d{4}-[0-1]\d-[0-3]\d")
@@ -88,7 +90,6 @@ class Timers(commands.Cog):
             matches = time_regex.findall(timestr)
             time = 0
             strings = [] #Stores all identified times
-            logging.debug(f"Matches: {matches}")
             for val, category in matches:
                 val = val.replace(',', '.') #Replace commas with periods to correctly register decimal places
                 #If this is a single letter
@@ -106,7 +107,7 @@ class Timers(commands.Cog):
                             strings.append(val + category)
                             strings.append(val + " " + category)
                             break
-            logging.debug(f"Time: {time}")
+            logger.debug(f"Time: {time}")
             if time > 0:
                 time = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=time)
             else: #If time is 0, then we failed to parse or the user indeed provided 0, which makes no sense, so we raise an error.
@@ -166,54 +167,53 @@ class Timers(commands.Cog):
     #Gets the first timer that is about to expire in X days, and returns it. Return None if no timers are found in that scope.
     async def get_latest_timer(self, days=7):
         await self.bot.wait_until_ready() #This must be included or you get a lot of NoneType errors while booting up, and timers do not get delivered
-        logging.debug("Getting latest timer...")
+        logger.debug("Getting latest timer...")
         result = await self.bot.pool.fetch('''SELECT * FROM timers WHERE expires < $1 ORDER BY expires LIMIT 1''', round((datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=days)).timestamp()))
-        logging.debug(f"Latest timer from db: {result}")
+        logger.debug(f"Latest timer from db: {result}")
         if len(result) != 0 and result[0]:
             timer = Timer(id=result[0].get('id'),guild_id=result[0].get('guild_id'),user_id=result[0].get('user_id'),channel_id=result[0].get('channel_id'),event=result[0].get('event'),expires=result[0].get('expires'),notes=result[0].get('notes'))
             #self.current_timer = timer
-            logging.debug(f"Timer class created for latest: {timer}")
+            logger.debug(f"Timer class created for latest: {timer}")
             return timer
     
 
     #The actual calling of the timer, deletes it from the db & dispatches the event
     async def call_timer(self, timer : Timer):
-        logging.debug("Deleting timer entry {timerid}".format(timerid=timer.id))
+        logger.debug("Deleting timer entry {timerid}".format(timerid=timer.id))
         await self.bot.pool.execute('''DELETE FROM timers WHERE id = $1''', timer.id)
         #Set the currently evaluated timer to None
         self.current_timer = None
-        logging.debug("Deleted")
+        logger.debug("Deleted")
         '''
         Dispatch an event named eventname_timer_complete, which will cause all listeners 
         for this event to fire. This function is not documented, so if anything breaks, it
         is probably in here. It passes on the Timer
         '''
-        logging.debug("Dispatching..")
         event = timer.event
         event_name = f'{event}_timer_complete'
-        logging.debug(event_name)
+        logger.debug("Dispatching: ", event_name)
         self.bot.dispatch(event_name, timer)
-        logging.debug("Dispatched.")
+        logger.debug("Dispatched.")
 
     async def dispatch_timers(self):
-        logging.debug("Dispatching timers.")
+        logger.debug("Dispatching timers.")
         try:
             while not self.bot.is_closed():
-                logging.debug("Getting timer")
+                logger.debug("Getting timer")
                 timer = await self.get_latest_timer(days=40)
                 self.current_timer=timer
                 now = round(datetime.datetime.now(datetime.timezone.utc).timestamp())
-                logging.debug(f"Now: {now}")
-                logging.debug(f"Timer: {timer}")
-                logging.debug("Has timer")
+                logger.debug(f"Now: {now}")
+                logger.debug(f"Timer: {timer}")
+                logger.debug("Has timer")
                 if timer:
-                    logging.debug("Evaluating timer.")
+                    logger.debug("Evaluating timer.")
                     if timer.expires >= now:
                         sleep_time = (timer.expires - now)
-                        logging.info(f"Awaiting next timer: '{timer.event}', which is in {sleep_time}s")
+                        logger.info(f"Awaiting next timer: '{timer.event}', which is in {sleep_time}s")
                         await asyncio.sleep(sleep_time)
 
-                    logging.info(f"Dispatching timer: {timer.event}")
+                    logger.info(f"Dispatching timer: {timer.event}")
                     await self.call_timer(timer)
                 else:
                     break #This is necessary because if on start-up there is no stored timer, it will go into an infinite loop
@@ -230,21 +230,21 @@ class Timers(commands.Cog):
         expires = round(expires.timestamp())
         await self.bot.pool.execute('''UPDATE timers SET expires = $1 WHERE id = $2 AND guild_id = $3''', expires, entry_id, guild_id)
         if self.current_timer and self.current_timer.id == entry_id:
-            logging.debug("Updating timers resulted in reshuffling.")
+            logger.debug("Updating timers resulted in reshuffling.")
             self.currenttask.cancel()
             self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
 
     async def create_timer(self, expires:datetime.datetime, event:str, guild_id:int, user_id:int, channel_id:int=None, *, notes:str=None):
         '''Create a new timer, will dispatch on_<event>_timer_complete when finished.'''
 
-        logging.debug(f"Expiry: {expires}")
+        logger.debug(f"Expiry: {expires}")
         expires=round(expires.timestamp()) #Converting it to time since epoch
         await self.bot.pool.execute('''INSERT INTO timers (guild_id, channel_id, user_id, event, expires, notes) VALUES ($1, $2, $3, $4, $5, $6)''', guild_id, channel_id, user_id, event, expires, notes)
-        logging.debug("Saved to database.")
+        logger.debug("Saved to database.")
         #If there is already a timer in queue, and it has an expiry that is further than the timer we just created
         #Then we reboot the dispatch_timers() function to re-check for the latest timer.
         if self.current_timer and expires < self.current_timer.expires:
-            logging.debug("Reshuffled timers, this is now the latest timer.")
+            logger.debug("Reshuffled timers, this is now the latest timer.")
             self.currenttask.cancel()
             self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
         elif self.current_timer is None:
@@ -286,7 +286,7 @@ class Timers(commands.Cog):
         await ctx.channel.trigger_typing()
         try:
             time, timestr = await self.remindertime(timestr)
-            logging.debug(f"Received conversion: {time}")
+            logger.debug(f"Received conversion: {time}")
             print(timestr)
         except ValueError as error:
             embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Your timeformat is invalid! Type `{prefix}help reminder` to see valid time formatting.\n**Error:** {error}").format(prefix=ctx.prefix, error=error),color=self.bot.errorColor)
@@ -296,7 +296,7 @@ class Timers(commands.Cog):
                 embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Sorry, but that's a bit too far in the future.").format(prefix=ctx.prefix),color=self.bot.errorColor)
                 await ctx.send(embed=embed)
             else:
-                logging.debug(f"Timestrs length is: {len(timestr)}")
+                logger.debug(f"Timestrs length is: {len(timestr)}")
                 if timestr is None or len(timestr) == 0:
                     timestr = "..."
                 note = timestr+f"\n\n[Jump to original message!]({ctx.message.jump_url})"
@@ -355,7 +355,7 @@ class Timers(commands.Cog):
 
     @commands.Cog.listener()
     async def on_reminder_timer_complete(self, timer : Timer):
-        logging.debug("on_reminder_timer_complete received.")
+        logger.debug("on_reminder_timer_complete received.")
         guild = self.bot.get_guild(timer.guild_id)
         if guild is None: #Check if bot did not leave guild
             return
@@ -369,9 +369,9 @@ class Timers(commands.Cog):
                 try: #Fallback to DM if cannot send in channel
                     await user.send(embed=embed, content="I lost access to the channel this reminder was sent from, so here it is!")
                 except discord.Forbidden:
-                    logging.info(f"Failed to deliver reminder to user {user}.")
+                    logger.info(f"Failed to deliver a reminder to user {user}.")
                     return
 
 def setup(bot):
-    logging.info("Adding cog: Timers...")
+    logger.info("Adding cog: Timers...")
     bot.add_cog(Timers(bot))

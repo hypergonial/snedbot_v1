@@ -5,6 +5,7 @@ from typing import Type
 import asyncpg
 from sql_metadata import Parser
 
+logger = logging.getLogger(__name__)
 
 class SQLParsingError(Exception):
     pass
@@ -33,7 +34,7 @@ class Caching():
         ''')
         for record in records:
             self.cache[record.get("tablename")] = {}
-        logging.info("Cache initialized!")
+        logger.info("Cache initialized!")
         self.is_ready = True
 
     
@@ -68,7 +69,7 @@ class Caching():
         '''
         if guild_id in self.cache[table].keys():
             if kwargs:
-                logging.debug("Loading data from cache and filtering...")
+                logger.debug("Loading data from cache and filtering...")
                 matches = {}
                 records = self.cache[table][guild_id]
                 if len(records) > 0:
@@ -87,12 +88,12 @@ class Caching():
                         if len(filtered_records) > 0:
                             return await self.format_records(filtered_records)
             else:
-                logging.debug("Loading data from cache...")
+                logger.debug("Loading data from cache...")
                 if len(self.cache[table][guild_id]) > 0:
                     return await self.format_records(self.cache[table][guild_id])
         
         else:
-            logging.debug("Loading data from database and loading into cache...")
+            logger.debug("Loading data from database and loading into cache...")
             await self.refresh(table, guild_id)
             return await self.get(table, guild_id, **kwargs)
 
@@ -141,7 +142,7 @@ class Caching():
                     self.cache[table][guild_id][field].append(value)
                 else:
                     self.cache[table][guild_id][field] = [value]
-        logging.debug(f"Refreshed cache for table {table}, guild {guild_id}!")
+        logger.debug(f"Refreshed cache for table {table}, guild {guild_id}!")
     
     async def wipe(self, guild_id:int):
         '''

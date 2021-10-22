@@ -3,6 +3,8 @@ import logging
 import discord
 from discord.ext import commands
 
+logger = logging.getLogger(__name__)
+
 class HomeGuild(commands.Cog):
     '''Functionality for the Home server of Sned'''
     
@@ -35,5 +37,5 @@ class HomeGuild(commands.Cog):
 
 
 def setup(bot):
-    logging.info("Adding cog: HomeGuild...")
+    logger.info("Adding cog: HomeGuild...")
     bot.add_cog(HomeGuild(bot))

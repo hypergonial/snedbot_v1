@@ -6,6 +6,8 @@ from discord.ext import commands
 async def has_admin_perms(ctx):
     return await ctx.bot.custom_checks.has_permissions(ctx, "admin_permitted")
 
+logger = logging.getLogger(__name__)
+
 class Permissions(commands.Cog):
     '''
     Assigns roles to permission lists, which determine their access level.
@@ -209,5 +211,5 @@ class Permissions(commands.Cog):
 
 
 def setup(bot):
-    logging.info("Adding cog: Permissions...")
+    logger.info("Adding cog: Permissions...")
     bot.add_cog(Permissions(bot))

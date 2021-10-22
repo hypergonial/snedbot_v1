@@ -13,6 +13,8 @@ async def has_owner(ctx):
 async def has_mod_perms(ctx):
     return await ctx.bot.custom_checks.has_permissions(ctx, 'mod_permitted')
 
+logger = logging.getLogger(__name__)
+
 @dataclass
 class Tag:
     '''
@@ -465,5 +467,5 @@ class Tags(commands.Cog):
             await ctx.send(embed=embed)
 
 def setup(bot):
-    logging.info("Adding cog: Tags...")
+    logger.info("Adding cog: Tags...")
     bot.add_cog(Tags(bot))

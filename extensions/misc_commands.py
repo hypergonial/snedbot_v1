@@ -9,6 +9,8 @@ from discord.ext import commands
 async def has_mod_perms(ctx):
     return await ctx.bot.custom_checks.has_permissions(ctx, 'mod_permitted')
 
+logger = logging.getLogger(__name__)
+
 class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     '''Commands that do not belong in any other category'''
 
@@ -193,5 +195,5 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
 
 
 def setup(bot):
-    logging.info("Adding cog: MiscCommands...")
+    logger.info("Adding cog: MiscCommands...")
     bot.add_cog(MiscCommands(bot))

@@ -13,6 +13,8 @@ from extensions.utils import components, exceptions
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
 
+logger = logging.getLogger(__name__)
+
 
 class PersistentEventView(discord.ui.View):
     def __init__(self, bot: commands.Bot, buttons: list = None):
@@ -263,7 +265,7 @@ class Events(commands.Cog):
     async def events_init(self):
         """Re-acquire all persistent buttons"""
         await self.bot.wait_until_ready()
-        logging.info("Adding persistent views to events...")
+        logger.info("Adding persistent views to events...")
         async with self.bot.pool.acquire() as con:
             records = await con.fetch("""SELECT * FROM events""")
 
@@ -286,7 +288,7 @@ class Events(commands.Cog):
         for msg_id, buttons in add_to_persistent_views.items():
             self.bot.add_view(PersistentEventView(self.bot, buttons), message_id=msg_id)
 
-        logging.info("Events ready!")
+        logger.info("Events ready!")
 
     @commands.Cog.listener()
     async def on_event_timer_complete(self, timer):
@@ -1177,5 +1179,5 @@ class Events(commands.Cog):
 
 
 def setup(bot):
-    logging.info("Adding cog: Events...")
+    logger.info("Adding cog: Events...")
     bot.add_cog(Events(bot))
