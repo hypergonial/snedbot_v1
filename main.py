@@ -47,6 +47,7 @@ initial_extensions = (
     'extensions.help', 
     'extensions.homeguild',
     'extensions.moderation',
+    'extensions.automod',
     'extensions.role_buttons', 
     'extensions.events',
     'extensions.ktp', 
