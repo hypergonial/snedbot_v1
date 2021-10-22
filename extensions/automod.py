@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 import unicodedata
@@ -22,6 +23,66 @@ class AutoMod(commands.Cog):
         self.link_spam_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
         self.escalate_prewarn_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
         self.escalate_cd_mapping = commands.CooldownMapping.from_cooldown(2, 30, commands.BucketType.member)
+
+
+        #The default set of automoderation policies
+        self.default_automod_policies = {
+            'invites': 'disabled', 
+            'invites_opt_dur': 15, 
+            'invites_opt_delete': True,
+            'spam': 'disabled', 
+            'spam_opt_dur': 15, 
+            'mass_mentions': 'disabled', 
+            'mass_mentions_opt_dur': 15, 
+            'mass_mentions_opt_delete': True,
+            'mass_mentions_opt_count': 10,
+            'zalgo': 'disabled', 
+            'zalgo_opt_dur': 15, 
+            'zalgo_opt_delete': True,
+            'attach_spam': 'disabled', 
+            'attach_spam_opt_dur': 15, 
+            'attach_spam_opt_delete': True,
+            'link_spam': 'disabled', 
+            'link_spam_opt_dur': 15, 
+            'link_spam_opt_delete': True,
+            'caps': 'disabled',
+            'caps_opt_dur': 15,
+            'caps_opt_delete': True,
+            'bad_words': 'disabled',
+            'bad_words_opt_dur': 15,
+            'bad_words_opt_delete': True,
+            'bad_words_opt_list': ["motherfucker", "faggot", "cockfucker", "cunt", "nigger", "nigga", "porn", "pornography", "slut", "whore"],
+            'escalate': 'disabled'
+            }
+
+
+    async def get_policies(self, guild_id:int) -> dict:
+        '''
+        Checks for and returns the auto-moderation policies for the given guild.
+        This function should always be used to retrieve auto-moderation policies.
+        '''
+        records = await self.bot.caching.get(table="mod_config", guild_id=guild_id)
+
+        policies = json.loads(records[0]["automod_policies"]) if records else self.default_automod_policies
+
+        for key in self.default_automod_policies.keys(): #Ensure that values always exist
+            if key not in policies:
+                policies[key] = self.default_automod_policies[key]
+        invalid = []
+        for key in policies:
+            if key not in self.default_automod_policies.keys(): #Ensure that invalid values don't exist
+                invalid.append(key) #To avoid modifying dict size during iteration
+        for key in invalid:
+            policies.pop(key)
+
+        return policies
+
+
+    @commands.command(name="automoderation", aliases=["automod"], help="Display and configure automoderation settings.", description="List all current automoderation settings with the ability to modify them.", usage="automoderation")
+    @commands.guild_only()
+    @commands.has_mod_perms()
+    async def automod_conf_cmd(self, ctx):
+        pass
 
 
     async def automod_punish(self, message, offender:discord.Member, offense:str, reason:str, original_offense:str=None):
@@ -55,7 +116,7 @@ class AutoMod(commands.Cog):
                     "bad_words": "using bad words in your message"
                 }
 
-        policies = await self.mod_cog.get_policies(ctx.guild.id)
+        policies = await self.get_policies(ctx.guild.id)
         policy = policies[offense] #This will decide the type of punishment
         if not original_offense:
             temp_dur = policies[f"{offense}_opt_dur"] #Get temporary duration
@@ -137,7 +198,7 @@ class AutoMod(commands.Cog):
             return
 
 
-        policies = await self.mod_cog.get_policies(message.guild.id)
+        policies = await self.get_policies(message.guild.id)
         mentions = sum(member.id != message.author.id and not member.bot for member in message.mentions)
         if mentions >= policies["mass_mentions_opt_count"]:
             '''Mass Mentions'''

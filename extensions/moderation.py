@@ -46,35 +46,6 @@ class Moderation(commands.Cog):
         self.bot = bot
         self._ = self.bot.get_localization('moderation', self.bot.lang)
 
-        #The default set of automoderation policies
-        self.default_automod_policies = {
-            'invites': 'disabled', 
-            'invites_opt_dur': 15, 
-            'invites_opt_delete': True,
-            'spam': 'disabled', 
-            'spam_opt_dur': 15, 
-            'mass_mentions': 'disabled', 
-            'mass_mentions_opt_dur': 15, 
-            'mass_mentions_opt_delete': True,
-            'mass_mentions_opt_count': 10,
-            'zalgo': 'disabled', 
-            'zalgo_opt_dur': 15, 
-            'zalgo_opt_delete': True,
-            'attach_spam': 'disabled', 
-            'attach_spam_opt_dur': 15, 
-            'attach_spam_opt_delete': True,
-            'link_spam': 'disabled', 
-            'link_spam_opt_dur': 15, 
-            'link_spam_opt_delete': True,
-            'caps': 'disabled',
-            'caps_opt_dur': 15,
-            'caps_opt_delete': True,
-            'bad_words': 'disabled',
-            'bad_words_opt_dur': 15,
-            'bad_words_opt_delete': True,
-            'bad_words_opt_list': ["motherfucker", "faggot", "cockfucker", "cunt", "nigger", "nigga", "porn", "pornography", "slut", "whore"],
-            'escalate': 'disabled'
-            }
     
     async def cog_check(self, ctx):
         return await self.bot.custom_checks.module_is_enabled(ctx, "moderation")
@@ -97,26 +68,6 @@ class Moderation(commands.Cog):
             )
         return mod_settings
 
-    async def get_policies(self, guild_id:int) -> dict:
-        '''
-        Checks for and returns the auto-moderation policies for the given guild.
-        This function should always be used to retrieve auto-moderation policies.
-        '''
-        records = await self.bot.caching.get(table="mod_config", guild_id=guild_id)
-
-        policies = json.loads(records[0]["automod_policies"]) if records else self.default_automod_policies
-
-        for key in self.default_automod_policies.keys(): #Ensure that values always exist
-            if key not in policies:
-                policies[key] = self.default_automod_policies[key]
-        invalid = []
-        for key in policies:
-            if key not in self.default_automod_policies.keys(): #Ensure that invalid values don't exist
-                invalid.append(key) #To avoid modifying dict size during iteration
-        for key in invalid:
-            policies.pop(key)
-
-        return policies
 
 
     def mod_punish(func):
