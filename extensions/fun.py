@@ -104,9 +104,9 @@ class Fun(commands.Cog):
             embed=discord.Embed(title="🏁 " + self._("Typeracing results"), description=self._("Nobody was able to complete the typerace within **60** seconds. Typerace cancelled."), color=self.bot.errorColor)
             await ctx.send(embed=embed)
         else:
-            embed=discord.Embed(title="🏁 " + self._("First Place"), description=self._("{winner} finished first, everyone else has **10 seconds** to submit their reply!").format(winner=list(winners.keys())[0].mention), color=self.bot.embedGreen)
+            embed=discord.Embed(title="🏁 " + self._("First Place"), description=self._("{winner} finished first, everyone else has **15 seconds** to submit their reply!").format(winner=list(winners.keys())[0].mention), color=self.bot.embedGreen)
             await ctx.send(embed=embed)
-            await asyncio.sleep(10)
+            await asyncio.sleep(15)
             desc = self._("**Participants:**\n")
             for winner in winners:
                 desc = (f"{desc}**#{list(winners.keys()).index(winner)+1}** {winner.mention} **{round(winners[winner], 1)}** seconds - **{round((len(typeracer_text)/5) / (winners[winner] / 60))}**WPM\n")
