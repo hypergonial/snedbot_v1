@@ -313,7 +313,7 @@ class AutoMod(commands.Cog):
             sql = '''
             INSERT INTO mod_config (automod_policies, guild_id)
             VALUES ($1, $2)
-            ON CONFLICT (guild_id)
+            ON CONFLICT (guild_id) DO
             UPDATE mod_config SET automod_policies = $1 WHERE guild_id = $2
             '''
 
