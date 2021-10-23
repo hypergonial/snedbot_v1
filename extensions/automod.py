@@ -310,6 +310,13 @@ class AutoMod(commands.Cog):
 
             '''Menu navigation for policy options'''
 
+            sql = '''
+            INSERT INTO mod_config (automod_policies, guild_id)
+            VALUES ($1, $2)
+            ON CONFLICT (guild_id)
+            UPDATE mod_config SET automod_policies = $1 WHERE guild_id = $2
+            '''
+
             if view.value == "back":
                 await show_main_menu(self, message)
 
@@ -325,13 +332,13 @@ class AutoMod(commands.Cog):
                 await view.wait()
                 state = view.value["values"][0]
                 policies[policy_str]["state"] = state
-                await self.bot.pool.execute('''UPDATE mod_config SET automod_policies = $1 WHERE guild_id = $2''', json.dumps(policies), ctx.guild.id)
+                await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
                 await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                 await show_policy_options(self, policy_str, message)
 
             elif view.value == "delete":
                 policies[policy_str]["delete"] = not policies[policy_str]["delete"]
-                await self.bot.pool.execute('''UPDATE mod_config SET automod_policies = $1 WHERE guild_id = $2''', json.dumps(policies), ctx.guild.id)
+                await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
                 await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                 await show_policy_options(self, policy_str, message)
 
@@ -344,7 +351,7 @@ class AutoMod(commands.Cog):
                     if temp_dur < 1 or temp_dur > 525960:
                         raise ValueError
                     policies[policy_str]["temp_dur"] = temp_dur
-                    await self.bot.pool.execute('''UPDATE mod_config SET automod_policies = $1 WHERE guild_id = $2''', json.dumps(policies), ctx.guild.id)
+                    await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
                     await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                     try: await input.delete() 
                     except discord.Forbidden: pass
@@ -372,7 +379,7 @@ class AutoMod(commands.Cog):
                     if count < 1 or count > 50:
                         raise ValueError
                     policies[policy_str]["count"] = count
-                    await self.bot.pool.execute('''UPDATE mod_config SET automod_policies = $1 WHERE guild_id = $2''', json.dumps(policies), ctx.guild.id)
+                    await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
                     await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                     try: await input.delete() 
                     except discord.Forbidden: pass
@@ -403,7 +410,7 @@ class AutoMod(commands.Cog):
                 words_list = list(filter(None, words_list)) # Remove empty values
 
                 policies[policy_str]["words_list"] = words_list
-                await self.bot.pool.execute('''UPDATE mod_config SET automod_policies = $1 WHERE guild_id = $2''', json.dumps(policies), ctx.guild.id)
+                await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
                 await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                 try: await input.delete()
                 except discord.Forbidden: pass
