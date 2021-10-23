@@ -312,9 +312,9 @@ class AutoMod(commands.Cog):
 
             sql = '''
             INSERT INTO mod_config (automod_policies, guild_id)
-            VALUES ($1, $2)
+            VALUES ($1, $2) 
             ON CONFLICT (guild_id) DO
-            UPDATE SET automod_policies = $1 WHERE guild_id = $2
+            UPDATE SET automod_policies = $1
             '''
 
             if view.value == "back":
