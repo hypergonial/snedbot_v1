@@ -2,9 +2,6 @@
 
 ## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py).
 
-### Update on development
-With the discontinuation of discord.py, I see no way for this bot to move forward, and will most likely end development soon. 
-
 ### Features:
  - Easy to use commands
  - Moderation capabilities
