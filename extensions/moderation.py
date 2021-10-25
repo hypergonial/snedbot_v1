@@ -207,38 +207,41 @@ class Moderation(commands.Cog):
         If duration is provided, it is a tempmute, otherwise permanent. Updates database. Returns converted duration, 
         if any.
         '''
-        db_user = await self.bot.global_config.get_user(member.id, ctx.guild.id)
-        if db_user.is_muted:
-            raise AlreadyMutedException('This member is already muted.')
-        else:
-            mute_role_id = 0
-            records = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
-            if records and records[0]["mute_role_id"]:
-                mute_role_id = records[0]["mute_role_id"]
-            mute_role = ctx.guild.get_role(mute_role_id)
-            try:
-                await member.add_roles(mute_role, reason=reason)
-            except:
-                raise
+        if can_mute(ctx):
+            db_user = await self.bot.global_config.get_user(member.id, ctx.guild.id)
+            if db_user.is_muted:
+                raise AlreadyMutedException('This member is already muted.')
             else:
-                db_user.is_muted = True
-                await self.bot.global_config.update_user(db_user)
-                dur = None
-                if duration:
-                    try:                   
-                        dur = await self.bot.get_cog("Timers").converttime(duration)
-                        await self.bot.get_cog("Timers").create_timer(expires=dur[0], event="tempmute", guild_id=ctx.guild.id, user_id=member.id, channel_id=ctx.channel.id)
-                    except AttributeError:
-                        raise ModuleNotFoundError('timers extension not found')
+                mute_role_id = 0
+                records = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
+                if records and records[0]["mute_role_id"]:
+                    mute_role_id = records[0]["mute_role_id"]
+                mute_role = ctx.guild.get_role(mute_role_id)
                 try:
-                    if not duration: duration = "Infinite"
-                    else: duration = discord.utils.format_dt(dur[0])
-                    muteembed=discord.Embed(title="🔇 User muted", description=F"**User:** `{member} ({member.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Until:** {duration}\n**Reason:** ```{reason}```", color=self.bot.errorColor)
-                    await self.bot.get_cog("Logging").log_elevated(muteembed, ctx.guild.id)
+                    await member.add_roles(mute_role, reason=reason)
                 except:
-                    pass
-                if dur:
-                    return dur[0] #Return it if needed to display
+                    raise
+                else:
+                    db_user.is_muted = True
+                    await self.bot.global_config.update_user(db_user)
+                    dur = None
+                    if duration:
+                        try:                   
+                            dur = await self.bot.get_cog("Timers").converttime(duration)
+                            await self.bot.get_cog("Timers").create_timer(expires=dur[0], event="tempmute", guild_id=ctx.guild.id, user_id=member.id, channel_id=ctx.channel.id)
+                        except AttributeError:
+                            raise ModuleNotFoundError('timers extension not found')
+                    try:
+                        if not duration: duration = "Infinite"
+                        else: duration = discord.utils.format_dt(dur[0])
+                        muteembed=discord.Embed(title="🔇 User muted", description=F"**User:** `{member} ({member.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Until:** {duration}\n**Reason:** ```{reason}```", color=self.bot.errorColor)
+                        await self.bot.get_cog("Logging").log_elevated(muteembed, ctx.guild.id)
+                    except:
+                        pass
+                    if dur:
+                        return dur[0] #Return it if needed to display
+        else:
+            raise AttributeError("No mute role set.")
 
     async def unmute(self, ctx, member:discord.Member, moderator:discord.Member, reason:str=None):
         '''
