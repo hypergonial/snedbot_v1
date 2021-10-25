@@ -269,6 +269,43 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         else:
             embed = discord.Embed(title="❌ User is not in blacklist", description=f"User is not present in the blacklist!", color=self.bot.errorColor)
             await ctx.send(embed=embed)
+    
+    @commands.command(help="Query guild data", description="Query guild data for any guild the bot is in.", usage="guildinfo <ID>")
+    @commands.is_owner()
+    async def guildinfo(self, ctx, guild_id:int):
+        guild = self.bot.get_guild(guild_id)
+        if guild:
+            embed=discord.Embed(title="ℹ️ " + self._("Server information"), description=self._("""**Name:** `{guild_name}`
+            **ID:** `{guild_id}`
+            **Owner:** `{owner}`
+            **Created at:** {creation_date}
+            **Member count:** `{member_count}`
+            **Channels:** `{channel_count}`
+            **Roles:** `{role_count}`
+            **Region:** `{region}`
+            **Filesize limit:** `{filecap}`
+            **Nitro Boost count:** `{premium_sub_count}`
+            **Nitro Boost level:** `{premium_tier}`""").format(guild_name=guild.name, 
+            guild_id=guild.id, 
+            owner=guild.owner, 
+            creation_date=discord.utils.format_dt(guild.created_at), 
+            member_count=guild.member_count, 
+            channel_count=len(guild.channels),
+            role_count=len(guild.roles),
+            region=guild.region, 
+            filecap=f"{guild.filesize_limit/1048576}MB", 
+            premium_sub_count=guild.premium_subscription_count, 
+            premium_tier=guild.premium_tier), 
+            color=self.bot.embedBlue)
+
+            if guild.icon:
+                embed.set_thumbnail(url=guild.icon.url)
+            if guild.discovery_splash: #If the server has a discovery splash/invite background, we put it as an embed image for extra fancyTM
+                embed.set_image(url=guild.discovery_splash.url)
+            await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(title="❌ Guild not found", description=f"Could not find a guild with this ID.", color=self.bot.errorColor)
+            await ctx.send(embed=embed)
 
 
 

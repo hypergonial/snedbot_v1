@@ -359,8 +359,28 @@ class SnedBot(commands.Bot):
             embed=discord.Embed(title="❌ " + _("Unhandled exception"), description=_("An error happened that should not have happened. Please [contact us](https://discord.gg/KNKr8FPmJa) with a screenshot of this message!\n**Error:** ```{error}```").format(error=error), color=self.errorColor)
             embed.set_footer(text=f"Guild: {ctx.guild.id}")
             return await ctx.send(embed=embed)
-
-
+    
+    async def maybe_send(self, channel, **kwargs):
+        '''Try and send a message in the given channel, and silently swallow the error if it fails.'''
+        try:
+            await channel.send(**kwargs)
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            pass
+    
+    async def maybe_edit(self, message, **kwargs):
+        '''Try and edit the given message, and silently swallow the error if it fails.'''
+        try:
+            await message.edit(**kwargs)
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            pass
+    
+    async def maybe_delete(self, message):
+        '''Try and delete the message, and silently swallow the error if it fails.'''
+        try:
+            await message.delete()
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            pass
+            
 
 bot = SnedBot()
 _ = bot.get_localization('main', lang)

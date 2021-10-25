@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import functools
 import json
 import logging
@@ -375,14 +376,14 @@ class Moderation(commands.Cog):
             if not message:
                 message = await ctx.send(embed=embed, view=view)
             else:
-                await message.edit(embed=embed, view=view)
+                await self.bot.maybe_edit(message, embed=embed, view=view)
             
             def check(message):
                 return message.author.id == ctx.author.id and  ctx.channel.id == message.channel.id
 
             await view.wait()
             if view.value == "quit" or not view.value:
-                await message.delete()
+                await self.bot.maybe_delete(message)
             elif view.value == "dm_users_on_punish":
                 await self.bot.pool.execute('''
                 INSERT INTO mod_config (guild_id, dm_users_on_punish)
@@ -401,34 +402,37 @@ class Moderation(commands.Cog):
                 await show_main_menu(self, message)
             elif view.value == "mute_role_id":
                 embed = discord.Embed(title=f"Configuring mute role", description="Please enter a mention, ID, or name of the role you want to use as a mute role! This role should **not be able** to send messages or add reactions in any channels for muting to work correctly!", color=self.bot.embedBlue)
-                await message.edit(embed=embed, view=None)
-                input = await self.bot.wait_for('message', check=check)
+                await self.bot.maybe_edit(message, embed=embed, view=None)
+
                 try:
-                    mute_role = await commands.RoleConverter().convert(ctx, input.content)
+                    input = await self.bot.wait_for('message', check=check, timeout=180)
+                except asyncio.TimeoutError:
+                    await self.bot.maybe_delete(message)
+                else:
+                    try:
+                        mute_role = await commands.RoleConverter().convert(ctx, input.content)
 
-                    await self.bot.pool.execute('''
-                    INSERT INTO mod_config (guild_id, mute_role_id)
-                    VALUES ($1, $2)
-                    ON CONFLICT (guild_id) DO
-                    UPDATE SET mute_role_id = $2''', ctx.guild.id, mute_role.id)
-                    await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
+                        await self.bot.pool.execute('''
+                        INSERT INTO mod_config (guild_id, mute_role_id)
+                        VALUES ($1, $2)
+                        ON CONFLICT (guild_id) DO
+                        UPDATE SET mute_role_id = $2''', ctx.guild.id, mute_role.id)
+                        await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
 
-                    try: await input.delete() 
-                    except discord.Forbidden: pass
-                    await show_main_menu(self, message)
-
-                except commands.RoleNotFound:
-                    view = components.BackButtonView(ctx)
-                    embed = discord.Embed(title="❌ Role not found", description="Unable to find role! Please make sure what you entered is correct.", color=self.bot.errorColor)
-                    await message.edit(embed=embed, view=view)
-                    try: await input.delete() 
-                    except discord.Forbidden: pass
-
-                    await view.wait()
-                    if view.value == "back":
+                        await self.bot.maybe_delete(message)
                         await show_main_menu(self, message)
-                    else:
-                        await message.delete()
+
+                    except commands.RoleNotFound:
+                        view = components.BackButtonView(ctx)
+                        embed = discord.Embed(title="❌ Role not found", description="Unable to find role! Please make sure what you entered is correct.", color=self.bot.errorColor)
+                        await self.bot.maybe_edit(message, view=view, embed=embed)
+                        await self.bot.maybe_delete(input)
+
+                        await view.wait()
+                        if view.value == "back":
+                            await show_main_menu(self, message)
+                        else:
+                            await self.bot.maybe_delete(message)
 
         await show_main_menu(self)
 
@@ -506,7 +510,7 @@ class Moderation(commands.Cog):
             embed=discord.Embed(title="❌ " + self._("Already muted"), description=self._("**{offender}** is already muted.").format(offender=member), color=self.bot.errorColor)
             await ctx.send(embed=embed)
         except (AttributeError, discord.Forbidden):
-            embed=discord.Embed(title="❌ " + self._("Mute role error"), description=self._("Unable to mute user. Check if you have a mute role configured, and if the bot has permissions to add said role.").format(offender=member.mention), color=self.bot.errorColor)
+            embed=discord.Embed(title="❌ " + self._("Mute role error"), description=self._(f"Unable to mute user. Check if you have a mute role configured, and if the bot has permissions to add said role. Use `{ctx.prefix}moderation` to configure this.").format(offender=member.mention), color=self.bot.errorColor)
             await ctx.send(embed=embed)              
         else:
             if not reason: reason = "No reason specified"
@@ -527,7 +531,7 @@ class Moderation(commands.Cog):
             embed=discord.Embed(title="❌ " + self._("Not muted"), description=self._("**{offender}** is not muted.").format(offender=offender), color=self.bot.errorColor)
             await ctx.send(embed=embed)
         except (AttributeError, discord.Forbidden):
-            embed=discord.Embed(title="❌ " + self._("Mute role error"), description=self._("Unable to unmute user. Check if you have a mute role configured, and if the bot has permissions to remove said role.").format(offender=offender.mention), color=self.bot.errorColor)
+            embed=discord.Embed(title="❌ " + self._("Mute role error"), description=self._(f"Unable to unmute user. Check if you have a mute role configured, and if the bot has permissions to add said role. Use `{ctx.prefix}moderation` to configure this.").format(offender=offender.mention), color=self.bot.errorColor)
             await ctx.send(embed=embed)              
         else:
             if not reason: reason = "No reason specified"
@@ -567,7 +571,7 @@ class Moderation(commands.Cog):
             embed=discord.Embed(title="❌ " + self.bot.errorDataTitle, description=self._("Your entered timeformat is invalid. Type `{prefix}help tempmute` for more information.").format(prefix=ctx.prefix), color=self.bot.errorColor)
             await ctx.send(embed=embed)
         except (AttributeError, discord.Forbidden):
-            embed=discord.Embed(title="❌ " + self._("Mute role error"), description=self._("Unable to mute user. Check if you have a mute role configured, and if the bot has permissions to add said role.").format(offender=member.mention), color=self.bot.errorColor)
+            embed=discord.Embed(title="❌ " + self._("Mute role error"), description=self._(f"Unable to mute user. Check if you have a mute role configured, and if the bot has permissions to add said role. Use `{ctx.prefix}moderation` to configure this.").format(offender=member.mention), color=self.bot.errorColor)
             await ctx.send(embed=embed)
         except ModuleNotFoundError as error:
             embed=discord.Embed(title="❌ " + self._("Muting failed"), description=self._("This function requires an extension that is not enabled.\n**Error:** ```{error}```").format(error=error), color=self.bot.errorColor)

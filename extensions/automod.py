@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import re
@@ -260,11 +261,11 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
             if not message:
                 message = await ctx.send(embed=embed, view=view)
             else:
-                await message.edit(embed=embed, view=view)
+                await self.bot.maybe_edit(message, embed=embed, view=view)
             
             await view.wait()
             if view.value == "quit" or not view.value:
-                await message.delete()
+                await self.bot.maybe_delete(message)
             else:
                 await show_policy_options(self, view.value, message)
 
@@ -297,7 +298,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                         button_labels["words_list"] = "Bad words"
             
             view = AutoModOptionsView(ctx, button_labels)
-            await message.edit(embed=embed, view=view)
+            await self.bot.maybe_edit(message, embed=embed, view=view)
             await view.wait()
 
             def check(message):
@@ -326,7 +327,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                             states[state] = data["name"]
 
                 view = StateChangeView(ctx, states)
-                await message.edit(embed=embed, view=view)
+                await self.bot.maybe_edit(message, embed=embed, view=view)
                 await view.wait()
                 state = view.value["values"][0]
                 policies[offense_str]["state"] = state
@@ -342,80 +343,86 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
 
             elif view.value == "temp_dur":
                 embed = discord.Embed(title=f"Temporary punishment duration for {policy_strings[offense_str]['name']}", description="Please enter a valid integer value between **1 and 525960**! This will set how long temporary punishments for this category should last, in minutes.", color=self.bot.embedBlue)
-                await message.edit(embed=embed, view=None)
-                input = await self.bot.wait_for('message', check=check)
+                await self.bot.maybe_edit(message, embed=embed, view=None)
                 try:
-                    temp_dur = int(input.content)
-                    if temp_dur < 1 or temp_dur > 525960:
-                        raise ValueError
-                    policies[offense_str]["temp_dur"] = temp_dur
-                    await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
-                    await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
-                    try: await input.delete() 
-                    except discord.Forbidden: pass
-                    await show_policy_options(self, offense_str, message)
-
-                except ValueError:
-                    view = components.BackButtonView(ctx)
-                    embed = discord.Embed(title="❌ Invalid data entered", description="You did not enter a valid integer between 1 and 525960.", color=self.bot.errorColor)
-                    await message.edit(embed=embed, view=view)
-                    try: await input.delete() 
-                    except discord.Forbidden: pass
-
-                    await view.wait()
-                    if view.value == "back":
+                    input = await self.bot.wait_for('message', check=check, timeout=180)
+                except asyncio.TimeoutError:
+                    await self.bot.maybe_delete(message)
+                else:
+                    try:
+                        temp_dur = int(input.content)
+                        if temp_dur < 1 or temp_dur > 525960:
+                            raise ValueError
+                        policies[offense_str]["temp_dur"] = temp_dur
+                        await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
+                        await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
+                        await self.bot.maybe_delete(input)
                         await show_policy_options(self, offense_str, message)
-                    else:
-                        await message.delete()
+
+                    except ValueError:
+                        view = components.BackButtonView(ctx)
+                        embed = discord.Embed(title="❌ Invalid data entered", description="You did not enter a valid integer between 1 and 525960.", color=self.bot.errorColor)
+                        await self.bot.maybe_edit(message, embed=embed, view=view)
+                        await self.bot.maybe_delete(input)
+
+                        await view.wait()
+                        if view.value == "back":
+                            await show_policy_options(self, offense_str, message)
+                        else:
+                            await self.bot.maybe_delete(message)
 
             elif view.value == "count":
                 embed = discord.Embed(title=f"Count for {policy_strings[offense_str]['name']}", description="Please enter a valid integer value **between 1 and 50**! This will set how many infractions count as a breach of the rules. (E.g. in the case of mention spamming, the number of mentions that count as mention spam)", color=self.bot.embedBlue)
-                await message.edit(embed=embed, view=None)
-                input = await self.bot.wait_for('message', check=check)
+                await self.bot.maybe_edit(message, embed=embed, view=None)
                 try:
-                    count = int(input.content)
-                    if count < 1 or count > 50:
-                        raise ValueError
-                    policies[offense_str]["count"] = count
-                    await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
-                    await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
-                    try: await input.delete() 
-                    except discord.Forbidden: pass
-                    await show_policy_options(self, offense_str, message)
-
-                except ValueError:
-                    view = components.BackButtonView(ctx)
-                    embed = discord.Embed(title="❌ Invalid data entered", description="You did not enter a valid integer between 1 and 50.", color=self.bot.errorColor)
-                    await message.edit(embed=embed, view=view)
-                    try: await input.delete()
-                    except discord.Forbidden: pass
-
-                    await view.wait()
-                    if view.value == "back":
+                    input = await self.bot.wait_for('message', check=check, timeout=180)
+                except asyncio.TimeoutError:
+                    await self.bot.maybe_delete(message)
+                else:
+                    try:
+                        count = int(input.content)
+                        if count < 1 or count > 50:
+                            raise ValueError
+                        policies[offense_str]["count"] = count
+                        await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
+                        await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
+                        await self.bot.maybe_delete(input)
                         await show_policy_options(self, offense_str, message)
-                    else:
-                        await message.delete()
+
+                    except ValueError:
+                        view = components.BackButtonView(ctx)
+                        embed = discord.Embed(title="❌ Invalid data entered", description="You did not enter a valid integer between 1 and 50.", color=self.bot.errorColor)
+                        await self.bot.maybe_edit(message, embed=embed, view=view)
+                        await self.bot.maybe_delete(input)
+
+                        await view.wait()
+                        if view.value == "back":
+                            await show_policy_options(self, offense_str, message)
+                        else:
+                            await self.bot.maybe_delete(message)
 
             elif view.value == "words_list":
                 words_list = ", ".join(policies[offense_str]["words_list"])
                 embed = discord.Embed(title=f"Words list for {policy_strings[offense_str]['name']}", description=f"Please enter a list of comma-separated words that will be blacklisted! Current list of bad words:\n ||{bad_words}||", color=self.bot.embedBlue)
-                await message.edit(embed=embed, view=None)
-                input = await self.bot.wait_for('message', check=check)
+                await self.bot.maybe_edit(message, embed=embed, view=None)
+                try:
+                    input = await self.bot.wait_for('message', check=check, timeout=180)
+                except asyncio.TimeoutError:
+                    await self.bot.maybe_delete(message)
+                else:
+                    words_list = input.content.split(',')
+                    for i, item in enumerate(words_list):
+                        words_list[i] = item.strip()
+                    words_list = list(filter(None, words_list)) # Remove empty values
 
-                words_list = input.content.split(',')
-                for i, item in enumerate(words_list):
-                    words_list[i] = item.strip()
-                words_list = list(filter(None, words_list)) # Remove empty values
-
-                policies[offense_str]["words_list"] = words_list
-                await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
-                await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
-                try: await input.delete()
-                except discord.Forbidden: pass
-                await show_policy_options(self, offense_str, message)
+                    policies[offense_str]["words_list"] = words_list
+                    await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
+                    await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
+                    await self.bot.maybe_delete(input)
+                    await show_policy_options(self, offense_str, message)
 
             else:
-                await message.delete()
+                await self.bot.maybe_delete(message)
 
         await show_main_menu(self)
 
@@ -469,7 +476,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
             return
         
         if should_delete:
-            await ctx.message.delete()
+            await self.bot.maybe_delete(ctx.message)
 
 
         if policy_state == "warn":
