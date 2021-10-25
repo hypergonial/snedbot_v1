@@ -30,7 +30,7 @@ class Fun(commands.Cog):
         return await ctx.bot.custom_checks.has_permissions(ctx, 'fun') or await ctx.bot.custom_checks.has_permissions(ctx, 'mod_permitted')
 
     @commands.command(help="Displays a user's avatar.", description="Displays a user's avatar for your viewing (or stealing) pleasure.", usage=f"avatar [user]")
-    @commands.cooldown(1, 30, type=commands.BucketType.member)
+    @commands.cooldown(1, 10, type=commands.BucketType.member)
     @commands.guild_only()
     async def avatar(self, ctx, member:discord.Member=None) :
         if not member: member=ctx.author
@@ -191,7 +191,7 @@ class Fun(commands.Cog):
     #Does about what you would expect it to do. Uses thecatapi
     @commands.command(help="Shows a random cat.", description="Searches the interwebz™️ for a random cat picture.", usage="randomcat", aliases=["cat"])
     @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
-    @commands.cooldown(1, 30, type=commands.BucketType.member)
+    @commands.cooldown(1, 15, type=commands.BucketType.member)
     @commands.guild_only()
     async def randomcat(self, ctx):
         embed=discord.Embed(title="🐱 " + self._("Random kitten"), description=self._("Looking for kitty..."), color=self.bot.embedBlue)
@@ -213,7 +213,7 @@ class Fun(commands.Cog):
 
     @commands.command(help="Shows a random dog.", description="Searches the interwebz™️ for a random dog picture.", usage="randomdog", aliases=["dog"])
     @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
-    @commands.cooldown(1, 30, type=commands.BucketType.member)
+    @commands.cooldown(1, 15, type=commands.BucketType.member)
     @commands.guild_only()
     async def randomdog(self, ctx):
         embed=discord.Embed(title="🐶 " + self._("Random doggo"), description=self._("Looking for pupper..."), color=self.bot.embedBlue)

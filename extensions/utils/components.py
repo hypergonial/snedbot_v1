@@ -11,6 +11,17 @@ class AuthorOnlyView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return self.ctx.author.id == interaction.user.id
 
+class BackButtonView(AuthorOnlyView):
+    '''A view typically used with errors, shows a single back button which changes View.value to "back" when pressed.'''
+    def __init__(self, ctx, *args, **kwargs):
+        super().__init__(ctx, *args, **kwargs)
+        self.value = None
+    
+    @discord.ui.button(emoji="⬅️", label="Back", style=discord.ButtonStyle.blurple)
+    async def callback(self, button:discord.ui.Button, interaction: discord.Interaction):
+        self.value = "back"
+        self.stop()
+
 async def select_or_ask(ctx, options:list[discord.SelectOption], placeholder:str, embed:discord.Embed=None, content:str=None, message_to_edit:discord.Message=None):
     '''
     Helper function to work around limitations of select item length

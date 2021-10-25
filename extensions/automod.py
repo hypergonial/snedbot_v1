@@ -189,16 +189,6 @@ class AutoModOptionsView(components.AuthorOnlyView):
             self.view.value = self.option
             self.view.stop()
 
-class ErrorView(components.AuthorOnlyView):
-    def __init__(self, ctx, *args, **kwargs):
-        super().__init__(ctx, *args, **kwargs)
-        self.value = None
-    
-    @discord.ui.button(emoji="⬅️", label="Back", style=discord.ButtonStyle.blurple)
-    async def callback(self, button:discord.ui.Button, interaction: discord.Interaction):
-        self.value = "back"
-        self.stop()
-
 class StateChangeView(components.AuthorOnlyView):
     def __init__(self, ctx, states:dict, *args, **kwargs):
         super().__init__(ctx, *args, **kwargs)
@@ -214,7 +204,7 @@ class StateChangeView(components.AuthorOnlyView):
 
 
 
-class AutoMod(commands.Cog):
+class AutoMod(commands.Cog, name="Auto-Moderation"):
     def __init__(self, bot):
         self.bot = bot
         self.mod_cog = self.bot.get_cog('Moderation')
@@ -262,9 +252,10 @@ class AutoMod(commands.Cog):
 
             policies = await self.get_policies(ctx.guild.id)
             embed = discord.Embed(title="Automoderation Settings", description="Below you can see a summary of the current automoderation settings. To see more details about a specific entry or change their settings, press the corresponding button.", color=self.bot.embedBlue)
+            if not await self.bot.get_cog("Moderation").can_mute(ctx):
+                embed.add_field(name="⚠️ Warning!", value=f"There is **no mute role** set! Without a mute role, muting and tempmuting is unavailable! Please configure one with `{ctx.prefix}moderation`", inline=False)
             for key in policies.keys():
                 embed.add_field(name=f"{self.policy_strings[key]['name']}", value=policies[key]["state"].capitalize(), inline=True)
-
             view = AutoModConfMainView(ctx, policies)
             if not message:
                 message = await ctx.send(embed=embed, view=view)
@@ -277,29 +268,33 @@ class AutoMod(commands.Cog):
             else:
                 await show_policy_options(self, view.value, message)
 
-        async def show_policy_options(self, policy_str:str, message:discord.Message=None):
+        async def show_policy_options(self, offense_str:str, message:discord.Message=None):
             policies = await self.get_policies(ctx.guild.id)
-            policy_data = policies[policy_str]
-            embed = discord.Embed(title=f"Options for: {policy_strings[policy_str]['name']}", description=f"{policy_strings[policy_str]['description']}", color=self.bot.embedBlue)
+            policy_data = policies[offense_str]
+            embed = discord.Embed(title=f"Options for: {policy_strings[offense_str]['name']}", description=f"{policy_strings[offense_str]['description']}", color=self.bot.embedBlue)
             button_labels = {}
+
+            if policy_data["state"] == "disabled" and offense_str not in ["spam", "escalate"]:
+                embed.add_field(name="ℹ️ Disclaimer:", value="More configuration options will appear if you enable/change the state of this entry!", inline=False)
 
             embed.add_field(name="State:", value=policy_data["state"].capitalize(), inline=False)
             button_labels["state"] = "State"
 
-            for key in policy_data:
-                if key == "temp_dur" and policy_data["state"].startswith("temp"):
-                    embed.add_field(name="Temporary punishment duration:", value=f"{policy_data[key]} minute(s)", inline=False)
-                    button_labels["temp_dur"] = "Duration"
-                elif key == "delete":
-                    embed.add_field(name="Delete offending messages:", value=policy_data[key], inline=False)
-                    button_labels["delete"] = "Deletion"
-                elif key == "count":
-                    embed.add_field(name="Count:", value=policy_data[key], inline=False)
-                    button_labels["count"] = "Count"
-                elif key == "words_list":
-                    bad_words = ', '.join(policy_data[key])
-                    embed.add_field(name="Blacklisted words:", value=f"||{bad_words}||", inline=False)
-                    button_labels["words_list"] = "Bad words"
+            if policy_data["state"] != "disabled":
+                for key in policy_data:
+                    if key == "temp_dur" and policy_data["state"].startswith("temp") or key == "temp_dur" and policies["escalate"]["state"].startswith("temp") and policy_data["state"] == "escalate":
+                        embed.add_field(name="Temporary punishment duration:", value=f"{policy_data[key]} minute(s)", inline=False)
+                        button_labels["temp_dur"] = "Duration"
+                    elif key == "delete":
+                        embed.add_field(name="Delete offending messages:", value=policy_data[key], inline=False)
+                        button_labels["delete"] = "Deletion"
+                    elif key == "count":
+                        embed.add_field(name="Count:", value=policy_data[key], inline=False)
+                        button_labels["count"] = "Count"
+                    elif key == "words_list":
+                        bad_words = ', '.join(policy_data[key])
+                        embed.add_field(name="Blacklisted words:", value=f"||{bad_words}||", inline=False)
+                        button_labels["words_list"] = "Bad words"
             
             view = AutoModOptionsView(ctx, button_labels)
             await message.edit(embed=embed, view=view)
@@ -321,44 +316,47 @@ class AutoMod(commands.Cog):
                 await show_main_menu(self, message)
 
             elif view.value == "state":
-                embed = discord.Embed(title=f"Set state for {policy_strings[policy_str]['name']}", description="Please change the current state of this moderation policy below!", color=self.bot.embedBlue)
+                embed = discord.Embed(title=f"Set state for {policy_strings[offense_str]['name']}", description="Please change the current state of this moderation policy below!", color=self.bot.embedBlue)
                 states = {}
                 for state, data in policy_states.items():
-                    if policy_str not in data["excludes"]:
-                        states[state] = data["name"]
+                    if offense_str not in data["excludes"]:
+                        if state in ["mute", "tempmute"] and not await self.bot.get_cog("Moderation").can_mute(ctx):
+                            continue
+                        else:
+                            states[state] = data["name"]
 
                 view = StateChangeView(ctx, states)
                 await message.edit(embed=embed, view=view)
                 await view.wait()
                 state = view.value["values"][0]
-                policies[policy_str]["state"] = state
+                policies[offense_str]["state"] = state
                 await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
                 await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
-                await show_policy_options(self, policy_str, message)
+                await show_policy_options(self, offense_str, message)
 
             elif view.value == "delete":
-                policies[policy_str]["delete"] = not policies[policy_str]["delete"]
+                policies[offense_str]["delete"] = not policies[offense_str]["delete"]
                 await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
                 await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
-                await show_policy_options(self, policy_str, message)
+                await show_policy_options(self, offense_str, message)
 
             elif view.value == "temp_dur":
-                embed = discord.Embed(title=f"Temporary punishment duration for {policy_strings[policy_str]['name']}", description="Please enter a valid integer value between **1 and 525960**! This will set how long temporary punishments for this category should last, in minutes.", color=self.bot.embedBlue)
+                embed = discord.Embed(title=f"Temporary punishment duration for {policy_strings[offense_str]['name']}", description="Please enter a valid integer value between **1 and 525960**! This will set how long temporary punishments for this category should last, in minutes.", color=self.bot.embedBlue)
                 await message.edit(embed=embed, view=None)
                 input = await self.bot.wait_for('message', check=check)
                 try:
                     temp_dur = int(input.content)
                     if temp_dur < 1 or temp_dur > 525960:
                         raise ValueError
-                    policies[policy_str]["temp_dur"] = temp_dur
+                    policies[offense_str]["temp_dur"] = temp_dur
                     await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
                     await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                     try: await input.delete() 
                     except discord.Forbidden: pass
-                    await show_policy_options(self, policy_str, message)
+                    await show_policy_options(self, offense_str, message)
 
                 except ValueError:
-                    view = ErrorView(ctx)
+                    view = components.BackButtonView(ctx)
                     embed = discord.Embed(title="❌ Invalid data entered", description="You did not enter a valid integer between 1 and 525960.", color=self.bot.errorColor)
                     await message.edit(embed=embed, view=view)
                     try: await input.delete() 
@@ -366,27 +364,27 @@ class AutoMod(commands.Cog):
 
                     await view.wait()
                     if view.value == "back":
-                        await show_policy_options(self, policy_str, message)
+                        await show_policy_options(self, offense_str, message)
                     else:
                         await message.delete()
 
             elif view.value == "count":
-                embed = discord.Embed(title=f"Count for {policy_strings[policy_str]['name']}", description="Please enter a valid integer value **between 1 and 50**! This will set how many infractions count as a breach of the rules. (E.g. in the case of mention spamming, the number of mentions that count as mention spam)", color=self.bot.embedBlue)
+                embed = discord.Embed(title=f"Count for {policy_strings[offense_str]['name']}", description="Please enter a valid integer value **between 1 and 50**! This will set how many infractions count as a breach of the rules. (E.g. in the case of mention spamming, the number of mentions that count as mention spam)", color=self.bot.embedBlue)
                 await message.edit(embed=embed, view=None)
                 input = await self.bot.wait_for('message', check=check)
                 try:
                     count = int(input.content)
                     if count < 1 or count > 50:
                         raise ValueError
-                    policies[policy_str]["count"] = count
+                    policies[offense_str]["count"] = count
                     await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
                     await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                     try: await input.delete() 
                     except discord.Forbidden: pass
-                    await show_policy_options(self, policy_str, message)
+                    await show_policy_options(self, offense_str, message)
 
                 except ValueError:
-                    view = ErrorView(ctx)
+                    view = components.BackButtonView(ctx)
                     embed = discord.Embed(title="❌ Invalid data entered", description="You did not enter a valid integer between 1 and 50.", color=self.bot.errorColor)
                     await message.edit(embed=embed, view=view)
                     try: await input.delete()
@@ -394,13 +392,13 @@ class AutoMod(commands.Cog):
 
                     await view.wait()
                     if view.value == "back":
-                        await show_policy_options(self, policy_str, message)
+                        await show_policy_options(self, offense_str, message)
                     else:
                         await message.delete()
 
             elif view.value == "words_list":
-                words_list = ", ".join(policies[policy_str]["words_list"])
-                embed = discord.Embed(title=f"Words list for {policy_strings[policy_str]['name']}", description=f"Please enter a list of comma-separated words that will be blacklisted! Current list of bad words:\n ||{bad_words}||", color=self.bot.embedBlue)
+                words_list = ", ".join(policies[offense_str]["words_list"])
+                embed = discord.Embed(title=f"Words list for {policy_strings[offense_str]['name']}", description=f"Please enter a list of comma-separated words that will be blacklisted! Current list of bad words:\n ||{bad_words}||", color=self.bot.embedBlue)
                 await message.edit(embed=embed, view=None)
                 input = await self.bot.wait_for('message', check=check)
 
@@ -409,12 +407,12 @@ class AutoMod(commands.Cog):
                     words_list[i] = item.strip()
                 words_list = list(filter(None, words_list)) # Remove empty values
 
-                policies[policy_str]["words_list"] = words_list
+                policies[offense_str]["words_list"] = words_list
                 await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
                 await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                 try: await input.delete()
                 except discord.Forbidden: pass
-                await show_policy_options(self, policy_str, message)
+                await show_policy_options(self, offense_str, message)
 
             else:
                 await message.delete()

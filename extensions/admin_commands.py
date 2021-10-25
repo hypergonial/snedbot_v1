@@ -182,7 +182,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         Of course there is a blacklist of commands that we do not want used, ever.
         '''
         blacklist = ["jsk", "jishaku", "shutdown"] #Stuff that I don't want to work
-        disabled_list = ["help", "sudo", "leave"] #Stuff that literally does not work
+        disabled_list = ["help", "sudo", "leave", "automoderation"] #Stuff that literally does not work
         disabled_cogs = ["Events", "Permissions", "Annoverse", "Matchmaking", "AdminCommands", "Moderation", "Role-Buttons", "Keep On Top", "Setup"] #Entire cogs can be disabled too
 
         for cog in disabled_cogs:

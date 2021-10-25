@@ -37,7 +37,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         await ctx.channel.send(embed=embed)
     
     @commands.command(help="Generates an embed with the given parameters.", description="Generates an embed, and displays it according to the parameters specified. Uses shell-like arguments. Valid parameters:\n\n`--title` or `-t` (Required) Sets embed title\n`--desc` or `-d` (Required) Sets embed description\n`--color` or `-c` Sets embed color (line on the left side)\n`--thumbnail_url` or `-tu` Sets thumbnail to the specified image URL\n`--image_url` or `-iu` Sets the image field to the specified image URL\n`--footer` or `-f` Sets the footer text", usage="embed <args>")
-    @commands.cooldown(1, 60, type=commands.BucketType.member)
+    @commands.cooldown(1, 20, type=commands.BucketType.member)
     @commands.guild_only()
     async def embed(self, ctx, *, args):
         
@@ -127,7 +127,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     #Retrieves info about the current guild for the end-user
     @commands.command(help="Get information about the server.", description="Provides detailed information about this server.", usage="serverinfo")
     @commands.guild_only()
-    @commands.cooldown(1, 60, type=commands.BucketType.member)
+    @commands.cooldown(1, 30, type=commands.BucketType.member)
     async def serverinfo(self, ctx):
         guild = ctx.guild
         embed=discord.Embed(title="ℹ️ " + self._("Server information"), description=self._("""**Name:** `{guild_name}`
