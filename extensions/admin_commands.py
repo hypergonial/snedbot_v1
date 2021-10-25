@@ -155,7 +155,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed=discord.Embed(title="❌ Channel not found", description=f"Could not find this channel.", color=self.bot.errorColor)
             await ctx.send(embed=embed)
 
-    @commands.command(help="Copies a message to the current channel.", description="Edits one of the bot's messages via the specified channel and message ID.", usage="edit <channel_ID> <message_ID>")
+    @commands.command(help="Copies a message to the current channel.", description="Copies the specified message to the specified channel. Can be used to create messages that are sent by the bot to then assign role-buttons or other interactions to it.", usage="edit <channel_ID> <message_ID>")
     @commands.guild_only()
     async def copy(self, ctx, channel_id:int, msg_id:int):
         channel = ctx.guild.get_channel(channel_id)
