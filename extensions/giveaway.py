@@ -114,7 +114,7 @@ class Giveaway(commands.Cog):
         else:
             list_str = self._("There are currently no running giveaways on this server. You can create one via `{prefix}giveaway create`!").format(prefix=ctx.prefix)
         embed=discord.Embed(title="🎉 " + self._("List of giveaways:"),description=list_str, color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.send(embed=embed)
 
     @giveaway.command(name="cancel", aliases=["del", "delete", "remove"], usage="giveaway delete <giveaway_ID>", help="Cancels a running giveaway.", description="Cancels a giveaway by it's ID, which you can obtain via the `giveaway list` command.")
@@ -132,7 +132,7 @@ class Giveaway(commands.Cog):
                     self.bot.get_cog("Timers").currenttask = self.bot.get_cog("Timers").bot.loop.create_task(self.bot.get_cog("Timers").dispatch_timers())
             else:
                 embed = discord.Embed(title="❌ " + self._("Giveaway not found"), description=self._("Cannot find giveaway with ID **{ID}**.").format(ID=ID), color=self.bot.errorColor)
-                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+                embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.send(embed=embed)
 
     @giveaway.command(name="end", aliases=["terminate"], usage="giveaway end <giveaway_ID>", help="Forces a running giveaway to end.", description="Forces a running giveaway to conclude, causing the winners to be calculated immediately.")
@@ -184,7 +184,7 @@ class Giveaway(commands.Cog):
 
             else:
                 embed = discord.Embed(title="❌ " + self._("Giveaway not found"), description=self._("Cannot find giveaway with ID **{ID}**.").format(ID=ID), color=self.bot.errorColor)
-                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+                embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.send(embed=embed)
 
 

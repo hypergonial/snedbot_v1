@@ -342,6 +342,10 @@ class SnedBot(commands.Bot):
         elif isinstance(error, discord.Forbidden):
             embed=discord.Embed(title="❌ " + _("Permissions error"), description=_("This action has failed due to a lack of permissions.\n**Error:** {error}").format(error=error), color=self.errorColor)
             return await ctx.send(embed=embed)
+        
+        elif isinstance(error, discord.DiscordServerError):
+            embed=discord.Embed(title="❌ " + _("Discord Server Error"), description=_("This action has failed due to an issue with Discord's servers. Please try again in a few moments.").format(error=error), color=self.errorColor)
+            return await ctx.send(embed=embed)
 
         else :
             '''If no known error has been passed, we will print the exception to console as usual
@@ -380,6 +384,14 @@ class SnedBot(commands.Bot):
             await message.delete()
         except (discord.NotFound, discord.Forbidden, discord.HTTPException):
             pass
+    
+    def add_embed_footer(self, ctx, embed:discord.Embed):
+        '''Add the 'Requested by xyz' standard footer to an embed.'''
+        if ctx.author.avatar:
+            embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar.url)
+        else:
+            embed.set_footer(text=f"Requested by {ctx.author}")
+        return embed
             
 
 bot = SnedBot()

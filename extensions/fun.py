@@ -36,7 +36,7 @@ class Fun(commands.Cog):
         if not member: member=ctx.author
         embed=discord.Embed(title=self._("{member_name}'s avatar:").format(member_name=member.name), color=member.colour)
         embed.set_image(url=member.avatar.url)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["typerace"], help="See who can type the fastest!", description="Starts a typerace where you can see who can type the fastest. You can optionally specify the difficulty and the length of the race.\n\n**Difficulty options:**\n`easy` - 1-4 letter words\n`medium` - 5-8 letter words (Default)\n`hard` 9+ letter words\n\n**Length:**\n`1-20` - (Default: `5`) Specifies the amount of words in the typerace", usage="typeracer [difficulty] [length]")
@@ -121,7 +121,7 @@ class Fun(commands.Cog):
         query = query.replace(" ", "+")
         link = f"https://letmegooglethat.com/?q={query}"
         embed = discord.Embed(title=self._("Googled it for you!"), description=self._("[Click me!]({link})").format(link=link), color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.send(embed=embed)
 
     @commands.command(hidden=True, help="Our cool ducky friends are back.", description="Searches duckduckgo instead of Google for you, because privacy is cool.", usage="ddg <search query>", aliases=["lmddgtfy"])
@@ -130,7 +130,7 @@ class Fun(commands.Cog):
         query = query.replace(" ", "%20")
         link = f"https://lmddgtfy.net/?q={query}"
         embed = discord.Embed(title="🦆 " + self._("I ducked it for you!"), description=self._("[Click me!]({link})").format(link=link), color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.send(embed=embed)
     
     @commands.command(help="Twanswoms tewt intuwu", description="Twanswoms tewt intuwu... What havew I donuwu...", aliases=["uwuify"], usage="uwuify <text>")
@@ -150,7 +150,7 @@ class Fun(commands.Cog):
         fun_path = Path(self.bot.BASE_DIR, 'etc', 'funfacts.txt')
         fun_facts = open(fun_path, "r").readlines()
         embed = discord.Embed(title="🤔 Did you know?", description=f"{random.choice(fun_facts)}", color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.send(embed=embed)
         
     @funfact.command(hidden=True, help='Shows a random fun fact about Minecraft.', description="Shows a fun fact about Minecraft. Watch out for creepers.\n\nFacts painstakingly gathered by `fusiongames#8748`.", usage="funfact minecraft", aliases=["mc"])
@@ -159,7 +159,7 @@ class Fun(commands.Cog):
         fun_path = Path(self.bot.BASE_DIR, 'etc', 'minecraft_funfacts.txt')
         fun_facts = open(fun_path, "r").readlines()
         embed = discord.Embed(title="🤔 Did you know? - Minecraft Edition", description=f"{random.choice(fun_facts)}", color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.send(embed=embed)
 
     @commands.command(help="Shows a fact about penguins.", description="Shows a random fact about penguins. Why? Why not?", usage="penguinfact")
@@ -169,7 +169,7 @@ class Fun(commands.Cog):
         penguin_path = Path(self.bot.BASE_DIR, 'etc', 'penguinfacts.txt')
         penguin_facts = open(penguin_path, "r").readlines()
         embed = discord.Embed(title="🐧 Penguin Fact", description=f"{random.choice(penguin_facts)}", color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.send(embed=embed)
     
     #Coin flipper
@@ -181,11 +181,11 @@ class Fun(commands.Cog):
         options=["heads", "tails"]
         flip=random.choice(options)
         embed=discord.Embed(title="🪙 " + self._("Flipping coin..."), description=self._("Hold on...").format(result=flip), color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         msg = await ctx.send(embed=embed)
         await asyncio.sleep(2)
         embed=discord.Embed(title="🪙 " + self._("Coin flipped"), description=self._("It's **{result}**!").format(result=flip), color=self.bot.embedGreen)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         await msg.edit(embed=embed)
 
     #Does about what you would expect it to do. Uses thecatapi
@@ -195,7 +195,7 @@ class Fun(commands.Cog):
     @commands.guild_only()
     async def randomcat(self, ctx):
         embed=discord.Embed(title="🐱 " + self._("Random kitten"), description=self._("Looking for kitty..."), color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         msg=await ctx.send(embed=embed)
         #Get a json file from thecatapi as response, then take url from dict
         async with aiohttp.ClientSession() as session:
@@ -204,7 +204,8 @@ class Fun(commands.Cog):
                     catjson = await response.json()
                     #Print kitten to user
                     embed=discord.Embed(title="🐱 " + self._("Random kitten"), description=self._("Found one!"), color=self.bot.embedBlue)
-                    embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+                    embed = self.bot.add_embed_footer(ctx, embed)
+                    embed = self.bot.add_embed_footer(ctx, embed)
                     embed.set_image(url=catjson[0]["url"])
                     await msg.edit(embed=embed)
                 else:
@@ -217,7 +218,7 @@ class Fun(commands.Cog):
     @commands.guild_only()
     async def randomdog(self, ctx):
         embed=discord.Embed(title="🐶 " + self._("Random doggo"), description=self._("Looking for pupper..."), color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         msg=await ctx.send(embed=embed)
         #Get a json file from thedogapi as response, then take url from dict
         async with aiohttp.ClientSession() as session:
@@ -226,7 +227,7 @@ class Fun(commands.Cog):
                     dogjson = await response.json()
                     #Print doggo to user
                     embed=discord.Embed(title="🐶 " + self._("Random doggo"), description=self._("Found one!"), color=self.bot.embedBlue)
-                    embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+                    embed = self.bot.add_embed_footer(ctx, embed)
                     embed.set_image(url=dogjson[0]["url"])
                     await msg.edit(embed=embed)
                 else:
@@ -237,7 +238,7 @@ class Fun(commands.Cog):
     @commands.guild_only()
     async def catdog(self, ctx):
         embed=discord.Embed(title="🐱🐶 " + self._("Ahh yes.. the legendary catdog!"), color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         embed.set_image(url="https://media1.tenor.com/images/203c3c6047b3c905962fc55ac7fa9548/tenor.gif")
         await ctx.send(embed=embed)
 
@@ -282,7 +283,7 @@ class Fun(commands.Cog):
     @commands.guild_only()
     async def jumbo(self, ctx, emoji : discord.PartialEmoji):
         embed=discord.Embed(color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         embed.set_image(url=emoji.url)
         await ctx.send(embed=embed)
         

@@ -25,7 +25,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     @commands.guild_only()
     async def ping(self, ctx):
         embed=discord.Embed(title="🏓 Pong!", description=self._("Latency: `{latency}ms`").format(latency=round(self.bot.latency * 1000)), color=self.bot.miscColor)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.channel.send(embed=embed)
 
     #A more fun way to get the ping.
@@ -33,7 +33,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     @commands.guild_only()
     async def leroy(self, ctx):
         embed=discord.Embed(title="JEEEEENKINS!", description=f"... Oh my god he just ran in. 👀 `{round(self.bot.latency * 1000)}ms`", color =self.bot.miscColor)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.channel.send(embed=embed)
     
     @commands.command(help="Generates an embed with the given parameters.", description="Generates an embed, and displays it according to the parameters specified. Uses shell-like arguments. Valid parameters:\n\n`--title` or `-t` (Required) Sets embed title\n`--desc` or `-d` (Required) Sets embed description\n`--color` or `-c` Sets embed color (line on the left side)\n`--thumbnail_url` or `-tu` Sets thumbnail to the specified image URL\n`--image_url` or `-iu` Sets the image field to the specified image URL\n`--footer` or `-f` Sets the footer text", usage="embed <args>")
@@ -52,17 +52,17 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
             args = parser.parse_args(shlex.split(str(args)))
         except Exception as e:
             embed = discord.Embed(title="❌ " + self._("Failed parsing arguments"), description=self._("Please see `{prefix}help embed` for argument formatting!\n**Exception:** ```{exception}```").format(prefix=ctx.prefix, exception=str(e)), color=self.bot.errorColor)
-            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+            embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
             return
         except SystemExit as s: #god this is dumb
             embed = discord.Embed(title="❌ " + self._("Failed parsing arguments"), description=self._("Please see `{prefix}help embed` for argument formatting!\n**Exception:** ```SystemExit: {exception}```\n**Note:** If you are trying to pass multiple words as an argument, wrap them in quotation marks.").format(prefix=ctx.prefix, exception=str(s)), color=self.bot.errorColor)
-            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+            embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
             return
         if args.title == None or args.desc == None:
             embed = discord.Embed(title="❌ " + self._("Missing required argument"), description=self._("You are missing a required argument. Please check `{prefix}help embed` for command usage.").format(prefix=ctx.prefix), color=self.bot.errorColor)
-            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+            embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
             return
         if args.color:
@@ -71,7 +71,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
                 genEmbed = discord.Embed(title=f"{args.title}", description=f"{args.desc}", color=color)
             except commands.BadArgument:
                 embed = discord.Embed(title="❌ " + self._("Invalid color"), description=self._("For valid colors, see the [discord.py API reference](https://discordpy.readthedocs.io/en/latest/api.html#discord.Colour)"), color=self.bot.errorColor)
-                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+                embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.send(embed=embed)
                 return
         else:
@@ -86,7 +86,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
             await ctx.send(embed=genEmbed)
         except discord.HTTPException as e:
             embed = discord.Embed(title="❌ " + self._("Failed parsing arguments."), description=self._("**Exception:** ```{exception}```").format(exception=str(e)), color=self.bot.errorColor)
-            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+            embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
             return
 
@@ -100,7 +100,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         **Invite:** [Invite me!](https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=3691506934&scope=bot%20applications.commands)
         **Support:** [Click here!](https://discord.gg/KNKr8FPmJa)
         Blob emoji is licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)""", color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         embed.set_thumbnail(url=self.bot.user.avatar.url)
         embed.add_field(name="CPU utilization", value=f"`{round(psutil.cpu_percent(interval=None))}%`")
         process = psutil.Process() #gets current process
@@ -113,7 +113,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         if not self.bot.EXPERIMENTAL:
             invite_url = f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=3691506934&scope=bot%20applications.commands"
             embed=discord.Embed(title="🌟 Yay!", description=self._("[Click here]({invite_url}) for an invite link!").format(invite_url=invite_url), color=self.bot.miscColor)
-            embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+            embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.channel.send(embed=embed)
 
     @commands.command(help="Provides a link to the support Discord.", description="Provides a link to the support Discord, where you can ask for help or provide feedback!", usage="support")
@@ -153,7 +153,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         premium_tier=guild.premium_tier), 
         color=self.bot.embedBlue)
 
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         if guild.icon:
             embed.set_thumbnail(url=guild.icon.url)
         if guild.discovery_splash: #If the server has a discovery splash/invite background, we put it as an embed image for extra fancyTM

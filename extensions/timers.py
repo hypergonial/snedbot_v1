@@ -301,7 +301,7 @@ class Timers(commands.Cog):
                     timestr = "..."
                 note = timestr+f"\n\n[Jump to original message!]({ctx.message.jump_url})"
                 embed = discord.Embed(title="✅ " + self._("Reminder set"), description=self._("Reminder set for:  {timestamp} ({timestampR})").format(timestamp=discord.utils.format_dt(time), timestampR=discord.utils.format_dt(time, style='R')), color=self.bot.embedGreen)
-                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+                embed = self.bot.add_embed_footer(ctx, embed)
                 await self.create_timer(expires=time, event="reminder", guild_id=ctx.guild.id,user_id=ctx.author.id, channel_id=ctx.channel.id, notes=note)
                 await ctx.send(embed=embed)
 
@@ -330,7 +330,7 @@ class Timers(commands.Cog):
         else:
             reminderstr = self._("You have no reminders. You can set one via `{prefix}reminder`!").format(prefix=ctx.prefix)
         embed=discord.Embed(title="✉️ " + self._("Your reminders:"),description=reminderstr, color=self.bot.embedBlue)
-        embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.send(embed=embed)
     
     @commands.command(usage="delreminder <reminder_ID>", help="Deletes a reminder.", description="Deletes a reminder by it's ID, which you can obtain via the `reminders` command.")
@@ -341,7 +341,7 @@ class Timers(commands.Cog):
             if result:
                 await con.execute('''DELETE FROM timers WHERE user_id = $1 AND id = $2''', ctx.author.id, ID)
                 embed = discord.Embed(title="✅ " + self._("Reminder deleted"), description=self._("Reminder **{ID}** has been deleted.").format(ID=ID), color=self.bot.embedGreen)
-                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+                embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.send(embed=embed)
                 #If we just deleted the currently running timer, then we re-evaluate to find the next timer.
                 if self.current_timer and self.current_timer.id == int(ID):
@@ -349,7 +349,7 @@ class Timers(commands.Cog):
                     self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
             else:
                 embed = discord.Embed(title="❌ " + self._("Reminder not found"), description=self._("Cannot find reminder with ID **{ID}**.").format(ID=ID), color=self.bot.errorColor)
-                embed.set_footer(text=self.bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+                embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.send(embed=embed)
 
 
