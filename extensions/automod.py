@@ -60,7 +60,8 @@ default_automod_policies = {
         'state': 'disabled',
         'temp_dur': 15,
         'delete': True,
-        'words_list': ["motherfucker", "faggot", "cockfucker", "cunt", "nigger", "nigga", "porn", "pornography", "slut", "whore"]
+        'words_list': ["motherfucker", "cock", "cockfucker", "anal", "cum", "anus", "porn", "pornography", "slut", "whore"],
+        'words_list_wildcard': ["blowjob", "boner", "dildo", "faggot", "dick", "whore", "pussy", "nigg", "cunt", "cnut", "d1ck"]
     },
     'escalate': {
         'state': 'disabled'
@@ -294,8 +295,12 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                         button_labels["count"] = "Count"
                     elif key == "words_list":
                         bad_words = ', '.join(policy_data[key])
-                        embed.add_field(name="Blacklisted words:", value=f"||{bad_words}||", inline=False)
-                        button_labels["words_list"] = "Bad words"
+                        embed.add_field(name="Blacklisted words (Exact):", value=f"||{bad_words}||", inline=False)
+                        button_labels["words_list"] = "Bad words (Exact)"
+                    elif key == "words_list_wildcard":
+                        bad_words = ", ".join(policy_data[key])
+                        embed.add_field(name="Blacklisted words (Wildcard):", value=f"||{bad_words}||", inline=False)
+                        button_labels["words_list_wildcard"] = "Bad words (Wildcard)"
             
             view = AutoModOptionsView(ctx, button_labels)
             await self.bot.maybe_edit(message, embed=embed, view=view)
@@ -416,6 +421,26 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                     words_list = list(filter(None, words_list)) # Remove empty values
 
                     policies[offense_str]["words_list"] = words_list
+                    await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
+                    await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
+                    await self.bot.maybe_delete(input)
+                    await show_policy_options(self, offense_str, message)
+
+            elif view.value == "words_list_wildcard":
+                words_list = ", ".join(policies[offense_str]["words_list_wildcard"])
+                embed = discord.Embed(title=f"Words list (wildcard) for {policy_strings[offense_str]['name']}", description=f"Please enter a list of comma-separated words that will be blacklisted! Current list of bad words:\n ||{bad_words}||", color=self.bot.embedBlue)
+                await self.bot.maybe_edit(message, embed=embed, view=None)
+                try:
+                    input = await self.bot.wait_for('message', check=check, timeout=180)
+                except asyncio.TimeoutError:
+                    await self.bot.maybe_delete(message)
+                else:
+                    words_list = input.content.split(',')
+                    for i, item in enumerate(words_list):
+                        words_list[i] = item.strip()
+                    words_list = list(filter(None, words_list)) # Remove empty values
+
+                    policies[offense_str]["words_list_wildcard"] = words_list
                     await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
                     await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                     await self.bot.maybe_delete(input)
@@ -566,10 +591,15 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
         
         for word in message.content.split(" "):
             if word in policies["bad_words"]["words_list"]:
-                await self.automod_punish(message, offender=message.author, offense="bad_words", reason=f"usage of bad words")
-        for bad_word in policies["bad_words"]["words_list"]: #Check bad_words with spaces in them
-            if " " in bad_word and bad_word in message.content:
-                await self.automod_punish(message, offender=message.author, offense="bad_words", reason=f"usage of bad words (expression)")
+                return await self.automod_punish(message, offender=message.author, offense="bad_words", reason=f"usage of bad words")
+            else:
+                for bad_word in policies["bad_words"]["words_list"]: #Check bad_words with spaces in them
+                    if " " in bad_word and bad_word in message.content:
+                        return await self.automod_punish(message, offender=message.author, offense="bad_words", reason=f"usage of bad words (expression)")
+                    else:
+                        for word in policies["bad_words"]["words_list_wildcard"]:
+                            if word in message.content:
+                                return await self.automod_punish(message, offender=message.author, offense="bad_words", reason=f"usage of bad words (wildcard)")
 
         else: #If the obvious stuff didn't work
             '''Discord Invites, Links, Attachments & Zalgo'''
