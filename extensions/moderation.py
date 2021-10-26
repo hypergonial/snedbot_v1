@@ -974,17 +974,17 @@ class Moderation(commands.Cog):
             embed = discord.Embed(title="❌ " + self._("Kick failed"), description=self._("Kick failed, please try again later."),color=self.bot.errorColor)
             return await ctx.send(embed=embed)
     
-    @commands.command(aliases=["bulkdelete", "bulkdel"], help="Deletes multiple messages at once.", description="Deletes up to 100 messages at once. Defaults to 5 messages. You can optionally specify a user whose messages will be purged.", usage="purge [limit] [user]")
+    @commands.group(aliases=["bulkdelete", "bulkdel"], help="Deletes multiple messages at once.", description="Deletes up to 100 messages at once. You can optionally specify a user whose messages will be purged.", usage="purge [limit] [user]", invoke_without_command=True, case_insensitive=True)
     @commands.check(has_mod_perms)
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
+    @commands.cooldown(1, 5, type=commands.BucketType.guild)
     @commands.guild_only()
     @mod_command
-    async def purge(self, ctx, limit=5, member:discord.Member=None):
+    async def purge(self, ctx, limit:int, member:discord.Member=None):
         if limit > 100:
             embed = discord.Embed(title="❌ " + self._("Limit too high"), description=self._("You cannot remove more than **100** messages."),color=self.bot.errorColor)
-            await ctx.send(embed=embed, delete_after=20.0)
-            return
+            return await ctx.send(embed=embed, delete_after=20.0)
         await ctx.channel.trigger_typing()
 
         if member:
@@ -997,6 +997,158 @@ class Moderation(commands.Cog):
         
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
+    
+    @purge.command(name="match", help="Delete messages containing the specified text.")
+    @commands.check(has_mod_perms)
+    @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(manage_messages=True)
+    @commands.cooldown(1, 5, type=commands.BucketType.guild)
+    @commands.guild_only()
+    @mod_command
+    async def purge_match(self, ctx, limit:int, *, text:str):
+        if limit > 100:
+            embed = discord.Embed(title="❌ " + self._("Limit too high"), description=self._("You cannot remove more than **100** messages."),color=self.bot.errorColor)
+            return await ctx.send(embed=embed, delete_after=20.0)
+
+        def check(message):
+            return text in message.content
+        await ctx.channel.trigger_typing()
+
+        purged = await ctx.channel.purge(limit=limit, check=check)
+
+        embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
+        await ctx.send(embed=embed, delete_after=20.0)
+
+    @purge.command(name="notext", help="Delete messages that do not contain text.")
+    @commands.check(has_mod_perms)
+    @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(manage_messages=True)
+    @commands.cooldown(1, 5, type=commands.BucketType.guild)
+    @commands.guild_only()
+    @mod_command
+    async def purge_notext(self, ctx, limit:int):
+        if limit > 100:
+            embed = discord.Embed(title="❌ " + self._("Limit too high"), description=self._("You cannot remove more than **100** messages."),color=self.bot.errorColor)
+            return await ctx.send(embed=embed, delete_after=20.0)
+
+        def check(message):
+            return message.content is None
+        await ctx.channel.trigger_typing()
+
+        purged = await ctx.channel.purge(limit=limit, check=check)
+
+        embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
+        await ctx.send(embed=embed, delete_after=20.0)
+
+    @purge.command(name="startswith", help="Delete messages that start with the specified text.")
+    @commands.check(has_mod_perms)
+    @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(manage_messages=True)
+    @commands.cooldown(1, 5, type=commands.BucketType.guild)
+    @commands.guild_only()
+    @mod_command
+    async def purge_startswith(self, ctx, limit:int, *, text:str):
+        if limit > 100:
+            embed = discord.Embed(title="❌ " + self._("Limit too high"), description=self._("You cannot remove more than **100** messages."),color=self.bot.errorColor)
+            return await ctx.send(embed=embed, delete_after=20.0)
+
+        def check(message):
+            return message.content.startswith(text)
+        await ctx.channel.trigger_typing()
+
+        purged = await ctx.channel.purge(limit=limit, check=check)
+
+        embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
+        await ctx.send(embed=embed, delete_after=20.0)
+
+    @purge.command(name="endswith", help="Delete messages that end to the specified text.")
+    @commands.check(has_mod_perms)
+    @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(manage_messages=True)
+    @commands.cooldown(1, 5, type=commands.BucketType.guild)
+    @commands.guild_only()
+    @mod_command
+    async def purge_endswith(self, ctx, limit:int, *, text:str):
+        if limit > 100:
+            embed = discord.Embed(title="❌ " + self._("Limit too high"), description=self._("You cannot remove more than **100** messages."),color=self.bot.errorColor)
+            return await ctx.send(embed=embed, delete_after=20.0)
+
+        def check(message):
+            return message.content.endswith(text)
+        await ctx.channel.trigger_typing()
+
+        purged = await ctx.channel.purge(limit=limit, check=check)
+
+        embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
+        await ctx.send(embed=embed, delete_after=20.0)
+
+    @purge.command(name="links", help="Delete messages that contain links.")
+    @commands.check(has_mod_perms)
+    @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(manage_messages=True)
+    @commands.cooldown(1, 5, type=commands.BucketType.guild)
+    @commands.guild_only()
+    @mod_command
+    async def purge_links(self, ctx, limit:int, *, text:str):
+        if limit > 100:
+            embed = discord.Embed(title="❌ " + self._("Limit too high"), description=self._("You cannot remove more than **100** messages."),color=self.bot.errorColor)
+            return await ctx.send(embed=embed, delete_after=20.0)
+
+        def check(message):
+            link_regex = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
+            link_matches = link_regex.findall(message.content)
+            return len(link_matches) > 0
+        await ctx.channel.trigger_typing()
+
+        purged = await ctx.channel.purge(limit=limit, check=check)
+
+        embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
+        await ctx.send(embed=embed, delete_after=20.0)
+
+    @purge.command(name="invites", help="Delete messages that contain invites.")
+    @commands.check(has_mod_perms)
+    @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(manage_messages=True)
+    @commands.cooldown(1, 5, type=commands.BucketType.guild)
+    @commands.guild_only()
+    @mod_command
+    async def purge_invites(self, ctx, limit:int, *, text:str):
+        if limit > 100:
+            embed = discord.Embed(title="❌ " + self._("Limit too high"), description=self._("You cannot remove more than **100** messages."),color=self.bot.errorColor)
+            return await ctx.send(embed=embed, delete_after=20.0)
+
+        def check(message):
+            invite_regex = re.compile(r"(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?")
+            invite_matches = invite_regex.findall(message.content)
+            return len(invite_matches) > 0
+        await ctx.channel.trigger_typing()
+
+        purged = await ctx.channel.purge(limit=limit, check=check)
+
+        embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
+        await ctx.send(embed=embed, delete_after=20.0)
+
+    @purge.command(name="images", help="Delete messages that contain attachments or images.")
+    @commands.check(has_mod_perms)
+    @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(manage_messages=True)
+    @commands.cooldown(1, 5, type=commands.BucketType.guild)
+    @commands.guild_only()
+    @mod_command
+    async def purge_endswith(self, ctx, limit:int, *, text:str):
+        if limit > 100:
+            embed = discord.Embed(title="❌ " + self._("Limit too high"), description=self._("You cannot remove more than **100** messages."),color=self.bot.errorColor)
+            return await ctx.send(embed=embed, delete_after=20.0)
+
+        def check(message):
+            return message.attachments and len(message.attachments) > 0
+        await ctx.channel.trigger_typing()
+
+        purged = await ctx.channel.purge(limit=limit, check=check)
+
+        embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
+        await ctx.send(embed=embed, delete_after=20.0)
+
     
     @commands.command(aliases=['clr', 'cleanup'], help="Cleans up the bot's messages.", description="Delete up to 50 of the bot's own responses in this channel. Defaults to 5.", usage="clear [limit]")
     @commands.check(has_mod_perms)

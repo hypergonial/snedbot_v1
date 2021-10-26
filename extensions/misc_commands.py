@@ -159,6 +159,13 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         if guild.discovery_splash: #If the server has a discovery splash/invite background, we put it as an embed image for extra fancyTM
             embed.set_image(url=guild.discovery_splash.url)
         await ctx.send(embed=embed)
+
+    @commands.command(help="Get information about yourself.", description="Provide detailed information about your user account.", usage="whoami")
+    @commands.guild_only()
+    @commands.cooldown(1, 30, type=commands.BucketType.member)
+    async def whoami(self, ctx):
+        whois = self.bot.get_command("whois")
+        await ctx.invoke(whois, user=ctx.author)
     
     @commands.command(help = "Displays the amount of warnings for a user.", description="Displays the amount of warnings issued to a user. If user is not specified, it will default to self.", usage="warns [user]")
     @commands.guild_only()
