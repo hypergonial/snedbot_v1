@@ -41,7 +41,7 @@ class Context(commands.Context):
         super().__init__(**kwargs)
     
 
-    async def confirm(self, message_content=None, *, embed:discord.Embed=None, delete_after:bool=True, confirm_msg:str=None, cancel_msg:str=None) -> bool:
+    async def confirm(self, message_content=None, *, embed:discord.Embed=None, file:discord.File=None, delete_after:bool=True, confirm_msg:str=None, cancel_msg:str=None) -> bool:
         '''Creates an interactive button-prompt to confirm an action. Returns True if user confirmed.'''
 
         if message_content is None and embed is None:
@@ -52,7 +52,7 @@ class Context(commands.Context):
         else:
             view = Confirm(self)
 
-        message = await self.send(content=message_content, embed=embed, view=view)
+        message = await self.send(content=message_content, embed=embed, file=file, view=view)
         await view.wait()
 
         if delete_after:

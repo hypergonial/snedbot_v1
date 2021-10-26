@@ -15,6 +15,7 @@ class Logging(commands.Cog):
         self.bot = bot
         self.recently_edited = []
         self.recently_deleted = []
+        self.frozen_guilds = [] #List of guilds where logging is temporarily suspended
 
 
     '''
@@ -25,39 +26,51 @@ class Logging(commands.Cog):
     has the ability to fall back to standard
     '''
 
-    async def log_standard(self, logcontent, guild_id):
-        records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
+    async def log_standard(self, logcontent, guild_id:int, file:discord.File=None, bypass:bool=False):
+        if guild_id not in self.frozen_guilds or bypass:
+            records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
 
-        if records and records[0]["log_channel_id"]:
-            guild = self.bot.get_guild(guild_id)
-            loggingchannel = guild.get_channel(records[0]["log_channel_id"])
-            if loggingchannel is None: return
-            try:
-                if isinstance(logcontent, discord.Embed):
-                    logcontent.timestamp = discord.utils.utcnow()
-                    await loggingchannel.send(embed=logcontent)
-                elif isinstance(logcontent, str):
-                    await loggingchannel.send(content=logcontent)
-            except discord.Forbidden:
-                return
+            if records and records[0]["log_channel_id"]:
+                guild = self.bot.get_guild(guild_id)
+                loggingchannel = guild.get_channel(records[0]["log_channel_id"])
+                if loggingchannel is None: return
+                try:
+                    if isinstance(logcontent, discord.Embed):
+                        logcontent.timestamp = discord.utils.utcnow()
+                        await loggingchannel.send(embed=logcontent, file=file)
+                    elif isinstance(logcontent, str):
+                        await loggingchannel.send(content=logcontent, file=file)
+                except discord.Forbidden:
+                    return
         
 
-    async def log_elevated(self, logcontent, guild_id):
-        records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
-        if records and records[0]["elevated_log_channel_id"]:
-            guild = self.bot.get_guild(guild_id)
-            elevated_loggingchannel = guild.get_channel(records[0]["elevated_log_channel_id"])
-            if elevated_loggingchannel is None: await self.log_standard(logcontent, guild_id)
-            try:
-                if isinstance(logcontent, discord.Embed):
-                    logcontent.timestamp = discord.utils.utcnow()
-                    await elevated_loggingchannel.send(embed=logcontent)
-                elif isinstance(logcontent, str):
-                    await elevated_loggingchannel.send(content=logcontent)
-            except discord.Forbidden:
-                await self.log_standard(logcontent, guild_id)
-        else:
-            await self.log_standard(logcontent, guild_id) #Fallback to standard logging channel
+    async def log_elevated(self, logcontent, guild_id:int, file:discord.File=None, bypass:bool=False):
+        if guild_id not in self.frozen_guilds or bypass:
+            records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
+            if records and records[0]["elevated_log_channel_id"]:
+                guild = self.bot.get_guild(guild_id)
+                elevated_loggingchannel = guild.get_channel(records[0]["elevated_log_channel_id"])
+                if elevated_loggingchannel is None: await self.log_standard(logcontent, guild_id)
+                try:
+                    if isinstance(logcontent, discord.Embed):
+                        logcontent.timestamp = discord.utils.utcnow()
+                        await elevated_loggingchannel.send(embed=logcontent, file=file)
+                    elif isinstance(logcontent, str):
+                        await elevated_loggingchannel.send(content=logcontent, file=file)
+                except discord.Forbidden:
+                    await self.log_standard(logcontent, guild_id)
+            else:
+                await self.log_standard(logcontent, guild_id) #Fallback to standard logging channel
+    
+    async def freeze_logging(self, guild_id):
+        '''Call to suspend logging temporarily in the given guild. Useful if a log-spammy command is being executed.'''
+        if guild_id not in self.frozen_guilds:
+            self.frozen_guilds.append(guild_id)
+    
+    async def unfreeze_logging(self, guild_id):
+        '''Call to stop suspending the logging in a given guild.'''
+        if guild_id in self.frozen_guilds:
+            self.frozen_guilds.remove(guild_id)
 
 
     #Message deletion logging

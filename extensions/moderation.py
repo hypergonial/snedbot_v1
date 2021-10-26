@@ -1,6 +1,8 @@
 import argparse
 import asyncio
+import datetime
 import functools
+import io
 import json
 import logging
 import re
@@ -9,11 +11,16 @@ from dataclasses import dataclass
 from typing import TypeVar, Union
 
 import discord
+from discord.errors import HTTPException
 from discord.ext import commands
 
 from extensions.utils import components
 
 logger = logging.getLogger(__name__)
+
+class ArgParser(argparse.ArgumentParser):
+    def error(self, message): #So it doesn't throw a SystemExit
+        raise RuntimeError(message)
 
 async def has_owner(ctx) -> bool:
     return await ctx.bot.custom_checks.has_owner(ctx)
@@ -726,29 +733,179 @@ class Moderation(commands.Cog):
 
         await ctx.channel.trigger_typing() #Long operation, so typing is triggered
         
-        for i, userid in enumerate(user_ids_conv):
+        embed=discord.Embed(title="⚠️ Confirm Massban", description=f"You are about to ban **{len(user_ids_conv)}** users. Are you sure you want to do this?", color=self.bot.warnColor)
+        confirm = await ctx.confirm(embed=embed, cancel_msg="Cancelling...")
+        if confirm:
+            await self.bot.get_cog("Logging").freeze_logging(ctx.guild.id)
+            for i, userid in enumerate(user_ids_conv):
 
-            if i < 100:
-                try:
-                    member = ctx.guild.get_member(userid)
-                    await ctx.guild.ban(member, reason=f"Mass-banned by {ctx.author} ({ctx.author.id}): \n{reason}")
-                except:
+                if i < 100:
+                    try:
+                        member = ctx.guild.get_member(userid)
+                        await ctx.guild.ban(member, reason=f"Mass-banned by {ctx.author} ({ctx.author.id}): \n{reason}")
+                    except:
+                        failed += 1
+                        if " - Error banning a user, userID is invalid or user is no longer member of the server." not in errors:
+                            errors.append(" - Error banning a user, userID is invalid or user is no longer member of the server.")
+                else:
                     failed += 1
-                    if " - Error banning a user, userID is invalid or user is no longer member of the server." not in errors:
-                        errors.append(" - Error banning a user, userID is invalid or user is no longer member of the server.")
+                    if " - Exceeded maximum amount (100) of users bannable by this command." not in errors:
+                        errors.append(" - Exceeded maximum amount (100) of users bannable by this command.")
+            await self.bot.get_cog("Logging").unfreeze_logging(ctx.guild.id)
+            
+            if failed == 0:
+                embed = discord.Embed(title="🔨 " + self._("Massban successful"), description=self._("Successfully banned **{amount}** users.\n**Reason:** ```{reason}```").format(amount=len(user_ids_conv), reason=reason),color=self.bot.embedGreen)
+                await ctx.send(embed=embed)
             else:
-                failed += 1
-                if " - Exceeded maximum amount (100) of users bannable by this command." not in errors:
-                    errors.append(" - Exceeded maximum amount (100) of users bannable by this command.")
+                embed = discord.Embed(title="🔨 " + self._("Massban concluded with failures"), description=self._("Banned **{amount}/{total}** users.\n**Reason:** ```{reason}```").format(amount=len(user_ids)-failed, total=len(user_ids), reason=reason),color=self.bot.warnColor)
+                await ctx.send(embed=embed)
+                embed = discord.Embed(title="🔨 " + self._("Failures encountered:"), description=self._("Some errors were encountered during the mass-ban: \n```{errors}```").format(errors="\n".join(errors)),color=self.bot.warnColor)
+                await ctx.send(embed=embed)
+    
+    @commands.command(help="Bans users based on criteria set.", description="""Bans a set of users based on the set of criteria specified. The command has advanced command-line syntax and is excellent for handling raids.
+    
+    **Arguments:**
+    `--reason` or `-r` - Reason to ban all matched users with
+    `--regex` - Regex to match usernames against
+    `--no-avatar` - Only match users with no avatars
+    `--no-roles` - Only match users with no roles
+    `--created` - Only match users who signed up x specified minutes before
+    `--joined` - Only match users who joined x specified minutes before
+    `--joined-before` Only match users who joined before this user (Takes userID)
+    `--joined-after` - Only match users who joined after this user (Takes userID)
+    `--show` or `-s` - Do a dry-run and only show who would have been banned instead of banning
+    
+    **Example:**
+    
+    `smartban --reason "Bad person" --regex .*Username.* --joined 10`""", usage="smartban <args>")
+    @commands.guild_only()
+    @commands.bot_has_permissions(ban_members=True)
+    @commands.has_permissions(ban_members=True)
+    @commands.check(has_mod_perms)
+    @commands.cooldown(1, 60, type=commands.BucketType.guild)
+    @mod_command
+    async def smartban(self, ctx, *, args):
+
+        parser = ArgParser(add_help=False, allow_abbrev=False)
+        parser.add_argument('--reason', '-r')
+        parser.add_argument('--regex')
+        parser.add_argument('--no-avatar', action='store_true')
+        parser.add_argument('--no-roles', action='store_true')
+        parser.add_argument('--created', type=int)
+        parser.add_argument('--joined', type=int)
+        parser.add_argument('--joined-before', type=int)
+        parser.add_argument('--joined-after', type=int)
+        parser.add_argument('--show', '-s', action='store_true')
+
+        try:
+            args = parser.parse_args(shlex.split(args))
+        except Exception as error:
+            embed = discord.Embed(title="❌ Argument parsing failed", description=f"Failed parsing arguments: ```{str(error)}```",color=self.bot.errorColor)
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send(embed=embed)
         
-        if failed == 0:
-            embed = discord.Embed(title="🔨 " + self._("Massban successful"), description=self._("Successfully banned **{amount}** users.\n**Reason:** ```{reason}```").format(amount=len(user_ids_conv), reason=reason),color=self.bot.embedGreen)
-            await ctx.send(embed=embed)
+        to_ban = []
+
+        if ctx.guild.chunked: #Check if members are cached or not
+            members = ctx.guild.members
         else:
-            embed = discord.Embed(title="🔨 " + self._("Massban concluded with failures"), description=self._("Banned **{amount}/{total}** users.\n**Reason:** ```{reason}```").format(amount=len(user_ids)-failed, total=len(user_ids), reason=reason),color=self.bot.warnColor)
-            await ctx.send(embed=embed)
-            embed = discord.Embed(title="🔨 " + self._("Failures encountered:"), description=self._("Some errors were encountered during the mass-ban: \n```{errors}```").format(errors="\n".join(errors)),color=self.bot.warnColor)
-            await ctx.send(embed=embed)
+            async with ctx.typing():
+                await ctx.guild.chunk(cache=True)
+            members = ctx.guild.members
+        
+        checks = [
+            lambda member: not member.bot, #Remove bots & deleted users
+            lambda member: member.id != ctx.author.id,
+            lambda member: member.discriminator != '0000'
+        ]
+
+        if args.regex:
+            try:
+                regex = re.compile(args.regex)
+            except re.error as error:
+                embed = discord.Embed(title="❌ Invalid regex passed", description=f"Failed parsing regex: ```{str(error)}```",color=self.bot.errorColor)
+                ctx.command.reset_cooldown(ctx)
+                return await ctx.send(embed=embed)
+            else:
+                checks.append(lambda member, regex=regex: regex.match(member.name))
+        
+        if args.no_avatar:
+            checks.append(lambda member: member.avatar is None)
+        if args.no_roles:
+            checks.append(lambda member: len(member.roles) <= 1)
+        
+        now = discord.utils.utcnow()
+
+        if args.created:
+            def created(member, *, offset=now - datetime.timedelta(minutes=args.created)):
+                return member.created_at > offset
+            checks.append(created)
+        
+        if args.joined:
+            def joined(member, *, offset=now - datetime.timedelta(minutes=args.joined)):
+                if isinstance(member, discord.User):
+                    return True
+                else:
+                    return member.joined_at and member.joined_at > offset
+            checks.append(joined)
+        
+        if args.joined_after:
+            joined_after = ctx.guild.get_member(int(args.joined_after))
+            def joined_after(member, *, joined_after=joined_after):
+                return member.joined_at and joined_after.joined_at and member.joined_at > joined_after.joined_at
+            checks.append(joined_after)
+        if args.joined_before:
+            joined_before = ctx.guild.get_member(int(args.joined_before))
+            def joined_before(member, *, joined_before=joined_before):
+                return member.joined_at and joined_before.joined_at and member.joined_at < joined_before.joined_at
+            checks.append(joined_before)
+        
+        #Add to to_ban list if all checks succeed
+        to_ban = {member for member in members if all(check(member) for check in checks)}
+
+        if len(to_ban) == 0:
+            embed = discord.Embed(title="❌ No members match criteria", description=f"No members found that match all criteria.",color=self.bot.errorColor)
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send(embed=embed)
+        
+
+        members = sorted(to_ban)
+        content = [f"Total members to ban: {len(members)}\n"]
+        for member in members:
+            content.append(f'{member} ({member.id}) | Joined: {member.joined_at} | Created: {member.created_at}')
+        content = "\n".join(content)
+        file = discord.File(io.BytesIO(content.encode('utf-8')), filename="members_to_ban.txt")
+
+        if args.show:
+            return await ctx.send(file=file)
+        
+        else:
+            if args.reason is None:
+                reason = "No reason specified"
+            else:
+                reason = args.reason
+            reason = f"{ctx.author} ({ctx.author.id}): {reason}"
+
+            embed=discord.Embed(title="⚠️ Confirm Smartban", description=f"You are about to ban **{len(to_ban)}** users. Are you sure you want to do this? Please review the attached list above for a full list of matched users.", color=self.bot.warnColor)
+            confirm = await ctx.confirm(embed=embed, file=file, confirm_msg="Starting smartban...", cancel_msg="Aborting...")
+            if confirm:
+                await self.bot.get_cog("Logging").freeze_logging(ctx.guild.id)
+                count = 0
+                for member in to_ban:
+                    try:
+                        await ctx.guild.ban(member, reason=reason)
+                    except discord.HTTPException:
+                        pass
+                    else:
+                        count += 1
+                log_embed = discord.Embed(title="🔨 Smartban concluded", description=f"Banned **{count}/{len(to_ban)}** users.\n**Moderator:** `{ctx.author} ({ctx.author.id if ctx.author else '0'})`\n**Reason:** ```{reason}```",color=self.bot.errorColor)
+                file = discord.File(io.BytesIO(content.encode('utf-8')), filename="members_banned.txt")
+                await self.bot.get_cog("Logging").log_elevated(log_embed, ctx.guild.id, file=file, bypass=True)
+                await asyncio.sleep(1)
+                await self.bot.get_cog("Logging").unfreeze_logging(ctx.guild.id)
+
+                embed=discord.Embed(title="✅ Smartban finished", description=f"Banned **{count}/{len(to_ban)}** users.", color=self.bot.embedGreen)
+                await ctx.send(embed=embed)
 
 
     @commands.Cog.listener()
