@@ -426,7 +426,7 @@ class Moderation(commands.Cog):
                         UPDATE SET mute_role_id = $2''', ctx.guild.id, mute_role.id)
                         await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
 
-                        await self.bot.maybe_delete(message)
+                        await self.bot.maybe_delete(input)
                         await show_main_menu(self, message)
 
                     except commands.RoleNotFound:
