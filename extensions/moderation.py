@@ -998,7 +998,7 @@ class Moderation(commands.Cog):
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
     
-    @purge.command(name="match", help="Delete messages containing the specified text.")
+    @purge.command(name="match", help="Delete messages containing the specified text.", usage="purge match <limit> <text>")
     @commands.check(has_mod_perms)
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
@@ -1019,7 +1019,7 @@ class Moderation(commands.Cog):
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
 
-    @purge.command(name="notext", help="Delete messages that do not contain text.")
+    @purge.command(name="notext", help="Delete messages that do not contain text.", usage="purge notext <limit>")
     @commands.check(has_mod_perms)
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
@@ -1040,7 +1040,7 @@ class Moderation(commands.Cog):
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
 
-    @purge.command(name="startswith", help="Delete messages that start with the specified text.")
+    @purge.command(name="startswith", help="Delete messages that start with the specified text.", usage="purge startswith <limit> <text>")
     @commands.check(has_mod_perms)
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
@@ -1061,7 +1061,7 @@ class Moderation(commands.Cog):
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
 
-    @purge.command(name="endswith", help="Delete messages that end to the specified text.")
+    @purge.command(name="endswith", help="Delete messages that end to the specified text.", usage="purge endswith <limit> <text>")
     @commands.check(has_mod_perms)
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
@@ -1082,14 +1082,14 @@ class Moderation(commands.Cog):
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
 
-    @purge.command(name="links", help="Delete messages that contain links.")
+    @purge.command(name="links", aliases=["link"], help="Delete messages that contain links.", usage="purge links <limit>")
     @commands.check(has_mod_perms)
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
     @commands.cooldown(1, 5, type=commands.BucketType.guild)
     @commands.guild_only()
     @mod_command
-    async def purge_links(self, ctx, limit:int, *, text:str):
+    async def purge_links(self, ctx, limit:int):
         if limit > 100:
             embed = discord.Embed(title="❌ " + self._("Limit too high"), description=self._("You cannot remove more than **100** messages."),color=self.bot.errorColor)
             return await ctx.send(embed=embed, delete_after=20.0)
@@ -1105,14 +1105,14 @@ class Moderation(commands.Cog):
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
 
-    @purge.command(name="invites", help="Delete messages that contain invites.")
+    @purge.command(name="invites", aliases=["invite"], help="Delete messages that contain invites.", usage="purge invites <limit>")
     @commands.check(has_mod_perms)
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
     @commands.cooldown(1, 5, type=commands.BucketType.guild)
     @commands.guild_only()
     @mod_command
-    async def purge_invites(self, ctx, limit:int, *, text:str):
+    async def purge_invites(self, ctx, limit:int):
         if limit > 100:
             embed = discord.Embed(title="❌ " + self._("Limit too high"), description=self._("You cannot remove more than **100** messages."),color=self.bot.errorColor)
             return await ctx.send(embed=embed, delete_after=20.0)
@@ -1128,14 +1128,14 @@ class Moderation(commands.Cog):
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
 
-    @purge.command(name="images", help="Delete messages that contain attachments or images.")
+    @purge.command(name="images", aliases=["image"], help="Delete messages that contain attachments or images.", usage="purge images <limit>")
     @commands.check(has_mod_perms)
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
     @commands.cooldown(1, 5, type=commands.BucketType.guild)
     @commands.guild_only()
     @mod_command
-    async def purge_endswith(self, ctx, limit:int, *, text:str):
+    async def purge_images(self, ctx, limit:int, *, text:str):
         if limit > 100:
             embed = discord.Embed(title="❌ " + self._("Limit too high"), description=self._("You cannot remove more than **100** messages."),color=self.bot.errorColor)
             return await ctx.send(embed=embed, delete_after=20.0)

@@ -144,7 +144,7 @@ class Logging(commands.Cog):
             pass
         guild = self.bot.get_guild(payload.guild_id)
         channel = guild.get_channel(payload.channel_id)
-        embed = discord.Embed(title=f"🗑️ Bulk message deletion", description=f"**Channel:** {channel.mention}\n**Moderator:** `{moderator}`\n```Multiple messages have been purged.```", color=self.bot.errorColor)
+        embed = discord.Embed(title=f"🗑️ Bulk message deletion", description=f"**Channel:** {channel.mention if channel else 'Unknown'}\n**Moderator:** `{moderator}`\n```Multiple messages have been purged.```", color=self.bot.errorColor)
         await self.log_elevated(embed, payload.guild_id)
     #Does not work, idk why but this event is never called
     @commands.Cog.listener()
