@@ -181,7 +181,7 @@ class Logging(commands.Cog):
                     break
         except discord.Forbidden:
             return
-        embed = discord.Embed(title=f"#️⃣ Channel deleted", description=f"**Channel:** `{channel.name}` ({channel.type})\n**Moderator:** `{moderator} ({moderator.id})`", color=self.bot.errorColor)
+        embed = discord.Embed(title=f"#️⃣ Channel deleted", description=f"**Channel:** `{channel.name}` ({channel.type})\n**Moderator:** `{moderator} ({moderator})`", color=self.bot.errorColor)
         await self.log_elevated(embed, channel.guild.id)
     
     #Creation

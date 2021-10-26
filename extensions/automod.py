@@ -24,42 +24,50 @@ default_automod_policies = {
     'invites': {
         'state': 'disabled',
         'temp_dur': 15,
-        'delete': True
+        'delete': True,
+        'excluded_channels': []
     },
     'spam': {
         'state': 'disabled',
         'temp_dur': 15,
+        'excluded_channels': []
     },
     'mass_mentions': {
         'state': 'disabled',
         'temp_dur': 15,
         'delete': True,
-        'count': 10
+        'count': 10,
+        'excluded_channels': []
     },
     'zalgo': {
         'state': 'disabled',
         'temp_dur': 15,
         'delete': True,
+        'excluded_channels': []
     },
     'attach_spam': {
         'state': 'disabled',
         'temp_dur': 15,
-        'delete': True
+        'delete': True,
+        'excluded_channels': []
     },
     'link_spam': {
         'state': 'disabled',
         'temp_dur': 15,
-        'delete': True
+        'delete': True,
+        'excluded_channels': []
     },
     'caps': {
         'state': 'disabled',
         'temp_dur': 15,
-        'delete': True
+        'delete': True,
+        'excluded_channels': []
     },
     'bad_words': {
         'state': 'disabled',
         'temp_dur': 15,
         'delete': True,
+        'excluded_channels': [],
         'words_list': ["motherfucker", "cock", "cockfucker", "anal", "cum", "anus", "porn", "pornography", "slut", "whore"],
         'words_list_wildcard': ["blowjob", "boner", "dildo", "faggot", "dick", "whore", "pussy", "nigg", "cunt", "cnut", "d1ck"]
     },
@@ -305,6 +313,17 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                         bad_words = ", ".join(policy_data[key])
                         embed.add_field(name="Blacklisted words (Wildcard):", value=f"||{bad_words}||", inline=False)
                         button_labels["words_list_wildcard"] = "Bad words (Wildcard)"
+                    elif key == "excluded_channels":
+                        channels = []
+                        for channel_id in policy_data[key]:
+                            channel = ctx.guild.get_channel(channel_id)
+                            if channel:
+                                channels.append(channel)
+                        if len(channels) > 0:
+                            embed.add_field(name="Excluded channels:", value=" ".join([channel.mention for channel in channels]))
+                        else:
+                            embed.add_field(name="Excluded channels:", value="None set")
+                        button_labels["excluded_channels"] = "Excluded channels"
             
             view = AutoModOptionsView(ctx, button_labels)
             await self.bot.maybe_edit(message, embed=embed, view=view)
@@ -449,6 +468,34 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                     await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                     await self.bot.maybe_delete(input)
                     await show_policy_options(self, offense_str, message)
+            
+            elif view.value == "excluded_channels":
+                embed = discord.Embed(title=f"Excluded channels for {policy_strings[offense_str]['name']}", description=f"Please enter a list of channel-mentions **seperated by spaces**! Enter `None` to reset the list. These will be excluded from the current automoderation action.", color=self.bot.embedBlue)
+                await self.bot.maybe_edit(message, embed=embed, view=None)
+                try:
+                    input = await self.bot.wait_for('message', check=check, timeout=180)
+                except asyncio.TimeoutError:
+                    await self.bot.maybe_delete(message)
+                else:
+                    if input.content.lower() == "none":
+                        channel_ids = []
+                    else:
+                        channel_mentions = input.content.split(' ')
+                        channel_ids = []
+                        try:
+                            for channel_mention in channel_mentions:
+                                channel = await commands.TextChannelConverter().convert(ctx, channel_mention)
+                                channel_ids.append(channel.id)
+                        except commands.ChannelNotFound:
+                            embed = discord.Embed(title="❌ Invalid data entered", description="Could not find one or more channels. Please make sure you seperate all mentions by spaces.", color=self.bot.errorColor)
+                            await self.bot.maybe_edit(message, embed=embed, view=view)
+                            await self.bot.maybe_delete(input)
+
+                    policies[offense_str]["excluded_channels"] = channel_ids
+                    await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
+                    await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
+                    await self.bot.maybe_delete(input)
+                    await show_policy_options(self, offense_str, message)
 
             else:
                 await self.bot.maybe_delete(message)
@@ -488,6 +535,10 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                 }
 
         policies = await self.get_policies(ctx.guild.id)
+
+        if ctx.channel.id in policies[offense]["excluded_channels"]:
+            return
+
         policy_state = policies[offense]["state"] #This will decide the type of punishment
         if not original_offense:
             temp_dur = policies[offense]["temp_dur"] #Get temporary duration
