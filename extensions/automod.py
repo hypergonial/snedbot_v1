@@ -235,6 +235,10 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
             if key not in policies:
                 policies[key] = self.default_automod_policies[key]
 
+            for nested_key in self.default_automod_policies[key].keys(): #Ensure that nested values always exist
+                if nested_key not in policies[key]:
+                    policies[key][nested_key] = self.default_automod_policies[key][nested_key]
+
         invalid = []
         for key in policies:
             if key not in self.default_automod_policies.keys(): #Ensure that invalid values don't exist
