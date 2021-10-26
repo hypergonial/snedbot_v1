@@ -279,7 +279,7 @@ class Fun(commands.Cog):
     async def die(self, ctx):
         await ctx.send(f"{ctx.author.mention} died.")
 
-    @commands.command(aliases=["bigmoji"],brief="Returns a jumbo-sized emoji.", description="Converts an emoji into it's jumbo-sized variant. Only supports custom emojies. No, the recipe is private.", usage="jumbo <emoji>")
+    @commands.command(aliases=["bigmoji", "enhance"],brief="Returns a jumbo-sized emoji.", description="Converts an emoji into it's jumbo-sized variant. Only supports custom emojies. No, the recipe is private.", usage="jumbo <emoji>")
     @commands.guild_only()
     async def jumbo(self, ctx, emoji : discord.PartialEmoji):
         embed=discord.Embed(color=self.bot.embedBlue)

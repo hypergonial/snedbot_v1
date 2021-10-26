@@ -32,7 +32,7 @@ except (ModuleNotFoundError, ImportError):
 #Language
 lang = "en"
 #Version of the bot
-current_version = "5.0.0p"
+current_version = "5.0.0q"
 
 TOKEN = config["token"]
 
