@@ -131,8 +131,6 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id, entry_id = id)
             if records:
                 channel = ctx.guild.get_channel(records[0]['channel_id'])
-                await self.bot.pool.execute('''DELETE FROM button_roles WHERE guild_id = $1 AND entry_id = $2''', ctx.guild.id, id)
-                await self.bot.caching.refresh(table="button_roles", guild_id=ctx.guild.id)
                 message = await channel.fetch_message(records[0]['msg_id']) if channel else None
                 if message: #Re-sync buttons if message still exists
                     records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id, msg_id=message.id)
@@ -142,6 +140,9 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                         buttons.append(ButtonRoleButton(record.get('entry_id'), ctx.guild.get_role(record.get('role_id')), label=record.get('buttonlabel'), style=self.button_styles[record.get('buttonstyle')], emoji=emoji))
                     view = PersistentRoleView(buttons) if len(buttons) > 0 else None
                     await message.edit(view=view)
+                
+                await self.bot.pool.execute('''DELETE FROM button_roles WHERE guild_id = $1 AND entry_id = $2''', ctx.guild.id, id)
+                await self.bot.caching.refresh(table="button_roles", guild_id=ctx.guild.id)
 
                 embed=discord.Embed(title="✅ Role-Button deleted", description="Role-Button has been successfully deleted!", color=self.bot.embedGreen)
                 await ctx.channel.send(embed=embed)
