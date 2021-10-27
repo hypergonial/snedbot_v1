@@ -731,14 +731,15 @@ class Settings(commands.Cog):
                         logging_channel = await commands.GuildChannelConverter().convert(ctx, value)
                         if logging_channel.type not in [discord.ChannelType.news, discord.ChannelType.text]:
                             embed=discord.Embed(title="❌ Error: Invalid channel", description="Channel must be of type `text` or `news`. Operation cancelled.", color=self.bot.errorColor)
-                            view = components.BackButtonView
-                            await message.edit(embed=embed, view=components.BackButtonView)
+                            view = components.BackButtonView(ctx)
+                            await message.edit(embed=embed, view=view)
                             await view.wait()
                             await show_logging_menu(self, message) if view.value == "back" else await self.bot.maybe_delete(message)
                     except commands.ChannelNotFound:
                         embed=discord.Embed(title="❌ Error: Channel not found.", description="Unable to locate channel. Operation cancelled.", color=self.bot.errorColor)
                         view = components.BackButtonView
-                        await message.edit(embed=embed, view=components.BackButtonView)
+                        view = components.BackButtonView(ctx)
+                        await message.edit(embed=embed, view=view)
                         await view.wait()
                         await show_logging_menu(self, message) if view.value == "back" else await self.bot.maybe_delete(message)
             if logging_channel:
