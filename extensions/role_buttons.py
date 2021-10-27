@@ -159,6 +159,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         '''
         Here is where end-users would set up a button role for their server
         '''
+
         records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id)
         
         if records and len(records) >= 200:
@@ -277,6 +278,9 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         for role in ctx.guild.roles:
             if role.name != "@everyone" and role < ctx.guild.me.top_role:
                 role_options.append(discord.SelectOption(label=role.name, value=role.id))
+        if len(role_options) == 0:
+            embed=discord.Embed(title="❌ Error: No valid roles", description="There are no roles the bot could assign. Try changing the role hierarchy.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed); return
 
         embed=discord.Embed(title="🛠️ Role-Buttons setup", description="Select the role that will be handed out!", color=self.bot.embedBlue)
         value, asked = await components.select_or_ask(ctx, options=role_options, placeholder="Select a role!", embed=embed, message_to_edit=setup_msg)
