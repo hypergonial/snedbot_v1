@@ -199,7 +199,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                 #Issue a notice, not a formal warning first
 
                 embed=discord.Embed(title="💬 Auto-Moderation Notice", description=f"**{offender}**, please refrain from {notices[offense]}!", color=self.bot.warnColor)
-                await ctx.send(content=offender.mention, embed=embed)
+                await ctx.send(content=offender.mention, embed=embed, delete_after=20)
 
 
         elif policy_state == "tempmute":
