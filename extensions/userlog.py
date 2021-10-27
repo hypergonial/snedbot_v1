@@ -37,6 +37,7 @@ class Logging(commands.Cog):
         '''Return a dict of all log channels for a given guild. Returns None values if an event has no logging channel.'''
 
         records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
+        logger.info(records)
         log_channels = json.loads(records[0]["log_channels"]) if records and records[0]["log_channels"] else {}
         for event in self.valid_log_events:
             if event not in log_channels.keys():
