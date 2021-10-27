@@ -724,7 +724,7 @@ class Settings(commands.Cog):
                 else:
                     logging_channel = ctx.guild.get_channel(int(value["values"][0]))
             elif value and asked:
-                if value.lower() == "disabled":
+                if value.lower() == "disable":
                     logging_channel = None
                 else:
                     try:
@@ -737,7 +737,6 @@ class Settings(commands.Cog):
                             await show_logging_menu(self, message) if view.value == "back" else await self.bot.maybe_delete(message)
                     except commands.ChannelNotFound:
                         embed=discord.Embed(title="❌ Error: Channel not found.", description="Unable to locate channel. Operation cancelled.", color=self.bot.errorColor)
-                        view = components.BackButtonView
                         view = components.BackButtonView(ctx)
                         await message.edit(embed=embed, view=view)
                         await view.wait()
