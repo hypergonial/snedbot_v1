@@ -54,10 +54,11 @@ async def select_or_ask(ctx, options:list[discord.SelectOption], placeholder:str
             await message_to_edit.edit(content=content, embed=embed, view=view)
             msg = None
         await view.wait()
+        value = view.value if hasattr(view, "value") else None
         if msg:
-            return (view.value, asked, msg)
+            return (value, asked, msg)
         else:
-            return (view.value, asked)
+            return (value, asked)
     else:
         asked = True
         if embed:
