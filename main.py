@@ -53,7 +53,6 @@ initial_extensions = (
     'extensions.ktp', 
     'extensions.matchmaking', 
     'extensions.tags', 
-    'extensions.setup', 
     'extensions.userlog', 
     'extensions.timers', 
     'extensions.fun', 
@@ -61,6 +60,7 @@ initial_extensions = (
     'extensions.giveaway',
     'extensions.ipc',
     'extensions.misc_commands',
+    'extensions.settings',
     'jishaku'
 )
 

@@ -49,12 +49,6 @@ def default_mod_settings() -> ModerationSettings:
         mute_role_id=None
     )
 
-mod_settings_strings = {
-    "dm_users_on_punish": "DM users after punishment",
-    "clean_up_mod_commands": "Clean up mod commands",
-    "mute_role_id": "Mute role"
-}
-
 
 class AlreadyMutedException(Exception):
     '''Raised when trying to mute an already muted user'''
@@ -63,26 +57,6 @@ class AlreadyMutedException(Exception):
 class NotMutedException(Exception):
     '''Raised when trying to unmute a user who is not muted'''
     pass
-
-class ModConfMainView(components.AuthorOnlyView):
-    def __init__(self, ctx, options:dict, *args, **kwargs):
-        super().__init__(ctx, *args, **kwargs)
-        self.value = None
-        self.options = options
-        self.ctx = ctx
-
-        for option in options:
-            self.add_item(self.MenuSelectButton(option=option, label=options[option], style=discord.ButtonStyle.blurple))
-        self.add_item(self.MenuSelectButton(option="quit", label="Quit", style=discord.ButtonStyle.red))
-
-    class MenuSelectButton(discord.ui.Button):
-        def __init__(self, option:str, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.option = option
-
-        async def callback(self, interaction: discord.Interaction):
-            self.view.value = self.option
-            self.view.stop()
 
 class Moderation(commands.Cog):
     '''All Moderation & Auto-Moderation related functionality'''
@@ -351,98 +325,6 @@ class Moderation(commands.Cog):
             embed = discord.Embed(title="❌ " + self._("Kick failed"), description=self._("Ban failed, please try again later."),color=self.bot.errorColor)
             await ctx.send(embed=embed)
             return
-
-
-    @commands.command(name="moderation", aliases=["mod"], help="Configures moderation.", description="Configures various moderation settings via an interactive menu.")
-    @commands.check(has_mod_perms)
-    @commands.guild_only()
-    @commands.max_concurrency(1, per=commands.BucketType.guild, wait=False)
-    async def mod_conf_cmd(self, ctx):
-
-        async def show_main_menu(self, message:discord.Message=None):
-
-            options = await self.get_settings(ctx.guild.id)
-            options_dict = {}
-            embed = discord.Embed(title="Moderation Settings", description="Below you can see the current moderation settings, to change any of them, press the corresponding button!", color=self.bot.embedBlue)
-            if not await can_mute(ctx):
-                embed.add_field(name="⚠️ Warning!", value="There is **no mute role** set! Without a mute role, muting and tempmuting is unavailable! Please configure one here!", inline=False)
-
-            for field in options.__dataclass_fields__:
-                value = getattr(options, field)
-                if field == "mute_role_id":
-                    mute_role = ctx.guild.get_role(value)
-                    if mute_role:
-                        value = mute_role.mention
-                    else:
-                        value = "Not set"
-
-                embed.add_field(name=f"{mod_settings_strings[field]}", value=value, inline=True)
-                options_dict[field] = mod_settings_strings[field]
-
-            view = ModConfMainView(ctx, options_dict)
-            if not message:
-                message = await ctx.send(embed=embed, view=view)
-            else:
-                await self.bot.maybe_edit(message, embed=embed, view=view)
-            
-            def check(message):
-                return message.author.id == ctx.author.id and  ctx.channel.id == message.channel.id
-
-            await view.wait()
-            if view.value == "quit" or not view.value:
-                await self.bot.maybe_delete(message)
-            elif view.value == "dm_users_on_punish":
-                await self.bot.pool.execute('''
-                INSERT INTO mod_config (guild_id, dm_users_on_punish)
-                VALUES ($1, $2)
-                ON CONFLICT (guild_id) DO
-                UPDATE SET dm_users_on_punish = $2''', ctx.guild.id, not options.dm_users_on_punish)
-                await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
-                await show_main_menu(self, message)
-            elif view.value == "clean_up_mod_commands":
-                await self.bot.pool.execute('''
-                INSERT INTO mod_config (guild_id, clean_up_mod_commands)
-                VALUES ($1, $2)
-                ON CONFLICT (guild_id) DO
-                UPDATE SET clean_up_mod_commands = $2''', ctx.guild.id, not options.clean_up_mod_commands)
-                await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
-                await show_main_menu(self, message)
-            elif view.value == "mute_role_id":
-                embed = discord.Embed(title=f"Configuring mute role", description="Please enter a mention, ID, or name of the role you want to use as a mute role! This role should **not be able** to send messages or add reactions in any channels for muting to work correctly!", color=self.bot.embedBlue)
-                await self.bot.maybe_edit(message, embed=embed, view=None)
-
-                try:
-                    input = await self.bot.wait_for('message', check=check, timeout=180)
-                except asyncio.TimeoutError:
-                    await self.bot.maybe_delete(message)
-                else:
-                    try:
-                        mute_role = await commands.RoleConverter().convert(ctx, input.content)
-
-                        await self.bot.pool.execute('''
-                        INSERT INTO mod_config (guild_id, mute_role_id)
-                        VALUES ($1, $2)
-                        ON CONFLICT (guild_id) DO
-                        UPDATE SET mute_role_id = $2''', ctx.guild.id, mute_role.id)
-                        await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
-
-                        await self.bot.maybe_delete(input)
-                        await show_main_menu(self, message)
-
-                    except commands.RoleNotFound:
-                        view = components.BackButtonView(ctx)
-                        embed = discord.Embed(title="❌ Role not found", description="Unable to find role! Please make sure what you entered is correct.", color=self.bot.errorColor)
-                        await self.bot.maybe_edit(message, view=view, embed=embed)
-                        await self.bot.maybe_delete(input)
-
-                        await view.wait()
-                        if view.value == "back":
-                            await show_main_menu(self, message)
-                        else:
-                            await self.bot.maybe_delete(message)
-
-        await show_main_menu(self)
-
 
     #Warn a user & print it to logs, needs logs to be set up
     @commands.group(name="warn", help="Warns a user. Subcommands allow you to clear warnings.", aliases=["bonk"], description="Warns the user and logs it.", usage="warn <user> [reason]", invoke_without_command=True, case_insensitive=True)

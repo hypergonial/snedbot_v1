@@ -1,6 +1,8 @@
 import asyncio
 import datetime
+import json
 import logging
+from typing import Union
 
 import discord
 from discord.ext import commands
@@ -16,51 +18,63 @@ class Logging(commands.Cog):
         self.recently_edited = []
         self.recently_deleted = []
         self.frozen_guilds = [] #List of guilds where logging is temporarily suspended
+        self.valid_log_events = ["ban", "kick", "mute", "message_delete", "message_delete_mod", "message_edit", "bulk_delete",
+        "invites", "roles", "channels", "member_join", "member_leave", "nickname", "guild_settings"]
+
+    async def get_log_channel(self, event:str, guild_id:int) -> int:
+        '''Get logging channel associated with a given event. Returns None if no logging channel is set.'''
+
+        if event not in self.valid_log_events: raise ValueError("Invalid event passed.")
+
+        records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
+        log_channels = json.loads(records[0]["log_channels"]) if records else None
+        if log_channels and event in log_channels.keys():
+            return log_channels[event]
+        else:
+            return None
+    
+    async def get_all_log_channels(self, guild_id:int) -> dict:
+        '''Return a dict of all log channels for a given guild. Returns None values if an event has no logging channel.'''
+
+        records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
+        log_channels = json.loads(records[0]["log_channels"]) if records else {}
+        for event in self.valid_log_events:
+            if event not in log_channels.keys():
+                log_channels[event] = None
+        return log_channels
+
+    async def set_log_channel(self, event:str, guild_id:int, channel_id:int=None):
+        '''Sets logging channel for an event.'''
+
+        if event not in self.valid_log_events: raise ValueError("Invalid event passed.")
+
+        log_channels = await self.get_all_log_channels(guild_id)
+        log_channels[event] = channel_id
+        logger.info(json.dumps(log_channels))
+        await self.bot.pool.execute('''
+        INSERT INTO log_config (log_channels, guild_id) VALUES ($1, $2)
+        ON CONFLICT (guild_id) DO
+        UPDATE SET log_channels = $1''', json.dumps(log_channels), guild_id)
+        await self.bot.caching.refresh(table="log_config", guild_id=guild_id)
 
 
-    '''
-    Functions to call to log events, standard
-    is for less useful/spammy events, while
-    elevated is generally for important entries,
-    like kicks or bans. Elevated is optional, thus it
-    has the ability to fall back to standard
-    '''
+    async def log(self, event:str, logcontent:Union[str, discord.Embed], guild_id:int, file:discord.File=None, bypass:bool=False):
+        '''Log an event to the designated logging channel.'''
 
-    async def log_standard(self, logcontent, guild_id:int, file:discord.File=None, bypass:bool=False):
         if guild_id not in self.frozen_guilds or bypass:
-            records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
-
-            if records and records[0]["log_channel_id"]:
+            logging_channel_id = await self.get_log_channel(event, guild_id)
+            if logging_channel_id:
                 guild = self.bot.get_guild(guild_id)
-                loggingchannel = guild.get_channel(records[0]["log_channel_id"])
-                if loggingchannel is None: return
+                logging_channel = guild.get_channel(logging_channel_id)
+                if logging_channel is None: return
                 try:
                     if isinstance(logcontent, discord.Embed):
                         logcontent.timestamp = discord.utils.utcnow()
-                        await loggingchannel.send(embed=logcontent, file=file)
+                        await logging_channel.send(embed=logcontent, file=file)
                     elif isinstance(logcontent, str):
-                        await loggingchannel.send(content=logcontent, file=file)
-                except discord.Forbidden:
+                        await logging_channel.send(content=logcontent, file=file)
+                except (discord.Forbidden, discord.HTTPException):
                     return
-        
-
-    async def log_elevated(self, logcontent, guild_id:int, file:discord.File=None, bypass:bool=False):
-        if guild_id not in self.frozen_guilds or bypass:
-            records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
-            if records and records[0]["elevated_log_channel_id"]:
-                guild = self.bot.get_guild(guild_id)
-                elevated_loggingchannel = guild.get_channel(records[0]["elevated_log_channel_id"])
-                if elevated_loggingchannel is None: await self.log_standard(logcontent, guild_id)
-                try:
-                    if isinstance(logcontent, discord.Embed):
-                        logcontent.timestamp = discord.utils.utcnow()
-                        await elevated_loggingchannel.send(embed=logcontent, file=file)
-                    elif isinstance(logcontent, str):
-                        await elevated_loggingchannel.send(content=logcontent, file=file)
-                except discord.Forbidden:
-                    await self.log_standard(logcontent, guild_id)
-            else:
-                await self.log_standard(logcontent, guild_id) #Fallback to standard logging channel
     
     async def freeze_logging(self, guild_id):
         '''Call to suspend logging temporarily in the given guild. Useful if a log-spammy command is being executed.'''
@@ -103,11 +117,11 @@ class Logging(commands.Cog):
 
         if moderator != None: #If this was deleted by a mod
             embed = discord.Embed(title=f"🗑️ Message deleted by Moderator", description=f"**Message author:** `{message.author} ({message.author.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{contentfield}```", color=self.bot.errorColor)
-            await self.log_elevated(embed, message.guild.id)
+            await self.log("message_delete_mod", embed, message.guild.id)
         else:
             #Logging channel
             embed = discord.Embed(title=f"🗑️ Message deleted", description=f"**Message author:** `{message.author} ({message.author.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{contentfield}```", color=self.bot.errorColor)
-            await self.log_standard(embed, message.guild.id)
+            await self.log("message_delete", embed, message.guild.id)
 
     #Message editing logging
 
@@ -123,7 +137,7 @@ class Logging(commands.Cog):
         after_content = after.content if len(after.content) < 1800 else after.content[:1800] + "..."
         if not after.author.bot:
             embed = discord.Embed(title=f"🖊️ Message edited", description=f"**Message author:** `{after.author} ({after.author.id})`\n**Channel:** {after.channel.mention}\n**Before:** ```{before_content}``` \n**After:** ```{after_content}```\n[Jump!]({after.jump_url})", color=self.bot.embedBlue)
-            await self.log_standard(embed, after.guild.id)
+            await self.log("message_edit", embed, after.guild.id)
 
 
     @commands.Cog.listener()
@@ -145,12 +159,12 @@ class Logging(commands.Cog):
         guild = self.bot.get_guild(payload.guild_id)
         channel = guild.get_channel(payload.channel_id)
         embed = discord.Embed(title=f"🗑️ Bulk message deletion", description=f"**Channel:** {channel.mention if channel else 'Unknown'}\n**Moderator:** `{moderator}`\n```Multiple messages have been purged.```", color=self.bot.errorColor)
-        await self.log_elevated(embed, payload.guild_id)
+        await self.log("bulk_delete", embed, payload.guild_id)
     #Does not work, idk why but this event is never called
     @commands.Cog.listener()
     async def on_invite_delete(self, invite):
         embed = discord.Embed(title=f"🗑️ Invite deleted", description=f"**Invite:** `{invite}`", color=self.bot.errorColor)
-        await self.log_standard(embed, invite.guild.id)
+        await self.log("invites", embed, invite.guild.id)
     
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role):
@@ -166,7 +180,7 @@ class Logging(commands.Cog):
         except discord.Forbidden:
             return
         embed = discord.Embed(title=f"🗑️ Role deleted", description=f"**Role:** `{role}`\n**Moderator:** `{moderator}`", color=self.bot.errorColor)
-        await self.log_elevated(embed, role.guild.id)
+        await self.log("roles", embed, role.guild.id)
     
     @commands.Cog.listener()
     async def on_guild_channel_delete(self, channel):
@@ -182,7 +196,7 @@ class Logging(commands.Cog):
         except discord.Forbidden:
             return
         embed = discord.Embed(title=f"#️⃣ Channel deleted", description=f"**Channel:** `{channel.name}` ({channel.type})\n**Moderator:** `{moderator} ({moderator})`", color=self.bot.errorColor)
-        await self.log_elevated(embed, channel.guild.id)
+        await self.log("channels", embed, channel.guild.id)
     
     #Creation
 
@@ -200,7 +214,7 @@ class Logging(commands.Cog):
         except discord.Forbidden:
             return
         embed = discord.Embed(title=f"#️⃣ Channel created", description=f"**Channel:** {channel.mention} `({channel.type})`\n**Moderator:** `{moderator}`", color=self.bot.embedGreen)
-        await self.log_elevated(embed, channel.guild.id)
+        await self.log("channels", embed, channel.guild.id)
 
     @commands.Cog.listener()
     async def on_guild_role_create(self, role):
@@ -216,7 +230,7 @@ class Logging(commands.Cog):
         except discord.Forbidden:
             return
         embed = discord.Embed(title=f"❇️ Role created", description=f"**Role:** `{role}`\n**Moderator:** `{moderator}`", color=self.bot.embedGreen)
-        await self.log_elevated(embed, role.guild.id)
+        await self.log("roles", embed, role.guild.id)
     
     @commands.Cog.listener()
     async def on_guild_role_update(self, before, after):
@@ -233,7 +247,7 @@ class Logging(commands.Cog):
             return
         if moderator:
             embed = discord.Embed(title=f"🖊️ Role updated", description=f"**Role:** `{after.name}` \n**Moderator:** `{moderator}`\n**Before:**```Name: {before.name}\nColor: {before.color}\nHoisted: {before.hoist}\nManaged: {before.managed}\nMentionable: {before.mentionable}\nPosition: {before.position}\nPermissions: {before.permissions}```\n**After:**\n```Name: {after.name}\nColor: {after.color}\nHoisted: {after.hoist}\nManaged: {after.managed}\nMentionable: {after.mentionable}\nPosition:{after.position}\nPermissions: {after.permissions}```", color=self.bot.embedBlue)
-            await self.log_elevated(embed, after.guild.id)
+            await self.log("roles", embed, after.guild.id)
 
     @commands.Cog.listener()
     async def on_guild_update(self, before, after):
@@ -249,7 +263,7 @@ class Logging(commands.Cog):
             return
         if moderator != "Undefined": #Necessary as e.g. Nitro boosts trigger guild update
             embed = discord.Embed(title=f"🖊️ Guild updated", description=f"Guild settings have been updated by `{moderator}`.", color=self.bot.embedBlue)
-            await self.log_elevated(embed, after.id)
+            await self.log("guild_settings", embed, after.id)
 
     
     @commands.Cog.listener()
@@ -268,7 +282,7 @@ class Logging(commands.Cog):
         except discord.Forbidden:
             return
         embed = discord.Embed(title=f"🔨 User unbanned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:** ```{reason}```", color=self.bot.embedGreen)
-        await self.log_elevated(embed, guild.id)
+        await self.log("ban", embed, guild.id)
 
 
     @commands.Cog.listener()
@@ -298,17 +312,17 @@ class Logging(commands.Cog):
 
         if type == "kick" :
             embed = discord.Embed(title=f"🚪👈 User was kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
-            await self.log_elevated(embed, member.guild.id)
+            await self.log("kick", embed, member.guild.id)
         
         elif type == "ban":
             embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
-            await self.log_elevated(embed, member.guild.id)
+            await self.log("ban", embed, member.guild.id)
 
         elif type == "standard":
             embed = discord.Embed(title=f"🚪 User left", description=f"**User:** `{member} ({member.id})`\n**User count:** `{member.guild.member_count}`", color=self.bot.errorColor)
             if member.avatar:
                 embed.set_thumbnail(url=member.avatar.url)
-            await self.log_standard(embed, member.guild.id)
+            await self.log("member_leave", embed, member.guild.id)
 
                 
 
@@ -318,14 +332,14 @@ class Logging(commands.Cog):
         embed.add_field(name="Account created", value=f"{discord.utils.format_dt(member.created_at)} ({discord.utils.format_dt(member.created_at, style='R')})", inline=False)
         if member.avatar:
             embed.set_thumbnail(url=member.avatar.url)
-        await self.log_standard(embed, member.guild.id)
+        await self.log("member_join", embed, member.guild.id)
     
     
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
         if before.nick != after.nick:
             embed = discord.Embed(title=f"🖊️ Nickname changed", description=f"**User:** `{after.name} ({after.id})`\nNickname before: `{before.nick}`\nNickname after: `{after.nick}`", color=self.bot.embedBlue)
-            await self.log_standard(embed, after.guild.id)
+            await self.log("nickname", embed, after.guild.id)
         elif before.roles != after.roles:
             #Contains role that was added to user if any
             add_diff = list(set(after.roles)-set(before.roles))
@@ -349,9 +363,9 @@ class Logging(commands.Cog):
                 embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name}#{after.discriminator} ({after.id})`\n**Moderator:** `{moderator}`\n**Role removed:** `{rem_diff[0]}`", color=self.bot.embedBlue)
             #Role updates are considered elevated due to importance
             if isinstance(moderator, discord.User) or isinstance(moderator, discord.Member) and moderator.bot:
-                await self.log_standard(embed, after.guild.id)
+                pass
             else:
-                await self.log_elevated(embed, after.guild.id)
+                await self.log("roles", embed, after.guild.id)
 
 def setup(bot):
     logger.info("Adding cog: Logging...")

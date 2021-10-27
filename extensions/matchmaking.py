@@ -118,6 +118,72 @@ class Matchmaking(commands.Cog):
     def cog_unload(self):
         self.delExpiredListings.cancel() # pylint: disable=<no-member>
     
+    @commands.command(name="matchmakingconf", help="Helps set up matchmaking")
+    @commands.check(is_anno_guild)
+    @commands.guild_only()
+    @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
+    async def matchmaking_conf(self, ctx):
+    #This setup will set up the !matchmaking command to work properly.
+        embed=discord.Embed(title="🛠️ Matchmaking setup", description="Please mention a channel where users should send the command to start matchmaking! Type `disable` to disable this feature.", color=self.bot.embedBlue)
+        await ctx.channel.send(embed=embed)
+        try:
+            #Gathering info
+            def check(payload):
+                return payload.author == ctx.author and payload.channel.id == ctx.channel.id
+            payload = await self.bot.wait_for('message', timeout =60.0, check=check)
+            if payload.content == "disable":
+                cmdchannel_id = None
+                embed=discord.Embed(title="🛠️ Matchmaking setup", description="Commands channel **disabled.**", color=self.bot.embedBlue)
+                await ctx.channel.send(embed=embed)
+            else :
+                cmdchannel = await commands.TextChannelConverter().convert(ctx, payload.content)
+                cmdchannel_id = cmdchannel.id
+                embed=discord.Embed(title="🛠️ Matchmaking setup", description=f"Commands channel set to {cmdchannel.mention}", color=self.bot.embedBlue)
+                await ctx.channel.send(embed=embed)
+
+            embed=discord.Embed(title="🛠️ Matchmaking setup", description="Now please mention the channel where the multiplayer listings should go.", color=self.bot.embedBlue)
+            await ctx.channel.send(embed=embed)
+            payload = await self.bot.wait_for('message', timeout=60.0, check=check)
+            announcechannel = await commands.TextChannelConverter().convert(ctx, payload.content)
+            embed=discord.Embed(title="🛠️ Matchmaking setup", description=f"Multiplayer listings channel set to {announcechannel.mention}", color=self.bot.embedBlue)
+            await ctx.channel.send(embed=embed)
+
+            embed=discord.Embed(title="🛠️ Matchmaking setup", description=f"Now specify the role that should be mentioned when a new listing is created. Type `skip` to skip this step.", color=self.bot.embedBlue)
+            await ctx.channel.send(embed=embed)
+            message = await self.bot.wait_for('message', timeout=60.0, check=check)
+            if message.content == "skip":
+                lfg_role_id = None
+            else:
+                lfg_role = await commands.RoleConverter().convert(ctx, message.content)
+                lfg_role_id = lfg_role.id
+                embed=discord.Embed(title="🛠️ Matchmaking setup", description=f"Multiplayer LFG role set to {lfg_role.mention}", color=self.bot.embedBlue)
+                await ctx.channel.send(embed=embed)
+
+            #Executing based on info
+
+
+            await self.bot.pool.execute('''
+            INSERT INTO matchmaking_config (guild_id, init_channel_id, announce_channel_id, lfg_role_id) VALUES ($1, $2, $3, $4)
+            ON CONFLICT (guild_id) DO
+            UPDATE SET init_channel_id = $2, announce_channel_id = $3, lfg_role_id = $4''', ctx.guild.id, cmdchannel_id, announcechannel.id, lfg_role_id)
+
+            embed=discord.Embed(title="🛠️ Matchmaking setup", description="✅ Setup completed. Matchmaking set up!", color=self.bot.embedGreen)
+            await ctx.channel.send(embed=embed)
+            return
+
+        except commands.ChannelNotFound:
+            embed=discord.Embed(title="❌ Error: Channel not found.", description="Unable to locate channel. Operation cancelled.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+        except commands.RoleNotFound:
+            embed=discord.Embed(title="❌ Error: Role not found.", description="Unable to locate role. Operation cancelled.", color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+        except asyncio.TimeoutError:
+            embed=discord.Embed(title=self.bot.errorTimeoutTitle, description=self.bot.errorTimeoutDesc, color=self.bot.errorColor)
+            await ctx.channel.send(embed=embed)
+            return
+
 
     #Command to initalize matchmaking.
     #The TL;DR version of this command is the following: It DMs the user, asks them some questions,

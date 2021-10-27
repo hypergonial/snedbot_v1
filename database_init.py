@@ -216,8 +216,7 @@ try:
                     CREATE TABLE IF NOT EXISTS public.log_config
                     (
                         guild_id bigint NOT NULL,
-                        log_channel_id bigint NOT NULL,
-                        elevated_log_channel_id bigint,
+                        log_channels json,
                         PRIMARY KEY (guild_id),
                         FOREIGN KEY (guild_id)
                             REFERENCES global_config (guild_id)
