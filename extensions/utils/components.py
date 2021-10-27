@@ -68,9 +68,9 @@ async def select_or_ask(ctx, options:list[discord.SelectOption], placeholder:str
         def check(message):
             return message.author == ctx.author and message.channel == ctx.channel
         if not message_to_edit:
-            msg = await ctx.channel.send(embed=embed, content=content)
+            msg = await ctx.channel.send(embed=embed, content=content, view=None)
         else:
-            await message_to_edit.edit(embed=embed, content=content)
+            await message_to_edit.edit(embed=embed, content=content, view=None)
             msg = None
         try:
             message = await ctx.bot.wait_for('message', timeout=180.0, check=check)
