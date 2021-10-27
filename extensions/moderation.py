@@ -178,7 +178,7 @@ class Moderation(commands.Cog):
             embed=discord.Embed(title="⚠️ " + self._("Warning issued"), description=self._("**{offender}** has been warned by **{moderator}**.\n**Reason:** ```{reason}```").format(offender=member, moderator=moderator, reason=reason), color=self.bot.warnColor)
             warnembed=discord.Embed(title="⚠️ Warning issued.", description=f"{member.mention} has been warned by {moderator.mention}.\n**Warns:** {db_user.warns}\n**Reason:** ```{reason}```\n[Jump!]({ctx.message.jump_url})", color=self.bot.warnColor)
         try:
-            await self.bot.get_cog("Logging").log_elevated(warnembed, ctx.guild.id)
+            await self.bot.get_cog("Logging").log("warn", warnembed, ctx.guild.id)
             await ctx.send(embed=embed)
         except AttributeError:
             pass
@@ -217,7 +217,7 @@ class Moderation(commands.Cog):
                         if not duration: duration = "Infinite"
                         else: duration = discord.utils.format_dt(dur[0])
                         muteembed=discord.Embed(title="🔇 User muted", description=F"**User:** `{member} ({member.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Until:** {duration}\n**Reason:** ```{reason}```", color=self.bot.errorColor)
-                        await self.bot.get_cog("Logging").log_elevated(muteembed, ctx.guild.id)
+                        await self.bot.get_cog("Logging").log("mute", muteembed, ctx.guild.id)
                     except:
                         pass
                     if dur:
@@ -247,7 +247,7 @@ class Moderation(commands.Cog):
                 await self.bot.global_config.update_user(db_user)
                 try:
                     muteembed=discord.Embed(title="🔉 User unmuted", description=F"**User:** `{member} ({member.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Reason:** ```{reason}```", color=self.bot.embedGreen)
-                    await self.bot.get_cog("Logging").log_elevated(muteembed, ctx.guild.id)
+                    await self.bot.get_cog("Logging").log("mute", muteembed, ctx.guild.id)
                 except:
                     pass
 
@@ -357,7 +357,7 @@ class Moderation(commands.Cog):
             embed=discord.Embed(title="✅ " + self._("Warnings cleared"), description=self._("**{offender}**'s warnings have been cleared.\n**Reason:** ```{reason}```").format(offender=offender, reason=reason), color=self.bot.embedGreen)
             warnembed=discord.Embed(title="⚠️ Warnings cleared.", description=f"{offender.mention}'s warnings have been cleared by {ctx.author.mention}.\n**Reason:** ```{reason}```\n[Jump!]({ctx.message.jump_url})", color=self.bot.embedGreen)
         try:
-            await self.bot.get_cog("Logging").log_elevated(warnembed, ctx.guild.id)
+            await self.bot.get_cog("Logging").log("warn", warnembed, ctx.guild.id)
             await ctx.send(embed=embed)
         except AttributeError:
             pass
@@ -489,7 +489,7 @@ class Moderation(commands.Cog):
                 offender = guild.get_member(timer.user_id)
                 await offender.remove_roles(mute_role,  reason="Temporary mute expired.")
                 embed=discord.Embed(title="🔉 User unmuted.", description=f"**{offender}** `({offender.id})` has been unmuted because their temporary mute expired.", color=self.bot.embedGreen)
-                await self.bot.get_cog("Logging").log_elevated(embed, timer.guild_id)
+                await self.bot.get_cog("Logging").log("mute", embed, timer.guild_id)
             except (AttributeError, discord.Forbidden):
                 return
     
@@ -782,7 +782,7 @@ class Moderation(commands.Cog):
                         count += 1
                 log_embed = discord.Embed(title="🔨 Smartban concluded", description=f"Banned **{count}/{len(to_ban)}** users.\n**Moderator:** `{ctx.author} ({ctx.author.id if ctx.author else '0'})`\n**Reason:** ```{reason}```",color=self.bot.errorColor)
                 file = discord.File(io.BytesIO(content.encode('utf-8')), filename="members_banned.txt")
-                await self.bot.get_cog("Logging").log_elevated(log_embed, ctx.guild.id, file=file, bypass=True)
+                await self.bot.get_cog("Logging").log("ban", log_embed, ctx.guild.id, file=file, bypass=True)
                 await asyncio.sleep(1)
                 await self.bot.get_cog("Logging").unfreeze_logging(ctx.guild.id)
 

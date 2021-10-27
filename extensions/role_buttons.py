@@ -349,7 +349,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
 
         embed=discord.Embed(title="❇️ Role-Button was added", description=f"A role-button for role {reactionrole.mention} has been created by {ctx.author.mention} in channel {reactchannel.mention}.\n__Note:__ Anyone who can see this channel can now obtain this role!", color=self.bot.embedGreen)
         try:
-            await self.bot.get_cog('Logging').log_elevated(embed, ctx.guild.id)
+            await self.bot.get_cog('Logging').log("roles", embed, ctx.guild.id)
         except AttributeError:
             pass
         

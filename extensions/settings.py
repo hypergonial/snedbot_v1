@@ -180,7 +180,8 @@ log_event_strings = {
     "member_join": "Member join",
     "member_leave": "Member leave",
     "nickname": "Nickname change",
-    "guild_settings": "Server settings"
+    "guild_settings": "Server settings",
+    "warn": "Warnings"
 }
 
 class SettingsMainView(components.AuthorOnlyView):
@@ -294,7 +295,7 @@ class LoggingConfMainView(components.AuthorOnlyView):
         self.ctx = ctx
         self.emojies = emojies
 
-        self.add_item(self.MenuSelectButton(option="back", label="Back", emoji="⬅️", style=discord.ButtonStyle.primary))
+        self.add_item(self.MenuSelectButton(option="back", emoji="⬅️", style=discord.ButtonStyle.primary))
         for i, key in enumerate(logging_channels.keys()):
             self.add_item(self.MenuSelectButton(option=key, emoji=self.emojies[i], style=discord.ButtonStyle.secondary))
 
@@ -689,12 +690,12 @@ class Settings(commands.Cog):
 
             log_channels = await logging.get_all_log_channels(ctx.guild.id)
             embed = discord.Embed(title="Logging Settings", description="Below you can see a list of logging events and channels associated with them. To change where a certain event's logs should be sent, click on the corresponding button.", color=self.bot.embedBlue)
-            emojies = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🇦", "🇧", "🇨", "🇩"]
+            emojies = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🇦", "🇧", "🇨", "🇩", "🇪"]
 
             for i, key in enumerate(log_channels.keys()):
                 channel = ctx.guild.get_channel(log_channels[key])
                 embed.add_field(name=f"{emojies[i]} {log_event_strings[key]}", value=channel.mention if channel else "Not set", inline=True)
-            embed.add_field(name="​", value="​") #Spacer
+            #embed.add_field(name="​", value="​") #Spacer
             view = LoggingConfMainView(ctx, log_channels, emojies)
             if not message:
                 message = await ctx.send(embed=embed, view=view)

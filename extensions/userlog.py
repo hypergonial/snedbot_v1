@@ -19,7 +19,7 @@ class Logging(commands.Cog):
         self.recently_deleted = []
         self.frozen_guilds = [] #List of guilds where logging is temporarily suspended
         self.valid_log_events = ["ban", "kick", "mute", "message_delete", "message_delete_mod", "message_edit", "bulk_delete",
-        "invites", "roles", "channels", "member_join", "member_leave", "nickname", "guild_settings"]
+        "invites", "roles", "channels", "member_join", "member_leave", "nickname", "guild_settings", "warn"]
 
     async def get_log_channel(self, event:str, guild_id:int) -> int:
         '''Get logging channel associated with a given event. Returns None if no logging channel is set.'''
@@ -37,7 +37,6 @@ class Logging(commands.Cog):
         '''Return a dict of all log channels for a given guild. Returns None values if an event has no logging channel.'''
 
         records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
-        logger.info(records)
         log_channels = json.loads(records[0]["log_channels"]) if records and records[0]["log_channels"] else {}
         for event in self.valid_log_events:
             if event not in log_channels.keys():
@@ -51,7 +50,6 @@ class Logging(commands.Cog):
 
         log_channels = await self.get_all_log_channels(guild_id)
         log_channels[event] = channel_id
-        logger.info(json.dumps(log_channels))
         await self.bot.pool.execute('''
         INSERT INTO log_config (log_channels, guild_id) VALUES ($1, $2)
         ON CONFLICT (guild_id) DO
