@@ -16,7 +16,7 @@ class FallingFrontier(commands.Cog, name="Falling Frontier"):
     '''
     def __init__(self, bot):
         self.bot = bot
-        self.ffwiki_color = "#4baa93"
+        self.ffwiki_color = discord.Colour.from_rgb(75, 170, 147)
 
     def cog_check(self,ctx):
         return is_ff_guild(ctx)
