@@ -27,7 +27,7 @@ class Logging(commands.Cog):
         if event not in self.valid_log_events: raise ValueError("Invalid event passed.")
 
         records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
-        log_channels = json.loads(records[0]["log_channels"]) if records else None
+        log_channels = json.loads(records[0]["log_channels"]) if records and records[0]["log_channels"] else None
         if log_channels and event in log_channels.keys():
             return log_channels[event]
         else:
@@ -37,7 +37,7 @@ class Logging(commands.Cog):
         '''Return a dict of all log channels for a given guild. Returns None values if an event has no logging channel.'''
 
         records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
-        log_channels = json.loads(records[0]["log_channels"]) if records else {}
+        log_channels = json.loads(records[0]["log_channels"]) if records and records[0]["log_channels"] else {}
         for event in self.valid_log_events:
             if event not in log_channels.keys():
                 log_channels[event] = None
