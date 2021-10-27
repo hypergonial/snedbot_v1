@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+from typing import List
 
 import discord
 from discord.components import SelectOption
@@ -286,15 +287,16 @@ class StateChangeView(components.AuthorOnlyView):
 
 class LoggingConfMainView(components.AuthorOnlyView):
     '''Logging main view'''
-    def __init__(self, ctx, logging_channels:dict, *args, **kwargs):
+    def __init__(self, ctx, logging_channels:dict, emojies:List[str],  *args, **kwargs):
         super().__init__(ctx, *args, **kwargs)
         self.value = None
         self.logging_channels = logging_channels
         self.ctx = ctx
+        self.emojies = emojies
 
         self.add_item(self.MenuSelectButton(option="back", label="Back", emoji="⬅️", style=discord.ButtonStyle.primary))
-        for key in logging_channels.keys():
-            self.add_item(self.MenuSelectButton(option=key, label=log_event_strings[key], style=discord.ButtonStyle.secondary))
+        for i, key in enumerate(logging_channels.keys()):
+            self.add_item(self.MenuSelectButton(option=key, emoji=self.emojies[i], style=discord.ButtonStyle.secondary))
 
     class MenuSelectButton(discord.ui.Button):
         def __init__(self, option:str, *args, **kwargs):
@@ -687,10 +689,13 @@ class Settings(commands.Cog):
 
             log_channels = await logging.get_all_log_channels(ctx.guild.id)
             embed = discord.Embed(title="Logging Settings", description="Below you can see a list of logging events and channels associated with them. To change where a certain event's logs should be sent, click on the corresponding button.", color=self.bot.embedBlue)
-            for key, value in log_channels.items():
-                channel = ctx.guild.get_channel(value)
-                embed.add_field(name=log_event_strings[key], value=channel.mention if channel else "Not set", inline=True)
-            view = LoggingConfMainView(ctx, log_channels)
+            emojies = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🇦", "🇧", "🇨", "🇩"]
+
+            for i, key in enumerate(log_channels.keys()):
+                channel = ctx.guild.get_channel(log_channels[key])
+                embed.add_field(name=f"{emojies[i]} {log_event_strings[key]}", value=channel.mention if channel else "Not set", inline=True)
+            embed.add_field(name="​", value="​") #Spacer
+            view = LoggingConfMainView(ctx, log_channels, emojies)
             if not message:
                 message = await ctx.send(embed=embed, view=view)
             else:
@@ -706,6 +711,7 @@ class Settings(commands.Cog):
 
         async def change_logging_channel(self, event:str, message:discord.Message):
             select_options = []
+            select_options.append(discord.SelectOption(label="Disable", value="disable", description="Stop logging this event"))
             for channel in ctx.guild.channels:
                 if isinstance(channel, (discord.TextChannel)):
                     select_options.append(discord.SelectOption(label="#"+channel.name, value=channel.id))
@@ -735,7 +741,10 @@ class Settings(commands.Cog):
                         await message.edit(embed=embed, view=components.BackButtonView)
                         await view.wait()
                         await show_logging_menu(self, message) if view.value == "back" else await self.bot.maybe_delete(message)
-            await logging.set_log_channel(event, ctx.guild.id, logging_channel.id)
+            if logging_channel:
+                await logging.set_log_channel(event, ctx.guild.id, logging_channel.id)
+            else:
+                await logging.set_log_channel(event, ctx.guild.id, None)
             await show_logging_menu(self, message)
 
         await show_logging_menu(self, message)
