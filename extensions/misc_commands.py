@@ -180,7 +180,8 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         db_user = await self.bot.global_config.get_user(user.id, ctx.guild.id)
         warns = db_user.warns
         embed = discord.Embed(title=self._("{user}'s warnings").format(user=user), description=self._("**Warnings:** `{warns}`").format(warns=warns), color=self.bot.warnColor)
-        embed.set_thumbnail(url=user.avatar.url)
+        if user.avatar:
+            embed.set_thumbnail(url=user.avatar.url)
         await ctx.send(embed=embed)
 
     @commands.group(brief="Repeats what you said.", description="Repeats the provided message, while deleting the command message.", usage="echo <message>", invoke_without_command=True, case_insensitive=True)
