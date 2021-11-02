@@ -47,6 +47,7 @@ async def select_or_ask(ctx, options:list[discord.SelectOption], placeholder:str
     if len(options) <= 25 and not invalid_select:
         asked = False
         view = AuthorOnlyView(ctx)
+        view.value = None
         view.add_item(CustomSelect(placeholder=placeholder, options=options))
         if not message_to_edit:
             msg = await ctx.send(content=content, embed=embed, view=view)
