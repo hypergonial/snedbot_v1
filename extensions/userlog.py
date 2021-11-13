@@ -267,6 +267,9 @@ class Logging(commands.Cog):
     
     @commands.Cog.listener()
     async def on_member_unban(self, guild, user):
+
+        await asyncio.sleep(1)
+        
         try:
             moderator = "Undefined"
             reason = "No reason provided"
@@ -299,6 +302,9 @@ class Logging(commands.Cog):
                         moderator = entry.user
                         reason = entry.reason
                         is_kick = True; break
+                elif entry.action == discord.AuditLogAction.ban and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
+                    if entry.target == member :
+                        return # bans get logged seperately
                 else :
                     break
         except discord.Forbidden:
