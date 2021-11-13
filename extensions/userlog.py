@@ -289,41 +289,49 @@ class Logging(commands.Cog):
 
         await asyncio.sleep(1) #Wait for audit log to be present
 
-        type = "standard"
+        is_kick = False
         moderator = "Unknown"
-        reason = "Error retrieving data from audit logs!"
+        reason = "Error retrieving data from audit logs! Ensure the bot has permissions to view them!"
         try:
             async for entry in member.guild.audit_logs():
                 if entry.action == discord.AuditLogAction.kick and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
                     if entry.target == member :
                         moderator = entry.user
                         reason = entry.reason
-                        type = "kick"; break
-                elif entry.action == discord.AuditLogAction.ban and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
-                    if entry.target == member :
-                        moderator = entry.user
-                        reason = entry.reason
-                        type = "ban"; break
+                        is_kick = True; break
                 else :
                     break
         except discord.Forbidden:
             pass
 
-        if type == "kick" :
+        if is_kick:
             embed = discord.Embed(title=f"🚪👈 User was kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
             await self.log("kick", embed, member.guild.id)
-        
-        elif type == "ban":
-            embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
-            await self.log("ban", embed, member.guild.id)
 
-        elif type == "standard":
+        else:
             embed = discord.Embed(title=f"🚪 User left", description=f"**User:** `{member} ({member.id})`\n**User count:** `{member.guild.member_count}`", color=self.bot.errorColor)
             if member.avatar:
                 embed.set_thumbnail(url=member.avatar.url)
             await self.log("member_leave", embed, member.guild.id)
+    
 
-                
+    @commands.Cog.listener()
+    async def on_member_ban(self, guild, user):
+
+        await asyncio.sleep(1) #Wait for audit log to be present
+        moderator = "Unknown"
+        reason = "Error retrieving data from audit logs! Ensure the bot has permissions to view them!"
+        try:
+            async for entry in guild.audit_logs():
+                if entry.action == discord.AuditLogAction.ban and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
+                    if entry.target == user:
+                        moderator = entry.user
+                        reason = entry.reason; break
+        except discord.Forbidden:
+            pass
+        embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
+        await self.log("ban", embed, guild.id)
+
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
