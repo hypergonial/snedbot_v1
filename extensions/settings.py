@@ -701,6 +701,9 @@ class Settings(commands.Cog):
             log_channels = await logging.get_all_log_channels(ctx.guild.id)
             embed = discord.Embed(title="Logging Settings", description="Below you can see a list of logging events and channels associated with them. To change where a certain event's logs should be sent, click on the corresponding button.", color=self.bot.embedBlue)
 
+            if not ctx.channel.permissions_for(ctx.guild.me).view_audit_log:
+                embed.add_field(name="⚠️ Warning!", value=f"The bot currently has no permissions to view the audit logs! This will severely limit logging capabilities. Please consider enabling `View Audit Log` for the bot in your server's settings!", inline=False)
+
             for i, key in enumerate(log_channels.keys()):
                 channel = ctx.guild.get_channel(log_channels[key])
                 embed.add_field(name=f"{log_event_strings[key]}", value=channel.mention if channel else "*Not set*", inline=True)
