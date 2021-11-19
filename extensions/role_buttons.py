@@ -154,7 +154,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                 await ctx.channel.send(embed=embed)
 
 
-    @rolebutton.command(name="add", aliases=["new", "setup", "create"], help="Initializes setup to add a new role-button.", description="Initializes a setup to help you add a new role-button. You can also access this setup via the `setup` command. Takes no arguments.", usage="reactionrole add")
+    @rolebutton.command(name="add", aliases=["new", "setup", "create"], help="Initializes setup to add a new role-button.", description="Initializes a setup to help you add a new role-button. Takes no arguments.", usage="reactionrole add")
     @commands.guild_only()
     @commands.max_concurrency(1, per=commands.BucketType.guild,wait=False)
     @commands.bot_has_permissions(manage_roles=True)
