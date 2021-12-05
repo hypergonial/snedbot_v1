@@ -1120,7 +1120,7 @@ class Moderation(commands.Cog):
             Warns: `{db_user.warns}`
             Muted: `{db_user.is_muted}`
             Flags: `{db_user.flags}`
-            Notes: `{db_user.notes}`
+            Journal: `{f"{len(db_user.notes)} entries" if db_user.notes else "No entries"}`
             Roles: {roleformatted}""", color=member.colour)
             if member.avatar:
                 embed.set_thumbnail(url=member.avatar.url)
