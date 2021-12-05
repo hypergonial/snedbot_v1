@@ -182,6 +182,9 @@ class Moderation(commands.Cog):
             await ctx.send(embed=embed)
         except AttributeError:
             pass
+        if reason and len(reason) > 240:
+            reason = reason[:240]+"..."
+        await self.add_note(member.id, ctx.guild.id, f"⚠️ **Warned by {moderator}:** {reason if reason else 'No reason specified'}")
 
     async def mute(self, ctx, member:discord.Member, moderator:discord.Member, duration:str=None, reason:str=None):
         '''
@@ -189,6 +192,8 @@ class Moderation(commands.Cog):
         If duration is provided, it is a tempmute, otherwise permanent. Updates database. Returns converted duration, 
         if any.
         '''
+        if reason and len(reason) > 200:
+            reason = reason[:200]+"..."
         if can_mute(ctx):
             db_user = await self.bot.global_config.get_user(member.id, ctx.guild.id)
             if db_user.is_muted:
@@ -216,6 +221,7 @@ class Moderation(commands.Cog):
                     try:
                         if not duration: duration = "Infinite"
                         else: duration = discord.utils.format_dt(dur[0])
+                        await self.add_note(member.id, ctx.guild.id, f"🔇 **Muted by {moderator}:** __Until:__ {duration} __Reason:__ {reason if reason else 'No reason specified'}")
                         muteembed=discord.Embed(title="🔇 User muted", description=F"**User:** `{member} ({member.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Until:** {duration}\n**Reason:** ```{reason}```", color=self.bot.errorColor)
                         await self.bot.get_cog("Logging").log("mute", muteembed, ctx.guild.id)
                     except:
@@ -229,6 +235,8 @@ class Moderation(commands.Cog):
         '''
         Handles unmuting a user, if logging is set up, it will log it. Updates database.
         '''
+        if reason and len(reason) > 240:
+            reason = reason[:240]+"..."
         db_user = await self.bot.global_config.get_user(member.id, ctx.guild.id)
         if not db_user.is_muted:
             raise NotMutedException('This member is not muted.')
@@ -245,6 +253,7 @@ class Moderation(commands.Cog):
             else:
                 db_user.is_muted = False
                 await self.bot.global_config.update_user(db_user)
+                await self.add_note(member.id, ctx.guild.id, f"🔉 **Unmuted by {moderator}:** {reason if reason else 'No reason specified'}")
                 try:
                     muteembed=discord.Embed(title="🔉 User unmuted", description=F"**User:** `{member} ({member.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Reason:** ```{reason}```", color=self.bot.embedGreen)
                     await self.bot.get_cog("Logging").log("mute", muteembed, ctx.guild.id)
@@ -262,7 +271,7 @@ class Moderation(commands.Cog):
             try:
                 dur = await self.bot.get_cog("Timers").converttime(duration)
                 dur = dur[0]
-                reason = f"{reason}\nBanned until: {dur} (UTC)"
+                reason = f"Banned until: {dur} (UTC)  |  {reason}"
 
             except ValueError:
                 embed=discord.Embed(title="❌ " + self.bot.errorDataTitle, description=self._("Your entered timeformat is invalid. Type `{prefix}help tempban` for more information.").format(prefix=ctx.prefix), color=self.bot.errorColor)
@@ -298,6 +307,10 @@ class Moderation(commands.Cog):
             embed = discord.Embed(title="❌ " + self._("Ban failed"), description=self._("Ban failed, please try again later."),color=self.bot.errorColor)
             await ctx.send(embed=embed)
             return
+        else:
+            if reason and len(reason) > 240:
+                reason = reason[:240]+"..."
+            await self.add_note(user.id, ctx.guild.id, f"🔨 **Banned by {moderator}:** {raw_reason}")
 
     async def kick(self, ctx, member:discord.Member, moderator:discord.Member, reason:str=None):
         '''
@@ -313,32 +326,43 @@ class Moderation(commands.Cog):
 
 
         try:
-            await ctx.guild.ban(member, reason=reason, delete_message_days=1)
+            await ctx.guild.kick(member, reason=reason)
             if raw_reason:
-                embed = discord.Embed(title="🔨 " + self._("User kicked"), description=self._("**{offender}** has been kicked.\n**Reason:** ```{raw_reason}```").format(offender=member, raw_reason=raw_reason),color=self.bot.errorColor)
+                embed = discord.Embed(title="🚪👈 " + self._("User kicked"), description=self._("**{offender}** has been kicked.\n**Reason:** ```{raw_reason}```").format(offender=member, raw_reason=raw_reason),color=self.bot.errorColor)
                 await ctx.send(embed=embed)
             else:
-                embed = discord.Embed(title="🔨 " + self._("User kicked"), description=self._("**{offender}** has been kicked.").format(offender=member),color=self.bot.errorColor)
+                embed = discord.Embed(title="🚪👈 " + self._("User kicked"), description=self._("**{offender}** has been kicked.").format(offender=member),color=self.bot.errorColor)
                 await ctx.send(embed=embed)
+                
 
         except discord.HTTPException:
-            embed = discord.Embed(title="❌ " + self._("Kick failed"), description=self._("Ban failed, please try again later."),color=self.bot.errorColor)
+            embed = discord.Embed(title="❌ " + self._("Kick failed"), description=self._("Kick failed, please try again later."),color=self.bot.errorColor)
             await ctx.send(embed=embed)
             return
+        else:
+            if reason and len(reason) > 240:
+                reason = reason[:240]+"..."
+            await self.add_note(member.id, ctx.guild.id, f"🚪👈 **Kicked by {moderator}:** {raw_reason}")
 
-    async def get_notes(self, member:discord.Member):
-        db_user = await self.bot.global_config.get_user(member.id, member.guild.id)
+    async def get_notes(self, user_id:int, guild_id:int):
+        '''Returns a list of the user's notes, oldest go first.'''
+        db_user = await self.bot.global_config.get_user(user_id, guild_id)
         return db_user.notes
     
-    async def add_note(self, member:discord.Member, new_note:str):
-        db_user = await self.bot.global_config.get_user(member.id, member.guild.id)
+    async def add_note(self, user_id:int, guild_id:int, new_note:str):
+        '''Add a new moderation note for the specified user. Gets automatically Discord timestamped.'''
+        if len(new_note) > 256:
+            raise ValueError("Note cannot exceed 256 characters!")
+
+        db_user = await self.bot.global_config.get_user(user_id, guild_id)
         notes = db_user.notes if db_user.notes else []
         notes.append(f"{discord.utils.format_dt(discord.utils.utcnow(), style='d')}: {new_note}")
         db_user.notes = notes
         await self.bot.global_config.update_user(db_user)
     
-    async def del_note(self, member:discord.Member, note_id:int):
-        db_user = await self.bot.global_config.get_user(member.id, member.guild.id)
+    async def del_note(self, user_id:int, guild_id:int, note_id:int):
+        '''Remove a moderation note by ID from the specified user.'''
+        db_user = await self.bot.global_config.get_user(user_id, guild_id)
         if note_id < len(db_user.notes):
             db_user.notes.pop(note_id)
         await self.bot.global_config.update_user(db_user)
@@ -355,13 +379,14 @@ class Moderation(commands.Cog):
                 offset = menu.current_page * self.per_page
                 embed = discord.Embed(title='📒 ' + "Journal entries for this user:", description="\n".join(f'{v}' for i, v in enumerate(entries, start=offset)), color=menu.ctx.bot.embedBlue)
                 embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
-                
+
                 return embed
-        notes = await self.get_notes(member)
+        notes = await self.get_notes(member.id, ctx.guild.id)
         notes_new = []
         if notes:
             for i, note in enumerate(notes):
                 notes_new.append(f"`#{i}` {note}")
+            notes_new.reverse() #Show newest first
 
             pages = ViewMenuPages(source=NotesSource(notes_new), clear_reactions_after=True)
             await pages.start(ctx)
@@ -373,7 +398,12 @@ class Moderation(commands.Cog):
     @commands.check(has_mod_perms)
     @commands.guild_only()
     async def notes_add_cmd(self, ctx, member:discord.Member, *, note:str):
-        await self.add_note(member, f"💬 **Note:** {note}")
+        try:
+            await self.add_note(member.id, ctx.guild.id, f"💬 **Note by {ctx.author}:** {note}")
+        except ValueError:
+            embed = discord.Embed(title="❌ " + self._("Journal entry too long"), description=self._("Journal entry cannot exceed **256** characters. Please try again!"),color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+
         embed=discord.Embed(title="✅ " + self._("Journal entry added!"), description=f"Added a new journal entry to user **{member}**. You can view this user's journal via the command `{ctx.prefix}journal {member}`.", color=self.bot.embedGreen)
         await ctx.send(embed=embed)
 
@@ -599,6 +629,10 @@ class Moderation(commands.Cog):
             embed = discord.Embed(title="❌ " + self._("Unban failed"), description=self._("Unban failed, please try again later."),color=self.bot.errorColor)
             await ctx.send(embed=embed)
             return
+        else:
+            if reason and len(reason) > 240:
+                reason = reason[:240]+"..."
+            await self.add_note(offender.id, ctx.guild.id, f"🔨 **Unbanned by {ctx.author}:** {raw_reason}")
     
 
     @commands.command(name="tempban", help="Temporarily bans a user.", description="Temporarily bans a user for the duration specified. Deletes the last 7 days worth of messages from the user.\n\n**Time formatting:**\n`s` or `second(s)`\n`m` or `minute(s)`\n`h` or `hour(s)`\n`d` or `day(s)`\n`w` or `week(s)`\n`M` or `month(s)`\n`Y` or `year(s)`\n\n**Example:** `tempban @User -d 5minutes -r 'Being naughty'` or `tempban @User 5d`\n**Note:** If your arguments contain spaces, you must wrap them in quotation marks.", usage="tempban <user> -d <duration> -r [reason] OR tempban <user> <duration>")
@@ -819,7 +853,7 @@ class Moderation(commands.Cog):
                 reason = args.reason
             reason = f"{ctx.author} ({ctx.author.id}): {reason}"
 
-            embed=discord.Embed(title="⚠️ Confirm Smartban", description=f"You are about to ban **{len(to_ban)}** users. Are you sure you want to do this? Please review the attached list above for a full list of matched users.", color=self.bot.warnColor)
+            embed=discord.Embed(title="⚠️ Confirm Smartban", description=f"You are about to ban **{len(to_ban)}** users. Are you sure you want to do this? Please review the attached list above for a full list of matched users. The user journals will not be updated.", color=self.bot.warnColor)
             confirm = await ctx.confirm(embed=embed, file=file, confirm_msg="Starting smartban...", cancel_msg="Aborting...")
             if confirm:
                 await self.bot.get_cog("Logging").freeze_logging(ctx.guild.id)
@@ -879,30 +913,16 @@ class Moderation(commands.Cog):
             return await ctx.send(embed=embed)
 
     
-    @commands.command(help="Kicks a user.", description="Kicks a user from the server with an optional reason.", usage="kick <user> [reason]")
+    @commands.command(name="kick", help="Kicks a user.", description="Kicks a user from the server with an optional reason.", usage="kick <user> [reason]")
     @commands.check(has_mod_perms)
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(kick_members=True)
     @commands.guild_only()
     @mod_punish
-    async def kick(self, ctx, member:discord.Member, *, reason:str=None):
-        await ctx.channel.trigger_typing()
-        if reason != None:
-            raw_reason = reason #Shown to the public
-            reason = f"{ctx.author} ({ctx.author.id}): \n{reason}"
-        else:
-            raw_reason = reason
-            reason = f"{ctx.author} ({ctx.author.id}): \nNo reason provided"
-        
+    async def kick_cmd(self, ctx, member:discord.Member, *, reason:str=None):
+        await ctx.channel.trigger_typing()   
         try:
-            await ctx.guild.kick(member, reason=reason)
-            if raw_reason:
-                embed = discord.Embed(title="✅ " + self._("User kicked"), description=self._("**{offender}** has been kicked.\n**Reason:** ```{raw_reason}```").format(offender=member, raw_reason=raw_reason),color=self.bot.embedGreen)
-                await ctx.send(embed=embed)
-            else:
-                embed = discord.Embed(title="✅ " + self._("User kicked"), description=self._("**{offender}** has been kicked.").format(offender=member),color=self.bot.embedGreen)
-                await ctx.send(embed=embed)
-
+            await self.kick(ctx, member, ctx.author, reason)
         except discord.HTTPException:
             embed = discord.Embed(title="❌ " + self._("Kick failed"), description=self._("Kick failed, please try again later."),color=self.bot.errorColor)
             return await ctx.send(embed=embed)

@@ -190,11 +190,11 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
 
             if bucket.update_rate_limit():
                 #If user continues ignoring warnings
-                await self.automod_punish(message, offender, offense="escalate", reason="previous offenses", original_offense=offense)
+                await self.automod_punish(message, offender, offense="escalate", reason=f"previous offenses ({offense})", original_offense=offense)
 
             elif bucket_prewarn.update_rate_limit():
                 #Issue warning after notice
-                await self.mod_cog.warn(ctx, offender, ctx.guild.me, reason=f"Warned by auto-moderator for previous offenses.")
+                await self.mod_cog.warn(ctx, offender, ctx.guild.me, reason=f"Warned by auto-moderator for previous offenses. ({offense})")
             else:
                 #Issue a notice, not a formal warning first
 
