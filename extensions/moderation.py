@@ -332,7 +332,9 @@ class Moderation(commands.Cog):
     
     async def add_note(self, member:discord.Member, new_note:str):
         db_user = await self.bot.global_config.get_user(member.id, member.guild.id)
-        db_user.notes.append(f"{discord.utils.format_dt(discord.utils.utcnow(), style='d')}: {new_note}")
+        notes = db_user.notes if db_user.notes else []
+        notes.append(f"{discord.utils.format_dt(discord.utils.utcnow(), style='d')}: {new_note}")
+        db_user.notes = notes
         await self.bot.global_config.update_user(db_user)
     
     async def del_note(self, member:discord.Member, note_id:int):
@@ -341,7 +343,7 @@ class Moderation(commands.Cog):
             db_user.notes.pop(note_id)
         await self.bot.global_config.update_user(db_user)
 
-    @commands.group(name="journal", aliases=["note", "notes"], help="Manage the moderation notes of a user.", description="Manage the moderation notes of a user. Useful for logging behaviour related to a user.", usage="note <user>", invoke_without_command=True, case_insensitive=True)
+    @commands.group(name="journal", aliases=["note", "notes"], help="Manage the moderation journal of a user.", description="Manage the moderation journal of a user. Useful for logging behaviour related to a user.", usage="journal <user>", invoke_without_command=True, case_insensitive=True)
     @commands.check(has_mod_perms)
     @commands.guild_only()
     async def notes_cmd(self, ctx, member:discord.Member):
@@ -351,22 +353,23 @@ class Moderation(commands.Cog):
             
             async def format_page(self, menu, entries):
                 offset = menu.current_page * self.per_page
-                embed = discord.Embed(title='💬 ' + "Journal entries for this user:", description="\n".join(f'**{i+1}.** {v}' for i, v in enumerate(entries, start=offset)), color=menu.ctx.bot.embedBlue)
-
+                embed = discord.Embed(title='📒 ' + "Journal entries for this user:", description="\n".join(f'{v}' for i, v in enumerate(entries, start=offset)), color=menu.ctx.bot.embedBlue)
+                embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
+                
                 return embed
         notes = await self.get_notes(member)
         notes_new = []
         if notes:
             for i, note in enumerate(notes):
-                notes.new.append(f"`#{i}` {note}")
+                notes_new.append(f"`#{i}` {note}")
 
             pages = ViewMenuPages(source=NotesSource(notes_new), clear_reactions_after=True)
             await pages.start(ctx)
         else:
-            embed = discord.Embed(title='💬 ' + "Journal entries for this user:", description=f"There are no journal entries for this user yet. Any moderation-actions will leave a note here, or you can set one manually with `{ctx.prefix}journal add @{member.name}` ", color=ctx.bot.embedBlue)
+            embed = discord.Embed(title='📒 ' + "Journal entries for this user:", description=f"There are no journal entries for this user yet. Any moderation-actions will leave a note here, or you can set one manually with `{ctx.prefix}journal add @{member.name}` ", color=ctx.bot.embedBlue)
             await ctx.send(embed=embed)
     
-    @notes_cmd.command(name="add", help="Add a new journal entry for this user.", description="Adds a new manual journal entry for this user.", usage="journal add <user> <note>")
+    @notes_cmd.command(name="add", help="Add a new journal entry for the user.", description="Adds a new manual journal entry for the specified user.", usage="journal add <user> <note>")
     @commands.check(has_mod_perms)
     @commands.guild_only()
     async def notes_add_cmd(self, ctx, member:discord.Member, *, note:str):
