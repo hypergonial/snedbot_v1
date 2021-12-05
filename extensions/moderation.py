@@ -437,9 +437,9 @@ class Moderation(commands.Cog):
         else :
             embed=discord.Embed(title="✅ " + self._("Warnings cleared"), description=self._("**{offender}**'s warnings have been cleared.\n**Reason:** ```{reason}```").format(offender=offender, reason=reason), color=self.bot.embedGreen)
             warnembed=discord.Embed(title="⚠️ Warnings cleared.", description=f"{offender.mention}'s warnings have been cleared by {ctx.author.mention}.\n**Reason:** ```{reason}```\n[Jump!]({ctx.message.jump_url})", color=self.bot.embedGreen)
-        if len(reason) > 240:
+        if reason and len(reason) > 240:
             reason = reason[:240]
-        await self.add_note(offender.id, ctx.guild.id, f"⚠️ **Warnings cleared by {ctx.author}:** {reason}")
+        await self.add_note(offender.id, ctx.guild.id, f"⚠️ **Warnings cleared by {ctx.author}:** {reason if reason else 'No reason provided'}")
         try:
             await self.bot.get_cog("Logging").log("warn", warnembed, ctx.guild.id)
             await ctx.send(embed=embed)
