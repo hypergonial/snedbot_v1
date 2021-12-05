@@ -56,7 +56,7 @@ try:
                     flags text[],
                     warns integer NOT NULL DEFAULT 0,
                     is_muted bool NOT NULL DEFAULT false,
-                    notes text,
+                    notes text[],
                     PRIMARY KEY (user_id, guild_id),
                     FOREIGN KEY (guild_id)
                         REFERENCES global_config (guild_id)

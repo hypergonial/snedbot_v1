@@ -3,7 +3,6 @@ import asyncio
 import datetime
 import functools
 import io
-import json
 import logging
 import re
 import shlex
@@ -12,7 +11,8 @@ from typing import TypeVar, Union
 
 import discord
 from discord.errors import HTTPException
-from discord.ext import commands
+from discord.ext import commands, menus
+from discord.ext.menus.views import ViewMenuPages
 
 from extensions.utils import components
 
@@ -325,6 +325,54 @@ class Moderation(commands.Cog):
             embed = discord.Embed(title="❌ " + self._("Kick failed"), description=self._("Ban failed, please try again later."),color=self.bot.errorColor)
             await ctx.send(embed=embed)
             return
+
+    async def get_notes(self, member:discord.Member):
+        db_user = await self.bot.global_config.get_user(member.id, member.guild.id)
+        return db_user.notes
+    
+    async def add_note(self, member:discord.Member, new_note:str):
+        db_user = await self.bot.global_config.get_user(member.id, member.guild.id)
+        db_user.notes.append(f"{discord.utils.format_dt(discord.utils.utcnow(), style='d')}: {new_note}")
+        await self.bot.global_config.update_user(db_user)
+    
+    async def del_note(self, member:discord.Member, note_id:int):
+        db_user = await self.bot.global_config.get_user(member.id, member.guild.id)
+        if note_id < len(db_user.notes):
+            db_user.notes.pop(note_id)
+        await self.bot.global_config.update_user(db_user)
+
+    @commands.group(name="journal", aliases=["note", "notes"], help="Manage the moderation notes of a user.", description="Manage the moderation notes of a user. Useful for logging behaviour related to a user.", usage="note <user>", invoke_without_command=True, case_insensitive=True)
+    @commands.check(has_mod_perms)
+    @commands.guild_only()
+    async def notes_cmd(self, ctx, member:discord.Member):
+        class NotesSource(menus.ListPageSource):
+            def __init__(self, data):
+                super().__init__(data, per_page=10)
+            
+            async def format_page(self, menu, entries):
+                offset = menu.current_page * self.per_page
+                embed = discord.Embed(title='💬 ' + "Journal entries for this user:", description="\n".join(f'**{i+1}.** {v}' for i, v in enumerate(entries, start=offset)), color=menu.ctx.bot.embedBlue)
+
+                return embed
+        notes = await self.get_notes(member)
+        notes_new = []
+        if notes:
+            for i, note in enumerate(notes):
+                notes.new.append(f"`#{i}` {note}")
+
+            pages = ViewMenuPages(source=NotesSource(notes_new), clear_reactions_after=True)
+            await pages.start(ctx)
+        else:
+            embed = discord.Embed(title='💬 ' + "Journal entries for this user:", description=f"There are no journal entries for this user yet. Any moderation-actions will leave a note here, or you can set one manually with `{ctx.prefix}journal add @{member.name}` ", color=ctx.bot.embedBlue)
+            await ctx.send(embed=embed)
+    
+    @notes_cmd.command(name="add", help="Add a new journal entry for this user.", description="Adds a new manual journal entry for this user.", usage="journal add <user> <note>")
+    @commands.check(has_mod_perms)
+    @commands.guild_only()
+    async def notes_add_cmd(self, ctx, member:discord.Member, *, note:str):
+        await self.add_note(member, f"💬 **Note:** {note}")
+        embed=discord.Embed(title="✅ " + self._("Journal entry added!"), description=f"Added a new journal entry to user **{member}**. You can view this user's journal via the command `{ctx.prefix}journal {member}`.", color=self.bot.embedGreen)
+        await ctx.send(embed=embed)
 
     #Warn a user & print it to logs, needs logs to be set up
     @commands.group(name="warn", help="Warns a user. Subcommands allow you to clear warnings.", aliases=["bonk"], description="Warns the user and logs it.", usage="warn <user> [reason]", invoke_without_command=True, case_insensitive=True)

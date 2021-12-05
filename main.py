@@ -455,7 +455,7 @@ class GlobalConfig():
         flags:list=None
         warns:int=0
         is_muted:bool=False
-        notes:str=None
+        notes:list=None
 
     def __init__(self, bot):
         self.bot = bot
