@@ -315,10 +315,13 @@ class Logging(commands.Cog):
         if is_kick:
             embed = discord.Embed(title=f"🚪👈 User was kicked", description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
             await self.log("kick", embed, member.guild.id)
-            journal_reason = reason.split("):", maxsplit='1')[1] #Remove author
+
+            if moderator != "Unknown" and moderator == self.bot.user:
+                moderator = reason.split(" ")[0] #Get actual moderator, not the bot
+                reason = reason.split("):", maxsplit=1)[1] #Remove author
             if reason and len(reason) > 240:
-                journal_reason = reason[:240]+"..."
-            await self.mod_cog.add_note(member.id, member.guild.id, f"🚪👈 **Kicked by {moderator}:** {journal_reason}")
+                reason = reason[:240]+"..."
+            await self.mod_cog.add_note(member.id, member.guild.id, f"🚪👈 **Kicked by {moderator}:** {reason}")
 
         else:
             embed = discord.Embed(title=f"🚪 User left", description=f"**User:** `{member} ({member.id})`\n**User count:** `{member.guild.member_count}`", color=self.bot.errorColor)
@@ -333,10 +336,6 @@ class Logging(commands.Cog):
         await asyncio.sleep(1) #Wait for audit log to be present
         moderator = "Unknown"
         reason = "Error retrieving data from audit logs! Ensure the bot has permissions to view them!"
-        journal_reason = reason.split("):", maxsplit='1')[1] #Remove author
-        if reason and len(reason) > 240:
-            journal_reason = reason[:240]+"..."
-        await self.mod_cog.add_note(user.id, guild.id, f"🔨 **Banned by {moderator}:** {journal_reason}")
         try:
             async for entry in guild.audit_logs():
                 if entry.action == discord.AuditLogAction.ban and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
@@ -345,8 +344,16 @@ class Logging(commands.Cog):
                         reason = entry.reason; break
         except discord.Forbidden:
             pass
+
         embed = discord.Embed(title=f"🔨 User banned", description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```", color=self.bot.errorColor)
         await self.log("ban", embed, guild.id)
+
+        if moderator != "Unknown" and moderator == self.bot.user:
+            moderator = reason.split(" ")[0] #Get actual moderator, not the bot
+            reason = reason.split("):", maxsplit=1)[1] #Remove author
+        if reason and len(reason) > 240:
+            reason = reason[:240]+"..."
+        await self.mod_cog.add_note(user.id, guild.id, f"🔨 **Banned by {moderator}:** {reason}")
 
 
     @commands.Cog.listener()

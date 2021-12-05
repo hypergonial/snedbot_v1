@@ -362,7 +362,7 @@ class Moderation(commands.Cog):
     @commands.group(name="journal", aliases=["note", "notes"], help="Manage the moderation journal of a user.", description="Manage the moderation journal of a user. Useful for logging behaviour related to a user.", usage="journal <user>", invoke_without_command=True, case_insensitive=True)
     @commands.check(has_mod_perms)
     @commands.guild_only()
-    async def notes_cmd(self, ctx, member:discord.Member):
+    async def notes_cmd(self, ctx, user:discord.User):
         class NotesSource(menus.ListPageSource):
             def __init__(self, data):
                 super().__init__(data, per_page=10)
@@ -373,7 +373,7 @@ class Moderation(commands.Cog):
                 embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
 
                 return embed
-        notes = await self.get_notes(member.id, ctx.guild.id)
+        notes = await self.get_notes(user.id, ctx.guild.id)
         notes_new = []
         if notes:
             for i, note in enumerate(notes):
@@ -383,7 +383,7 @@ class Moderation(commands.Cog):
             pages = ViewMenuPages(source=NotesSource(notes_new), clear_reactions_after=True)
             await pages.start(ctx)
         else:
-            embed = discord.Embed(title='📒 ' + "Journal entries for this user:", description=f"There are no journal entries for this user yet. Any moderation-actions will leave a note here, or you can set one manually with `{ctx.prefix}journal add @{member.name}` ", color=ctx.bot.embedBlue)
+            embed = discord.Embed(title='📒 ' + "Journal entries for this user:", description=f"There are no journal entries for this user yet. Any moderation-actions will leave a note here, or you can set one manually with `{ctx.prefix}journal add @{user.name}` ", color=ctx.bot.embedBlue)
             await ctx.send(embed=embed)
     
     @notes_cmd.command(name="add", help="Add a new journal entry for the user.", description="Adds a new manual journal entry for the specified user.", usage="journal add <user> <note>")
