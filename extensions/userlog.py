@@ -60,20 +60,21 @@ class Logging(commands.Cog):
     async def log(self, event:str, logcontent:Union[str, discord.Embed], guild_id:int, file:discord.File=None, bypass:bool=False):
         '''Log an event to the designated logging channel.'''
 
-        if guild_id not in self.frozen_guilds or bypass:
-            logging_channel_id = await self.get_log_channel(event, guild_id)
-            if logging_channel_id:
-                guild = self.bot.get_guild(guild_id)
-                logging_channel = guild.get_channel(logging_channel_id)
-                if logging_channel is None: return
-                try:
-                    if isinstance(logcontent, discord.Embed):
-                        logcontent.timestamp = discord.utils.utcnow()
-                        await logging_channel.send(embed=logcontent, file=file)
-                    elif isinstance(logcontent, str):
-                        await logging_channel.send(content=logcontent, file=file)
-                except (discord.Forbidden, discord.HTTPException):
-                    return
+        if self.bot.is_ready() and self.bot.caching.is_ready:
+            if guild_id not in self.frozen_guilds or bypass:
+                logging_channel_id = await self.get_log_channel(event, guild_id)
+                if logging_channel_id:
+                    guild = self.bot.get_guild(guild_id)
+                    logging_channel = guild.get_channel(logging_channel_id)
+                    if logging_channel is None: return
+                    try:
+                        if isinstance(logcontent, discord.Embed):
+                            logcontent.timestamp = discord.utils.utcnow()
+                            await logging_channel.send(embed=logcontent, file=file)
+                        elif isinstance(logcontent, str):
+                            await logging_channel.send(content=logcontent, file=file)
+                    except (discord.Forbidden, discord.HTTPException):
+                        return
     
     async def freeze_logging(self, guild_id):
         '''Call to suspend logging temporarily in the given guild. Useful if a log-spammy command is being executed.'''
