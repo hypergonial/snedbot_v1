@@ -307,10 +307,6 @@ class Moderation(commands.Cog):
             embed = discord.Embed(title="❌ " + self._("Ban failed"), description=self._("Ban failed, please try again later."),color=self.bot.errorColor)
             await ctx.send(embed=embed)
             return
-        else:
-            if reason and len(reason) > 240:
-                reason = reason[:240]+"..."
-            await self.add_note(user.id, ctx.guild.id, f"🔨 **Banned by {moderator}:** {raw_reason}")
 
     async def kick(self, ctx, member:discord.Member, moderator:discord.Member, reason:str=None):
         '''
@@ -339,10 +335,6 @@ class Moderation(commands.Cog):
             embed = discord.Embed(title="❌ " + self._("Kick failed"), description=self._("Kick failed, please try again later."),color=self.bot.errorColor)
             await ctx.send(embed=embed)
             return
-        else:
-            if reason and len(reason) > 240:
-                reason = reason[:240]+"..."
-            await self.add_note(member.id, ctx.guild.id, f"🚪👈 **Kicked by {moderator}:** {raw_reason}")
 
     async def get_notes(self, user_id:int, guild_id:int):
         '''Returns a list of the user's notes, oldest go first.'''
