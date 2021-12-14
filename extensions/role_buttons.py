@@ -33,10 +33,10 @@ class ButtonRoleButton(discord.ui.Button):
         if interaction.guild_id:
             try:
                 if self.role in interaction.user.roles:
-                    await interaction.user.remove_roles(self.role, reason=f"Removed by role-button (ID: {self.entry_id}")
+                    await interaction.user.remove_roles(self.role, reason=f"Removed by role-button (ID: {self.entry_id})")
                     await interaction.response.send_message(f'Removed role: {self.role.mention}', ephemeral=True)
                 else:
-                    await interaction.user.add_roles(self.role, reason=f"Granted by role-button (ID: {self.entry_id}")
+                    await interaction.user.add_roles(self.role, reason=f"Granted by role-button (ID: {self.entry_id})")
                     await interaction.response.send_message(f'Added role: {self.role.mention}', ephemeral=True)
             except discord.Forbidden:
                 await interaction.response.send_message(f'Failed adding role due to an issue with permissions and/or role hierarchy! Please contact an administrator!', ephemeral=True)
