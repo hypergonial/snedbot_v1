@@ -277,12 +277,13 @@ class SnedBot(commands.Bot):
             logging.info(f"{ctx.author} tried calling a command but did not meet checks.")
             if isinstance(error, commands.BotMissingPermissions):
                 embed=discord.Embed(title="❌ " + _("Bot missing permissions"), description=_("The bot requires additional permissions to execute this command.\n**Error:**```{error}```").format(error=error), color=self.errorColor)
+                embed = self.add_embed_footer(ctx, embed)
                 return await ctx.send(embed=embed)
             return
 
         elif isinstance(error, commands.CommandInvokeError) and isinstance(error.original, asyncio.exceptions.TimeoutError):
             embed=discord.Embed(title=self.errorTimeoutTitle, description=self.errorTimeoutDesc, color=self.errorColor)
-            embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+            embed = self.add_embed_footer(ctx, embed)
             return await ctx.send(embed=embed)
 
         elif isinstance(error, commands.CommandNotFound):
@@ -304,11 +305,11 @@ class SnedBot(commands.Bot):
 
             if len(matches) > 0:
                 embed=discord.Embed(title=self.unknownCMDstr, description=_("Did you mean `{prefix}{match}`?").format(prefix=ctx.prefix, match=matches[0]), color=self.unknownColor)
-                embed.set_footer(text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+                embed = self.add_embed_footer(ctx, embed)
                 return await ctx.send(embed=embed)
             elif len(aliasmatches) > 0:
                 embed=discord.Embed(title=self.unknownCMDstr, description=_("Did you mean `{prefix}{match}`?").format(prefix=ctx.prefix, match=aliasmatches[0]), color=self.unknownColor)
-                embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+                embed = self.add_embed_footer(ctx, embed)
                 return await ctx.send(embed=embed)
 
         elif isinstance(error, commands.CommandOnCooldown):
@@ -318,34 +319,39 @@ class SnedBot(commands.Bot):
 
         elif isinstance(error, commands.MissingRequiredArgument):
             embed=discord.Embed(title="❌" + _("Missing argument."), description=_("One or more arguments are missing. \n__Hint:__ You can use `{prefix}help {command_name}` to view command usage.").format(prefix=ctx.prefix, command_name=ctx.command.qualified_name), color=self.errorColor)
-            embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+            embed = self.add_embed_footer(ctx, embed)
             logging.info(f"{ctx.author} tried calling a command ({ctx.message.content}) but did not supply sufficient arguments.")
             return await ctx.send(embed=embed)
 
 
         elif isinstance(error, commands.MaxConcurrencyReached):
             embed = discord.Embed(title=self.errorMaxConcurrencyReachedTitle, description=self.errorMaxConcurrencyReachedDesc, color=self.errorColor)
-            embed.set_footer(text=self.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator), icon_url=ctx.author.avatar.url)
+            embed = self.add_embed_footer(ctx, embed)
             return await ctx.channel.send(embed=embed)
 
         elif isinstance(error, commands.MemberNotFound):
             embed=discord.Embed(title="❌ " + _("Cannot find user by that name"), description=_("Please check if you typed everything correctly, then try again.\n**Error:**```{error}```").format(error=str(error)), color=self.errorColor)
+            embed = self.add_embed_footer(ctx, embed)
             return await ctx.send(embed=embed)
 
         elif isinstance(error, commands.errors.BadArgument):
             embed=discord.Embed(title="❌ " + _("Bad argument"), description=_("Invalid data entered! Check `{prefix}help {command_name}` for more information.\n**Error:**```{error}```").format(prefix=ctx.prefix, command_name=ctx.command.qualified_name, error=error), color=self.errorColor)
+            embed = self.add_embed_footer(ctx, embed)
             return await ctx.send(embed=embed)
 
         elif isinstance(error, commands.TooManyArguments):
             embed=discord.Embed(title="❌ " + _("Too many arguments"), description=_("You have provided more arguments than what `{prefix}{command_name}` can take. Check `{prefix}help {command_name}` for more information.").format(prefix=ctx.prefix, command_name=ctx.command.qualified_name), color=self.errorColor)
+            embed = self.add_embed_footer(ctx, embed)
             return await ctx.send(embed=embed)
 
         elif isinstance(error, discord.Forbidden):
             embed=discord.Embed(title="❌ " + _("Permissions error"), description=_("This action has failed due to a lack of permissions.\n**Error:** {error}").format(error=error), color=self.errorColor)
+            embed = self.add_embed_footer(ctx, embed)
             return await ctx.send(embed=embed)
         
         elif isinstance(error, discord.DiscordServerError):
             embed=discord.Embed(title="❌ " + _("Discord Server Error"), description=_("This action has failed due to an issue with Discord's servers. Please try again in a few moments.").format(error=error), color=self.errorColor)
+            embed = self.add_embed_footer(ctx, embed)
             return await ctx.send(embed=embed)
 
         else :
@@ -498,7 +504,7 @@ class GlobalConfig():
         except asyncpg.exceptions.ForeignKeyViolationError:
             logging.warn('Trying to update a guild db_user whose guild no longer exists. This could be due to pending timers.')
 
-    async def get_user(self, user_id, guild_id): 
+    async def get_user(self, user_id, guild_id):
         '''
         Gets an instance of GlobalConfig.User that contains basic information about the user in relation to a guild
         Returns None if not found
