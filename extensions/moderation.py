@@ -938,10 +938,10 @@ class Moderation(commands.Cog):
         if member:
             def check(message):
                 return message.author.id == member.id   
-            purged = await ctx.channel.purge(limit=limit, check=check)
+            purged = await ctx.channel.purge(limit=limit+1, check=check)
 
         else:
-            purged = await ctx.channel.purge(limit=limit)
+            purged = await ctx.channel.purge(limit=limit+1)
         
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
@@ -962,7 +962,7 @@ class Moderation(commands.Cog):
             return text in message.content
         await ctx.channel.trigger_typing()
 
-        purged = await ctx.channel.purge(limit=limit, check=check)
+        purged = await ctx.channel.purge(limit=limit+1, check=check)
 
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
@@ -983,7 +983,7 @@ class Moderation(commands.Cog):
             return message.content is None
         await ctx.channel.trigger_typing()
 
-        purged = await ctx.channel.purge(limit=limit, check=check)
+        purged = await ctx.channel.purge(limit=limit+1, check=check)
 
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
@@ -1004,7 +1004,7 @@ class Moderation(commands.Cog):
             return message.content.startswith(text)
         await ctx.channel.trigger_typing()
 
-        purged = await ctx.channel.purge(limit=limit, check=check)
+        purged = await ctx.channel.purge(limit=limit+1, check=check)
 
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
@@ -1025,7 +1025,7 @@ class Moderation(commands.Cog):
             return message.content.endswith(text)
         await ctx.channel.trigger_typing()
 
-        purged = await ctx.channel.purge(limit=limit, check=check)
+        purged = await ctx.channel.purge(limit=limit+1, check=check)
 
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
@@ -1048,7 +1048,7 @@ class Moderation(commands.Cog):
             return len(link_matches) > 0
         await ctx.channel.trigger_typing()
 
-        purged = await ctx.channel.purge(limit=limit, check=check)
+        purged = await ctx.channel.purge(limit=limit+1, check=check)
 
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
@@ -1071,7 +1071,7 @@ class Moderation(commands.Cog):
             return len(invite_matches) > 0
         await ctx.channel.trigger_typing()
 
-        purged = await ctx.channel.purge(limit=limit, check=check)
+        purged = await ctx.channel.purge(limit=limit+1, check=check)
 
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
@@ -1092,7 +1092,7 @@ class Moderation(commands.Cog):
             return message.attachments and len(message.attachments) > 0
         await ctx.channel.trigger_typing()
 
-        purged = await ctx.channel.purge(limit=limit, check=check)
+        purged = await ctx.channel.purge(limit=limit+1, check=check)
 
         embed = discord.Embed(title="🗑️ " + self._("Messages purged"), description=self._("**{count}** messages have been deleted.").format(count=len(purged)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
@@ -1112,7 +1112,7 @@ class Moderation(commands.Cog):
         def check(message):
             return message.author.id == self.bot.user.id
 
-        cleared = await ctx.channel.purge(limit=limit, check=check)
+        cleared = await ctx.channel.purge(limit=limit+1, check=check)
         embed = discord.Embed(title="🗑️ " + self._("Messages cleared"), description=self._("**{count}** bot messages have been removed.").format(count=len(cleared)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
 
