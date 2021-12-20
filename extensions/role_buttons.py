@@ -2,8 +2,7 @@ import asyncio
 import logging
 
 import discord
-from discord.ext import commands, menus
-from discord.ext.menus.views import ViewMenuPages
+from discord.ext import commands, pages
 from extensions.utils import components
 
 
@@ -100,26 +99,17 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     @commands.guild_only()
     async def rolebutton(self, ctx):
 
-        class RbSource(menus.ListPageSource):
-            '''
-            Role-Button list page source
-            '''
-            def __init__(self, entries:list):
-                super().__init__(entries, per_page=1)
-
-            async def format_page(self, menu, entries:list):
-                embed = discord.Embed(title='Role-Buttons on this server', description=entries[menu.current_page],color=menu.ctx.bot.embedBlue)
-                embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
-                return embed
-
         records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id)
         if records:
             paginator = commands.Paginator(prefix='', suffix='', max_size=500)
             for record in records:
                 paginator.add_line(f"**#{record['entry_id']}** - {ctx.guild.get_channel(record['channel_id']).mention} - {ctx.guild.get_role(record['role_id']).mention}")
-            
-            pages = ViewMenuPages(source=RbSource([paginator.pages]), clear_reactions_after=True)
-            await pages.start(ctx)
+            embed_list = []
+            for page in paginator.pages:
+                embed = discord.Embed(title="Rolebuttons on this server:", description=page, color=self.bot.embedBlue)
+                embed_list.append(embed)
+            menu_paginator = components.SnedMenuPaginator(pages=embed_list, show_disabled=True, show_indicator=True)
+            await menu_paginator.send(ctx, ephemeral=False)
         else:
             embed=discord.Embed(title="❌ Error: No role-buttons", description="There are no role-buttons for this server.", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)

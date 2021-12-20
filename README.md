@@ -1,6 +1,6 @@
 # Sned
 
-## A Discord bot made with [discord.py](https://github.com/Rapptz/discord.py).
+## A Discord bot made with [PyCord](https://github.com/Pycord-Development/pycord).
 
 ### Features:
  - Easy to use commands

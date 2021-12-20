@@ -4,8 +4,8 @@ from difflib import get_close_matches
 from itertools import chain
 
 import discord
-from discord.ext import commands, menus
-from discord.ext.menus.views import ViewMenuPages
+from discord.ext import commands, pages
+from extensions.utils import components
 
 
 async def has_owner(ctx):
@@ -406,30 +406,19 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def list_tags(self, ctx):
 
-        class TagSource(menus.ListPageSource):
-            '''
-            Takes a list of tag names to convert into a menu.
-            '''
-            def __init__(self, data):
-                super().__init__(data, per_page=10)
-            
-            async def format_page(self,menu,entries):
-                self._ = menu.ctx.bot.get_localization('tags', menu.ctx.bot.lang)
-                offset = menu.current_page * self.per_page
-                embed = discord.Embed(title='💬 ' + self._("Available tags for this server:"), description="\n".join(f'**{i+1}.** {v}' for i, v in enumerate(entries, start=offset)), color=menu.ctx.bot.embedBlue)
-
-                if menu.ctx.author.avatar:
-                    embed.set_footer(text=f"Requested by {ctx.author}  |  Page {menu.current_page + 1}/{self.get_max_pages()}", icon_url=menu.ctx.author.avatar.url)
-                else:
-                    embed.set_footer(text=f"Requested by {ctx.author}  |  Page {menu.current_page + 1}/{self.get_max_pages()}")
-
-                return embed
-
-
         tags = await self.tag_handler.get_all(ctx.guild.id)
         if tags:
-            pages = ViewMenuPages(source=TagSource(sorted([tag.tag_name for tag in tags])), clear_reactions_after=True)
-            await pages.start(ctx)
+            tags_fmt = []
+            for i, tag in enumerate(tags):
+                tags_fmt.append(f"**#{i+1}** {tag.tag_name}")
+            tags_fmt = [tags_fmt[i*10:(i+1) * 10] for i in range((len(tags_fmt) + 10 - 1) // 10)]
+            embed_list = []
+            for page_contents in tags_fmt:
+                embed = discord.Embed(title='💬 ' + self._("Available tags for this server:"), description="\n".join(page_contents), color=ctx.bot.embedBlue)
+                embed_list.append(embed)
+            
+            menu_paginator = components.SnedMenuPaginator(pages=embed_list, show_disabled=True, show_indicator=True)
+            await menu_paginator.send(ctx, ephemeral=False)
         else:
             embed = discord.Embed(title="💬 " + self._("Available tags for this server:"), description=self._("There are currently no tags! You can create one via `{prefix}tag create`").format(prefix=ctx.prefix), color=self.bot.embedBlue)
             await ctx.send(embed=embed)

@@ -1,5 +1,6 @@
 import discord
 import asyncio
+from discord.ext import pages
 
 class AuthorOnlyView(discord.ui.View):
     '''A view that only responds to the author of the passed context'''
@@ -97,3 +98,13 @@ class CustomSelect(discord.ui.Select):
             await interaction.response.send_message(self.response_msg, ephemeral=True)
         self.view.value = interaction.data
         self.view.stop()
+
+
+class SnedMenuPaginator(pages.Paginator):
+    '''Custom menu-styling for the bot'''
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.customize_button(button_name="first", button_emoji="⏮️", button_style=discord.ButtonStyle.blurple)
+        self.customize_button(button_name="last", button_emoji="⏭️", button_style=discord.ButtonStyle.blurple)
+        self.customize_button(button_name="next", button_emoji="▶️", button_style=discord.ButtonStyle.blurple)
+        self.customize_button(button_name="prev", button_emoji="◀️", button_style=discord.ButtonStyle.blurple)

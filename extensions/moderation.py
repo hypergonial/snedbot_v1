@@ -11,8 +11,8 @@ from typing import TypeVar, Union
 
 import discord
 from discord.errors import HTTPException
-from discord.ext import commands, menus
-from discord.ext.menus.views import ViewMenuPages
+from discord.ext import commands, pages
+from discord.ext.commands.core import max_concurrency
 
 from extensions.utils import components
 
@@ -363,25 +363,25 @@ class Moderation(commands.Cog):
     @commands.check(has_mod_perms)
     @commands.guild_only()
     async def notes_cmd(self, ctx, user:discord.User):
-        class NotesSource(menus.ListPageSource):
-            def __init__(self, data):
-                super().__init__(data, per_page=10)
-            
-            async def format_page(self, menu, entries):
-                offset = menu.current_page * self.per_page
-                embed = discord.Embed(title='📒 ' + "Journal entries for this user:", description="\n".join(f'{v}' for i, v in enumerate(entries, start=offset)), color=menu.ctx.bot.embedBlue)
-                embed.set_footer(text=f"Page {menu.current_page + 1}/{self.get_max_pages()}")
 
-                return embed
         notes = await self.get_notes(user.id, ctx.guild.id)
         notes_new = []
         if notes:
+
             for i, note in enumerate(notes):
                 notes_new.append(f"`#{i}` {note}")
             notes_new.reverse() #Show newest first
+            paginator = commands.Paginator(prefix="", suffix="", max_size=1500)
+            for note in notes_new:
+                paginator.add_line(note)
+            embed_list = []
+            for page in paginator.pages:
+                embed = discord.Embed(title='📒 ' + "Journal entries for this user:", description=page, color=ctx.bot.embedBlue)
+                embed_list.append(embed)
 
-            pages = ViewMenuPages(source=NotesSource(notes_new), clear_reactions_after=True)
-            await pages.start(ctx)
+            menu_paginator = components.SnedMenuPaginator(pages=embed_list, show_disabled=True, show_indicator=True)
+
+            await menu_paginator.send(ctx, ephemeral=False)
         else:
             embed = discord.Embed(title='📒 ' + "Journal entries for this user:", description=f"There are no journal entries for this user yet. Any moderation-actions will leave a note here, or you can set one manually with `{ctx.prefix}journal add @{user.name}` ", color=ctx.bot.embedBlue)
             await ctx.send(embed=embed)
@@ -1121,7 +1121,6 @@ class Moderation(commands.Cog):
     @commands.check(has_mod_perms)
     @commands.guild_only()
     async def whois(self, ctx, *, user : discord.User) :
-
 
         if user in ctx.guild.members:
             db_user = await self.bot.global_config.get_user(user.id, ctx.guild.id)

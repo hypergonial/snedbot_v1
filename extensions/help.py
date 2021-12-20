@@ -1,42 +1,10 @@
 import logging
 
 import discord
-from discord.ext import commands, menus
-from discord.ext.menus.views import ViewMenuPages
+from discord.ext import commands, pages
+from extensions.utils import components
 
 logger = logging.getLogger(__name__)
-
-class HelpPages(ViewMenuPages):
-    '''
-    Subclassing MenuPages to add an offset for the homepage (so it does not swallow the first page)
-    '''
-    def __init__(self, initial_message, source, **kwargs):
-        self.initial_message = initial_message
-        super().__init__(source, **kwargs)
-    
-    async def send_initial_message(self, _, channel):
-        self.current_page = -1
-        print("Sending view...")
-        return await self.send_with_view(channel, embed=self.initial_message)
-        #return await channel.send(embed=self.initial_message)
-
-
-class HelpSource(menus.ListPageSource):
-    '''
-    Takes a list, and puts it into an embed menu, 1 item per page
-    '''
-    def __init__(self, data):
-        super().__init__(data, per_page=1)
-
-    async def format_page(self, menu, entries):
-        self._ = menu.ctx.bot.get_localization('help', menu.ctx.bot.lang)
-        offset = menu.current_page * self.per_page
-        embed=discord.Embed(title="⚙️ " + self._("__Available commands:__"), description=self._("**Tip:** You can also type **`{prefix}help [command]`** to get more information about a specific command and see any subcommands a command may have.\n\n").format(prefix=menu.ctx.prefix) + ''.join(f'{v}' for i, v in enumerate(entries, start=offset)), color=menu.ctx.bot.embedBlue)
-        if menu.ctx.author.avatar:
-            embed.set_footer(text=f"Requested by {menu.ctx.author}" + f"  |  Page {menu.current_page + 1}/{self.get_max_pages()}", icon_url=menu.ctx.author.avatar.url)
-        else:
-            embed.set_footer(text=f"Requested by {menu.ctx.author}" + f"  |  Page {menu.current_page + 1}/{self.get_max_pages()}")
-        return embed
 
 class SnedHelp(commands.HelpCommand):
     '''
@@ -54,7 +22,27 @@ class SnedHelp(commands.HelpCommand):
     async def send_bot_help(self, mapping):
 
         ctx = self.context   #Obtaining ctx
-        self._ = ctx.bot.get_localization('help', ctx.bot.lang)
+
+        help_home_embed=discord.Embed(title="🏠 " + "__Help Home__", color=ctx.bot.embedBlue, description='''**How to navigate this help dialogue**
+
+        Navigate via the ◀️ ▶️ buttons, or skip to the end via the ⏮️ ⏭️ buttons.
+        You can stop this help session by pressing ⏹️.
+
+        If you need support, please join the [support server](https://discord.gg/KNKr8FPmJa)!
+
+        **Command Usage & Syntax**
+
+        `<argument>` is a __required__ parameter
+        `[argument]` is an __optional__ parameter
+        `<foo|bar>` means foo __OR__ bar
+
+        *Do not include the brackets in your commands!*        
+
+        Press ▶️ to see the next page and what commands are available to you!
+        ''')
+        embed = ctx.bot.add_embed_footer(ctx, help_home_embed)
+        help_pages = []
+        help_pages.append(help_home_embed)
         #We retrieve all the commands from the mapping of cog,commands
         paginator = commands.Paginator(prefix='', suffix='', max_size=500)
         for cog, cmds in mapping.items(): 
@@ -70,40 +58,26 @@ class SnedHelp(commands.HelpCommand):
                 for signature in command_signatures:
                     paginator.add_line(signature)
         
-        help_home_embed=discord.Embed(title="🏠 " + self._("__Help Home__"), color=ctx.bot.embedBlue, description='''**How to navigate this help dialogue**
-
-        Navigate via the ◀️ ▶️ buttons, or skip to the end via the ⏮️ ⏭️ buttons.
-        You can stop this help session by pressing ⏹️.
-
-        If you need support, please join the [support server](https://discord.gg/KNKr8FPmJa)!
-
-        **Command Usage & Syntax**
-
-        `<argument>` is a __required__ parameter
-        `[argument]` is an __optional__ parameter
-        `<foo|bar>` means foo __OR__ bar
-
-        *Do not include the brackets in your commands!*        
-
-        React with ▶️ to see the next page and what commands are available to you!
-        ''')
-        help_home_embed = ctx.bot.add_embed_footer(ctx, help_home_embed)
-        help_pages = HelpPages(help_home_embed, source=HelpSource(paginator.pages), clear_reactions_after=True) #Feed the list of commands into the menu system
-        await help_pages.start(ctx)
+        for page in paginator.pages:
+            embed=discord.Embed(title="⚙️ " + "__Available commands:__", description="**Tip:** You can also type **`{prefix}help [command]`** to get more information about a specific command and see any subcommands a command may have.\n\n {page}".format(prefix=ctx.prefix, page=page), color=ctx.bot.embedBlue)
+            embed = ctx.bot.add_embed_footer(ctx, embed)
+            help_pages.append(embed)
+        
+        menu_paginator = components.SnedMenuPaginator(pages=help_pages, show_disabled=True, show_indicator=True)
+        await menu_paginator.send(ctx, ephemeral=False)
 
     async def send_command_help(self, command):
         ctx = self.context   #Obtaining ctx
-        self._ = ctx.bot.get_localization('help', ctx.bot.lang)
         if command.parents:
-            detail_embed=discord.Embed(title="⚙️ " + self._("Command: {prefix}{parent} {command}").format(prefix=ctx.clean_prefix, parent=command.full_parent_name, command=command.name), color=ctx.bot.embedBlue)
+            detail_embed=discord.Embed(title="⚙️ " + "Command: {prefix}{parent} {command}".format(prefix=ctx.clean_prefix, parent=command.full_parent_name, command=command.name), color=ctx.bot.embedBlue)
         else:
-            detail_embed=discord.Embed(title="⚙️ " + self._("Command: {prefix}{command}").format(prefix=ctx.clean_prefix, command=command.name), color=ctx.bot.embedBlue)
+            detail_embed=discord.Embed(title="⚙️ " + "Command: {prefix}{command}".format(prefix=ctx.clean_prefix, command=command.name), color=ctx.bot.embedBlue)
         if command.description:
-            detail_embed.add_field(name=self._("Description:"), value=command.description)  #Getting command description
+            detail_embed.add_field(name="Description:", value=command.description)  #Getting command description
         elif command.help:
-            detail_embed.add_field(name=self._("Description:"), value=command.help)  #Fallback to help attribute if description does not exist
+            detail_embed.add_field(name="Description:", value=command.help)  #Fallback to help attribute if description does not exist
         if command.usage:
-            detail_embed.add_field(name=self._("Usage:"), value=f"**`{ctx.clean_prefix}{command.usage}`**", inline=False) #Getting command usage & formatting it
+            detail_embed.add_field(name="Usage:", value=f"**`{ctx.clean_prefix}{command.usage}`**", inline=False) #Getting command usage & formatting it
         aliases = []
         for alias in command.aliases:
             if command.parents:
@@ -111,7 +85,7 @@ class SnedHelp(commands.HelpCommand):
             else:
                 aliases.append(f"**`{ctx.clean_prefix}{alias}`**")  #Adding some custom formatting to each alias
         if aliases:
-            detail_embed.add_field(name=self._("Aliases:"), value=", ".join(aliases), inline=False)   #If any aliases exist, we add those to the embed in new field
+            detail_embed.add_field(name="Aliases:", value=", ".join(aliases), inline=False)   #If any aliases exist, we add those to the embed in new field
         detail_embed = ctx.bot.add_embed_footer(ctx, detail_embed)
         channel = self.get_destination()   #Send it to destination
         await channel.send(embed=detail_embed)
@@ -119,41 +93,38 @@ class SnedHelp(commands.HelpCommand):
     async def send_cog_help(self, cog):
         #I chose not to implement help for cogs, but if you want to do something, do it here
         ctx = self.context
-        self._ = ctx.bot.get_localization('help', ctx.bot.lang)
-        embed=discord.Embed(title=ctx.bot.unknownCMDstr, description=self._("Use `{prefix}help` for a list of available commands.").format(prefix=ctx.prefix), color=ctx.bot.unknownColor)
+        embed=discord.Embed(title=ctx.bot.unknownCMDstr, description="Use `{prefix}help` for a list of available commands.".format(prefix=ctx.prefix), color=ctx.bot.unknownColor)
         embed = ctx.bot.add_embed_footer(ctx, embed)
         channel = self.get_destination()
         await channel.send(embed=embed)
 
     async def send_group_help(self, group):
         ctx = self.context
-        self._ = ctx.bot.get_localization('help', ctx.bot.lang)
-        group_embed = discord.Embed(title="⚙️ " + self._("Group: {prefix}{group}").format(prefix=ctx.prefix, group=group.name), description=self._("**Note:**\nTo see detailed information about one of the subcommands, type **`{prefix}help {group} [subcommand]`**").format(prefix=ctx.prefix, group=group.name), color=ctx.bot.embedBlue)
+        group_embed = discord.Embed(title="⚙️ " + "Group: {prefix}{group}".format(prefix=ctx.prefix, group=group.name), description="**Note:**\nTo see detailed information about one of the subcommands, type **`{prefix}help {group} [subcommand]`**".format(prefix=ctx.prefix, group=group.name), color=ctx.bot.embedBlue)
         if group.description:
-            group_embed.add_field(name=self._("Description:"), value=group.description)  #Getting command description
+            group_embed.add_field(name="Description:", value=group.description)  #Getting command description
         elif group.help:
-            group_embed.add_field(name=self._("Description:"), value=group.help)  #Fallback to help attribute if description does not exist
+            group_embed.add_field(name="Description:", value=group.help)  #Fallback to help attribute if description does not exist
         if group.usage:
-            group_embed.add_field(name=self._("Usage:"), value=f"**`{ctx.clean_prefix}{group.usage}`**", inline=False) #Getting command usage & formatting it
+            group_embed.add_field(name="Usage:", value=f"**`{ctx.clean_prefix}{group.usage}`**", inline=False) #Getting command usage & formatting it
         aliases = []
         for alias in group.aliases:
             aliases.append(f"**`{ctx.clean_prefix}{alias}`**")  #Adding some custom formatting to each alias
         if aliases:
-            group_embed.add_field(name=self._("Aliases:"), value=", ".join(aliases), inline=False)   #If any aliases exist, we add those to the embed in new field
+            group_embed.add_field(name="Aliases:", value=", ".join(aliases), inline=False)   #If any aliases exist, we add those to the embed in new field
         sub_cmds = []
         filtered = await self.filter_commands(group.walk_commands(), sort=True)
         for command in filtered:
             sub_cmds.append(self.get_subcommand_signature(ctx, group, command))
         if sub_cmds:
             sub_cmds = "\n".join(sub_cmds)
-            group_embed.add_field(name=self._("Sub-commands:"), value=f"{sub_cmds}")
+            group_embed.add_field(name="Sub-commands:", value=f"{sub_cmds}")
         channel = self.get_destination()
         await channel.send(embed=group_embed)
 
     async def send_error_message(self, error):   #Overriding the default help error message
         ctx = self.context
-        self._ = ctx.bot.get_localization('help', ctx.bot.lang)
-        embed=discord.Embed(title=ctx.bot.unknownCMDstr, description=self._("Use `{prefix}help` for a list of available commands.").format(prefix=ctx.prefix), color=ctx.bot.unknownColor)
+        embed=discord.Embed(title=ctx.bot.unknownCMDstr, description="Use `{prefix}help` for a list of available commands.".format(prefix=ctx.prefix), color=ctx.bot.unknownColor)
         embed = ctx.bot.add_embed_footer(ctx, embed)
         channel = self.get_destination()
         await channel.send(embed=embed)
