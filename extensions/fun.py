@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import datetime
 import logging
 import os
@@ -286,6 +287,23 @@ class Fun(commands.Cog):
         embed = self.bot.add_embed_footer(ctx, embed)
         embed.set_image(url=emoji.url)
         await ctx.send(embed=embed)
+    
+    @commands.group(hidden=True, help="Encodes and decodes text into Base64.", usage="base64", invoke_without_command=True, case_insensitive=True)
+    @commands.guild_only()
+    async def base64(self, ctx):
+        await ctx.send_help(ctx.command)
+    
+    @base64.command(help="Encodes text into Base64.", usage="base64 encode <text>")
+    @commands.guild_only()
+    async def encode(self, ctx, *, string):
+        base64_string = (base64.b64encode(string.encode("ascii"))).decode("ascii")
+        await ctx.send(base64_string)
+
+    @base64.command(help="Decodes text from Base64.", usage="base64 decode <text>")
+    @commands.guild_only()
+    async def decode(self, ctx, *, string):
+        decoded_string = (base64.b64decode(string.encode("ascii"))).decode("ascii")
+        await ctx.send(decoded_string)
         
 
 def setup(bot):
