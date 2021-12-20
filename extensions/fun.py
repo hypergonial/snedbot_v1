@@ -296,14 +296,22 @@ class Fun(commands.Cog):
     @base64.command(help="Encodes text into Base64.", usage="base64 encode <text>")
     @commands.guild_only()
     async def encode(self, ctx, *, string):
-        base64_string = (base64.b64encode(string.encode("ascii"))).decode("ascii")
-        await ctx.send(base64_string)
+        try:
+            base64_string = (base64.b64encode(string.encode("ascii"))).decode("ascii")
+            await ctx.send(base64_string)
+        except Exception as error:
+            embed=discord.Embed(title="❌ " + self._("Error encoding to base64"), description=f"An error occured while attempting to encode the string to base64: ```{error}```", color=self.bot.errorColor)
+            await ctx.send(embed=embed)
 
     @base64.command(help="Decodes text from Base64.", usage="base64 decode <text>")
     @commands.guild_only()
     async def decode(self, ctx, *, string):
-        decoded_string = (base64.b64decode(string.encode("ascii"))).decode("ascii")
-        await ctx.send(decoded_string)
+        try:
+            decoded_string = (base64.b64decode(string.encode("ascii"))).decode("ascii")
+            await ctx.send(decoded_string)
+        except Exception as error:
+            embed=discord.Embed(title="❌ " + self._("Error decoding from base64"), description=f"An error occured while attempting to decode base64 to string: ```{error}```", color=self.bot.errorColor)
+            await ctx.send(embed=embed)
         
 
 def setup(bot):
