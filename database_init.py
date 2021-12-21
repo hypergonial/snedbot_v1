@@ -55,7 +55,6 @@ try:
                     guild_id bigint NOT NULL,
                     flags text[],
                     warns integer NOT NULL DEFAULT 0,
-                    is_muted bool NOT NULL DEFAULT false,
                     notes text[],
                     PRIMARY KEY (user_id, guild_id),
                     FOREIGN KEY (guild_id)
@@ -82,7 +81,6 @@ try:
                 CREATE TABLE IF NOT EXISTS public.mod_config
                 (
                     guild_id bigint,
-                    mute_role_id bigint,
                     dm_users_on_punish bool NOT NULL DEFAULT true,
                     clean_up_mod_commands bool NOT NULL DEFAULT false,
                     automod_policies text NOT NULL DEFAULT '{}',

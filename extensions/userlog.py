@@ -19,7 +19,7 @@ class Logging(commands.Cog):
         self.recently_deleted = []
         self.mod_cog = self.bot.get_cog("Moderation")
         self.frozen_guilds = [] #List of guilds where logging is temporarily suspended
-        self.valid_log_events = ["ban", "kick", "mute", "message_delete", "message_delete_mod", "message_edit", "bulk_delete",
+        self.valid_log_events = ["ban", "kick", "timeout", "message_delete", "message_delete_mod", "message_edit", "bulk_delete",
         "invites", "roles", "channels", "member_join", "member_leave", "nickname", "guild_settings", "warn"]
 
     async def get_log_channel(self, event:str, guild_id:int) -> int:
@@ -367,9 +367,45 @@ class Logging(commands.Cog):
     
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
+
+        def is_timed_out(member:discord.Member): #TODO: Remove this after Member.timed_out is implemented
+            return member.communication_disabled_until is not None and member.communication_disabled_until > discord.utils.utcnow()
+
         if before.nick != after.nick:
             embed = discord.Embed(title=f"🖊️ Nickname changed", description=f"**User:** `{after.name} ({after.id})`\nNickname before: `{before.nick}`\nNickname after: `{after.nick}`", color=self.bot.embedBlue)
             await self.log("nickname", embed, after.guild.id)
+        
+        if (not is_timed_out(before) and is_timed_out(after)) or (not is_timed_out(after) and is_timed_out(before)):
+            await asyncio.sleep(1) #Wait for audit log to be present
+            moderator = "Discord"
+            reason = "Error retrieving data from audit logs! Ensure the bot has permissions to view them!"
+
+            try:
+                async for entry in after.guild.audit_logs():
+                    if entry.action == discord.AuditLogAction.member_update and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15:
+                        if entry.target == before:
+                            moderator = entry.user
+                            reason = entry.reason if entry.reason else "No reason provided"; break
+            except discord.Forbidden:
+                pass
+
+            if reason and len(reason) > 200:
+                reason = reason[:200]+"..."
+
+            if moderator != "Discord" and moderator == self.bot.user:
+                moderator = reason.split(" ")[0] #Get actual moderator, not the bot
+                reason = reason.split("):", maxsplit=1)[1] #Remove author
+            
+            if not is_timed_out(before) and is_timed_out(after): #Got timed out
+                await self.mod_cog.add_note(after.id, after.guild.id, f"🔇 **Timed out by {moderator} until {discord.utils.format_dt(after.communication_disabled_until)}:** {reason}")
+                embed = discord.Embed(title=f"🔇 User timed out", description=f"**User:** `{after.name} ({after.id})` \n**Moderator:** `{moderator}` \n**Until:** {discord.utils.format_dt(after.communication_disabled_until)} ({discord.utils.format_dt(after.communication_disabled_until, style='R')}) \n**Reason:** ```{reason}```", color=self.bot.errorColor)
+                await self.log("timeout", embed, after.guild.id)
+            else: #Got timeout removed
+                await self.mod_cog.add_note(after.id, after.guild.id, f"🔉 **Timeout removed by {moderator}:** {reason}")
+                embed = discord.Embed(title=f"🔉 User timeout removed", description=f"**User:** `{after.name} ({after.id})` \n**Moderator:** `{moderator}` \n**Reason:** ```{reason}```", color=self.bot.embedGreen)
+                await self.log("timeout", embed, after.guild.id)
+
+        
         elif before.roles != after.roles:
             #Contains role that was added to user if any
             add_diff = list(set(after.roles)-set(before.roles))
@@ -388,9 +424,9 @@ class Logging(commands.Cog):
             except discord.Forbidden:
                 return
             if len(add_diff) != 0 :
-                embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name}#{after.discriminator} ({after.id})`\n**Moderator:** `{moderator}`\n**Role added:** `{add_diff[0]}`", color=self.bot.embedBlue)
+                embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after} ({after.id})`\n**Moderator:** `{moderator}`\n**Role added:** `{add_diff[0]}`", color=self.bot.embedBlue)
             elif len(rem_diff) != 0 :
-                embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after.name}#{after.discriminator} ({after.id})`\n**Moderator:** `{moderator}`\n**Role removed:** `{rem_diff[0]}`", color=self.bot.embedBlue)
+                embed = discord.Embed(title=f"🖊️ Member roles updated", description=f"**User:** `{after} ({after.id})`\n**Moderator:** `{moderator}`\n**Role removed:** `{rem_diff[0]}`", color=self.bot.embedBlue)
             #Role updates are considered elevated due to importance
             if isinstance(moderator, discord.User) or isinstance(moderator, discord.Member) and moderator.bot:
                 pass

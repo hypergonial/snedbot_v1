@@ -14,19 +14,9 @@ logger = logging.getLogger(__name__)
 async def has_admin_perms(ctx):
     return await ctx.bot.custom_checks.has_permissions(ctx, 'admin_permitted')
 
-async def can_mute(ctx) -> bool:
-    '''A check performed to see if the configuration is correct for muting to be done.'''
-    records = await ctx.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
-    if records and records[0]["mute_role_id"]:
-        mute_role = ctx.guild.get_role(records[0]["mute_role_id"])
-        if mute_role:
-            return True
-        return False
-
 mod_settings_strings = {
     "dm_users_on_punish": "DM users after punishment",
     "clean_up_mod_commands": "Clean up mod commands",
-    "mute_role_id": "Mute role"
 }
 
 default_automod_policies = {
@@ -103,8 +93,8 @@ policy_states = {
         "name": "Smart",
         "excludes": ["spam", "escalate"]
     },
-    "tempmute": {
-        "name": "Tempmute",
+    "timeout": {
+        "name": "Timeout",
         "excludes": []
     },
     "kick": {
@@ -169,7 +159,7 @@ policy_strings = {
 log_event_strings = {
     "ban": "Ban",
     "kick": "Kick",
-    "mute": "Mute",
+    "timeout": "Timeout",
     "message_delete": "Message Deletion",
     "message_delete_mod": "Message Deletion by Mod",
     "message_edit": "Message Edits",
@@ -360,18 +350,9 @@ class Settings(commands.Cog):
             options = await mod.get_settings(ctx.guild.id)
             options_dict = {}
             embed = discord.Embed(title="Moderation Settings", description="Below you can see the current moderation settings, to change any of them, press the corresponding button!", color=self.bot.embedBlue)
-            if not await can_mute(ctx):
-                embed.add_field(name="⚠️ Warning!", value="There is **no mute role** set! Without a mute role, muting and tempmuting is unavailable! Please configure one here!", inline=False)
 
             for field in options.__dataclass_fields__:
                 value = getattr(options, field)
-                if field == "mute_role_id":
-                    mute_role = ctx.guild.get_role(value)
-                    if mute_role:
-                        value = mute_role.mention
-                    else:
-                        value = "Not set"
-
                 embed.add_field(name=f"{mod_settings_strings[field]}", value=value, inline=True)
                 options_dict[field] = mod_settings_strings[field]
 
@@ -409,40 +390,6 @@ class Settings(commands.Cog):
                 await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                 await show_mod_menu(self, message)
 
-            elif view.value == "mute_role_id":
-                embed = discord.Embed(title=f"Configuring mute role", description="Please enter a mention, ID, or name of the role you want to use as a mute role! This role should **not be able** to send messages or add reactions in any channels for muting to work correctly!", color=self.bot.embedBlue)
-                await self.bot.maybe_edit(message, embed=embed, view=None)
-
-                try:
-                    input = await self.bot.wait_for('message', check=check, timeout=180)
-                except asyncio.TimeoutError:
-                    await self.bot.maybe_delete(message)
-                else:
-                    try:
-                        mute_role = await commands.RoleConverter().convert(ctx, input.content)
-
-                        await self.bot.pool.execute('''
-                        INSERT INTO mod_config (guild_id, mute_role_id)
-                        VALUES ($1, $2)
-                        ON CONFLICT (guild_id) DO
-                        UPDATE SET mute_role_id = $2''', ctx.guild.id, mute_role.id)
-                        await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
-
-                        await self.bot.maybe_delete(input)
-                        await show_mod_menu(self, message)
-
-                    except commands.RoleNotFound:
-                        view = components.BackButtonView(ctx)
-                        embed = discord.Embed(title="❌ Role not found", description="Unable to find role! Please make sure what you entered is correct.", color=self.bot.errorColor)
-                        await self.bot.maybe_edit(message, view=view, embed=embed)
-                        await self.bot.maybe_delete(input)
-
-                        await view.wait()
-                        if view.value == "back":
-                            await show_mod_menu(self, message)
-                        else:
-                            await self.bot.maybe_delete(message)
-
         await show_mod_menu(self, message)
 
 
@@ -454,8 +401,7 @@ class Settings(commands.Cog):
 
             policies = await automod.get_policies(ctx.guild.id)
             embed = discord.Embed(title="Automoderation Settings", description="Below you can see a summary of the current automoderation settings. To see more details about a specific entry or change their settings, press the corresponding button.", color=self.bot.embedBlue)
-            if not await can_mute(ctx):
-                embed.add_field(name="⚠️ Warning!", value=f"There is **no mute role** set! Without a mute role, muting and tempmuting is unavailable! Please configure one with `{ctx.prefix}moderation`", inline=False)
+
             for key in policies.keys():
                 embed.add_field(name=f"{policy_strings[key]['name']}", value=policies[key]["state"].capitalize(), inline=True)
             view = AutoModConfMainView(ctx, policies)
@@ -486,7 +432,7 @@ class Settings(commands.Cog):
 
             if policy_data["state"] != "disabled":
                 for key in policy_data:
-                    if key == "temp_dur" and policy_data["state"].startswith("temp") or key == "temp_dur" and policies["escalate"]["state"].startswith("temp") and policy_data["state"] == "escalate":
+                    if key == "temp_dur" and policy_data["state"] in ["timeout", "tempban"] or key == "temp_dur" and policies["escalate"]["state"] in ["timeout", "tempban"] and policy_data["state"] == "escalate":
                         embed.add_field(name="Temporary punishment duration:", value=f"{policy_data[key]} minute(s)", inline=False)
                         button_labels["temp_dur"] = "Duration"
                     elif key == "delete":
@@ -539,16 +485,17 @@ class Settings(commands.Cog):
                 states = {}
                 for state, data in policy_states.items():
                     if offense_str not in data["excludes"]:
-                        if state in ["mute", "tempmute"] and not await can_mute(ctx):
-                            continue
-                        else:
-                            states[state] = data["name"]
+                        states[state] = data["name"]
 
                 view = StateChangeView(ctx, states)
                 await self.bot.maybe_edit(message, embed=embed, view=view)
                 await view.wait()
                 state = view.value["values"][0]
                 policies[offense_str]["state"] = state
+
+                if state == "timeout" and policies[offense_str]["temp_dur"] > 40320: # Ensure timeouts remain within 28 days
+                    policies[offense_str]["temp_dur"] = 40320
+
                 await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
                 await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                 await show_policy_options(self, offense_str, message)
@@ -560,7 +507,12 @@ class Settings(commands.Cog):
                 await show_policy_options(self, offense_str, message)
 
             elif view.value == "temp_dur":
-                embed = discord.Embed(title=f"Temporary punishment duration for {policy_strings[offense_str]['name']}", description="Please enter a valid integer value between **1 and 525960**! This will set how long temporary punishments for this category should last, in minutes.", color=self.bot.embedBlue)
+                if policies[offense_str]["state"] == "timeout":
+                    max_dur = 40320
+                else:
+                    max_dur = 525960
+
+                embed = discord.Embed(title=f"Temporary punishment duration for {policy_strings[offense_str]['name']}", description=f"Please enter a valid integer value between **1 and {max_dur}**! This will set how long temporary punishments for this category should last, in minutes.", color=self.bot.embedBlue)
                 await self.bot.maybe_edit(message, embed=embed, view=None)
                 try:
                     input = await self.bot.wait_for('message', check=check, timeout=180)
@@ -569,7 +521,7 @@ class Settings(commands.Cog):
                 else:
                     try:
                         temp_dur = int(input.content)
-                        if temp_dur < 1 or temp_dur > 525960:
+                        if temp_dur < 1 or temp_dur > max_dur:
                             raise ValueError
                         policies[offense_str]["temp_dur"] = temp_dur
                         await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
@@ -579,7 +531,7 @@ class Settings(commands.Cog):
 
                     except ValueError:
                         view = components.BackButtonView(ctx)
-                        embed = discord.Embed(title="❌ Invalid data entered", description="You did not enter a valid integer between 1 and 525960.", color=self.bot.errorColor)
+                        embed = discord.Embed(title="❌ Invalid data entered", description=f"You did not enter a valid integer between 1 and {max_dur}.", color=self.bot.errorColor)
                         await self.bot.maybe_edit(message, embed=embed, view=view)
                         await self.bot.maybe_delete(input)
 

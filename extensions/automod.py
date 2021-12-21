@@ -202,9 +202,9 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                 await ctx.send(content=offender.mention, embed=embed, delete_after=20)
 
 
-        elif policy_state == "tempmute":
-            await self.mod_cog.mute(ctx, offender, ctx.guild.me, duration=f"{temp_dur} minutes", reason=f"Muted by auto-moderator for {reason}.")
-            embed=discord.Embed(title="🔇 User muted", description="**{offender}** has been muted for **{temp_dur}** minutes.\n**Reason:**```Muted by auto-moderator for {reason}.```".format(offender=offender, temp_dur=temp_dur, reason=reason), color=self.bot.errorColor)
+        elif policy_state == "timeout":
+            await self.mod_cog.mute(ctx, offender, ctx.guild.me, duration=f"{temp_dur} minutes", reason=f"Timed out by auto-moderator for {reason}.")
+            embed=discord.Embed(title="🔇 User timed out", description="**{offender}** has been timed out for **{temp_dur}** minutes.\n**Reason:**```Muted by auto-moderator for {reason}.```".format(offender=offender, temp_dur=temp_dur, reason=reason), color=self.bot.errorColor)
             await ctx.send(embed=embed)
         
         elif policy_state == "kick":

@@ -460,7 +460,6 @@ class GlobalConfig():
         guild_id:int
         flags:list=None
         warns:int=0
-        is_muted:bool=False
         notes:list=None
 
     def __init__(self, bot):
@@ -472,7 +471,7 @@ class GlobalConfig():
         '''Clean up garbage userdata from db'''
 
         await bot.wait_until_ready()
-        await self.bot.pool.execute('DELETE FROM users WHERE flags IS NULL and warns = 0 AND is_muted = false AND notes IS NULL')
+        await self.bot.pool.execute('DELETE FROM users WHERE flags IS NULL and warns = 0 AND notes IS NULL')
 
     async def deletedata(self, guild_id):
         '''
@@ -497,10 +496,10 @@ class GlobalConfig():
 
         try:
             await self.bot.pool.execute('''
-            INSERT INTO users (user_id, guild_id, flags, warns, is_muted, notes) 
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO users (user_id, guild_id, flags, warns, notes) 
+            VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (user_id, guild_id) DO
-            UPDATE SET flags = $3, warns = $4, is_muted = $5, notes = $6''', user.user_id, user.guild_id, user.flags, user.warns, user.is_muted, user.notes)
+            UPDATE SET flags = $3, warns = $4,notes = $5''', user.user_id, user.guild_id, user.flags, user.warns, user.notes)
         except asyncpg.exceptions.ForeignKeyViolationError:
             logging.warn('Trying to update a guild db_user whose guild no longer exists. This could be due to pending timers.')
 
@@ -512,7 +511,7 @@ class GlobalConfig():
         result = await self.bot.pool.fetch('''SELECT * FROM users WHERE user_id = $1 AND guild_id = $2''', user_id, guild_id)
         if result:
             user = self.User(user_id = result[0].get('user_id'), guild_id=result[0].get('guild_id'), flags=result[0].get('flags'), 
-            warns=result[0].get('warns'), is_muted=result[0].get('is_muted'), notes=result[0].get('notes'))
+            warns=result[0].get('warns'), notes=result[0].get('notes'))
             return user
         else:
             user = self.User(user_id = user_id, guild_id = guild_id) #Generate a new db user if none exists
@@ -530,7 +529,7 @@ class GlobalConfig():
             users = []
             for result in results:
                 user = self.User(user_id = result.get('user_id'), guild_id=result.get('guild_id'), flags=result.get('flags'), 
-                warns=result.get('warns'), is_muted=result.get('is_muted'), notes=result.get('notes'))
+                warns=result.get('warns'), notes=result.get('notes'))
                 users.append(user)
             return users
 
