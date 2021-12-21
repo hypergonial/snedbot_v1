@@ -21,14 +21,14 @@ class ContextMenus(commands.Cog):
         self.mod_cog = self.bot.get_cog("Moderation")
         self.checkfailure_embed =discord.Embed(title="❌ Missing permissions", description="You require additional permissions to execute this action.", color=self.bot.errorColor)
     
-    @user_command(guild_ids=[836248845268680785], name="Show Userinfo")
+    @user_command(name="Show Userinfo")
     async def whois_context(self, ctx, member: discord.Member):
         if await has_mod_perms(ctx):
             await ctx.respond(embed=await self.mod_cog.whois(ctx, member), ephemeral=True)
         else:
             await ctx.respond(embed=self.checkfailure_embed, ephemeral=True)
 
-    @user_command(guild_ids=[836248845268680785], name="Show Journal")
+    @user_command(name="Show Journal")
     async def journal_context(self, ctx, member: discord.Member):
         if await has_mod_perms(ctx):
             notes = await self.mod_cog.get_notes(member.id, ctx.guild.id)
@@ -54,7 +54,7 @@ class ContextMenus(commands.Cog):
         else:
             await ctx.respond(embed=self.checkfailure_embed, ephemeral=True)
 
-    @user_command(guild_ids=[836248845268680785], name="Show Avatar")
+    @user_command(name="Show Avatar")
     async def avatar_context(self, ctx, member: discord.Member):
         if await has_fun_perms(ctx):
             embed=discord.Embed(title="{member_name}'s avatar:".format(member_name=member.name), color=member.colour)
