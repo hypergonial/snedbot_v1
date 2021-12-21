@@ -317,7 +317,7 @@ class Logging(commands.Cog):
             await self.log("kick", embed, member.guild.id)
 
             if moderator != "Unknown" and moderator == self.bot.user:
-                moderator = reason.split(" ")[0] #Get actual moderator, not the bot
+                moderator = reason.split(" ")[0] + "via Sned" #Get actual moderator, not the bot
                 reason = reason.split("):", maxsplit=1)[1] #Remove author
             if reason and len(reason) > 240:
                 reason = reason[:240]+"..."
@@ -349,7 +349,7 @@ class Logging(commands.Cog):
         await self.log("ban", embed, guild.id)
 
         if moderator != "Unknown" and moderator == self.bot.user:
-            moderator = reason.split(" ")[0] #Get actual moderator, not the bot
+            moderator = reason.split(" ")[0] + "via Sned" #Get actual moderator, not the bot
             reason = reason.split("):", maxsplit=1)[1] #Remove author
         if reason and len(reason) > 240:
             reason = reason[:240]+"..."
@@ -367,11 +367,8 @@ class Logging(commands.Cog):
     
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
-
-        def is_timed_out(member:discord.Member): #TODO: Remove this after Member.timed_out is implemented
-            return member.communication_disabled_until is not None and member.communication_disabled_until > discord.utils.utcnow()
         
-        if (not is_timed_out(before) and is_timed_out(after)) or (not is_timed_out(after) and is_timed_out(before)):
+        if before.communication_disabled_until != after.communication_disabled_until:
             await asyncio.sleep(1) #Wait for audit log to be present
             moderator = "Discord"
             reason = "Error retrieving data from audit logs! Ensure the bot has permissions to view them!"
@@ -389,17 +386,18 @@ class Logging(commands.Cog):
                 reason = reason[:200]+"..."
 
             if moderator != "Discord" and moderator == self.bot.user:
-                moderator = reason.split(" ")[0] #Get actual moderator, not the bot
+                moderator = f"{reason.split(' ')[0]} via Sned" #Get actual moderator, not the bot
                 reason = reason.split("):", maxsplit=1)[1] #Remove author
             
-            if not is_timed_out(before) and is_timed_out(after): #Got timed out
-                await self.mod_cog.add_note(after.id, after.guild.id, f"🔇 **Timed out by {moderator} until {discord.utils.format_dt(after.communication_disabled_until)}:** {reason}")
-                embed = discord.Embed(title=f"🔇 User timed out", description=f"**User:** `{after.name} ({after.id})` \n**Moderator:** `{moderator}` \n**Until:** {discord.utils.format_dt(after.communication_disabled_until)} ({discord.utils.format_dt(after.communication_disabled_until, style='R')}) \n**Reason:** ```{reason}```", color=self.bot.errorColor)
-                await self.log("timeout", embed, after.guild.id)
-            else: #Got timeout removed
+            if after.communication_disabled_until is None or after.communication_disabled_until < discord.utils.utcnow(): #Got timeout removed
                 await self.mod_cog.add_note(after.id, after.guild.id, f"🔉 **Timeout removed by {moderator}:** {reason}")
                 embed = discord.Embed(title=f"🔉 User timeout removed", description=f"**User:** `{after.name} ({after.id})` \n**Moderator:** `{moderator}` \n**Reason:** ```{reason}```", color=self.bot.embedGreen)
                 await self.log("timeout", embed, after.guild.id)
+            else: #Got timed out
+                await self.mod_cog.add_note(after.id, after.guild.id, f"🔇 **Timed out by {moderator} until {discord.utils.format_dt(after.communication_disabled_until)}:** {reason}")
+                embed = discord.Embed(title=f"🔇 User timed out", description=f"**User:** `{after.name} ({after.id})` \n**Moderator:** `{moderator}` \n**Until:** {discord.utils.format_dt(after.communication_disabled_until)} ({discord.utils.format_dt(after.communication_disabled_until, style='R')}) \n**Reason:** ```{reason}```", color=self.bot.errorColor)
+                await self.log("timeout", embed, after.guild.id)
+
 
         
         elif before.nick != after.nick:
