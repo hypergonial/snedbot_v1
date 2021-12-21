@@ -62,6 +62,7 @@ initial_extensions = (
     'extensions.ipc',
     'extensions.misc_commands',
     'extensions.settings',
+    'extensions.context_menus',
     'jishaku'
 )
 
