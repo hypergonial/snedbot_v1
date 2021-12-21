@@ -13,6 +13,7 @@ import discord
 from discord.errors import HTTPException
 from discord.ext import commands, pages
 from discord.ext.commands.core import max_concurrency
+from discord.ext.commands.errors import UserInputError
 
 from extensions.utils import components
 
@@ -190,6 +191,10 @@ class Moderation(commands.Cog):
         reason = self.format_reason(reason, moderator)
         
         duration = await self.bot.get_cog("Timers").converttime(duration)
+
+        if duration[0] > discord.utils.utcnow() + datetime.timedelta(days=28):
+            raise UserInputError("Duration exceeds 28 days.")
+            
         await member.timeout(duration[0], reason=reason)
         return duration[0]
 
@@ -393,6 +398,10 @@ class Moderation(commands.Cog):
             embed=discord.Embed(title="❌ " + "Timeout failed", description="This function requires an extension that is not enabled.\n**Error:** ```{error}```".format(error=error), color=self.bot.errorColor)
             await ctx.send(embed=embed)
             raise PunishFailed 
+        except UserInputError:
+            embed=discord.Embed(title="❌ Timeout too long", description=self._("Timeout length exceeded maximum length of **28 days**! Please pick a shorter timeout duration.").format(prefix=ctx.prefix), color=self.bot.errorColor)
+            await ctx.send(embed=embed)
+            raise PunishFailed
         else:
             embed=discord.Embed(title="🔇 " + "User timed out", description="**{offender}** has been timed out until {duration}.\n**Reason:** ```{reason}```".format(offender=member, duration=discord.utils.format_dt(muted_until), reason=reason), color=self.bot.embedGreen)
             await ctx.send(embed=embed)
@@ -969,12 +978,8 @@ class Moderation(commands.Cog):
         embed = discord.Embed(title="🗑️ " + self._("Messages cleared"), description=self._("**{count}** bot messages have been removed.").format(count=len(cleared)), color=self.bot.errorColor)
         await ctx.send(embed=embed, delete_after=20.0)
 
-    #Returns basically all information we know about a given member of this guild.
-    @commands.command(help="Get information about a user.", description="Provides information about a specified user. If they are in the server, more detailed information will be provided.\n\n__Note:__ To receive information about users outside this server, you must use their ID.", usage=f"whois <userID|userMention|userName>")
-    @commands.check(has_mod_perms)
-    @commands.guild_only()
-    async def whois(self, ctx, *, user : discord.User) :
 
+    async def whois(self, ctx, user:Union[discord.User, discord.Member]) -> discord.Embed:
         if user in ctx.guild.members:
             db_user = await self.bot.global_config.get_user(user.id, ctx.guild.id)
             member = ctx.guild.get_member(user.id)
@@ -992,8 +997,7 @@ class Moderation(commands.Cog):
             Flags: `{db_user.flags}`
             Journal: `{f"{len(db_user.notes)} entries" if db_user.notes else "No entries"}`
             Roles: {roleformatted}""", color=member.colour)
-            if member.avatar:
-                embed.set_thumbnail(url=member.avatar.url)
+            embed.set_thumbnail(url=member.display_avatar.url)
 
         else: #Retrieve limited information about the user if they are not in the guild
             embed=discord.Embed(title=f"User information: {user.name}", description=f"""Username: `{user}`
@@ -1005,8 +1009,7 @@ class Moderation(commands.Cog):
             Join date: `-`
             Roles: `-`
             *Note: This user is not a member of this server*""", color=self.bot.embedBlue)
-            if user.avatar:
-                embed.set_thumbnail(url=user.avatar.url)
+            embed.set_thumbnail(url=user.display_avatar.url)
 
         if await self.bot.is_owner(ctx.author):
             records = await self.bot.caching.get(table="blacklist", guild_id=0, user_id=user.id)
@@ -1014,7 +1017,16 @@ class Moderation(commands.Cog):
             embed.description = f"{embed.description}\nBlacklisted: `{is_blacklisted}`"
 
         embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar.url)
-        await ctx.channel.send(embed=embed)
+        return embed
+
+
+    #Returns basically all information we know about a given member of this guild.
+    @commands.command(name="whois", help="Get information about a user.", description="Provides information about a specified user. If they are in the server, more detailed information will be provided.\n\n__Note:__ To receive information about users outside this server, you must use their ID.", usage=f"whois <userID|userMention|userName>")
+    @commands.check(has_mod_perms)
+    @commands.guild_only()
+    async def whois_cmd(self, ctx, *, user:Union[discord.User, discord.Member]):
+        embed = await self.whois(ctx, user)
+        await ctx.send(embed=embed)
 
 
 
