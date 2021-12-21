@@ -30,12 +30,22 @@ class Fun(commands.Cog):
     async def cog_check(self, ctx):
         return await ctx.bot.custom_checks.has_permissions(ctx, 'fun') or await ctx.bot.custom_checks.has_permissions(ctx, 'mod_permitted')
 
-    @commands.command(help="Displays a user's avatar.", description="Displays a user's avatar for your viewing (or stealing) pleasure.", usage=f"avatar [user]")
+    @commands.group(help="Displays a user's avatar.", description="Displays a user's avatar for your viewing (or stealing) pleasure.", usage=f"avatar [user]", invoke_without_command=True, case_insensitive=True)
     @commands.cooldown(1, 10, type=commands.BucketType.member)
     @commands.guild_only()
     async def avatar(self, ctx, member:discord.Member=None) :
         if not member: member=ctx.author
         embed=discord.Embed(title=self._("{member_name}'s avatar:").format(member_name=member.name), color=member.colour)
+        embed.set_image(url=member.display_avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
+        await ctx.channel.send(embed=embed)
+
+    @avatar.command(name="global", help="Displays a user's global avatar.", description="Displays a user's global avatar for your viewing (or stealing) pleasure.", usage=f"avatar global [user]")
+    @commands.cooldown(1, 10, type=commands.BucketType.member)
+    @commands.guild_only()
+    async def avatar_global(self, ctx, member:discord.Member=None) :
+        if not member: member=ctx.author
+        embed=discord.Embed(title=self._("{member_name}'s global avatar:").format(member_name=member.name), color=member.colour)
         embed.set_image(url=member.avatar.url)
         embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.channel.send(embed=embed)

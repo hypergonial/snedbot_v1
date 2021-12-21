@@ -394,8 +394,8 @@ class SnedBot(commands.Bot):
     
     def add_embed_footer(self, ctx, embed:discord.Embed):
         '''Add the 'Requested by xyz' standard footer to an embed.'''
-        if ctx.author.avatar:
-            embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar.url)
+        if ctx.author.display_avatar:
+            embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url)
         else:
             embed.set_footer(text=f"Requested by {ctx.author}")
         return embed
