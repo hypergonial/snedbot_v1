@@ -101,7 +101,7 @@ class Moderation(commands.Cog):
                 return
             
             if user.id == 163979124820541440:
-                embed=discord.Embed(title="❌ " + self._("Stop hurting him!!").format(pwn=ctx.command.name), description=self._("You cannot {pwn} your own account.").format(pwn=ctx.command.name), color=self.bot.errorColor)
+                embed=discord.Embed(title="❌ Stop hurting him!!", description="I swear he did nothing wrong!", color=self.bot.errorColor)
                 await ctx.send(embed=embed)
                 return
             
