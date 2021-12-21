@@ -45,8 +45,9 @@ class Fun(commands.Cog):
     @commands.guild_only()
     async def avatar_global(self, ctx, member:discord.Member=None) :
         if not member: member=ctx.author
+        avatar = member.avatar if member.avatar else member.display_avatar #Avoid empty avatars
         embed=discord.Embed(title=self._("{member_name}'s global avatar:").format(member_name=member.name), color=member.colour)
-        embed.set_image(url=member.avatar.url)
+        embed.set_image(url=avatar.url)
         embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.channel.send(embed=embed)
 
