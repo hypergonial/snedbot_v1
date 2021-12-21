@@ -374,7 +374,7 @@ class Moderation(commands.Cog):
 
     @commands.group(name="timeout", aliases=["mute"], help="Times out a user.", description='Times out a user for the specified duration. Logs the event if logging is set up. Please note that if you wish to separate the duration by spaces, you must wrap it in quotation marks.\n**Example:** `"10 days"` or `1week`', usage="timeout <user> <duration> [reason]", invoke_without_command=True, case_insensitive=True)
     @commands.check(has_mod_perms)
-    #@commands.bot_has_permissions(moderate_members=True)
+    @commands.bot_has_permissions(moderate_members=True)
     @commands.guild_only()
     @mod_punish
     async def timeout_cmd(self, ctx, member:discord.Member, duration:str, *, reason:str=None):
@@ -400,7 +400,7 @@ class Moderation(commands.Cog):
 
     @timeout_cmd.command(name="remove", help="Removes timeout from a user.", description="Removes timeout from a user. Logs the event if logging is set up.", usage="timeout remove <user> [reason]")
     @commands.check(has_mod_perms)
-    #@commands.bot_has_permissions(moderate_members=True)
+    @commands.bot_has_permissions(moderate_members=True)
     @commands.guild_only()
     @mod_command
     async def remove_timeout_cmd(self, ctx, offender:discord.Member, *, reason:str=None):

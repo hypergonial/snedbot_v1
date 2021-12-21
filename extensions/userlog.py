@@ -370,10 +370,6 @@ class Logging(commands.Cog):
 
         def is_timed_out(member:discord.Member): #TODO: Remove this after Member.timed_out is implemented
             return member.communication_disabled_until is not None and member.communication_disabled_until > discord.utils.utcnow()
-
-        if before.nick != after.nick:
-            embed = discord.Embed(title=f"🖊️ Nickname changed", description=f"**User:** `{after.name} ({after.id})`\nNickname before: `{before.nick}`\nNickname after: `{after.nick}`", color=self.bot.embedBlue)
-            await self.log("nickname", embed, after.guild.id)
         
         if (not is_timed_out(before) and is_timed_out(after)) or (not is_timed_out(after) and is_timed_out(before)):
             await asyncio.sleep(1) #Wait for audit log to be present
@@ -406,6 +402,10 @@ class Logging(commands.Cog):
                 await self.log("timeout", embed, after.guild.id)
 
         
+        elif before.nick != after.nick:
+            embed = discord.Embed(title=f"🖊️ Nickname changed", description=f"**User:** `{after.name} ({after.id})`\nNickname before: `{before.nick}`\nNickname after: `{after.nick}`", color=self.bot.embedBlue)
+            await self.log("nickname", embed, after.guild.id)
+
         elif before.roles != after.roles:
             #Contains role that was added to user if any
             add_diff = list(set(after.roles)-set(before.roles))
