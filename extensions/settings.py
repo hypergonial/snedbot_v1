@@ -493,7 +493,9 @@ class Settings(commands.Cog):
                 state = view.value["values"][0]
                 policies[offense_str]["state"] = state
 
-                if state == "timeout" and policies[offense_str]["temp_dur"] > 40320: # Ensure timeouts remain within 28 days
+                if state == "timeout" and "temp_dur" in policies[offense_str].keys() and policies[offense_str]["temp_dur"] > 40320: # Ensure timeouts remain within 28 days
+                    policies[offense_str]["temp_dur"] = 40320
+                elif state == "escalate" and policies["escalate"] == "timeout" and "temp_dur" in policies[offense_str].keys() and policies[offense_str]["temp_dur"] > 40320:
                     policies[offense_str]["temp_dur"] = 40320
 
                 await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
