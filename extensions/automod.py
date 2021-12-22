@@ -7,6 +7,7 @@ from typing import Dict
 
 import discord
 from discord.ext import commands
+from main import SnedBot
 
 from extensions.utils import components
 
@@ -79,7 +80,7 @@ default_automod_policies = {
 
 
 class AutoMod(commands.Cog, name="Auto-Moderation"):
-    def __init__(self, bot):
+    def __init__(self, bot:SnedBot):
         self.bot = bot
         self.mod_cog = self.bot.get_cog('Moderation')
 

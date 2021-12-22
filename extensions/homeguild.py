@@ -2,13 +2,14 @@ import logging
 
 import discord
 from discord.ext import commands
+from main import SnedBot
 
 logger = logging.getLogger(__name__)
 
 class HomeGuild(commands.Cog):
     '''Functionality for the Home server of Sned'''
     
-    def __init__(self, bot):
+    def __init__(self, bot:SnedBot):
         self.bot = bot
 
 

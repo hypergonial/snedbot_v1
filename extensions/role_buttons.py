@@ -5,6 +5,8 @@ import discord
 from discord.ext import commands, pages
 from extensions.utils import components
 
+from main import SnedBot
+
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
@@ -46,7 +48,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     Formerly "reaction roles"
     '''
     
-    def __init__(self, bot):
+    def __init__(self, bot:SnedBot):
         self.bot = bot
         self.button_styles = {
             "Blurple": discord.ButtonStyle.primary,

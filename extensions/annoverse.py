@@ -1,7 +1,10 @@
 import logging
+
 import aiohttp
 import discord
 from discord.ext import commands
+from main import SnedBot
+
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
@@ -14,7 +17,7 @@ class Annoverse(commands.Cog):
     '''
     Commands & functionality related to Anno-discords
     '''
-    def __init__(self, bot):
+    def __init__(self, bot:SnedBot):
         self.bot = bot
         self.annowiki_color = discord.Color.from_rgb(218, 166, 100)
 

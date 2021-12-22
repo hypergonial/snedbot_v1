@@ -5,6 +5,7 @@ import random
 
 import discord
 from discord.ext import commands
+from main import SnedBot
 
 
 async def has_owner(ctx):
@@ -19,7 +20,7 @@ class Giveaway(commands.Cog):
     with no additional database/storage features. I wrote it in like 3 hours so it might suck. :)
     '''
 
-    def __init__(self, bot):
+    def __init__(self, bot:SnedBot):
         self.bot = bot
         self._ = self.bot.get_localization('giveaway', self.bot.lang)
     

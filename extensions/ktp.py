@@ -2,6 +2,7 @@ import logging
 
 import discord
 from discord.ext import commands
+from main import SnedBot
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
@@ -14,7 +15,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
     to whitelisted guilds
     '''
     
-    def __init__(self, bot):
+    def __init__(self, bot:SnedBot):
         self.bot = bot
 
     

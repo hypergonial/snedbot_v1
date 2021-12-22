@@ -1,7 +1,10 @@
 import logging
+
 import aiohttp
 import discord
 from discord.ext import commands
+from main import SnedBot
+
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
@@ -14,7 +17,7 @@ class FallingFrontier(commands.Cog, name="Falling Frontier"):
     '''
     Commands & functionality related to the Falling Frontier Discord
     '''
-    def __init__(self, bot):
+    def __init__(self, bot:SnedBot):
         self.bot = bot
         self.ffwiki_color = discord.Colour.from_rgb(75, 170, 147)
 

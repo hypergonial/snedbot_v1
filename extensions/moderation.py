@@ -14,6 +14,7 @@ from discord.errors import HTTPException
 from discord.ext import commands, pages
 from discord.ext.commands.core import max_concurrency
 from discord.ext.commands.errors import UserInputError
+from main import SnedBot
 
 from extensions.utils import components
 
@@ -46,7 +47,7 @@ class PunishFailed(Exception):
 class Moderation(commands.Cog):
     '''All Moderation & Auto-Moderation related functionality'''
     
-    def __init__(self, bot):
+    def __init__(self, bot:SnedBot):
         
         self.bot = bot
         self._ = self.bot.get_localization('moderation', self.bot.lang)

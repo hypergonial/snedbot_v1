@@ -12,6 +12,7 @@ import discord
 import Levenshtein as lev
 import uwuify
 from discord.ext import commands
+from main import SnedBot
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 class Fun(commands.Cog):
     '''All the fun!'''
 
-    def __init__(self, bot):
+    def __init__(self, bot:SnedBot):
         self.bot = bot
         self._ = self.bot.get_localization('fun', self.bot.lang)
 
