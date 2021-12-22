@@ -596,13 +596,14 @@ class CustomChecks():
 bot.custom_checks = CustomChecks()
 
 #Run bot with token from .env
-try :
-    if hasattr(bot, 'ipc'):
-        logging.info('IPC was disabled.')
-        #bot.ipc.start()
-    else:
-        logging.warn('IPC was not found, or configured correctly!')
-    bot.run(TOKEN)
-except KeyboardInterrupt :
-    bot.loop.run_until_complete(bot.pool.close())
-    bot.close()
+if __name__ == "__main__":
+    try :
+        if hasattr(bot, 'ipc'):
+            logging.info('IPC was disabled.')
+            #bot.ipc.start()
+        else:
+            logging.warn('IPC was not found, or configured correctly!')
+        bot.run(TOKEN)
+    except KeyboardInterrupt :
+        bot.loop.run_until_complete(bot.pool.close())
+        bot.close()

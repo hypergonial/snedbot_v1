@@ -998,7 +998,7 @@ class Moderation(commands.Cog):
             Account creation date: {discord.utils.format_dt(member.created_at)} ({discord.utils.format_dt(member.created_at, style='R')})
             Join date: {discord.utils.format_dt(member.joined_at)} ({discord.utils.format_dt(member.joined_at, style='R')})
             Warns: `{db_user.warns}`
-            Timed out: `Not Implemented :)`
+            Timed out: `{member.timed_out}`
             Flags: `{db_user.flags}`
             Journal: `{f"{len(db_user.notes)} entries" if db_user.notes else "No entries"}`
             Roles: {roleformatted}""", color=member.colour)
