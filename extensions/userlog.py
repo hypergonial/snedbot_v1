@@ -6,7 +6,6 @@ from typing import Union
 
 import discord
 from discord.ext import commands
-from main import SnedBot
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +13,7 @@ logger = logging.getLogger(__name__)
 class Logging(commands.Cog):
     '''User-facing logging support for important server events'''
 
-    def __init__(self, bot:SnedBot):
+    def __init__(self, bot):
         self.bot = bot
         self.recently_edited = []
         self.recently_deleted = []

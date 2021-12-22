@@ -3,7 +3,6 @@ import logging
 import discord
 from discord.commands import user_command
 from discord.ext import commands
-from main import SnedBot
 
 from extensions.utils import components
 
@@ -17,7 +16,7 @@ async def has_fun_perms(ctx) -> bool:
 
 
 class ContextMenus(commands.Cog):
-    def __init__(self, bot:SnedBot):
+    def __init__(self, bot):
         self.bot = bot
         self.mod_cog = self.bot.get_cog("Moderation")
         self.checkfailure_embed =discord.Embed(title="❌ Missing permissions", description="You require additional permissions to execute this action.", color=self.bot.errorColor)

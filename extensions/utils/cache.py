@@ -3,7 +3,6 @@ import logging
 from typing import Type
 
 import asyncpg
-from main import SnedBot
 from sql_metadata import Parser
 
 logger = logging.getLogger(__name__)
@@ -18,7 +17,7 @@ class Caching():
     or setting it.
     '''
 
-    def __init__(self, bot:SnedBot):
+    def __init__(self, bot):
         self.bot = bot
         self.cache = {}
         self.is_ready = False

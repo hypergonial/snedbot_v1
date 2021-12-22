@@ -8,7 +8,6 @@ from discord.components import SelectOption
 from discord.ext import commands
 
 from extensions.utils import components
-from main import SnedBot
 
 logger = logging.getLogger(__name__)
 
@@ -311,7 +310,7 @@ class LoggingConfMainView(components.AuthorOnlyView):
 
 
 class Settings(commands.Cog):
-    def __init__(self, bot:SnedBot):
+    def __init__(self, bot):
         self.bot = bot
 
 

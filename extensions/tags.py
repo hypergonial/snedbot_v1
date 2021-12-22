@@ -5,8 +5,6 @@ from itertools import chain
 
 import discord
 from discord.ext import commands, pages
-from main import SnedBot
-
 from extensions.utils import components
 
 
@@ -150,7 +148,7 @@ class TagHandler():
 class Tags(commands.Cog):
     '''All commands relating to tags'''
 
-    def __init__(self, bot:SnedBot):
+    def __init__(self, bot):
         self.bot = bot
         self.tag_handler = TagHandler(bot)
         self._ = self.bot.get_localization('tags', self.bot.lang)

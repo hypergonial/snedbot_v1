@@ -5,7 +5,6 @@ import logging
 
 import discord
 from discord.ext import commands
-from main import SnedBot
 
 
 async def has_owner(ctx):
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 class AdminCommands(commands.Cog, name="Admin Commands"):
     '''All commands relating to the administration of the server'''
 
-    def __init__(self, bot:SnedBot):
+    def __init__(self, bot):
 
         self.bot = bot
         self._ = self.bot.get_localization('admin_commands', self.bot.lang)

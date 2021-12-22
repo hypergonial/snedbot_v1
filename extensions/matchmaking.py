@@ -7,7 +7,6 @@ from dataclasses import dataclass
 import discord
 from discord.ext import commands
 from discord.ext import tasks
-from main import SnedBot
 
 logger = logging.getLogger(__name__)
 '''
@@ -27,7 +26,7 @@ def is_anno_guild(ctx):
         
 #Managing the DB config
 class Matchmaking_Config():
-    def __init__(self, bot:SnedBot):
+    def __init__(self, bot):
         self.bot = bot
 
     

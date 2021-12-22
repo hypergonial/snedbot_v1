@@ -3,7 +3,6 @@ import logging
 import discord
 from discord.ext import commands, pages
 from extensions.utils import components
-from main import SnedBot
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +133,7 @@ class SnedHelp(commands.HelpCommand):
 class Help(commands.Cog):
     '''Cog that implements a custom help command'''
 
-    def __init__(self, bot:SnedBot):
+    def __init__(self, bot):
         bot.help_command = SnedHelp()
         self.bot = bot
 
