@@ -395,7 +395,7 @@ class Logging(commands.Cog):
                 await self.log("timeout", embed, after.guild.id)
             else: #Got timed out
                 await self.mod_cog.add_note(after.id, after.guild.id, f"🔇 **Timed out by {moderator} until {discord.utils.format_dt(after.communication_disabled_until)}:** {reason}")
-                embed = discord.Embed(title=f"🔇 User timed out", description=f"**User:** `{after.name} ({after.id})` \n**Moderator:** `{moderator}` \n**Until:** {discord.utils.format_dt(after.communication_disabled_until)} ({discord.utils.format_dt(after.communication_disabled_until, style='R')}) \n**Reason:** ```{reason}```", color=self.bot.errorColor)
+                embed = discord.Embed(title=f"🔇 User timed out", description=f"**User:** `{after.name} ({after.id})` \n**Moderator:** `{moderator}` \n**Until:** {discord.utils.format_dt(after.communication_disabled_until)} ({discord.utils.format_dt(after.communication_disabled_until, style='R')})\n**Reason:** ```{reason}```", color=self.bot.errorColor)
                 await self.log("timeout", embed, after.guild.id)
 
 

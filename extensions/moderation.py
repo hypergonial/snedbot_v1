@@ -76,7 +76,7 @@ class Moderation(commands.Cog):
             reason = "No reason provided"
 
         if moderator:
-            reason = f"{moderator} ({moderator.id}): \n{reason}"
+            reason = f"{moderator} ({moderator.id}): {reason}"
 
         if len(reason) > 240:
             reason = reason[:240]+"..."
