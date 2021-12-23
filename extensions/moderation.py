@@ -431,7 +431,7 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     @mod_command
     async def unmute_cmd(self, ctx, offender:discord.Member, *, reason:str=None):
-        await ctx.invoke(self.timeout_cmd.get_command("remove"), ctx, offender, reason)
+        await ctx.invoke(self.timeout_cmd.get_command("remove"), ctx, offender, moderator=ctx.author, reason=reason)
     
 
     @commands.command(name="ban", help="Bans a user.", description="Bans a user with an optional reason. Deletes the last 7 days worth of messages from the user.", usage="ban <user> [reason]")
