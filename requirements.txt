@@ -1,4 +1,4 @@
-git+https://github.com/Pycord-Development/pycord
+git+https://github.com/Pycord-Development/pycord@fix-get_commands
 git+https://github.com/Ext-Creators/discord-ext-ipc.git
 Levenshtein
 asyncpg

@@ -46,9 +46,6 @@ class SnedHelp(commands.HelpCommand):
         #We retrieve all the commands from the mapping of cog,commands
         paginator = commands.Paginator(prefix='', suffix='', max_size=500)
         for cog, cmds in mapping.items():
-            if cog: 
-                print(cog.qualified_name)
-                print(cmds)
             filtered = await self.filter_commands(cmds, sort=True)   #This will filter commands to those the user can actually execute
             command_signatures = [self.get_command_signature(ctx, command) for command in filtered]   #Get command signature in format as specified above
             #If we have any, put them in categories according to cogs, fallback is "Other"
