@@ -224,6 +224,29 @@ class Fun(commands.Cog):
                     embed=discord.Embed(title="🐱 " + self._("Random kitten"), description=self._("Oops! Looks like the cat delivery service is unavailable! Check back later."), color=self.bot.errorColor)
                     await msg.edit(embed=embed)
 
+    #Does about what you would expect it to do. Uses thecatapi
+    @commands.command(help="Shows a random fox.", description="Searches the interwebz™️ for a random fox picture.", usage="randomfox", aliases=["fox"])
+    @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
+    @commands.cooldown(1, 15, type=commands.BucketType.member)
+    @commands.guild_only()
+    async def randomfox(self, ctx):
+        embed=discord.Embed(title="🦊 " + self._("Random fox"), description=self._("Looking for a fox..."), color=0xff7f00)
+        embed = self.bot.add_embed_footer(ctx, embed)
+        msg=await ctx.send(embed=embed)
+        #Get a json file from  as response, then take url from dict
+        async with aiohttp.ClientSession() as session:
+            async with session.get('https://foxapi.dev/foxes/') as response:
+                if response.status == 200:
+                    foxjson = await response.json()
+                    embed=discord.Embed(title="🦊 " + self._("Random fox"), description=self._("Found one!"), color=0xff7f00)
+                    embed = self.bot.add_embed_footer(ctx, embed)
+                    embed = self.bot.add_embed_footer(ctx, embed)
+                    embed.set_image(url=foxjson["image"])
+                    await msg.edit(embed=embed)
+                else:
+                    embed=discord.Embed(title="🦊 " + self._("Random fox"), description=self._("Oops! Looks like the fox delivery service is unavailable! Check back later."), color=self.bot.errorColor)
+                    await msg.edit(embed=embed)
+
     @commands.command(help="Shows a random dog.", description="Searches the interwebz™️ for a random dog picture.", usage="randomdog", aliases=["dog"])
     @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
     @commands.cooldown(1, 15, type=commands.BucketType.member)
