@@ -259,7 +259,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
             for char in msg_content:
                 if char.isupper():
                     upper += 1
-            if upper/len(msg_content) > 0.8:
+            if upper/len(msg_content) > 0.3:
                 await self.automod_punish(message, offender=message.author, offense="caps", reason=f"using excessive caps")
         
         for word in message.content.split(" "):
