@@ -255,7 +255,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
         elif len(message.content) > 7:
             '''Caps'''
             upper = 0
-            msg_content = message.content.replace(" ", "").strip()
+            msg_content = ''.join(char for char in message.content if char.isalnum()) #Remove non-alphanumerical chars
             for char in msg_content:
                 if char.isupper():
                     upper += 1
