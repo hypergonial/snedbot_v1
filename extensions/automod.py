@@ -153,7 +153,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
 
         policies = await self.get_policies(ctx.guild.id)
 
-        if ctx.channel.id in policies[offense]["excluded_channels"]:
+        if not original_offense and ctx.channel.id in policies[offense]["excluded_channels"]:
             return
 
         policy_state = policies[offense]["state"] #This will decide the type of punishment
@@ -203,8 +203,8 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
 
 
         elif policy_state == "timeout":
-            await self.mod_cog.mute(ctx, offender, ctx.guild.me, duration=f"{temp_dur} minutes", reason=f"Timed out by auto-moderator for {reason}.")
-            embed=discord.Embed(title="🔇 User timed out", description="**{offender}** has been timed out for **{temp_dur}** minutes.\n**Reason:**```Muted by auto-moderator for {reason}.```".format(offender=offender, temp_dur=temp_dur, reason=reason), color=self.bot.errorColor)
+            await self.mod_cog.timeout(ctx, offender, ctx.guild.me, duration=f"{temp_dur} minutes", reason=f"Timed out by auto-moderator for {reason}.")
+            embed=discord.Embed(title="🔇 User timed out", description="**{offender}** has been timed out for **{temp_dur}** minutes.\n**Reason:**```Timed out by auto-moderator for {reason}.```".format(offender=offender, temp_dur=temp_dur, reason=reason), color=self.bot.errorColor)
             await ctx.send(embed=embed)
         
         elif policy_state == "kick":
