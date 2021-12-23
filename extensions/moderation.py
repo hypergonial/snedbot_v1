@@ -425,7 +425,7 @@ class Moderation(commands.Cog):
         embed=discord.Embed(title="🔉 " + self._("User timeout removed"), description=self._("**{offender}**'s timeout was removed.\n**Reason:** ```{reason}```").format(offender=offender, reason=reason), color=self.bot.embedGreen)
         await ctx.send(embed=embed)
     
-    @commands.command(hidden=True, help="Removes timeout from a user.", description="Removes timeout from a user. Logs the event if logging is set up.", usage="unmute <user> [reason]")
+    @commands.command(name="unmute", hidden=True, help="Removes timeout from a user.", description="Removes timeout from a user. Logs the event if logging is set up.", usage="unmute <user> [reason]")
     @commands.check(has_mod_perms)
     @commands.bot_has_permissions(moderate_members=True)
     @commands.guild_only()
