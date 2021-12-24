@@ -9,16 +9,6 @@ from extensions.utils import components
 
 logger = logging.getLogger(__name__)
 
-"""class HelpSelect(discord.ui.Select):
-    def __init__(self, cog_embeds:dict, message:discord.Message, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.cog_embeds = cog_embeds
-        self.message = message
-    
-    async def callback(self, interaction:discord.Interaction):
-        await self.message.edit(embed=self.cog_embeds[interaction.data["values"][0]])"""
-
-
 help_menu_strings = {
     "Permissions": {
         "description": "All commands related to handling command permissions",
@@ -135,7 +125,6 @@ class SnedHelp(commands.HelpCommand):
         cog_embeds = {} # Key: cog_name, Value: embed
         #We retrieve all the commands from the mapping of cog,commands
         select_options = []
-        paginator = commands.Paginator(prefix='', suffix='', max_size=500)
         for cog, cmds in mapping.items():
             filtered = await self.filter_commands(cmds, sort=True)   #This will filter commands to those the user can actually execute
             command_signatures = [self.get_command_signature(ctx, command) for command in filtered]   #Get command signature in format as specified above
