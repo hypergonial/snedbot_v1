@@ -1,10 +1,99 @@
+import asyncio
+import datetime
 import logging
 
 import discord
 from discord.ext import commands, pages
+
 from extensions.utils import components
 
 logger = logging.getLogger(__name__)
+
+"""class HelpSelect(discord.ui.Select):
+    def __init__(self, cog_embeds:dict, message:discord.Message, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cog_embeds = cog_embeds
+        self.message = message
+    
+    async def callback(self, interaction:discord.Interaction):
+        await self.message.edit(embed=self.cog_embeds[interaction.data["values"][0]])"""
+
+
+help_menu_strings = {
+    "Permissions": {
+        "description": "All commands related to handling command permissions",
+        "emoji": "📖"
+    },
+    "Admin Commands": {
+        "description": "All commands related to admin duties & bot configuration",
+        "emoji": "🔑"
+    },
+    "Role-Buttons": {
+        "description": "Configure roles that can hand out roles to users",
+        "emoji": "🔘"
+    },
+    "Events": {
+        "description": "Set up, organize, and manage events",
+        "emoji": "📅"
+    },
+    "Keep On Top": {
+        "description": "Manage keep-on-top settings",
+        "emoji": "⬆️"
+    },
+    "Matchmaking": {
+        "description": "Show all Annoverse matchmaking related commands",
+        "emoji": discord.PartialEmoji.from_str("annoverse:923758544661143582")
+    },
+    "Tags": {
+        "description": "Call, create, claim, search for tags",
+        "emoji": "💬"
+    },
+    "Logging": {
+        "description": "Manage logging configuration",
+        "emoji": "📝"
+    },
+    "Timers": {
+        "description": "Create and manage timers and reminders",
+        "emoji": "🕓"
+    },
+    "Falling Frontier": {
+        "description": "Functionality exclusive to Falling Frontier",
+        "emoji": discord.PartialEmoji.from_str("ff_serverlogo:923759064230535199")
+    },
+    "Annoverse": {
+        "description": "Functionality exclusive to Annoverse",
+        "emoji": discord.PartialEmoji.from_str("annoverse:923758544661143582")
+    },
+    "Giveaway": {
+        "description": "Create and manage giveaways",
+        "emoji": "🎉"
+    },
+    "Miscellaneous Commands": {
+        "description": "Commands that do not fit in other categories",
+        "emoji": "❔"
+    },
+    "Settings": {
+        "description": "Configure and customize the bot",
+        "emoji": "🔧"
+    },
+    "Jishaku": {
+        "description": "Owner-only, stop looking",
+        "emoji": "🤫"
+    },
+    "Auto-Moderation": {
+        "description": "Configure & customize automoderation filters & settings",
+        "emoji": "🤖"
+    },
+    "Fun": {
+        "description": "Commands that hopefully make your day a little better",
+        "emoji": "🙃"
+    },
+    "Moderation": {
+        "description": "All commands related to moderator duties",
+        "emoji": discord.PartialEmoji.from_str("mod_shield:923752735768190976")
+    },
+
+}
 
 class SnedHelp(commands.HelpCommand):
     '''
@@ -25,8 +114,7 @@ class SnedHelp(commands.HelpCommand):
 
         help_home_embed=discord.Embed(title="🏠 " + "__Help Home__", color=ctx.bot.embedBlue, description='''**How to navigate this help dialogue**
 
-        Navigate via the ◀️ ▶️ buttons, or skip to the end via the ⏮️ ⏭️ buttons.
-        You can stop this help session by pressing ⏹️.
+        Navigate to different sections of this help dialogue via the **dropdown** below!
 
         If you need support, please join the [support server](https://discord.gg/KNKr8FPmJa)!
 
@@ -38,12 +126,15 @@ class SnedHelp(commands.HelpCommand):
 
         *Do not include the brackets in your commands!*        
 
-        Press ▶️ to see the next page and what commands are available to you!
+        Thank you for using Sned!
         ''')
         embed = ctx.bot.add_embed_footer(ctx, help_home_embed)
         help_pages = []
         help_pages.append(help_home_embed)
+        all_commands = {} # Key: cog_name, Value: all command_signatures for cog
+        cog_embeds = {} # Key: cog_name, Value: embed
         #We retrieve all the commands from the mapping of cog,commands
+        select_options = []
         paginator = commands.Paginator(prefix='', suffix='', max_size=500)
         for cog, cmds in mapping.items():
             filtered = await self.filter_commands(cmds, sort=True)   #This will filter commands to those the user can actually execute
@@ -51,20 +142,34 @@ class SnedHelp(commands.HelpCommand):
             #If we have any, put them in categories according to cogs, fallback is "Other"
             if command_signatures:
                 cog_name = getattr(cog, "qualified_name", "Other") #Append items into a list of str, one item per cog
-                paginator.add_line(f"\n**{cog_name}**")
-                for signature in command_signatures:
-                    paginator.add_line(signature)
+                all_commands[cog_name] = "\n".join(command_signatures)
         
-        for page in paginator.pages:
-            embed=discord.Embed(title="⚙️ " + "__Available commands:__", description="**Tip:** You can also type **`{prefix}help [command]`** to get more information about a specific command and see any subcommands a command may have.\n\n {page}".format(prefix=ctx.prefix, page=page), color=ctx.bot.embedBlue)
+        for cog_name in all_commands.keys():
+            emoji = help_menu_strings[cog_name]['emoji'] if cog_name in help_menu_strings.keys() and help_menu_strings[cog_name]['emoji'] else '⚙️'
+            embed=discord.Embed(title=f"{emoji} __Help Page for {cog_name}:__", description="**Tip:** You can also type **`{prefix}help [command]`** to get more information about a specific command, see usage syntax, and see any subcommands a command may have.\n\n {commands}".format(prefix=ctx.prefix, commands=all_commands[cog_name]), color=ctx.bot.embedBlue)
             embed = ctx.bot.add_embed_footer(ctx, embed)
-            help_pages.append(embed)
+            cog_embeds[cog_name] = embed
+            select_options.append(discord.SelectOption(label=cog_name, value=cog_name, description=help_menu_strings[cog_name]["description"] if cog_name in help_menu_strings.keys() else None, emoji=help_menu_strings[cog_name]["emoji"] if cog_name in help_menu_strings.keys() else None))
         
-        menu_paginator = components.SnedMenuPaginator(pages=help_pages, show_disabled=True, show_indicator=True)
-        await menu_paginator.send(ctx, ephemeral=False)
+        class HelpView(components.AuthorOnlyView):
+            async def on_timeout(self):
+                await message.edit(view=None) # Remove timed out view
+
+        class HelpSelect(discord.ui.Select):
+            def __init__(self, cog_embeds:dict, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.cog_embeds = cog_embeds
+            
+            async def callback(self, interaction:discord.Interaction):
+                await message.edit(embed=self.cog_embeds[interaction.data["values"][0]])
+
+        view = HelpView(ctx)
+        view.add_item(HelpSelect(cog_embeds, placeholder="Select a category...", options=select_options))
+        message = await ctx.send(embed=help_home_embed, view=view)
+        
 
     async def send_command_help(self, command):
-        ctx = self.context   #Obtaining ctx
+        ctx = self.context
         if command.parents:
             detail_embed=discord.Embed(title="⚙️ " + "Command: {prefix}{parent} {command}".format(prefix=ctx.clean_prefix, parent=command.full_parent_name, command=command.name), color=ctx.bot.embedBlue)
         else:

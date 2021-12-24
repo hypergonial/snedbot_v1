@@ -588,7 +588,7 @@ class Moderation(commands.Cog):
                 embed = discord.Embed(title="🔨 " + self._("Failures encountered:"), description=self._("Some errors were encountered during the mass-ban: \n```{errors}```").format(errors="\n".join(errors)),color=self.bot.warnColor)
                 await ctx.send(embed=embed)
     
-    @commands.command(help="Bans users based on criteria set.", description="""Bans a set of users based on the set of criteria specified. The command has advanced command-line syntax and is excellent for handling raids.
+    @commands.command(help="Bans users based on criteria set. See command help for more.", description="""Bans a set of users based on the set of criteria specified. The command has advanced command-line syntax and is excellent for handling raids.
     
     **Arguments:**
     `--reason` or `-r` - Reason to ban all matched users with
