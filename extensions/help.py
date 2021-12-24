@@ -145,7 +145,7 @@ class SnedHelp(commands.HelpCommand):
                 all_commands[cog_name] = "\n".join(command_signatures)
         
         for cog_name in all_commands.keys():
-            emoji = help_menu_strings[cog_name]['emoji'] if cog_name in help_menu_strings.keys() and help_menu_strings[cog_name]['emoji'] else '⚙️'
+            emoji = help_menu_strings[cog_name]['emoji'] if cog_name in help_menu_strings.keys() and help_menu_strings[cog_name]['emoji'] and isinstance(help_menu_strings[cog_name]['emoji'], str) else '⚙️'
             embed=discord.Embed(title=f"{emoji} __Help Page for {cog_name}:__", description="**Tip:** You can also type **`{prefix}help [command]`** to get more information about a specific command, see usage syntax, and see any subcommands a command may have.\n\n {commands}".format(prefix=ctx.prefix, commands=all_commands[cog_name]), color=ctx.bot.embedBlue)
             embed = ctx.bot.add_embed_footer(ctx, embed)
             cog_embeds[cog_name] = embed
