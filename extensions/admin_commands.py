@@ -106,10 +106,10 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(title="✅ Prefix added", description=f"Prefix **{prefix}** has been added to the list of valid prefixes.\n\n**Note:** Setting a custom prefix disables the default prefix. If you forget your prefix, mention the bot!", color=self.bot.embedGreen)
             await ctx.send(embed=embed)
 
-        elif prefix in records["prefix"][0]:
+        elif prefix in records[0]["prefix"]:
             embed=discord.Embed(title="❌ Prefix already added", description=f"This prefix is already added.", color=self.bot.errorColor)
             await ctx.send(embed=embed)
-        elif len(records["prefix"][0]) > 5:
+        elif len(records[0]["prefix"]) > 5:
             embed=discord.Embed(title="❌ Too many prefixes", description=f"This server has reached the maximum amount of prefixes.", color=self.bot.errorColor)
             await ctx.send(embed=embed)
 
