@@ -111,6 +111,7 @@ class SnedBot(commands.Bot):
         self.DEFAULT_PREFIX = 'sn '
         if self.EXPERIMENTAL == True :
             self.DEFAULT_PREFIX = 'snx '
+            self.debug_guilds = [config["home_guild"] if isinstance(config["home_guild"], int) else None]
             logging.basicConfig(level=logging.INFO)
             DB_NAME = "sned_exp"
         else :
