@@ -224,13 +224,8 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
     @commands.guild_only()
     async def leave(self, ctx):
         embed = discord.Embed(title="Are you sure you want the bot to leave?", description="You need an invite link and `Manage Server` permissions to undo this.", color=self.bot.embedBlue)
-        msg = await ctx.channel.send(embed=embed)
-        await msg.add_reaction("✅")
-        await msg.add_reaction("❌")
-        def check(payload):
-            return payload.message_id == msg.id and payload.user_id == ctx.author.id
-        payload = await self.bot.wait_for('raw_reaction_add', timeout=60.0,check=check)
-        if str(payload.emoji) == "✅":
+        confirmed = await ctx.confirm(embed=embed)
+        if confirmed:
             embed = discord.Embed(title="🚪 See you soon! (hopefully)", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             await ctx.guild.leave()
