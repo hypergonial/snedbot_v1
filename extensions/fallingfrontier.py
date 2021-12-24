@@ -65,7 +65,7 @@ class FallingFrontier(commands.Cog, name="Falling Frontier"):
             await ctx.channel.send(embed=embed)
 
     
-    @commands.command(aliases=["ffwiki"])
+    @commands.command(aliases=["ffwiki"], brief="Searches the Falling Frontier Wiki", description="Searches the Falling Frontier Wiki for the given query.", usage="fallingfrontierwiki <query>")
     @commands.guild_only()
     async def fallingfrontierwiki(self, ctx, *, query:str=None):
         await ctx.channel.trigger_typing()
