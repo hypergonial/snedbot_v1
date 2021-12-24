@@ -26,7 +26,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             return await ctx.bot.custom_checks.has_permissions(ctx, 'admin_permitted')
 
 
-    @commands.command(help="Resets all settings for this guild.", description = "Resets all settings for this guild. Requires priviliged access and administrator permissions. Will also erase all tags, reminders, reaction roles and pending moderation actions. Irreversible.", usage="resetsettings")
+    @commands.command(help="Resets all settings for this guild.", aliases=["reset"], description = "Resets all settings for this guild. Requires priviliged access and administrator permissions. Will also erase all tags, reminders, reaction roles and pending moderation actions. Irreversible.", usage="resetsettings")
     @commands.has_permissions(administrator=True)
     @commands.guild_only()
     async def resetsettings(self, ctx):
