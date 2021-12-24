@@ -4,12 +4,10 @@ import gettext
 import logging
 import os
 import sys
-import time
 import traceback
 from dataclasses import dataclass
 from difflib import get_close_matches
 from itertools import chain
-from pathlib import Path
 
 import asyncpg
 import discord
