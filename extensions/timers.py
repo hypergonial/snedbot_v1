@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import json
 import logging
 import re
 
@@ -9,15 +10,41 @@ from discord.ext import commands, tasks
 
 logger = logging.getLogger(__name__)
 
-'''
-The repo https://github.com/Rapptz/RoboDanny was massive help when writing this code,
-and I used the same general structure as seen in /cogs/reminder.py there.
-Also thanks to Vex#3110 from the discord.py discord for the original regex code, which
-I tweaked to to be a bit more generally applicable (and possibly more shit) :verycool:
-'''
+
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
+
+class ReminderView(discord.ui.View):
+    def __init__(self, ctx, timer_id:int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.ctx = ctx
+        self.timer_id = timer_id
+
+
+    @discord.ui.button(emoji='✉️', label="Remind me too!", style=discord.ButtonStyle.blurple)
+    async def add_recipient(self, button: discord.ui.Button, interaction: discord.Interaction):
+        try:
+            timer_cog = self.ctx.bot.get_cog("Timers")
+            timer = await timer_cog.get_timer(self.timer_id, self.ctx.guild.id)
+        except ValueError:
+            return await interaction.response.send_message("Oops! It looks like this reminder already expired!", ephemeral=True)
+        else:
+            notes = json.loads(timer.notes)
+            if timer.user_id == interaction.user.id:
+                embed = discord.Embed(title="❌ Invalid interaction", description="You cannot do this on your own reminder.", color=self.bot.errorColor)
+                return await interaction.response.send_message(embed=embed, ephemeral=True)
+            if interaction.user.id not in notes["additional_recipients"]:
+                notes["additional_recipients"].append(interaction.user.id)
+                await timer_cog.update_timer(datetime.datetime.fromtimestamp(timer.expires, tz=datetime.timezone.utc), self.timer_id, self.ctx.guild.id, new_notes=json.dumps(notes))
+                embed = discord.Embed(title="✅ Signed up to reminder", description="You will also be notified when this reminder is due!", color=self.bot.embedGreen)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            else:
+                notes["additional_recipients"].remove(interaction.user.id)
+                await timer_cog.update_timer(datetime.datetime.fromtimestamp(timer.expires, tz=datetime.timezone.utc), self.timer_id, self.ctx.guild.id, new_notes=json.dumps(notes))
+                embed = discord.Embed(title="✅ Removed from reminder", description="Removed you from the list of recipients!", color=self.bot.embedGreen)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+
 
 class Timer():
     '''
@@ -224,22 +251,44 @@ class Timers(commands.Cog):
             self.currenttask.cancel()
             self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
 
-    async def update_timer(self, expires:datetime.datetime, entry_id:int, guild_id:int):
-        '''Update a timer's expiry'''
+    async def update_timer(self, expires:datetime.datetime, entry_id:int, guild_id:int, new_notes:str=None):
+        '''Update a timer's expiry and/or notes field.'''
 
         expires = round(expires.timestamp())
-        await self.bot.pool.execute('''UPDATE timers SET expires = $1 WHERE id = $2 AND guild_id = $3''', expires, entry_id, guild_id)
+        if new_notes:
+            print(isinstance(expires, bool))
+            print(isinstance(new_notes, bool))
+            print(isinstance(entry_id, bool))
+            print(isinstance(guild_id, bool))
+            await self.bot.pool.execute('''UPDATE timers SET expires = $1, notes = $2 WHERE id = $3 AND guild_id = $4''', expires, new_notes, entry_id, guild_id)
+        else:
+            await self.bot.pool.execute('''UPDATE timers SET expires = $1 WHERE id = $2 AND guild_id = $3''', expires, entry_id, guild_id)
         if self.current_timer and self.current_timer.id == entry_id:
             logger.debug("Updating timers resulted in reshuffling.")
             self.currenttask.cancel()
             self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
+    
+    async def get_timer(self, entry_id:int, guild_id:int) -> Timer:
+        '''Retrieve a pending timer'''
+
+        records = await self.bot.pool.fetch('''SELECT * FROM timers WHERE id = $1 AND guild_id = $2''', entry_id, guild_id)
+
+        if records and len(records) > 0:
+            record = records[0]
+            timer = Timer(record.get('id'), record.get('guild_id'), record.get('user_id'), record.get('event'), record.get('channel_id'), record.get('expires'), record.get('notes'))
+            return timer
+
+        else:
+            raise ValueError("Invalid entry_id or guild_id: Timer not found.")
 
     async def create_timer(self, expires:datetime.datetime, event:str, guild_id:int, user_id:int, channel_id:int=None, *, notes:str=None):
         '''Create a new timer, will dispatch on_<event>_timer_complete when finished.'''
 
         logger.debug(f"Expiry: {expires}")
         expires=round(expires.timestamp()) #Converting it to time since epoch
-        await self.bot.pool.execute('''INSERT INTO timers (guild_id, channel_id, user_id, event, expires, notes) VALUES ($1, $2, $3, $4, $5, $6)''', guild_id, channel_id, user_id, event, expires, notes)
+        records = await self.bot.pool.fetch('''INSERT INTO timers (guild_id, channel_id, user_id, event, expires, notes) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *''', guild_id, channel_id, user_id, event, expires, notes)
+        record = records[0]
+        timer = Timer(record.get('id'), record.get('guild_id'), record.get('user_id'), record.get('event'), record.get('channel_id'), record.get('expires'), record.get('notes'))
         logger.debug("Saved to database.")
         #If there is already a timer in queue, and it has an expiry that is further than the timer we just created
         #Then we reboot the dispatch_timers() function to re-check for the latest timer.
@@ -249,6 +298,7 @@ class Timers(commands.Cog):
             self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
         elif self.current_timer is None:
             self.currenttask = self.bot.loop.create_task(self.dispatch_timers())
+        return timer
 
     #Loop every hour to check if any timers entered the 40 day max sleep range if we have no timers queued
     #This allows us to have timers of infinite length practically
@@ -299,11 +349,15 @@ class Timers(commands.Cog):
                 logger.debug(f"Timestrs length is: {len(timestr)}")
                 if timestr is None or len(timestr) == 0:
                     timestr = "..."
-                note = timestr+f"\n\n[Jump to original message!]({ctx.message.jump_url})"
+                reminder_data = {
+                    "message": timestr,
+                    "jump_url": ctx.message.jump_url,
+                    "additional_recipients": []
+                }
                 embed = discord.Embed(title="✅ " + self._("Reminder set"), description=self._("Reminder set for:  {timestamp} ({timestampR})").format(timestamp=discord.utils.format_dt(time), timestampR=discord.utils.format_dt(time, style='R')), color=self.bot.embedGreen)
                 embed = self.bot.add_embed_footer(ctx, embed)
-                await self.create_timer(expires=time, event="reminder", guild_id=ctx.guild.id,user_id=ctx.author.id, channel_id=ctx.channel.id, notes=note)
-                await ctx.send(embed=embed)
+                timer = await self.create_timer(expires=time, event="reminder", guild_id=ctx.guild.id,user_id=ctx.author.id, channel_id=ctx.channel.id, notes=json.dumps(reminder_data))
+                await ctx.send(embed=embed, view=ReminderView(ctx, timer.id, timeout=300))
 
 
     @commands.command(usage="reminders", help="Lists all reminders you have pending.", description="Lists all your pending reminders, you can get a reminder's ID here to delete it.", aliases=["myreminders", "listreminders"])
@@ -314,8 +368,7 @@ class Timers(commands.Cog):
         reminderstr = ""
         for result in results :
             if result.get('event') == "reminder":
-                note_stripped = result.get('notes').replace("\n", " ") #Avoid the reminder dialog breaking
-                note_stripped = note_stripped.split("[Jump to original message!]")[0] #Remove jump url
+                note_stripped = json.loads(result.get('notes'))["message"].replace("\n", " ") #Avoid the reminder dialog breaking
                 if len(note_stripped) > 50:
                     note_stripped = f"{note_stripped[slice(47)]}..."
                 timers.append(Timer(id=result.get('id'),guild_id=result.get('guild_id'),user_id=result.get('user_id'),channel_id=result.get('channel_id'),event=result.get('event'),expires=result.get('expires'),notes=note_stripped))      
@@ -362,9 +415,15 @@ class Timers(commands.Cog):
         channel = await self.bot.fetch_channel(timer.channel_id)
         if guild.get_member(timer.user_id) != None: #Check if user did not leave guild
             user = guild.get_member(timer.user_id)
-            embed=discord.Embed(title="✉️ " + self._("{user}, your reminder:").format(user=user.name), description=f"{timer.notes}", color=self.bot.embedBlue)
+            notes = json.loads(timer.notes)
+            embed=discord.Embed(title="✉️ " + self._("{user}, your reminder:").format(user=user.name), description=f"{notes['message']}\n\n[Jump to original message!]({notes['jump_url']})", color=self.bot.embedBlue)
+            pings = [user.mention]
+            if len(notes["additional_recipients"]) > 0:
+                for user_id in notes["additional_recipients"]:
+                    if guild.get_member(user_id):
+                        pings.append(guild.get_member(user_id).mention)
             try:
-                await channel.send(embed=embed, content=user.mention)
+                await channel.send(embed=embed, content=' '.join(pings))
             except (discord.Forbidden, discord.HTTPException, discord.errors.NotFound) :
                 try: #Fallback to DM if cannot send in channel
                     await user.send(embed=embed, content="I lost access to the channel this reminder was sent from, so here it is!")
