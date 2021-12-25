@@ -15,37 +15,6 @@ logger = logging.getLogger(__name__)
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
 
-class ReminderView(discord.ui.View):
-    def __init__(self, ctx, timer_id:int, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.ctx = ctx
-        self.timer_id = timer_id
-
-
-    @discord.ui.button(emoji='✉️', label="Remind me too!", style=discord.ButtonStyle.blurple)
-    async def add_recipient(self, button: discord.ui.Button, interaction: discord.Interaction):
-        try:
-            timer_cog = self.ctx.bot.get_cog("Timers")
-            timer = await timer_cog.get_timer(self.timer_id, self.ctx.guild.id)
-        except ValueError:
-            return await interaction.response.send_message("Oops! It looks like this reminder already expired!", ephemeral=True)
-        else:
-            notes = json.loads(timer.notes)
-            if timer.user_id == interaction.user.id:
-                embed = discord.Embed(title="❌ Invalid interaction", description="You cannot do this on your own reminder.", color=self.ctx.bot.errorColor)
-                return await interaction.response.send_message(embed=embed, ephemeral=True)
-            if interaction.user.id not in notes["additional_recipients"]:
-                notes["additional_recipients"].append(interaction.user.id)
-                await timer_cog.update_timer(datetime.datetime.fromtimestamp(timer.expires, tz=datetime.timezone.utc), self.timer_id, self.ctx.guild.id, new_notes=json.dumps(notes))
-                embed = discord.Embed(title="✅ Signed up to reminder", description="You will also be notified when this reminder is due!", color=self.ctx.bot.embedGreen)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-            else:
-                notes["additional_recipients"].remove(interaction.user.id)
-                await timer_cog.update_timer(datetime.datetime.fromtimestamp(timer.expires, tz=datetime.timezone.utc), self.timer_id, self.ctx.guild.id, new_notes=json.dumps(notes))
-                embed = discord.Embed(title="✅ Removed from reminder", description="Removed you from the list of recipients!", color=self.ctx.bot.embedGreen)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-
-
 class Timer():
     '''
     Represents a timer object.
@@ -346,6 +315,47 @@ class Timers(commands.Cog):
                 embed = discord.Embed(title=self.bot.errorDataTitle, description=self._("Sorry, but that's a bit too far in the future.").format(prefix=ctx.prefix),color=self.bot.errorColor)
                 await ctx.send(embed=embed)
             else:
+
+
+                class ReminderView(discord.ui.View):
+                    def __init__(self, ctx, timer_id:int, *args, **kwargs):
+                        super().__init__(*args, **kwargs)
+                        self.ctx = ctx
+                        self.timer_id = timer_id
+                    
+                    async def on_timeout(self):
+                        for item in self.children:
+                            item.disabled = True
+                        await reminder_msg.edit(view=self)
+
+                    @discord.ui.button(emoji='✉️', label="Remind me too!", style=discord.ButtonStyle.blurple)
+                    async def add_recipient(self, button: discord.ui.Button, interaction: discord.Interaction):
+                        try:
+                            timer_cog = self.ctx.bot.get_cog("Timers")
+                            timer = await timer_cog.get_timer(self.timer_id, self.ctx.guild.id)
+                        except ValueError:
+                            return await interaction.response.send_message("Oops! It looks like this reminder already expired!", ephemeral=True)
+                        else:
+                            notes = json.loads(timer.notes)
+                            if timer.user_id == interaction.user.id:
+                                embed = discord.Embed(title="❌ Invalid interaction", description="You cannot do this on your own reminder.", color=self.ctx.bot.errorColor)
+                                return await interaction.response.send_message(embed=embed, ephemeral=True)
+                            if interaction.user.id not in notes["additional_recipients"]:
+                                if len(notes["additional_recipients"]) < 50:
+                                    notes["additional_recipients"].append(interaction.user.id)
+                                    await timer_cog.update_timer(datetime.datetime.fromtimestamp(timer.expires, tz=datetime.timezone.utc), self.timer_id, self.ctx.guild.id, new_notes=json.dumps(notes))
+                                    embed = discord.Embed(title="✅ Signed up to reminder", description="You will also be notified when this reminder is due!", color=self.ctx.bot.embedGreen)
+                                    await interaction.response.send_message(embed=embed, ephemeral=True)
+                                else:
+                                    embed = discord.Embed(title="❌ Invalid interaction", description="Oops! Looks like too many people signed up for this reminder. Try creating a new reminder! (Max cap: 50)", color=self.ctx.bot.errorColor)
+                                    return await interaction.response.send_message(embed=embed, ephemeral=True)
+                            else:
+                                notes["additional_recipients"].remove(interaction.user.id)
+                                await timer_cog.update_timer(datetime.datetime.fromtimestamp(timer.expires, tz=datetime.timezone.utc), self.timer_id, self.ctx.guild.id, new_notes=json.dumps(notes))
+                                embed = discord.Embed(title="✅ Removed from reminder", description="Removed you from the list of recipients!", color=self.ctx.bot.embedGreen)
+                                await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
                 logger.debug(f"Timestrs length is: {len(timestr)}")
                 if timestr is None or len(timestr) == 0:
                     timestr = "..."
@@ -357,7 +367,7 @@ class Timers(commands.Cog):
                 embed = discord.Embed(title="✅ " + self._("Reminder set"), description=self._("Reminder set for:  {timestamp} ({timestampR})").format(timestamp=discord.utils.format_dt(time), timestampR=discord.utils.format_dt(time, style='R')), color=self.bot.embedGreen)
                 embed = self.bot.add_embed_footer(ctx, embed)
                 timer = await self.create_timer(expires=time, event="reminder", guild_id=ctx.guild.id,user_id=ctx.author.id, channel_id=ctx.channel.id, notes=json.dumps(reminder_data))
-                await ctx.send(embed=embed, view=ReminderView(ctx, timer.id, timeout=300))
+                reminder_msg = await ctx.send(embed=embed, view=ReminderView(ctx, timer.id, timeout=300))
 
 
     @commands.command(usage="reminders", help="Lists all reminders you have pending.", description="Lists all your pending reminders, you can get a reminder's ID here to delete it.", aliases=["myreminders", "listreminders"])
