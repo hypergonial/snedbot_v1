@@ -1021,7 +1021,7 @@ class Moderation(commands.Cog):
             is_blacklisted = True if records and records[0]["user_id"] == user.id else False
             embed.description = f"{embed.description}\nBlacklisted: `{is_blacklisted}`"
 
-        embed.set_footer(text=f"Requested by {ctx.author.name}#{ctx.author.discriminator}", icon_url=ctx.author.avatar.url)
+        embed = self.bot.add_embed_footer(ctx, embed)
         return embed
 
 
