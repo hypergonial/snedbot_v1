@@ -32,17 +32,17 @@ class ReminderView(discord.ui.View):
         else:
             notes = json.loads(timer.notes)
             if timer.user_id == interaction.user.id:
-                embed = discord.Embed(title="❌ Invalid interaction", description="You cannot do this on your own reminder.", color=self.bot.errorColor)
+                embed = discord.Embed(title="❌ Invalid interaction", description="You cannot do this on your own reminder.", color=self.ctx.bot.errorColor)
                 return await interaction.response.send_message(embed=embed, ephemeral=True)
             if interaction.user.id not in notes["additional_recipients"]:
                 notes["additional_recipients"].append(interaction.user.id)
                 await timer_cog.update_timer(datetime.datetime.fromtimestamp(timer.expires, tz=datetime.timezone.utc), self.timer_id, self.ctx.guild.id, new_notes=json.dumps(notes))
-                embed = discord.Embed(title="✅ Signed up to reminder", description="You will also be notified when this reminder is due!", color=self.bot.embedGreen)
+                embed = discord.Embed(title="✅ Signed up to reminder", description="You will also be notified when this reminder is due!", color=self.ctx.bot.embedGreen)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
             else:
                 notes["additional_recipients"].remove(interaction.user.id)
                 await timer_cog.update_timer(datetime.datetime.fromtimestamp(timer.expires, tz=datetime.timezone.utc), self.timer_id, self.ctx.guild.id, new_notes=json.dumps(notes))
-                embed = discord.Embed(title="✅ Removed from reminder", description="Removed you from the list of recipients!", color=self.bot.embedGreen)
+                embed = discord.Embed(title="✅ Removed from reminder", description="Removed you from the list of recipients!", color=self.ctx.bot.embedGreen)
                 await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
