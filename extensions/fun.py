@@ -150,6 +150,29 @@ class Fun(commands.Cog):
     async def uwu(self, ctx, *, text:str):
         await ctx.send(uwuify.uwu(text))
 
+    @commands.command(help="Generates free nitro... perharps...", description="A fun command to rickroll your friends... or is it?", aliases=["freenitro"], usage="nitro")
+    @commands.guild_only()
+    async def nitro(self, ctx):
+
+        class NitroView(discord.ui.View):
+            async def on_timeout(self):
+                for item in self.children:
+                    item.disabled = True
+                    item.style = discord.ButtonStyle.secondary
+                    item.label = "            Accept            "
+                embed = discord.Embed(title="You've been gifted a subscription!", description="Hmm, it seems someone already claimed this gift.", color=0x2f3136)
+                embed.set_thumbnail(url="https://i.imgur.com/w9aiD6F.png")
+                await nitro_msg.edit(view=self, embed=embed)
+
+            @discord.ui.button(style=discord.ButtonStyle.green, label="          Accept          ")
+            async def callback(self, button:discord.ui.Button, interaction:discord.Interaction):
+                await interaction.response.send_message("https://tenor.com/view/rickroll-roll-rick-never-gonna-give-you-up-never-gonna-gif-22954713", ephemeral=True)
+
+
+        embed = discord.Embed(title="You've been gifted a subscription!", description="You've been gifted Nitro for **1 month!**", color=0x2f3136)
+        embed.set_thumbnail(url="https://i.imgur.com/w9aiD6F.png")
+        nitro_msg = await ctx.send(embed=embed, view=NitroView(timeout=60))
+
     @commands.command(help="Boom!", description="Because who doesn't like blowing stuff up?", usage="boom")
     async def boom(self, ctx):
         embed=discord.Embed(title="💥 BOOM!", color=discord.Colour.gold())
