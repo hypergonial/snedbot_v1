@@ -392,46 +392,53 @@ class Moderation(commands.Cog):
         Temporarily times out a member
         '''
         await ctx.channel.trigger_typing()
-
-        try:
-            muted_until = await self.timeout(ctx, member, ctx.author, duration, reason)
-        except ValueError:
-            embed=discord.Embed(title="❌ Error: Invalid data entered", description="Your entered timeformat is invalid. Type `{prefix}help timeout` for more information.".format(prefix=ctx.prefix), color=self.bot.errorColor)
-            await ctx.send(embed=embed)
-            raise PunishFailed
-        except ModuleNotFoundError as error:
-            embed=discord.Embed(title="❌ " + "Timeout failed", description="This function requires an extension that is not enabled.\n**Error:** ```{error}```".format(error=error), color=self.bot.errorColor)
-            await ctx.send(embed=embed)
-            raise PunishFailed 
-        except UserInputError:
-            embed=discord.Embed(title="❌ Timeout too long", description=self._("Timeout length exceeded maximum length of **28 days**! Please pick a shorter timeout duration.").format(prefix=ctx.prefix), color=self.bot.errorColor)
-            await ctx.send(embed=embed)
-            raise PunishFailed
+        if not member.timed_out:
+            try:
+                muted_until = await self.timeout(ctx, member, ctx.author, duration, reason)
+            except ValueError:
+                embed=discord.Embed(title="❌ Invalid data entered", description="Your entered timeformat is invalid. Type `{prefix}help timeout` for more information.".format(prefix=ctx.prefix), color=self.bot.errorColor)
+                await ctx.send(embed=embed)
+                raise PunishFailed
+            except ModuleNotFoundError as error:
+                embed=discord.Embed(title="❌ " + "Timeout failed", description="This function requires an extension that is not enabled.\n**Error:** ```{error}```".format(error=error), color=self.bot.errorColor)
+                await ctx.send(embed=embed)
+                raise PunishFailed 
+            except UserInputError:
+                embed=discord.Embed(title="❌ Timeout too long", description=self._("Timeout length exceeded maximum length of **28 days**! Please pick a shorter timeout duration.").format(prefix=ctx.prefix), color=self.bot.errorColor)
+                await ctx.send(embed=embed)
+                raise PunishFailed
+            else:
+                embed=discord.Embed(title="🔇 " + "User timed out", description="**{offender}** has been timed out until {duration}.\n**Reason:** ```{reason}```".format(offender=member, duration=discord.utils.format_dt(muted_until), reason=reason), color=self.bot.embedGreen)
+                await ctx.send(embed=embed)
         else:
-            embed=discord.Embed(title="🔇 " + "User timed out", description="**{offender}** has been timed out until {duration}.\n**Reason:** ```{reason}```".format(offender=member, duration=discord.utils.format_dt(muted_until), reason=reason), color=self.bot.embedGreen)
+            embed=discord.Embed(title="❌ User already timed out", description="User is already timed out. Use `{prefix}timeout remove` to remove it.".format(prefix=ctx.prefix), color=self.bot.errorColor)
             await ctx.send(embed=embed)
-
+            raise PunishFailed
 
     @timeout_cmd.command(name="remove", help="Removes timeout from a user.", description="Removes timeout from a user. Logs the event if logging is set up.", usage="timeout remove <user> [reason]")
     @commands.check(has_mod_perms)
     @commands.bot_has_permissions(moderate_members=True)
     @commands.guild_only()
     @mod_command
-    async def remove_timeout_cmd(self, ctx, offender:discord.Member, *, reason:str=None):
+    async def remove_timeout_cmd(self, ctx, member:discord.Member, *, reason:str=None):
 
-        await self.remove_timeout(ctx, offender, moderator=ctx.author, reason=reason)
+        if member.timed_out:
+            await self.remove_timeout(ctx, member, moderator=ctx.author, reason=reason)
 
-        if not reason: reason = "No reason specified"
-        embed=discord.Embed(title="🔉 " + self._("User timeout removed"), description=self._("**{offender}**'s timeout was removed.\n**Reason:** ```{reason}```").format(offender=offender, reason=reason), color=self.bot.embedGreen)
-        await ctx.send(embed=embed)
+            if not reason: reason = "No reason specified"
+            embed=discord.Embed(title="🔉 " + self._("User timeout removed"), description=self._("**{offender}**'s timeout was removed.\n**Reason:** ```{reason}```").format(offender=member, reason=reason), color=self.bot.embedGreen)
+            await ctx.send(embed=embed)
+        else:
+            embed=discord.Embed(title="❌ Error: User not timed out", description="User is not timed out.", color=self.bot.errorColor)
+            return await ctx.send(embed=embed)
     
     @commands.command(name="unmute", hidden=True, help="Removes timeout from a user.", description="Removes timeout from a user. Logs the event if logging is set up.", usage="unmute <user> [reason]")
     @commands.check(has_mod_perms)
     @commands.bot_has_permissions(moderate_members=True)
     @commands.guild_only()
     @mod_command
-    async def unmute_cmd(self, ctx, offender:discord.Member, *, reason:str=None):
-        await ctx.invoke(self.timeout_cmd.get_command("remove"), offender, reason=reason)
+    async def unmute_cmd(self, ctx, member:discord.Member, *, reason:str=None):
+        await ctx.invoke(self.timeout_cmd.get_command("remove"), member, reason=reason)
     
 
     @commands.command(name="ban", help="Bans a user.", description="Bans a user with an optional reason. Deletes the last 7 days worth of messages from the user.", usage="ban <user> [reason]")
