@@ -186,9 +186,6 @@ class SnedBot(commands.Bot):
 
         ctx = await self.get_context(message, cls=context.Context)
 
-        if ctx.command is None:
-            return
-
         if message.author.bot:
             return
 
