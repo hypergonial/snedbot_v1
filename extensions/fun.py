@@ -6,6 +6,7 @@ import os
 import random
 from pathlib import Path
 from textwrap import fill
+import functools
 
 import aiohttp
 import discord
@@ -30,9 +31,39 @@ class Fun(commands.Cog):
     async def cog_check(self, ctx):
         return await ctx.bot.custom_checks.has_permissions(ctx, 'fun') or await ctx.bot.custom_checks.has_permissions(ctx, 'mod_permitted')
 
+    def easter_eggs(func):
+        '''Occasionally sends a random easter-egg instead of what the command intended.'''
+
+        @functools.wraps(func)
+        async def inner(*args, **kwargs):
+            self = args[0]
+            ctx = args[1]
+
+            to_meme_or_not_to_meme = random.randint(1, 200) == 1
+
+            if to_meme_or_not_to_meme:
+                to_stick_bug_or_not_to_stick_bug = random.randint(1, 2) == 1
+                if to_stick_bug_or_not_to_stick_bug:
+                    embed = discord.Embed(title="Get stick bugged lol", color=0xd76b00)
+                    embed.set_image(url="https://c.tenor.com/JTyF_DiQb2kAAAAd/get-bugged.gif")
+                    embed.set_footer(text="Bet you did not see this coming!")
+                    await ctx.send(embed=embed)
+                else:
+                    embed = discord.Embed(title="You've just got a legendary encounter!", color=0xd76b00)
+                    embed.set_image(url="https://cdn.discordapp.com/attachments/800542220390367243/924478488264728646/5DQgDDPZT47S.jpg")
+                    await ctx.send(embed=embed)
+
+            else:
+                 return await func(*args, **kwargs)
+        return inner
+
+
+
+
     @commands.group(help="Displays a user's avatar.", description="Displays a user's avatar for your viewing (or stealing) pleasure.", usage=f"avatar [user]", invoke_without_command=True, case_insensitive=True)
     @commands.cooldown(1, 10, type=commands.BucketType.member)
     @commands.guild_only()
+    @easter_eggs
     async def avatar(self, ctx, member:discord.Member=None) :
         if not member: member=ctx.author
         embed=discord.Embed(title=self._("{member_name}'s avatar:").format(member_name=member.name), color=member.colour)
@@ -43,6 +74,7 @@ class Fun(commands.Cog):
     @avatar.command(name="global", help="Displays a user's global avatar.", description="Displays a user's global avatar for your viewing (or stealing) pleasure.", usage=f"avatar global [user]")
     @commands.cooldown(1, 10, type=commands.BucketType.member)
     @commands.guild_only()
+    @easter_eggs
     async def avatar_global(self, ctx, member:discord.Member=None) :
         if not member: member=ctx.author
         avatar = member.avatar if member.avatar else member.display_avatar #Avoid empty avatars
@@ -53,6 +85,7 @@ class Fun(commands.Cog):
 
     @commands.command(aliases=["typerace"], help="See who can type the fastest!", description="Starts a typerace where you can see who can type the fastest. You can optionally specify the difficulty and the length of the race.\n\n**Difficulty options:**\n`easy` - 1-4 letter words\n`medium` - 5-8 letter words (Default)\n`hard` 9+ letter words\n\n**Length:**\n`1-20` - (Default: `5`) Specifies the amount of words in the typerace", usage="typeracer [difficulty] [length]")
     @commands.max_concurrency(1, per=commands.BucketType.channel,wait=False)
+    @easter_eggs
     async def typeracer(self, ctx, difficulty:str="medium", length=5):
         if length not in range(1, 21) or difficulty.lower() not in ("easy", "medium", "hard"):
             embed=discord.Embed(title="🏁 " + self._("Typeracer"), description=self._("Invalid data entered! Check `{prefix}help typeracer` for more information.").format(prefix=ctx.prefix), color=self.bot.errorColor)
@@ -129,6 +162,7 @@ class Fun(commands.Cog):
     
     @commands.command(help="Googles something for you.", description="Googles something for you because you could not be bothered to do it...", usage="google <search query>", aliases=["lmgtfy"])
     @commands.guild_only()
+    @easter_eggs
     async def google(self, ctx, *, query):
         query = query.replace(" ", "+")
         link = f"https://letmegooglethat.com/?q={query}"
@@ -138,6 +172,7 @@ class Fun(commands.Cog):
 
     @commands.command(hidden=True, help="Our cool ducky friends are back.", description="Searches duckduckgo instead of Google for you, because privacy is cool.", usage="ddg <search query>", aliases=["lmddgtfy"])
     @commands.guild_only()
+    @easter_eggs
     async def ddg(self, ctx, *, query):
         query = query.replace(" ", "%20")
         link = f"https://lmddgtfy.net/?q={query}"
@@ -147,11 +182,13 @@ class Fun(commands.Cog):
     
     @commands.command(help="Twanswoms tewt intuwu", description="Twanswoms tewt intuwu... What havew I donuwu...", aliases=["uwuify"], usage="uwuify <text>")
     @commands.guild_only()
+    @easter_eggs
     async def uwu(self, ctx, *, text:str):
         await ctx.send(uwuify.uwu(text))
 
     @commands.command(help="Generates free nitro... perharps...", description="A fun command to rickroll your friends... or is it?", aliases=["freenitro"], usage="nitro")
     @commands.guild_only()
+    @easter_eggs
     async def nitro(self, ctx):
 
         class NitroView(discord.ui.View):
@@ -174,6 +211,7 @@ class Fun(commands.Cog):
         nitro_msg = await ctx.send(embed=embed, view=NitroView(timeout=60))
 
     @commands.command(help="Boom!", description="Because who doesn't like blowing stuff up?", usage="boom")
+    @easter_eggs
     async def boom(self, ctx):
         embed=discord.Embed(title="💥 BOOM!", color=discord.Colour.gold())
         embed.set_image(url='https://media1.tenor.com/images/ed5f49e5717a642812b019deb19ad264/tenor.gif')
@@ -181,6 +219,7 @@ class Fun(commands.Cog):
     
     @commands.group(help='Shows a random fun fact.', description="Shows a fun fact. Why? Why not?\n\nFacts painstakingly gathered by `fusiongames#8748`.", usage="funfact", invoke_without_command=True, case_insensitive=True)
     @commands.guild_only()
+    @easter_eggs
     async def funfact(self, ctx):
         fun_path = Path(self.bot.BASE_DIR, 'etc', 'funfacts.txt')
         fun_facts = open(fun_path, "r").readlines()
@@ -190,6 +229,7 @@ class Fun(commands.Cog):
         
     @funfact.command(hidden=True, help='Shows a random fun fact about Minecraft.', description="Shows a fun fact about Minecraft. Watch out for creepers.\n\nFacts painstakingly gathered by `fusiongames#8748`.", usage="funfact minecraft", aliases=["mc"])
     @commands.guild_only()
+    @easter_eggs
     async def minecraft(self, ctx):
         fun_path = Path(self.bot.BASE_DIR, 'etc', 'minecraft_funfacts.txt')
         fun_facts = open(fun_path, "r").readlines()
@@ -200,6 +240,7 @@ class Fun(commands.Cog):
     @commands.command(help="Shows a fact about penguins.", description="Shows a random fact about penguins. Why? Why not?", usage="penguinfact")
     @commands.cooldown(1, 10, type=commands.BucketType.member)
     @commands.guild_only()
+    @easter_eggs
     async def penguinfact(self, ctx):
         penguin_path = Path(self.bot.BASE_DIR, 'etc', 'penguinfacts.txt')
         penguin_facts = open(penguin_path, "r").readlines()
@@ -212,6 +253,7 @@ class Fun(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
     @commands.cooldown(1, 5, type=commands.BucketType.member)
     @commands.guild_only()
+    @easter_eggs
     async def flipcoin(self, ctx):
         options=["heads", "tails"]
         flip=random.choice(options)
@@ -228,6 +270,7 @@ class Fun(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
     @commands.cooldown(1, 15, type=commands.BucketType.member)
     @commands.guild_only()
+    @easter_eggs
     async def randomcat(self, ctx):
         embed=discord.Embed(title="🐱 " + self._("Random kitten"), description=self._("Looking for kitty..."), color=self.bot.embedBlue)
         embed = self.bot.add_embed_footer(ctx, embed)
@@ -252,6 +295,7 @@ class Fun(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
     @commands.cooldown(1, 15, type=commands.BucketType.member)
     @commands.guild_only()
+    @easter_eggs
     async def randomfox(self, ctx):
         embed=discord.Embed(title="🦊 " + self._("Random fox"), description=self._("Looking for a fox..."), color=0xff7f00)
         embed = self.bot.add_embed_footer(ctx, embed)
@@ -274,6 +318,7 @@ class Fun(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.user,wait=False)
     @commands.cooldown(1, 15, type=commands.BucketType.member)
     @commands.guild_only()
+    @easter_eggs
     async def randomdog(self, ctx):
         embed=discord.Embed(title="🐶 " + self._("Random doggo"), description=self._("Looking for pupper..."), color=self.bot.embedBlue)
         embed = self.bot.add_embed_footer(ctx, embed)
@@ -294,6 +339,7 @@ class Fun(commands.Cog):
 
     @commands.command(hidden=True, help="Why?...", description="I have no idea why this exists...", usage="catdog", aliases=["randomcatdog", "randomdogcat", "dogcat"])
     @commands.guild_only()
+    @easter_eggs
     async def catdog(self, ctx):
         embed=discord.Embed(title="🐱🐶 " + self._("Ahh yes.. the legendary catdog!"), color=self.bot.embedBlue)
         embed = self.bot.add_embed_footer(ctx, embed)
@@ -305,6 +351,7 @@ class Fun(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.user, wait=False)
     @commands.cooldown(1, 10, type=commands.BucketType.member)
     @commands.guild_only()
+    @easter_eggs
     async def wiki(self, ctx, *, query):
         await ctx.channel.trigger_typing()
         link = "https://en.wikipedia.org/w/api.php?action=opensearch&search={query}&limit=5"
@@ -334,6 +381,7 @@ class Fun(commands.Cog):
 
     @commands.command(hidden=True, brief = "Hmm...", description="I mean... what did you expect?", usage="die")
     @commands.guild_only()
+    @easter_eggs
     async def die(self, ctx):
         await ctx.send(f"{ctx.author.mention} died.")
 
