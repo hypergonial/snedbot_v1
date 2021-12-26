@@ -166,7 +166,7 @@ class Fun(commands.Cog):
 
             @discord.ui.button(style=discord.ButtonStyle.green, label="          Accept          ")
             async def callback(self, button:discord.ui.Button, interaction:discord.Interaction):
-                await interaction.response.send_message("https://tenor.com/view/rickroll-roll-rick-never-gonna-give-you-up-never-gonna-gif-22954713", ephemeral=True)
+                await interaction.response.send_message("https://images-ext-1.discordapp.net/external/AoV9l5YhsWBj92gcKGkzyJAAXoYpGiN6BdtfzM-00SU/https/i.imgur.com/NQinKJB.mp4", ephemeral=True)
 
 
         embed = discord.Embed(title="You've been gifted a subscription!", description="You've been gifted Nitro for **1 month!**", color=0x2f3136)
