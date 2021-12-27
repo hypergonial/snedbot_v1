@@ -2,53 +2,58 @@ import asyncio
 import os
 
 import asyncpg
+from config import config
 from dotenv import load_dotenv
 
-from config import config
-
-#Modify this line & change it to your PSQL DB address
-#Do not modify the variables, DBPASS is retrieved from .env,
-#while db_name is decided on runtime.
-dsn=config["postgres_dsn"]
+# Modify this line & change it to your PSQL DB address
+# Do not modify the variables, DBPASS is retrieved from .env,
+# while db_name is decided on runtime.
+dsn = config["postgres_dsn"]
 
 try:
-    print('''Sned-Bot Database Initialization
+    print(
+        """Sned-Bot Database Initialization
 
     The following steps need to be taken BEFORE running this script:
 
     Create a postgresql database on the address specified in the DSN,
     and point the postgres_dsn in config.py to it. The database's name 
     must be either 'sned' or 'sned_exp' with default user 'postgres'.
-    Current DSN: {dsn}''')
+    Current DSN: {dsn}"""
+    )
 
     while True:
-        is_experimental = input("Do you want to initialize the database for the stable or the experimental version? Type 'stable' for stable, 'exp' for experimental.\n> ")
-        if is_experimental in ['stable', 'exp']:
-            if is_experimental == 'stable':
-                db_name = 'sned'
+        is_experimental = input(
+            "Do you want to initialize the database for the stable or the experimental version? Type 'stable' for stable, 'exp' for experimental.\n> "
+        )
+        if is_experimental in ["stable", "exp"]:
+            if is_experimental == "stable":
+                db_name = "sned"
             else:
-                db_name = 'sned_exp'
+                db_name = "sned_exp"
             break
         else:
-            print('Invalid input. Try again.\n')
-
+            print("Invalid input. Try again.\n")
 
     async def init_tables():
-        '''
+        """
         Create all tables necessary for the functioning of this bot.
-        '''
+        """
 
         pool = await asyncpg.create_pool(dsn=dsn.format(db_name=db_name))
         async with pool.acquire() as con:
-            print('Creating tables...')
-            await con.execute('''
+            print("Creating tables...")
+            await con.execute(
+                """
                 CREATE TABLE IF NOT EXISTS public.global_config
                 (
                     guild_id bigint NOT NULL,
                     prefix text[],
                     PRIMARY KEY (guild_id)
-                )''')
-            await con.execute('''
+                )"""
+            )
+            await con.execute(
+                """
                 CREATE TABLE IF NOT EXISTS public.users
                 (
                     user_id bigint NOT NULL,
@@ -60,24 +65,30 @@ try:
                     FOREIGN KEY (guild_id)
                         REFERENCES global_config (guild_id)
                         ON DELETE CASCADE
-                )''')
-            #guild_id is always needed in table, so I just hacked it in c:
-            #the table is not guild-specific though
-            await con.execute('''
+                )"""
+            )
+            # guild_id is always needed in table, so I just hacked it in c:
+            # the table is not guild-specific though
+            await con.execute(
+                """
                 CREATE TABLE IF NOT EXISTS public.blacklist
                 (
                     guild_id integer NOT NULL DEFAULT 0,
                     user_id bigint NOT NULL,
                     PRIMARY KEY (user_id)
                 )
-            ''')
-            await con.execute('''
+            """
+            )
+            await con.execute(
+                """
                 CREATE TABLE IF NOT EXISTS public.guild_blacklist
                 (
                     guild_id bigint NOT NULL
-                )''')
+                )"""
+            )
 
-            await con.execute("""
+            await con.execute(
+                """
                 CREATE TABLE IF NOT EXISTS public.mod_config
                 (
                     guild_id bigint,
@@ -88,8 +99,10 @@ try:
                     FOREIGN KEY (guild_id)
                         REFERENCES global_config (guild_id)
                         ON DELETE CASCADE
-                )""")
-            await con.execute('''
+                )"""
+            )
+            await con.execute(
+                """
                     CREATE TABLE IF NOT EXISTS public.timers
                     (
                         id serial NOT NULL,
@@ -103,8 +116,10 @@ try:
                         FOREIGN KEY (guild_id)
                             REFERENCES global_config (guild_id)
                             ON DELETE CASCADE
-                    )''')
-            await con.execute('''
+                    )"""
+            )
+            await con.execute(
+                """
                     CREATE TABLE IF NOT EXISTS public.permissions
                     (
                         guild_id bigint NOT NULL,
@@ -114,8 +129,10 @@ try:
                         FOREIGN KEY (guild_id)
                             REFERENCES global_config (guild_id)
                             ON DELETE CASCADE
-                    )''')
-            await con.execute('''
+                    )"""
+            )
+            await con.execute(
+                """
                     CREATE TABLE IF NOT EXISTS public.modules
                     (
                         guild_id bigint NOT NULL,
@@ -126,8 +143,10 @@ try:
                             REFERENCES global_config (guild_id)
                             ON DELETE CASCADE
                     )
-            ''')
-            await con.execute('''
+            """
+            )
+            await con.execute(
+                """
                     CREATE TABLE IF NOT EXISTS public.priviliged
                     (
                         guild_id bigint NOT NULL,
@@ -136,8 +155,10 @@ try:
                         FOREIGN KEY (guild_id)
                             REFERENCES global_config (guild_id)
                             ON DELETE CASCADE
-                    )''')
-            await con.execute('''
+                    )"""
+            )
+            await con.execute(
+                """
                     CREATE TABLE IF NOT EXISTS public.button_roles
                     (
                         guild_id bigint NOT NULL,
@@ -152,8 +173,10 @@ try:
                         FOREIGN KEY (guild_id)
                             REFERENCES global_config (guild_id)
                             ON DELETE CASCADE
-                    )''')
-            await con.execute('''
+                    )"""
+            )
+            await con.execute(
+                """
                     CREATE TABLE IF NOT EXISTS public.events
                     (
                         guild_id bigint NOT NULL,
@@ -168,8 +191,10 @@ try:
                             REFERENCES global_config (guild_id)
                             ON DELETE CASCADE
                     )
-                    ''')
-            await con.execute('''
+                    """
+            )
+            await con.execute(
+                """
                     CREATE TABLE IF NOT EXISTS public.matchmaking_config
                     (
                         guild_id bigint,
@@ -180,8 +205,10 @@ try:
                         FOREIGN KEY (guild_id)
                             REFERENCES global_config (guild_id)
                             ON DELETE CASCADE
-                    )''')
-            await con.execute('''
+                    )"""
+            )
+            await con.execute(
+                """
                     CREATE TABLE IF NOT EXISTS public.matchmaking_listings
                     (
                         id text,
@@ -196,8 +223,10 @@ try:
                         timestamp bigint NOT NULL,
                         guild_id bigint NOT NULL,
                         PRIMARY KEY (id)
-                    )''')
-            await con.execute('''
+                    )"""
+            )
+            await con.execute(
+                """
                     CREATE TABLE IF NOT EXISTS public.tags
                     (
                         guild_id bigint NOT NULL,
@@ -209,8 +238,10 @@ try:
                         FOREIGN KEY (guild_id)
                             REFERENCES global_config (guild_id)
                             ON DELETE CASCADE
-                    )''')
-            await con.execute('''
+                    )"""
+            )
+            await con.execute(
+                """
                     CREATE TABLE IF NOT EXISTS public.log_config
                     (
                         guild_id bigint NOT NULL,
@@ -219,8 +250,10 @@ try:
                         FOREIGN KEY (guild_id)
                             REFERENCES global_config (guild_id)
                             ON DELETE CASCADE
-                    )''')
-            await con.execute('''
+                    )"""
+            )
+            await con.execute(
+                """
                     CREATE TABLE IF NOT EXISTS public.ktp
                     (
                         guild_id bigint NOT NULL,
@@ -232,12 +265,13 @@ try:
                         FOREIGN KEY (guild_id)
                             REFERENCES global_config (guild_id)
                             ON DELETE CASCADE
-                    )''')
-            
-            print('Tables created, database is ready!')
+                    )"""
+            )
+
+            print("Tables created, database is ready!")
 
     asyncio.get_event_loop().run_until_complete(init_tables())
-    input('\nPress enter to exit...')
+    input("\nPress enter to exit...")
 
 except KeyboardInterrupt:
     print("\nKeyboard interrupt received, exiting...")
