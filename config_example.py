@@ -10,5 +10,6 @@ config = {
     'ipc_secret': 'oh no I leaked my ipc secret', #IPC secret (optional)
     'experimental': False, #Controls debugging mode
     'home_guild': 123456789, #ID of guild to send debug info to (optional)
-    'error_logging_channel': 123456789 #Sends tracebacks of command errors here (optional)
+    'error_logging_channel': 123456789, #Sends tracebacks of command errors here (optional)
+    'db_backup_channel': 123456789 #Sends daily database backup files here
 }

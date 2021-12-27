@@ -137,3 +137,6 @@ dmypy.json
 
 # config file
 config.py
+
+# automated database backups
+db_backup/

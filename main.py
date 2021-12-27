@@ -13,6 +13,7 @@ import asyncpg
 import discord
 from discord.ext import commands, ipc, tasks
 
+import db_backup
 from extensions.utils import cache, context
 
 try:
@@ -121,7 +122,8 @@ class SnedBot(commands.Bot):
         self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
         self.lang = lang
-        self.pool = self.loop.run_until_complete(asyncpg.create_pool(dsn=config["postgres_dsn"].format(db_name=DB_NAME)))
+        self.dsn = config["postgres_dsn"].format(db_name=DB_NAME)
+        self.pool = self.loop.run_until_complete(asyncpg.create_pool(dsn=self.dsn))
         self.whitelisted_guilds = [372128553031958529, 627876365223591976, 818223666143690783, 836248845268680785]
         self.anno_guilds = (372128553031958529, 627876365223591976, 818223666143690783) #Guilds whitelisted for Anno-related commands
         self.cmd_cd_mapping = commands.CooldownMapping.from_cooldown(10, 10, commands.BucketType.channel)
@@ -531,6 +533,29 @@ class GlobalConfig():
             return users
 
 bot.global_config = GlobalConfig(bot)
+
+class DBBackup():
+    '''Class that handles all database backups'''
+    def __init__(self, bot):
+        self.bot = bot
+        self.backup_bot_db.start()
+        self.first_run = True
+
+    @tasks.loop(hours=24.0)
+    async def backup_bot_db(self):
+        if self.first_run == True:
+            self.first_run = False # Prevent quick bot restarts from triggering the system
+            return
+        file = await db_backup.backup_database(self.bot.dsn)
+        await self.bot.wait_until_ready()
+        if self.bot.config["home_guild"] and self.bot.config["db_backup_channel"] and self.bot.is_ready():
+            guild = self.bot.get_guild(self.bot.config["home_guild"])
+            backup_channel = guild.get_channel(self.bot.config["db_backup_channel"])
+            if guild and backup_channel:
+                await backup_channel.send(f"Database Backup: {discord.utils.format_dt(discord.utils.utcnow())}", file=file)
+                logging.info("Database backed up to specified Discord channel.")
+
+bot.db_backup = DBBackup(bot)
 
 '''
 Loading extensions, has to be AFTER global_config is initialized so global_config already exists
