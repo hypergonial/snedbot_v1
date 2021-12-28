@@ -13,6 +13,7 @@ from extensions.utils import components, exceptions
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -195,32 +196,48 @@ class EditMainView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return self.ctx.author.id == interaction.user.id
 
-    @discord.ui.button(emoji="#️⃣", label="Title", style=discord.ButtonStyle.blurple, row=0)
+    @discord.ui.button(
+        emoji="#️⃣", label="Title", style=discord.ButtonStyle.blurple, row=0
+    )
     async def title(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = "title"
         await interaction.response.defer()
         self.stop()
 
-    @discord.ui.button(emoji="📚", label="Description", style=discord.ButtonStyle.blurple, row=0)
+    @discord.ui.button(
+        emoji="📚", label="Description", style=discord.ButtonStyle.blurple, row=0
+    )
     async def desc(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = "description"
         await interaction.response.defer()
         self.stop()
 
-    @discord.ui.button(emoji="🕘", label="Timestamp", style=discord.ButtonStyle.blurple, row=0)
-    async def timestamp(self, button: discord.ui.Button, interaction: discord.Interaction):
+    @discord.ui.button(
+        emoji="🕘", label="Timestamp", style=discord.ButtonStyle.blurple, row=0
+    )
+    async def timestamp(
+        self, button: discord.ui.Button, interaction: discord.Interaction
+    ):
         self.value = "timestamp"
         await interaction.response.defer()
         self.stop()
 
-    @discord.ui.button(emoji="➕", label="Category", style=discord.ButtonStyle.green, row=1)
-    async def add_category(self, button: discord.ui.Button, interaction: discord.Interaction):
+    @discord.ui.button(
+        emoji="➕", label="Category", style=discord.ButtonStyle.green, row=1
+    )
+    async def add_category(
+        self, button: discord.ui.Button, interaction: discord.Interaction
+    ):
         self.value = "add_category"
         await interaction.response.defer()
         self.stop()
 
-    @discord.ui.button(emoji="➖", label="Category", style=discord.ButtonStyle.red, row=1)
-    async def del_category(self, button: discord.ui.Button, interaction: discord.Interaction):
+    @discord.ui.button(
+        emoji="➖", label="Category", style=discord.ButtonStyle.red, row=1
+    )
+    async def del_category(
+        self, button: discord.ui.Button, interaction: discord.Interaction
+    ):
         self.value = "del_category"
         await interaction.response.defer()
         self.stop()
@@ -233,7 +250,8 @@ class EditMainView(discord.ui.View):
 
     @discord.ui.button(emoji="🚪", label="Exit", style=discord.ButtonStyle.grey, row=2)
     async def exit_menu(
-        self, button: discord.ui.Button, interaction: discord.Interaction):
+        self, button: discord.ui.Button, interaction: discord.Interaction
+    ):
         self.value = "exit"
         await interaction.response.defer()
         self.stop()
@@ -794,7 +812,7 @@ class Events(commands.Cog):
                             title=f"🛠️ Editing {event_embed.title}",
                             description="✅ Event deleted!",
                             color=self.bot.embedGreen,
-                                )
+                        )
                         await setup_msg.edit(embed=embed, view=None)
 
                     elif view.value == "timestamp":
@@ -816,34 +834,49 @@ class Events(commands.Cog):
                             For more information about time and date formatting, please refer to the [documentation](https://sned.hypersden.com/docs/modules/reminders.html).
                             """,
                             color=self.bot.embedBlue,
-                            )
+                        )
                         await setup_msg.edit(embed=embed, view=None)
-                        message = await self.bot.wait_for("message", timeout=300.0, check=check)
+                        message = await self.bot.wait_for(
+                            "message", timeout=300.0, check=check
+                        )
                         try:
-                            new_expiry, string = await self.bot.get_cog("Timers").converttime(
-                                message.content
-                            )
+                            new_expiry, string = await self.bot.get_cog(
+                                "Timers"
+                            ).converttime(message.content)
                         except ValueError as error:
                             embed = discord.Embed(
                                 title="❌ Error: Date formatting error",
                                 description=f"Failed reading date. Operation cancelled.\n**Error:** ```{error}```",
-                                color=self.bot.errorColor)
+                                color=self.bot.errorColor,
+                            )
 
-                            await setup_msg.edit(embed=embed); return
+                            await setup_msg.edit(embed=embed)
+                            return
                         else:
                             await message.delete()
                             async with self.bot.pool.acquire() as con:
-                                timer_records = await con.fetch('''
+                                timer_records = await con.fetch(
+                                    """
                                 SELECT id FROM timers 
-                                WHERE event = 'event' AND guild_id = $1 AND channel_id = $2 AND notes = $3''',
-                                ctx.guild.id, records[0]['channel_id'], str(records[0]['entry_id']))
+                                WHERE event = 'event' AND guild_id = $1 AND channel_id = $2 AND notes = $3""",
+                                    ctx.guild.id,
+                                    records[0]["channel_id"],
+                                    str(records[0]["entry_id"]),
+                                )
                             if timer_records:
-                                await self.bot.get_cog("Timers").update_timer(new_expiry, timer_records[0].get('id'), ctx.guild.id)
+                                await self.bot.get_cog("Timers").update_timer(
+                                    new_expiry, timer_records[0].get("id"), ctx.guild.id
+                                )
                                 for i, field in enumerate(event_embed.fields):
                                     if field.name == "Event start":
-                                        insert_at = i; break
-                                event_embed.insert_field_at(insert_at, name="Event start", value=f"{discord.utils.format_dt(new_expiry, style='F')} ({discord.utils.format_dt(new_expiry, style='R')})")
-                                event_embed.remove_field(insert_at+1)
+                                        insert_at = i
+                                        break
+                                event_embed.insert_field_at(
+                                    insert_at,
+                                    name="Event start",
+                                    value=f"{discord.utils.format_dt(new_expiry, style='F')} ({discord.utils.format_dt(new_expiry, style='R')})",
+                                )
+                                event_embed.remove_field(insert_at + 1)
                                 await event_message.edit(embed=event_embed)
                                 embed = discord.Embed(
                                     title=f"🛠️ Editing {event_embed.title}",
