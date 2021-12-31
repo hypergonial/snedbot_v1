@@ -21,33 +21,21 @@ if platform.system() == "Windows":
     os.system(f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "main")}" main.py"')
     print(f"main.pot @ {BASE_DIR}")
     os.chdir(EXTENSIONS_DIR)
-    os.system(
-        f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "admin_commands")}" admin_commands.py"'
-    )
+    os.system(f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "admin_commands")}" admin_commands.py"')
     print(f"admin_commands.pot @ {BASE_DIR}")
-    os.system(
-        f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "misc_commands")}" misc_commands.py"'
-    )
+    os.system(f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "misc_commands")}" misc_commands.py"')
     print(f"misc_commands.pot @ {BASE_DIR}")
-    os.system(
-        f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "matchmaking")}" matchmaking.py"'
-    )
+    os.system(f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "matchmaking")}" matchmaking.py"')
     print(f"matchmaking.pot @ {BASE_DIR}")
     os.system(f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "tags")}" tags.py"')
     print(f"tags.pot @ {BASE_DIR}")
-    os.system(
-        f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "moderation")}" moderation.py"'
-    )
+    os.system(f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "moderation")}" moderation.py"')
     print(f"moderation.pot @ {BASE_DIR}")
-    os.system(
-        f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "timers")}" timers.py"'
-    )
+    os.system(f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "timers")}" timers.py"')
     print(f"timers.pot @ {BASE_DIR}")
     os.system(f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "fun")}" fun.py"')
     print(f"fun.pot @ {BASE_DIR}")
-    os.system(
-        f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "annoverse")}" annoverse.py"'
-    )
+    os.system(f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "annoverse")}" annoverse.py"')
     print(f"annoverse.pot @ {BASE_DIR}")
     os.system(f'cmd /c "py "{pygettextpy_path}" -d "{Path(BASE_DIR, "help")}" help.py"')
     print(f"help.pot @ {BASE_DIR}")
@@ -74,31 +62,21 @@ else:
     os.system(f'python3 "{pygettextpy_path}" -d "{Path(BASE_DIR, "main")}" main.py')
     print(f"main.pot @ {BASE_DIR}")
     os.chdir(EXTENSIONS_DIR)
-    os.system(
-        f'python3 "{pygettextpy_path}" -d "{Path(BASE_DIR, "admin_commands")}" admin_commands.py'
-    )
+    os.system(f'python3 "{pygettextpy_path}" -d "{Path(BASE_DIR, "admin_commands")}" admin_commands.py')
     print(f"admin_commands.pot @ {BASE_DIR}")
-    os.system(
-        f'python3 "{pygettextpy_path}" -d "{Path(BASE_DIR, "misc_commands")}" misc_commands.py'
-    )
+    os.system(f'python3 "{pygettextpy_path}" -d "{Path(BASE_DIR, "misc_commands")}" misc_commands.py')
     print(f"misc_commands.pot @ {BASE_DIR}")
-    os.system(
-        f'python3 "{pygettextpy_path}" -d "{Path(BASE_DIR, "matchmaking")}" matchmaking.py'
-    )
+    os.system(f'python3 "{pygettextpy_path}" -d "{Path(BASE_DIR, "matchmaking")}" matchmaking.py')
     print(f"matchmaking.pot @ {BASE_DIR}")
     os.system(f'python3 "{pygettextpy_path}" -d "{Path(BASE_DIR, "tags")}" tags.py')
     print(f"tags.pot @ {BASE_DIR}")
-    os.system(
-        f'python3 "{pygettextpy_path}" -d "{Path(BASE_DIR, "moderation")}" moderation.py'
-    )
+    os.system(f'python3 "{pygettextpy_path}" -d "{Path(BASE_DIR, "moderation")}" moderation.py')
     print(f"moderation.pot @ {BASE_DIR}")
     os.system(f'python3 "{pygettextpy_path}" -d "{Path(BASE_DIR, "timers")}" timers.py')
     print(f"timers.pot @ {BASE_DIR}")
     os.system(f'python3 "{pygettextpy_path}" -d "{Path(BASE_DIR, "fun")}" fun.py')
     print(f"fun.pot @ {BASE_DIR}")
-    os.system(
-        f'python3 "{pygettextpy_path}" -d "{Path(BASE_DIR, "annoverse")}" annoverse.py'
-    )
+    os.system(f'python3 "{pygettextpy_path}" -d "{Path(BASE_DIR, "annoverse")}" annoverse.py')
     print(f"annoverse.pot @ {BASE_DIR}")
     os.system(f'python3 "{pygettextpy_path}" -d "{Path(BASE_DIR, "help")}" help.py')
     print(f"help.pot @ {BASE_DIR}")

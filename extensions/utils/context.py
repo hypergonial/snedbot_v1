@@ -26,9 +26,7 @@ class Confirm(discord.ui.View):
         return self.ctx.author.id == interaction.user.id
 
     @discord.ui.button(emoji="✔️", style=discord.ButtonStyle.green)
-    async def confirm(
-        self, button: discord.ui.Button, interaction: discord.Interaction
-    ):
+    async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
         if self.verbose:
             await interaction.response.send_message(self.confirm_msg, ephemeral=True)
         self.value = True
@@ -64,15 +62,11 @@ class Context(commands.Context):
             raise ValueError("Either content or embed must not be None.")
 
         if confirm_msg or cancel_msg:
-            view = Confirm(
-                self, verbose=True, confirm_msg=confirm_msg, cancel_msg=cancel_msg
-            )
+            view = Confirm(self, verbose=True, confirm_msg=confirm_msg, cancel_msg=cancel_msg)
         else:
             view = Confirm(self)
 
-        message = await self.send(
-            content=message_content, embed=embed, file=file, view=view
-        )
+        message = await self.send(content=message_content, embed=embed, file=file, view=view)
         await view.wait()
 
         if delete_after:

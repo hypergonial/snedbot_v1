@@ -23,9 +23,7 @@ class BackButtonView(AuthorOnlyView):
         self.value = None
 
     @discord.ui.button(emoji="⬅️", label="Back", style=discord.ButtonStyle.blurple)
-    async def callback(
-        self, button: discord.ui.Button, interaction: discord.Interaction
-    ):
+    async def callback(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = "back"
         self.stop()
 
@@ -78,9 +76,7 @@ async def select_or_ask(
     else:
         asked = True
         if embed:
-            embed.description = (
-                f"{embed.description}\nPlease type in your response below!"
-            )
+            embed.description = f"{embed.description}\nPlease type in your response below!"
         elif content:
             content = f"{content}\nPlease type in your response below!"
 

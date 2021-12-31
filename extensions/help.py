@@ -125,9 +125,7 @@ class SnedHelp(commands.HelpCommand):
             ]  # Get command signature in format as specified above
             # If we have any, put them in categories according to cogs, fallback is "Other"
             if command_signatures:
-                cog_name = getattr(
-                    cog, "qualified_name", "Other"
-                )  # Append items into a list of str, one item per cog
+                cog_name = getattr(cog, "qualified_name", "Other")  # Append items into a list of str, one item per cog
                 all_commands[cog_name] = "\n".join(command_signatures)
 
         for cog_name in all_commands.keys():
@@ -154,9 +152,7 @@ class SnedHelp(commands.HelpCommand):
                     description=help_menu_strings[cog_name]["description"]
                     if cog_name in help_menu_strings.keys()
                     else None,
-                    emoji=help_menu_strings[cog_name]["emoji"]
-                    if cog_name in help_menu_strings.keys()
-                    else None,
+                    emoji=help_menu_strings[cog_name]["emoji"] if cog_name in help_menu_strings.keys() else None,
                 )
             )
 
@@ -173,11 +169,7 @@ class SnedHelp(commands.HelpCommand):
                 await message.edit(embed=self.cog_embeds[interaction.data["values"][0]])
 
         view = HelpView(ctx)
-        view.add_item(
-            HelpSelect(
-                cog_embeds, placeholder="Select a category...", options=select_options
-            )
-        )
+        view.add_item(HelpSelect(cog_embeds, placeholder="Select a category...", options=select_options))
         message = await ctx.send(embed=help_home_embed, view=view)
 
     async def send_command_help(self, command):
@@ -194,16 +186,11 @@ class SnedHelp(commands.HelpCommand):
             )
         else:
             detail_embed = discord.Embed(
-                title="⚙️ "
-                + "Command: {prefix}{command}".format(
-                    prefix=ctx.clean_prefix, command=command.name
-                ),
+                title="⚙️ " + "Command: {prefix}{command}".format(prefix=ctx.clean_prefix, command=command.name),
                 color=ctx.bot.embedBlue,
             )
         if command.description:
-            detail_embed.add_field(
-                name="Description:", value=command.description
-            )  # Getting command description
+            detail_embed.add_field(name="Description:", value=command.description)  # Getting command description
         elif command.help:
             detail_embed.add_field(
                 name="Description:", value=command.help
@@ -217,13 +204,9 @@ class SnedHelp(commands.HelpCommand):
         aliases = []
         for alias in command.aliases:
             if command.parents:
-                aliases.append(
-                    f"**`{ctx.clean_prefix}{command.full_parent_name} {alias}`**"
-                )
+                aliases.append(f"**`{ctx.clean_prefix}{command.full_parent_name} {alias}`**")
             else:
-                aliases.append(
-                    f"**`{ctx.clean_prefix}{alias}`**"
-                )  # Adding some custom formatting to each alias
+                aliases.append(f"**`{ctx.clean_prefix}{alias}`**")  # Adding some custom formatting to each alias
         if aliases:
             detail_embed.add_field(
                 name="Aliases:", value=", ".join(aliases), inline=False
@@ -237,9 +220,7 @@ class SnedHelp(commands.HelpCommand):
         ctx = self.context
         embed = discord.Embed(
             title=ctx.bot.unknownCMDstr,
-            description="Use `{prefix}help` for a list of available commands.".format(
-                prefix=ctx.prefix
-            ),
+            description="Use `{prefix}help` for a list of available commands.".format(prefix=ctx.prefix),
             color=ctx.bot.unknownColor,
         )
         embed = ctx.bot.add_embed_footer(ctx, embed)
@@ -249,17 +230,14 @@ class SnedHelp(commands.HelpCommand):
     async def send_group_help(self, group):
         ctx = self.context
         group_embed = discord.Embed(
-            title="⚙️ "
-            + "Group: {prefix}{group}".format(prefix=ctx.prefix, group=group.name),
+            title="⚙️ " + "Group: {prefix}{group}".format(prefix=ctx.prefix, group=group.name),
             description="**Note:**\nTo see detailed information about one of the subcommands, type **`{prefix}help {group} [subcommand]`**".format(
                 prefix=ctx.prefix, group=group.name
             ),
             color=ctx.bot.embedBlue,
         )
         if group.description:
-            group_embed.add_field(
-                name="Description:", value=group.description
-            )  # Getting command description
+            group_embed.add_field(name="Description:", value=group.description)  # Getting command description
         elif group.help:
             group_embed.add_field(
                 name="Description:", value=group.help
@@ -272,9 +250,7 @@ class SnedHelp(commands.HelpCommand):
             )  # Getting command usage & formatting it
         aliases = []
         for alias in group.aliases:
-            aliases.append(
-                f"**`{ctx.clean_prefix}{alias}`**"
-            )  # Adding some custom formatting to each alias
+            aliases.append(f"**`{ctx.clean_prefix}{alias}`**")  # Adding some custom formatting to each alias
         if aliases:
             group_embed.add_field(
                 name="Aliases:", value=", ".join(aliases), inline=False
@@ -289,15 +265,11 @@ class SnedHelp(commands.HelpCommand):
         channel = self.get_destination()
         await channel.send(embed=group_embed)
 
-    async def send_error_message(
-        self, error
-    ):  # Overriding the default help error message
+    async def send_error_message(self, error):  # Overriding the default help error message
         ctx = self.context
         embed = discord.Embed(
             title=ctx.bot.unknownCMDstr,
-            description="Use `{prefix}help` for a list of available commands.".format(
-                prefix=ctx.prefix
-            ),
+            description="Use `{prefix}help` for a list of available commands.".format(prefix=ctx.prefix),
             color=ctx.bot.unknownColor,
         )
         embed = ctx.bot.add_embed_footer(ctx, embed)

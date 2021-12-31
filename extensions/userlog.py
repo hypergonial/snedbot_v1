@@ -44,11 +44,7 @@ class Logging(commands.Cog):
             raise ValueError("Invalid event passed.")
 
         records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
-        log_channels = (
-            json.loads(records[0]["log_channels"])
-            if records and records[0]["log_channels"]
-            else None
-        )
+        log_channels = json.loads(records[0]["log_channels"]) if records and records[0]["log_channels"] else None
         if log_channels and event in log_channels.keys():
             return log_channels[event]
         else:
@@ -58,11 +54,7 @@ class Logging(commands.Cog):
         """Return a dict of all log channels for a given guild. Returns None values if an event has no logging channel."""
 
         records = await self.bot.caching.get(table="log_config", guild_id=guild_id)
-        log_channels = (
-            json.loads(records[0]["log_channels"])
-            if records and records[0]["log_channels"]
-            else {}
-        )
+        log_channels = json.loads(records[0]["log_channels"]) if records and records[0]["log_channels"] else {}
         for event in self.valid_log_events:
             if event not in log_channels.keys():
                 log_channels[event] = None
@@ -137,10 +129,7 @@ class Logging(commands.Cog):
             async for entry in message.guild.audit_logs():
                 if (
                     entry.action == discord.AuditLogAction.message_delete
-                    and (
-                        datetime.datetime.now(datetime.timezone.utc) - entry.created_at
-                    ).total_seconds()
-                    < 15
+                    and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15
                 ):
                     if entry.target == message.author:
                         moderator = entry.user
@@ -183,14 +172,8 @@ class Logging(commands.Cog):
         # Add it to the recently deleted so on_raw_message_edit will ignore this
         self.recently_edited.append(after.id)
         # Then do info collection & dump
-        before_content = (
-            before.content
-            if len(before.content) < 1800
-            else before.content[:1800] + "..."
-        )
-        after_content = (
-            after.content if len(after.content) < 1800 else after.content[:1800] + "..."
-        )
+        before_content = before.content if len(before.content) < 1800 else before.content[:1800] + "..."
+        after_content = after.content if len(after.content) < 1800 else after.content[:1800] + "..."
         if not after.author.bot:
             embed = discord.Embed(
                 title=f"🖊️ Message edited",
@@ -210,10 +193,7 @@ class Logging(commands.Cog):
             async for entry in guild.audit_logs():  # Get the bot that did it
                 if (
                     entry.action == discord.AuditLogAction.message_bulk_delete
-                    and (
-                        datetime.datetime.now(datetime.timezone.utc) - entry.created_at
-                    ).total_seconds()
-                    < 15
+                    and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15
                 ):
                     moderator = entry.user
                     break
@@ -249,11 +229,7 @@ class Logging(commands.Cog):
                     if (
                         entry.target == role
                         or entry.target.id == role.id
-                        and (
-                            datetime.datetime.now(datetime.timezone.utc)
-                            - entry.created_at
-                        ).total_seconds()
-                        < 15
+                        and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15
                     ):
                         moderator = entry.user
                     break
@@ -299,10 +275,7 @@ class Logging(commands.Cog):
             async for entry in channel.guild.audit_logs():
                 if (
                     entry.action == discord.AuditLogAction.channel_create
-                    and (
-                        datetime.datetime.now(datetime.timezone.utc) - entry.created_at
-                    ).total_seconds()
-                    < 15
+                    and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15
                 ):
                     if entry.target == channel or entry.target.id == channel.id:
                         moderator = entry.user
@@ -325,10 +298,7 @@ class Logging(commands.Cog):
             async for entry in role.guild.audit_logs():
                 if (
                     entry.action == discord.AuditLogAction.role_create
-                    and (
-                        datetime.datetime.now(datetime.timezone.utc) - entry.created_at
-                    ).total_seconds()
-                    < 15
+                    and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15
                 ):
                     if entry.target == role or entry.target.id == role.id:
                         moderator = entry.user
@@ -351,10 +321,7 @@ class Logging(commands.Cog):
             async for entry in after.guild.audit_logs():
                 if (
                     entry.action == discord.AuditLogAction.role_update
-                    and (
-                        datetime.datetime.now(datetime.timezone.utc) - entry.created_at
-                    ).total_seconds()
-                    < 15
+                    and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15
                 ):
                     if entry.target == after or entry.target.id == after.id:
                         moderator = entry.user
@@ -378,10 +345,7 @@ class Logging(commands.Cog):
             async for entry in after.audit_logs():
                 if (
                     entry.action == discord.AuditLogAction.guild_update
-                    and (
-                        datetime.datetime.now(datetime.timezone.utc) - entry.created_at
-                    ).total_seconds()
-                    < 15
+                    and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15
                 ):
                     moderator = entry.user
                     break
@@ -389,9 +353,7 @@ class Logging(commands.Cog):
                     break
         except discord.Forbidden:
             return
-        if (
-            moderator != "Undefined"
-        ):  # Necessary as e.g. Nitro boosts trigger guild update
+        if moderator != "Undefined":  # Necessary as e.g. Nitro boosts trigger guild update
             embed = discord.Embed(
                 title=f"🖊️ Guild updated",
                 description=f"Guild settings have been updated by `{moderator}`.",
@@ -411,10 +373,7 @@ class Logging(commands.Cog):
                 if (
                     entry.target == user
                     and entry.action == discord.AuditLogAction.unban
-                    and (
-                        datetime.datetime.now(datetime.timezone.utc) - entry.created_at
-                    ).total_seconds()
-                    < 15
+                    and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15
                 ):
                     moderator = entry.user
                     if entry.reason:
@@ -443,10 +402,7 @@ class Logging(commands.Cog):
             async for entry in member.guild.audit_logs():
                 if (
                     entry.action == discord.AuditLogAction.kick
-                    and (
-                        datetime.datetime.now(datetime.timezone.utc) - entry.created_at
-                    ).total_seconds()
-                    < 15
+                    and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15
                 ):
                     if entry.target == member:
                         moderator = entry.user
@@ -455,10 +411,7 @@ class Logging(commands.Cog):
                         break
                 elif (
                     entry.action == discord.AuditLogAction.ban
-                    and (
-                        datetime.datetime.now(datetime.timezone.utc) - entry.created_at
-                    ).total_seconds()
-                    < 15
+                    and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15
                 ):
                     if entry.target == member:
                         return  # bans get logged seperately
@@ -476,15 +429,11 @@ class Logging(commands.Cog):
             await self.log("kick", embed, member.guild.id)
 
             if moderator != "Unknown" and moderator == self.bot.user:
-                moderator = (
-                    reason.split(" ")[0] + "via Sned"
-                )  # Get actual moderator, not the bot
+                moderator = reason.split(" ")[0] + "via Sned"  # Get actual moderator, not the bot
                 reason = reason.split("):", maxsplit=1)[1]  # Remove author
             if reason and len(reason) > 240:
                 reason = reason[:240] + "..."
-            await self.mod_cog.add_note(
-                member.id, member.guild.id, f"🚪👈 **Kicked by {moderator}:** {reason}"
-            )
+            await self.mod_cog.add_note(member.id, member.guild.id, f"🚪👈 **Kicked by {moderator}:** {reason}")
 
         else:
             embed = discord.Embed(
@@ -506,10 +455,7 @@ class Logging(commands.Cog):
             async for entry in guild.audit_logs():
                 if (
                     entry.action == discord.AuditLogAction.ban
-                    and (
-                        datetime.datetime.now(datetime.timezone.utc) - entry.created_at
-                    ).total_seconds()
-                    < 15
+                    and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15
                 ):
                     if entry.target == user:
                         moderator = entry.user
@@ -526,15 +472,11 @@ class Logging(commands.Cog):
         await self.log("ban", embed, guild.id)
 
         if moderator != "Unknown" and moderator == self.bot.user:
-            moderator = (
-                reason.split(" ")[0] + "via Sned"
-            )  # Get actual moderator, not the bot
+            moderator = reason.split(" ")[0] + "via Sned"  # Get actual moderator, not the bot
             reason = reason.split("):", maxsplit=1)[1]  # Remove author
         if reason and len(reason) > 240:
             reason = reason[:240] + "..."
-        await self.mod_cog.add_note(
-            user.id, guild.id, f"🔨 **Banned by {moderator}:** {reason}"
-        )
+        await self.mod_cog.add_note(user.id, guild.id, f"🔨 **Banned by {moderator}:** {reason}")
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -564,17 +506,11 @@ class Logging(commands.Cog):
                 async for entry in after.guild.audit_logs():
                     if (
                         entry.action == discord.AuditLogAction.member_update
-                        and (
-                            datetime.datetime.now(datetime.timezone.utc)
-                            - entry.created_at
-                        ).total_seconds()
-                        < 15
+                        and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15
                     ):
                         if entry.target == before:
                             moderator = entry.user
-                            reason = (
-                                entry.reason if entry.reason else "No reason provided"
-                            )
+                            reason = entry.reason if entry.reason else "No reason provided"
                             break
             except discord.Forbidden:
                 pass
@@ -633,11 +569,7 @@ class Logging(commands.Cog):
                 async for entry in after.guild.audit_logs():
                     if (
                         entry.action == discord.AuditLogAction.member_role_update
-                        and (
-                            datetime.datetime.now(datetime.timezone.utc)
-                            - entry.created_at
-                        ).total_seconds()
-                        < 15
+                        and (datetime.datetime.now(datetime.timezone.utc) - entry.created_at).total_seconds() < 15
                     ):
                         if entry.target == after:
                             moderator = entry.user
@@ -659,11 +591,7 @@ class Logging(commands.Cog):
                     color=self.bot.embedBlue,
                 )
             # Role updates are considered elevated due to importance
-            if (
-                isinstance(moderator, discord.User)
-                or isinstance(moderator, discord.Member)
-                and moderator.bot
-            ):
+            if isinstance(moderator, discord.User) or isinstance(moderator, discord.Member) and moderator.bot:
                 pass
             else:
                 await self.log("roles", embed, after.guild.id)

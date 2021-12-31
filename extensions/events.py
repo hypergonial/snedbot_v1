@@ -115,12 +115,8 @@ class SignUpCategoryButton(discord.ui.Button):
             else:  # If adding
                 for category, data in categories.items():
                     if category == self.category_name:
-                        if data["member_cap"] and data["member_cap"] <= len(
-                            data["members"]
-                        ):
-                            return await interaction.response.send_message(
-                                "This category is full!", ephemeral=True
-                            )
+                        if data["member_cap"] and data["member_cap"] <= len(data["members"]):
+                            return await interaction.response.send_message("This category is full!", ephemeral=True)
                         elif records[0]["permitted_roles"] and not any(
                             role_id in [role.id for role in interaction.user.roles]
                             for role_id in records[0]["permitted_roles"]
@@ -130,9 +126,7 @@ class SignUpCategoryButton(discord.ui.Button):
                                 ephemeral=True,
                             )
                         else:
-                            categories[self.category_name]["members"].append(
-                                interaction.user.id
-                            )
+                            categories[self.category_name]["members"].append(interaction.user.id)
                             embed = await self.refresh_embed_field(
                                 guild,
                                 categories[self.category_name]["members"],
@@ -145,10 +139,7 @@ class SignUpCategoryButton(discord.ui.Button):
                     category,
                     data,
                 ) in categories.items():  # Check if user is already in a team
-                    if (
-                        interaction.user.id in data["members"]
-                        and category != self.category_name
-                    ):
+                    if interaction.user.id in data["members"] and category != self.category_name:
                         state = "moved"
                         categories[category]["members"].remove(interaction.user.id)
                         embed = await self.refresh_embed_field(
@@ -175,9 +166,7 @@ class SignUpCategoryButton(discord.ui.Button):
                     await interaction.response.edit_message(embed=embed)
                     await webhook.send(state_msgs[state], ephemeral=True)
                 else:
-                    await interaction.response.send_message(
-                        state_msgs[state], ephemeral=True
-                    )
+                    await interaction.response.send_message(state_msgs[state], ephemeral=True)
             except discord.Forbidden:
                 await interaction.response.send_message(
                     "Failed to register event due to a permissions issue. Please contact an administrator!",
@@ -196,48 +185,32 @@ class EditMainView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return self.ctx.author.id == interaction.user.id
 
-    @discord.ui.button(
-        emoji="#️⃣", label="Title", style=discord.ButtonStyle.blurple, row=0
-    )
+    @discord.ui.button(emoji="#️⃣", label="Title", style=discord.ButtonStyle.blurple, row=0)
     async def title(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = "title"
         await interaction.response.defer()
         self.stop()
 
-    @discord.ui.button(
-        emoji="📚", label="Description", style=discord.ButtonStyle.blurple, row=0
-    )
+    @discord.ui.button(emoji="📚", label="Description", style=discord.ButtonStyle.blurple, row=0)
     async def desc(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = "description"
         await interaction.response.defer()
         self.stop()
 
-    @discord.ui.button(
-        emoji="🕘", label="Timestamp", style=discord.ButtonStyle.blurple, row=0
-    )
-    async def timestamp(
-        self, button: discord.ui.Button, interaction: discord.Interaction
-    ):
+    @discord.ui.button(emoji="🕘", label="Timestamp", style=discord.ButtonStyle.blurple, row=0)
+    async def timestamp(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = "timestamp"
         await interaction.response.defer()
         self.stop()
 
-    @discord.ui.button(
-        emoji="➕", label="Category", style=discord.ButtonStyle.green, row=1
-    )
-    async def add_category(
-        self, button: discord.ui.Button, interaction: discord.Interaction
-    ):
+    @discord.ui.button(emoji="➕", label="Category", style=discord.ButtonStyle.green, row=1)
+    async def add_category(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = "add_category"
         await interaction.response.defer()
         self.stop()
 
-    @discord.ui.button(
-        emoji="➖", label="Category", style=discord.ButtonStyle.red, row=1
-    )
-    async def del_category(
-        self, button: discord.ui.Button, interaction: discord.Interaction
-    ):
+    @discord.ui.button(emoji="➖", label="Category", style=discord.ButtonStyle.red, row=1)
+    async def del_category(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = "del_category"
         await interaction.response.defer()
         self.stop()
@@ -249,9 +222,7 @@ class EditMainView(discord.ui.View):
         self.stop()
 
     @discord.ui.button(emoji="🚪", label="Exit", style=discord.ButtonStyle.grey, row=2)
-    async def exit_menu(
-        self, button: discord.ui.Button, interaction: discord.Interaction
-    ):
+    async def exit_menu(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = "exit"
         await interaction.response.defer()
         self.stop()
@@ -312,9 +283,7 @@ class Events(commands.Cog):
     async def on_event_timer_complete(self, timer):
         """Event expiry"""
         entry_id = timer.notes
-        record = await self.bot.caching.get(
-            table="events", guild_id=timer.guild_id, entry_id=entry_id
-        )
+        record = await self.bot.caching.get(table="events", guild_id=timer.guild_id, entry_id=entry_id)
         guild = self.bot.get_guild(timer.guild_id)
         channel = guild.get_channel(timer.channel_id)
         if guild and channel and record:
@@ -325,17 +294,11 @@ class Events(commands.Cog):
             else:
                 await message.edit(view=None)
                 paginator = commands.Paginator(prefix="", suffix="")
-                paginator.add_line(
-                    f"Event **'{message.embeds[0].title}'** is starting now!\n"
-                )
+                paginator.add_line(f"Event **'{message.embeds[0].title}'** is starting now!\n")
                 for category, data in json.loads(record[0]["categories"]).items():
-                    members = [
-                        (guild.get_member(member_id)) for member_id in data["members"]
-                    ]
+                    members = [(guild.get_member(member_id)) for member_id in data["members"]]
                     members = list(filter(None, members))
-                    paginator.add_line(
-                        f"**{category}: {', '.join([member.mention for member in members])}**"
-                    )
+                    paginator.add_line(f"**{category}: {', '.join([member.mention for member in members])}**")
 
                 async with self.bot.pool.acquire() as con:
                     await con.execute(
@@ -418,9 +381,7 @@ class Events(commands.Cog):
             color=self.bot.embedBlue,
         )
         await invoke_msg.edit(embed=embed)
-        reaction, user = await self.bot.wait_for(
-            "reaction_add", timeout=60.0, check=confirmemoji
-        )
+        reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=confirmemoji)
         emoji = reaction.emoji
         await invoke_msg.clear_reactions()
 
@@ -428,9 +389,7 @@ class Events(commands.Cog):
         options = []
         for name in self.button_styles.keys():
             options.append(discord.SelectOption(label=name))
-        view.add_item(
-            components.CustomSelect(placeholder="Select a style!", options=options)
-        )
+        view.add_item(components.CustomSelect(placeholder="Select a style!", options=options))
         embed = discord.Embed(
             title="🛠️ Event Categories setup",
             description="Select the style of the sign-up button!",
@@ -452,9 +411,7 @@ class Events(commands.Cog):
         message = await self.bot.wait_for("message", timeout=180.0, check=idcheck)
         await message.delete()
         try:
-            member_cap = (
-                int(message.content) if message.content.lower() != "skip" else None
-            )
+            member_cap = int(message.content) if message.content.lower() != "skip" else None
             if member_cap and (member_cap <= 0 or member_cap > 100):
                 raise ValueError
         except ValueError:
@@ -481,9 +438,7 @@ class Events(commands.Cog):
             )
             create_another = await ctx.confirm(embed=embed, delete_after=True)
             if create_another == True:
-                return await self.add_category(
-                    ctx, invoke_msg, categories, first=False, loop=True
-                )
+                return await self.add_category(ctx, invoke_msg, categories, first=False, loop=True)
             elif create_another == False:
                 return categories
             else:
@@ -529,17 +484,11 @@ class Events(commands.Cog):
     )
     @commands.guild_only()
     async def event_delete(self, ctx, id: str):
-        records = await self.bot.caching.get(
-            table="events", guild_id=ctx.guild.id, entry_id=id
-        )
+        records = await self.bot.caching.get(table="events", guild_id=ctx.guild.id, entry_id=id)
         if records:
             channel = ctx.guild.get_channel(records[0]["channel_id"])
             try:
-                message = (
-                    await channel.fetch_message(records[0]["msg_id"])
-                    if channel
-                    else None
-                )
+                message = await channel.fetch_message(records[0]["msg_id"]) if channel else None
                 if message:
                     await message.delete()
             except discord.NotFound:
@@ -578,9 +527,7 @@ class Events(commands.Cog):
         def check(payload):
             return payload.author == ctx.author and payload.channel.id == ctx.channel.id
 
-        records = await self.bot.caching.get(
-            table="events", guild_id=ctx.guild.id, entry_id=id
-        )
+        records = await self.bot.caching.get(table="events", guild_id=ctx.guild.id, entry_id=id)
         if records:
             channel = ctx.guild.get_channel(records[0]["channel_id"])
             try:
@@ -621,9 +568,7 @@ class Events(commands.Cog):
                             color=self.bot.embedBlue,
                         )
                         await setup_msg.edit(embed=embed, view=None)
-                        message = await self.bot.wait_for(
-                            "message", timeout=180.0, check=check
-                        )
+                        message = await self.bot.wait_for("message", timeout=180.0, check=check)
                         if len(message.content) <= 100:
                             event_embed.title = message.content
                         else:
@@ -650,9 +595,7 @@ class Events(commands.Cog):
                             color=self.bot.embedBlue,
                         )
                         await setup_msg.edit(embed=embed, view=None)
-                        message = await self.bot.wait_for(
-                            "message", timeout=300.0, check=check
-                        )
+                        message = await self.bot.wait_for("message", timeout=300.0, check=check)
                         if len(message.content) <= 2500:
                             event_embed.description = message.content
                         else:
@@ -693,18 +636,14 @@ class Events(commands.Cog):
                                     button = SignUpCategoryButton(
                                         entry_id=records[0]["entry_id"],
                                         category_name=category,
-                                        emoji=discord.PartialEmoji.from_str(
-                                            data["emoji"]
-                                        ),
+                                        emoji=discord.PartialEmoji.from_str(data["emoji"]),
                                         style=self.button_styles[data["buttonstyle"]],
                                         label=data["buttonlabel"],
                                     )
                                     buttons.append(button)
                                 event_view = PersistentEventView(self.bot, buttons)
 
-                                await event_message.edit(
-                                    embed=event_embed, view=event_view
-                                )
+                                await event_message.edit(embed=event_embed, view=event_view)
 
                                 await self.bot.caching.execute(
                                     """UPDATE events SET categories = $1 WHERE guild_id = $2 AND entry_id = $3""",
@@ -736,11 +675,7 @@ class Events(commands.Cog):
                             options = []
                             for category in categories:
                                 options.append(discord.SelectOption(label=category))
-                            view.add_item(
-                                components.CustomSelect(
-                                    placeholder="Select a category!", options=options
-                                )
-                            )
+                            view.add_item(components.CustomSelect(placeholder="Select a category!", options=options))
                             embed = discord.Embed(
                                 title=f"🛠️ Editing {event_embed.title}",
                                 description="Select which category you would like to delete! Please note this will also remove all users who signed up for this category.",
@@ -760,18 +695,14 @@ class Events(commands.Cog):
                                     button = SignUpCategoryButton(
                                         entry_id=records[0]["entry_id"],
                                         category_name=category,
-                                        emoji=discord.PartialEmoji.from_str(
-                                            data["emoji"]
-                                        ),
+                                        emoji=discord.PartialEmoji.from_str(data["emoji"]),
                                         style=self.button_styles[data["buttonstyle"]],
                                         label=data["buttonlabel"],
                                     )
                                     buttons.append(button)
                                 event_view = PersistentEventView(self.bot, buttons)
 
-                                await event_message.edit(
-                                    embed=event_embed, view=event_view
-                                )
+                                await event_message.edit(embed=event_embed, view=event_view)
                                 await self.bot.caching.execute(
                                     """UPDATE events SET categories = $1 WHERE guild_id = $2 AND entry_id = $3""",
                                     json.dumps(categories),
@@ -805,9 +736,7 @@ class Events(commands.Cog):
                                 ctx.guild.id,
                                 records[0]["entry_id"],
                             )
-                        await self.bot.caching.refresh(
-                            table="events", guild_id=ctx.guild.id
-                        )
+                        await self.bot.caching.refresh(table="events", guild_id=ctx.guild.id)
                         embed = discord.Embed(
                             title=f"🛠️ Editing {event_embed.title}",
                             description="✅ Event deleted!",
@@ -836,13 +765,9 @@ class Events(commands.Cog):
                             color=self.bot.embedBlue,
                         )
                         await setup_msg.edit(embed=embed, view=None)
-                        message = await self.bot.wait_for(
-                            "message", timeout=300.0, check=check
-                        )
+                        message = await self.bot.wait_for("message", timeout=300.0, check=check)
                         try:
-                            new_expiry, string = await self.bot.get_cog(
-                                "Timers"
-                            ).converttime(message.content)
+                            new_expiry, string = await self.bot.get_cog("Timers").converttime(message.content)
                         except ValueError as error:
                             embed = discord.Embed(
                                 title="❌ Error: Date formatting error",
@@ -932,9 +857,7 @@ class Events(commands.Cog):
         options = []
         for channel in ctx.guild.channels:
             if channel.type in [discord.ChannelType.text, discord.ChannelType.news]:
-                options.append(
-                    discord.SelectOption(label=f"#{channel.name}", value=channel.id)
-                )
+                options.append(discord.SelectOption(label=f"#{channel.name}", value=channel.id))
 
         embed = discord.Embed(
             title="🛠️ Event setup",
@@ -949,9 +872,7 @@ class Events(commands.Cog):
             event_channel = ctx.guild.get_channel(int(value["values"][0]))
         elif value and asked:
             try:
-                event_channel = await commands.GuildChannelConverter().convert(
-                    ctx, value
-                )
+                event_channel = await commands.GuildChannelConverter().convert(ctx, value)
                 if event_channel.type not in [
                     discord.ChannelType.news,
                     discord.ChannelType.text,
@@ -1035,9 +956,7 @@ class Events(commands.Cog):
         await setup_msg.edit(embed=embed, view=None)
         message = await self.bot.wait_for("message", timeout=300.0, check=idcheck)
         try:
-            event_expiry, string = await self.bot.get_cog("Timers").converttime(
-                message.content
-            )
+            event_expiry, string = await self.bot.get_cog("Timers").converttime(message.content)
         except ValueError as error:
             embed = discord.Embed(
                 title="❌ Error: Date formatting error",
@@ -1080,27 +999,17 @@ class Events(commands.Cog):
                 max_values=max_values,
                 options=role_options,
             )
-            async def callback(
-                self, select: discord.ui.Select, interaction: discord.Interaction
-            ):
+            async def callback(self, select: discord.ui.Select, interaction: discord.Interaction):
                 select.view.data = interaction.data
 
-            @discord.ui.button(
-                emoji="➡️", label="Skip", style=discord.ButtonStyle.blurple
-            )
-            async def skip(
-                self, button: discord.ui.Button, interaction: discord.Interaction
-            ):
+            @discord.ui.button(emoji="➡️", label="Skip", style=discord.ButtonStyle.blurple)
+            async def skip(self, button: discord.ui.Button, interaction: discord.Interaction):
                 button.view.skipping = True
                 button.view.data = None
                 button.view.stop()
 
-            @discord.ui.button(
-                emoji="✔️", label="Confirm", style=discord.ButtonStyle.green
-            )
-            async def confirm(
-                self, button: discord.ui.Button, interaction: discord.Interaction
-            ):
+            @discord.ui.button(emoji="✔️", label="Confirm", style=discord.ButtonStyle.green)
+            async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
                 if button.view.data is not None:
                     button.view.stop()
                 else:
@@ -1127,18 +1036,11 @@ class Events(commands.Cog):
         # entry_id is assigned manually because the button needs it before it is in the db
         entry_id = str(uuid.uuid4())
 
-        event_embed = discord.Embed(
-            title=event_title, description=event_description, color=discord.Color.gold()
-        )
+        event_embed = discord.Embed(title=event_title, description=event_description, color=discord.Color.gold())
         if event_permitted_roles:
             event_embed.add_field(
                 name="Allowed roles",
-                value=", ".join(
-                    [
-                        ctx.guild.get_role(role_id).mention
-                        for role_id in event_permitted_roles
-                    ]
-                ),
+                value=", ".join([ctx.guild.get_role(role_id).mention for role_id in event_permitted_roles]),
                 inline=False,
             )
         event_embed.add_field(
@@ -1158,9 +1060,7 @@ class Events(commands.Cog):
             )
             buttons.append(button)
             member_cap = data["member_cap"] if data["member_cap"] else "∞"
-            event_embed.add_field(
-                name=f"{category} (0/{member_cap})", value="-", inline=True
-            )
+            event_embed.add_field(name=f"{category} (0/{member_cap})", value="-", inline=True)
         event_embed.set_footer(
             text=f"Event by {ctx.author}  |  ID: {entry_id}",
             icon_url=ctx.author.avatar.url,

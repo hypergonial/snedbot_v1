@@ -35,9 +35,7 @@ class ButtonRoleButton(discord.ui.Button):
         style: discord.ButtonStyle,
         label: str = None,
     ):
-        super().__init__(
-            style=style, label=label, emoji=emoji, custom_id=f"{entry_id}:{role.id}"
-        )
+        super().__init__(style=style, label=label, emoji=emoji, custom_id=f"{entry_id}:{role.id}")
         self.entry_id = entry_id
         self.role = role
 
@@ -50,17 +48,13 @@ class ButtonRoleButton(discord.ui.Button):
                         self.role,
                         reason=f"Removed by role-button (ID: {self.entry_id})",
                     )
-                    await interaction.response.send_message(
-                        f"Removed role: {self.role.mention}", ephemeral=True
-                    )
+                    await interaction.response.send_message(f"Removed role: {self.role.mention}", ephemeral=True)
                 else:
                     await interaction.user.add_roles(
                         self.role,
                         reason=f"Granted by role-button (ID: {self.entry_id})",
                     )
-                    await interaction.response.send_message(
-                        f"Added role: {self.role.mention}", ephemeral=True
-                    )
+                    await interaction.response.send_message(f"Added role: {self.role.mention}", ephemeral=True)
             except discord.Forbidden:
                 await interaction.response.send_message(
                     f"Failed adding role due to an issue with permissions and/or role hierarchy! Please contact an administrator!",
@@ -142,9 +136,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     @commands.guild_only()
     async def rolebutton(self, ctx):
 
-        records = await self.bot.caching.get(
-            table="button_roles", guild_id=ctx.guild.id
-        )
+        records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id)
         if records:
             paginator = commands.Paginator(prefix="", suffix="", max_size=500)
             for record in records:
@@ -159,9 +151,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                     color=self.bot.embedBlue,
                 )
                 embed_list.append(embed)
-            menu_paginator = components.SnedMenuPaginator(
-                pages=embed_list, show_disabled=True, show_indicator=True
-            )
+            menu_paginator = components.SnedMenuPaginator(pages=embed_list, show_disabled=True, show_indicator=True)
             await menu_paginator.send(ctx, ephemeral=False)
         else:
             embed = discord.Embed(
@@ -180,18 +170,12 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     )
     @commands.guild_only()
     async def rb_delete(self, ctx, id: int):
-        records = await self.bot.caching.get(
-            table="button_roles", guild_id=ctx.guild.id, entry_id=id
-        )
+        records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id, entry_id=id)
         if records:
             channel = ctx.guild.get_channel(records[0]["channel_id"])
-            message = (
-                await channel.fetch_message(records[0]["msg_id"]) if channel else None
-            )
+            message = await channel.fetch_message(records[0]["msg_id"]) if channel else None
             if message:  # Re-sync buttons if message still exists
-                records = await self.bot.caching.get(
-                    table="button_roles", guild_id=ctx.guild.id, msg_id=message.id
-                )
+                records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id, msg_id=message.id)
                 buttons = []
                 for record in records:
                     emoji = discord.PartialEmoji.from_str(record.get("emoji"))
@@ -246,9 +230,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         Here is where end-users would set up a button role for their server
         """
 
-        records = await self.bot.caching.get(
-            table="button_roles", guild_id=ctx.guild.id
-        )
+        records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id)
 
         if records and len(records) >= 200:
             embed = discord.Embed(
@@ -277,9 +259,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             options = []
             for channel in ctx.guild.channels:
                 if channel.type in [discord.ChannelType.text, discord.ChannelType.news]:
-                    options.append(
-                        discord.SelectOption(label=f"#{channel.name}", value=channel.id)
-                    )
+                    options.append(discord.SelectOption(label=f"#{channel.name}", value=channel.id))
 
             embed = discord.Embed(
                 title="🛠️ Role-Buttons setup",
@@ -294,9 +274,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                 reactchannel = ctx.guild.get_channel(int(value["values"][0]))
             elif value and asked:
                 try:
-                    reactchannel = await commands.GuildChannelConverter().convert(
-                        ctx, value
-                    )
+                    reactchannel = await commands.GuildChannelConverter().convert(ctx, value)
                     if reactchannel.type not in [
                         discord.ChannelType.news,
                         discord.ChannelType.text,
@@ -340,11 +318,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                         discord.ChannelType.text,
                         discord.ChannelType.news,
                     ]:
-                        options.append(
-                            discord.SelectOption(
-                                label=f"#{channel.name}", value=channel.id
-                            )
-                        )
+                        options.append(discord.SelectOption(label=f"#{channel.name}", value=channel.id))
 
                 embed = discord.Embed(
                     title="🛠️ Role-Buttons setup",
@@ -359,9 +333,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                     reactchannel = ctx.guild.get_channel(int(value["values"][0]))
                 elif value and asked:
                     try:
-                        reactchannel = await commands.GuildChannelConverter().convert(
-                            ctx, value
-                        )
+                        reactchannel = await commands.GuildChannelConverter().convert(ctx, value)
                         if reactchannel.type not in [
                             discord.ChannelType.news,
                             discord.ChannelType.text,
@@ -392,9 +364,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                     color=self.bot.embedBlue,
                 )
                 await setup_msg.edit(embed=embed, view=None)
-                message = await self.bot.wait_for(
-                    "message", timeout=60.0, check=idcheck
-                )
+                message = await self.bot.wait_for("message", timeout=60.0, check=idcheck)
                 await message.delete()
 
                 reactmsg = await reactchannel.fetch_message(int(message.content))
@@ -442,9 +412,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             color=self.bot.embedBlue,
         )
         await setup_msg.edit(embed=embed)
-        reaction, user = await self.bot.wait_for(
-            "reaction_add", timeout=60.0, check=confirmemoji
-        )
+        reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=confirmemoji)
 
         reactemoji = reaction.emoji
         await setup_msg.clear_reactions()
@@ -462,9 +430,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         role_options = []
         for role in ctx.guild.roles:
             if role.name != "@everyone" and role < ctx.guild.me.top_role:
-                role_options.append(
-                    discord.SelectOption(label=role.name, value=role.id)
-                )
+                role_options.append(discord.SelectOption(label=role.name, value=role.id))
         if len(role_options) == 0:
             embed = discord.Embed(
                 title="❌ Error: No valid roles",
@@ -508,9 +474,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         options = []
         for name in self.button_styles.keys():
             options.append(discord.SelectOption(label=name))
-        view.add_item(
-            components.CustomSelect(placeholder="Select a style!", options=options)
-        )
+        view.add_item(components.CustomSelect(placeholder="Select a style!", options=options))
         embed = discord.Embed(
             title="🛠️ Role-Buttons setup",
             description="Select the style of the button!",
@@ -523,12 +487,8 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         else:
             raise asyncio.exceptions.TimeoutError
         # entry_id is assigned manually because the button needs it before it is in the db
-        record = await self.bot.pool.fetch(
-            """SELECT entry_id FROM button_roles ORDER BY entry_id DESC LIMIT 1"""
-        )
-        entry_id = (
-            record[0].get("entry_id") + 1 if record and record[0] else 1
-        )  # Calculate the entry id
+        record = await self.bot.pool.fetch("""SELECT entry_id FROM button_roles ORDER BY entry_id DESC LIMIT 1""")
+        entry_id = record[0].get("entry_id") + 1 if record and record[0] else 1  # Calculate the entry id
 
         button = ButtonRoleButton(
             entry_id=entry_id,

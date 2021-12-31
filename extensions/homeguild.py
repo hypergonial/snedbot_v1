@@ -29,19 +29,14 @@ class HomeGuild(commands.Cog):
 
         for line in error_lines:
             paginator.add_line(line)
-        if (
-            "home_guild" in self.bot.config.keys()
-            and "error_logging_channel" in self.bot.config.keys()
-        ):
+        if "home_guild" in self.bot.config.keys() and "error_logging_channel" in self.bot.config.keys():
             guild = self.bot.get_guild(self.bot.config["home_guild"])
             channel = guild.get_channel(self.bot.config["error_logging_channel"])
             for page in paginator.pages:
                 try:
                     await channel.send(page)
                 except Exception as error:
-                    logging.error(
-                        f"Failed sending traceback to logging channel: {error}"
-                    )
+                    logging.error(f"Failed sending traceback to logging channel: {error}")
                     return
 
 

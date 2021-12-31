@@ -38,12 +38,8 @@ class Annoverse(commands.Cog):
 
     async def search_fandom(self, site, query):
 
-        link_root = (
-            "https://{site}.fandom.com/wiki/"  # Redirect here if no query is specified
-        )
-        link = (
-            "https://{site}.fandom.com/api.php?action=opensearch&search={query}&limit=5"
-        )
+        link_root = "https://{site}.fandom.com/wiki/"  # Redirect here if no query is specified
+        link = "https://{site}.fandom.com/api.php?action=opensearch&search={query}&limit=5"
         if query is None:
             return link_root.format(site=site)
         query = query.replace(" ", "+")
@@ -67,13 +63,9 @@ class Annoverse(commands.Cog):
         If message is a reply to someone, the bot's reply will also be a reply
         to that message.
         """
-        if (
-            ctx.message.reference != None
-        ):  # If the original command was invoked as a reply to someone
+        if ctx.message.reference != None:  # If the original command was invoked as a reply to someone
             try:
-                replytomsg = ctx.channel.get_partial_message(
-                    ctx.message.reference.message_id
-                )
+                replytomsg = ctx.channel.get_partial_message(ctx.message.reference.message_id)
                 await replytomsg.reply(
                     embed=embed, mention_author=True
                 )  # Then the invoked tag will also reply to that message
@@ -92,21 +84,15 @@ class Annoverse(commands.Cog):
     )
     @commands.guild_only()
     async def annowiki(self, ctx, *, query: str = None):
-        if query and query.startswith(
-            tuple(["1602", "1503", "1701", "anno1602", "anno1503", "anno1701"])
-        ):
+        if query and query.startswith(tuple(["1602", "1503", "1701", "anno1602", "anno1503", "anno1701"])):
             embed = discord.Embed(
                 title="❌ " + self._("Wiki does not exist or unsupported"),
-                description=self._(
-                    "This wiki is either not supported or does not exist!"
-                ).format(query=query),
+                description=self._("This wiki is either not supported or does not exist!").format(query=query),
                 color=self.bot.errorColor,
             )
             await ctx.send(embed=embed)
             return
-        await ctx.invoke(
-            self.annowiki.get_command("anno1800"), query=query
-        )  # pylint: disable=<no-member>
+        await ctx.invoke(self.annowiki.get_command("anno1800"), query=query)  # pylint: disable=<no-member>
 
     @annowiki.command(aliases=["1800"])
     @commands.guild_only()
@@ -124,9 +110,7 @@ class Annoverse(commands.Cog):
         except NameError:
             embed = discord.Embed(
                 title="❌ " + self._("Not found"),
-                description=self._("Could not find anything for `{query}`!").format(
-                    query=query
-                ),
+                description=self._("Could not find anything for `{query}`!").format(query=query),
                 color=self.bot.errorColor,
             )
             await ctx.send(embed=embed)
@@ -147,9 +131,7 @@ class Annoverse(commands.Cog):
         except NameError:
             embed = discord.Embed(
                 title="❌ " + self._("Not found"),
-                description=self._("Could not find anything for `{query}`!").format(
-                    query=query
-                ),
+                description=self._("Could not find anything for `{query}`!").format(query=query),
                 color=self.bot.errorColor,
             )
             await ctx.send(embed=embed)
@@ -170,9 +152,7 @@ class Annoverse(commands.Cog):
         except NameError:
             embed = discord.Embed(
                 title="❌ " + self._("Not found"),
-                description=self._("Could not find anything for `{query}`!").format(
-                    query=query
-                ),
+                description=self._("Could not find anything for `{query}`!").format(query=query),
                 color=self.bot.errorColor,
             )
             await ctx.send(embed=embed)
@@ -193,9 +173,7 @@ class Annoverse(commands.Cog):
         except NameError:
             embed = discord.Embed(
                 title="❌ " + self._("Not found"),
-                description=self._("Could not find anything for `{query}`!").format(
-                    query=query
-                ),
+                description=self._("Could not find anything for `{query}`!").format(query=query),
                 color=self.bot.errorColor,
             )
             await ctx.send(embed=embed)

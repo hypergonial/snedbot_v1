@@ -67,9 +67,7 @@ class Giveaway(commands.Cog):
 
         try:
             message = await self.bot.wait_for("message", timeout=60.0, check=check)
-            giveaway_channel = await commands.TextChannelConverter().convert(
-                ctx, message.content
-            )
+            giveaway_channel = await commands.TextChannelConverter().convert(ctx, message.content)
             embed = discord.Embed(
                 title="🛠️ Giveaway creator",
                 description="Now specify the amount of winners by typing in a number!",
@@ -96,9 +94,7 @@ class Giveaway(commands.Cog):
             await ctx.channel.send(embed=embed)
             message = await self.bot.wait_for("message", timeout=60.0, check=check)
             try:
-                time, timestr = await self.bot.get_cog("Timers").converttime(
-                    message.content
-                )
+                time, timestr = await self.bot.get_cog("Timers").converttime(message.content)
             except ValueError:
                 embed = discord.Embed(
                     title="❌ Error: Invalid value",
@@ -126,9 +122,7 @@ class Giveaway(commands.Cog):
                 **Number of winners:** `{winners}`""",
                     color=0xD76B00,
                 )
-                embed.set_footer(
-                    text=f"Hosted by {ctx.author}", icon_url=ctx.author.avatar.url
-                )
+                embed.set_footer(text=f"Hosted by {ctx.author}", icon_url=ctx.author.avatar.url)
                 giveaway_msg = await giveaway_channel.send(embed=embed)
                 await giveaway_msg.add_reaction("🎉")
                 embed = discord.Embed(
@@ -220,9 +214,7 @@ class Giveaway(commands.Cog):
     @commands.guild_only()
     async def giveaway_delete(self, ctx, ID: int):
         async with self.bot.pool.acquire() as con:
-            result = await con.fetch(
-                """SELECT * FROM timers WHERE event = $1 AND id = $2""", "giveaway", ID
-            )
+            result = await con.fetch("""SELECT * FROM timers WHERE event = $1 AND id = $2""", "giveaway", ID)
             if result:
                 await con.execute(
                     """DELETE FROM timers WHERE event = $1 AND id = $2""",
@@ -231,26 +223,20 @@ class Giveaway(commands.Cog):
                 )
                 embed = discord.Embed(
                     title="✅ " + self._("Giveaway deleted"),
-                    description=self._(
-                        "Giveaway **{ID}** has been cancelled and deleted."
-                    ).format(ID=ID),
+                    description=self._("Giveaway **{ID}** has been cancelled and deleted.").format(ID=ID),
                     color=self.bot.embedGreen,
                 )
                 await ctx.send(embed=embed)
                 # If we just deleted the currently running timer, then we re-evaluate to find the next timer.
-                if self.bot.get_cog("Timers").current_timer and self.bot.get_cog(
-                    "Timers"
-                ).current_timer.id == int(ID):
+                if self.bot.get_cog("Timers").current_timer and self.bot.get_cog("Timers").current_timer.id == int(ID):
                     self.bot.get_cog("Timers").currenttask.cancel()
-                    self.bot.get_cog("Timers").currenttask = self.bot.get_cog(
-                        "Timers"
-                    ).bot.loop.create_task(self.bot.get_cog("Timers").dispatch_timers())
+                    self.bot.get_cog("Timers").currenttask = self.bot.get_cog("Timers").bot.loop.create_task(
+                        self.bot.get_cog("Timers").dispatch_timers()
+                    )
             else:
                 embed = discord.Embed(
                     title="❌ " + self._("Giveaway not found"),
-                    description=self._("Cannot find giveaway with ID **{ID}**.").format(
-                        ID=ID
-                    ),
+                    description=self._("Cannot find giveaway with ID **{ID}**.").format(ID=ID),
                     color=self.bot.errorColor,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
@@ -266,9 +252,7 @@ class Giveaway(commands.Cog):
     @commands.guild_only()
     async def giveaway_terminate(self, ctx, ID: int):
         async with self.bot.pool.acquire() as con:
-            result = await con.fetch(
-                """SELECT * FROM timers WHERE event = $1 AND id = $2""", "giveaway", ID
-            )
+            result = await con.fetch("""SELECT * FROM timers WHERE event = $1 AND id = $2""", "giveaway", ID)
             if result:
                 await con.execute(
                     """DELETE FROM timers WHERE event = $1 AND id = $2""",
@@ -284,19 +268,15 @@ class Giveaway(commands.Cog):
                 )
                 await ctx.send(embed=embed)
                 # If we just deleted the currently running timer, then we re-evaluate to find the next timer.
-                if self.bot.get_cog("Timers").current_timer and self.bot.get_cog(
-                    "Timers"
-                ).current_timer.id == int(ID):
+                if self.bot.get_cog("Timers").current_timer and self.bot.get_cog("Timers").current_timer.id == int(ID):
                     self.bot.get_cog("Timers").currenttask.cancel()
-                    self.bot.get_cog("Timers").currenttask = self.bot.get_cog(
-                        "Timers"
-                    ).bot.loop.create_task(self.bot.get_cog("Timers").dispatch_timers())
+                    self.bot.get_cog("Timers").currenttask = self.bot.get_cog("Timers").bot.loop.create_task(
+                        self.bot.get_cog("Timers").dispatch_timers()
+                    )
 
                 # Calculating the winners
                 channel = self.bot.get_channel(result[0].get("channel_id"))
-                message = await channel.fetch_message(
-                    int(result[0].get("notes").split("\n")[0])
-                )
+                message = await channel.fetch_message(int(result[0].get("notes").split("\n")[0]))
                 embed = message.embeds[0]
 
                 for reaction in message.reactions:
@@ -316,14 +296,9 @@ class Giveaway(commands.Cog):
                         users.remove(winners[len(winners) - 1])
 
                     winners_str = "\n".join(
-                        [
-                            f"{winner.mention} `({winner.name}#{winner.discriminator})`"
-                            for winner in winners
-                        ]
+                        [f"{winner.mention} `({winner.name}#{winner.discriminator})`" for winner in winners]
                     )
-                    embed.description = (
-                        f"{embed.description}\n\n**Winners:**\n {winners_str}"
-                    )
+                    embed.description = f"{embed.description}\n\n**Winners:**\n {winners_str}"
                     await message.edit(embed=embed)
 
                     winner_mentions = ", ".join([winner.mention for winner in winners])
@@ -336,17 +311,13 @@ class Giveaway(commands.Cog):
                         description="The giveaway was forced to end by a moderator with insufficient participants.",
                         color=self.bot.errorColor,
                     )
-                    err_embed.set_footer(
-                        text="Hint: You could try lowering the amount of winners."
-                    )
+                    err_embed.set_footer(text="Hint: You could try lowering the amount of winners.")
                     await channel.send(embed=err_embed)
 
             else:
                 embed = discord.Embed(
                     title="❌ " + self._("Giveaway not found"),
-                    description=self._("Cannot find giveaway with ID **{ID}**.").format(
-                        ID=ID
-                    ),
+                    description=self._("Cannot find giveaway with ID **{ID}**.").format(ID=ID),
                     color=self.bot.errorColor,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
@@ -375,10 +346,7 @@ class Giveaway(commands.Cog):
                 users.remove(winners[len(winners) - 1])
 
             winners_str = "\n".join(
-                [
-                    f"{winner.mention} `({winner.name}#{winner.discriminator})`"
-                    for winner in winners
-                ]
+                [f"{winner.mention} `({winner.name}#{winner.discriminator})`" for winner in winners]
             )
             embed.description = f"{embed.description}\n\n**Winners:**\n {winners_str}"
             await message.edit(embed=embed)
@@ -391,9 +359,7 @@ class Giveaway(commands.Cog):
                 description="The giveaway ended with insufficient participants.",
                 color=self.bot.errorColor,
             )
-            err_embed.set_footer(
-                text="Hint: You could try lowering the amount of winners."
-            )
+            err_embed.set_footer(text="Hint: You could try lowering the amount of winners.")
             await channel.send(embed=err_embed)
 
 

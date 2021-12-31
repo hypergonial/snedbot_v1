@@ -20,9 +20,7 @@ class Timer:
     Represents a timer object.
     """
 
-    def __init__(
-        self, id, guild_id, user_id, event, channel_id=None, expires=None, notes=None
-    ):
+    def __init__(self, id, guild_id, user_id, event, channel_id=None, expires=None, notes=None):
         self.id = id
         self.guild_id = guild_id
         self.user_id = user_id
@@ -64,9 +62,7 @@ class Timers(commands.Cog):
         date_match = date_regex.search(timestr)
         if not force_mode or force_mode == "absolute":
             if date_and_time_match:
-                time = datetime.datetime.strptime(
-                    date_and_time_match.group(), "%Y-%m-%d %H:%M"
-                )
+                time = datetime.datetime.strptime(date_and_time_match.group(), "%Y-%m-%d %H:%M")
                 time = time.replace(tzinfo=datetime.timezone.utc)
                 if time > datetime.datetime.now(datetime.timezone.utc):
                     return time, [date_and_time_match.group()]
@@ -108,16 +104,12 @@ class Timers(commands.Cog):
             time = 0
             strings = []  # Stores all identified times
             for val, category in matches:
-                val = val.replace(
-                    ",", "."
-                )  # Replace commas with periods to correctly register decimal places
+                val = val.replace(",", ".")  # Replace commas with periods to correctly register decimal places
                 # If this is a single letter
                 if len(category) == 1:
                     if category in time_letter_dict.keys():
                         strings.append(val + category)
-                        strings.append(
-                            val + " " + category
-                        )  # Append both with space & without
+                        strings.append(val + " " + category)  # Append both with space & without
                         time += time_letter_dict[category] * float(val)
                 else:
                     # If a partial match is found with any of the keys
@@ -132,13 +124,9 @@ class Timers(commands.Cog):
                             break
             logger.debug(f"Time: {time}")
             if time > 0:
-                time = datetime.datetime.now(
-                    datetime.timezone.utc
-                ) + datetime.timedelta(seconds=time)
+                time = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=time)
             else:  # If time is 0, then we failed to parse or the user indeed provided 0, which makes no sense, so we raise an error.
-                raise ValueError(
-                    "Failed converting time from string. (Relative conversion)"
-                )
+                raise ValueError("Failed converting time from string. (Relative conversion)")
             return time, strings
 
     async def remindertime(self, timestr: str):
@@ -195,12 +183,7 @@ class Timers(commands.Cog):
         logger.debug("Getting latest timer...")
         result = await self.bot.pool.fetch(
             """SELECT * FROM timers WHERE expires < $1 ORDER BY expires LIMIT 1""",
-            round(
-                (
-                    datetime.datetime.now(datetime.timezone.utc)
-                    + datetime.timedelta(days=days)
-                ).timestamp()
-            ),
+            round((datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=days)).timestamp()),
         )
         logger.debug(f"Latest timer from db: {result}")
         if len(result) != 0 and result[0]:
@@ -250,9 +233,7 @@ class Timers(commands.Cog):
                     logger.debug("Evaluating timer.")
                     if timer.expires >= now:
                         sleep_time = timer.expires - now
-                        logger.info(
-                            f"Awaiting next timer: '{timer.event}', which is in {sleep_time}s"
-                        )
+                        logger.info(f"Awaiting next timer: '{timer.event}', which is in {sleep_time}s")
                         await asyncio.sleep(sleep_time)
 
                     logger.info(f"Dispatching timer: {timer.event}")
@@ -426,14 +407,10 @@ class Timers(commands.Cog):
             )
             await ctx.send(embed=embed)
         else:
-            if (
-                time - datetime.datetime.now(datetime.timezone.utc)
-            ).total_seconds() >= 31536000 * 5:
+            if (time - datetime.datetime.now(datetime.timezone.utc)).total_seconds() >= 31536000 * 5:
                 embed = discord.Embed(
                     title=self.bot.errorDataTitle,
-                    description=self._(
-                        "Sorry, but that's a bit too far in the future."
-                    ).format(prefix=ctx.prefix),
+                    description=self._("Sorry, but that's a bit too far in the future.").format(prefix=ctx.prefix),
                     color=self.bot.errorColor,
                 )
                 await ctx.send(embed=embed)
@@ -462,9 +439,7 @@ class Timers(commands.Cog):
                     ):
                         try:
                             timer_cog = self.ctx.bot.get_cog("Timers")
-                            timer = await timer_cog.get_timer(
-                                self.timer_id, self.ctx.guild.id
-                            )
+                            timer = await timer_cog.get_timer(self.timer_id, self.ctx.guild.id)
                         except ValueError:
                             return await interaction.response.send_message(
                                 "Oops! It looks like this reminder already expired!",
@@ -478,21 +453,12 @@ class Timers(commands.Cog):
                                     description="You cannot do this on your own reminder.",
                                     color=self.ctx.bot.errorColor,
                                 )
-                                return await interaction.response.send_message(
-                                    embed=embed, ephemeral=True
-                                )
-                            if (
-                                interaction.user.id
-                                not in notes["additional_recipients"]
-                            ):
+                                return await interaction.response.send_message(embed=embed, ephemeral=True)
+                            if interaction.user.id not in notes["additional_recipients"]:
                                 if len(notes["additional_recipients"]) < 50:
-                                    notes["additional_recipients"].append(
-                                        interaction.user.id
-                                    )
+                                    notes["additional_recipients"].append(interaction.user.id)
                                     await timer_cog.update_timer(
-                                        datetime.datetime.fromtimestamp(
-                                            timer.expires, tz=datetime.timezone.utc
-                                        ),
+                                        datetime.datetime.fromtimestamp(timer.expires, tz=datetime.timezone.utc),
                                         self.timer_id,
                                         self.ctx.guild.id,
                                         new_notes=json.dumps(notes),
@@ -502,26 +468,18 @@ class Timers(commands.Cog):
                                         description="You will also be notified when this reminder is due!",
                                         color=self.ctx.bot.embedGreen,
                                     )
-                                    await interaction.response.send_message(
-                                        embed=embed, ephemeral=True
-                                    )
+                                    await interaction.response.send_message(embed=embed, ephemeral=True)
                                 else:
                                     embed = discord.Embed(
                                         title="❌ Invalid interaction",
                                         description="Oops! Looks like too many people signed up for this reminder. Try creating a new reminder! (Max cap: 50)",
                                         color=self.ctx.bot.errorColor,
                                     )
-                                    return await interaction.response.send_message(
-                                        embed=embed, ephemeral=True
-                                    )
+                                    return await interaction.response.send_message(embed=embed, ephemeral=True)
                             else:
-                                notes["additional_recipients"].remove(
-                                    interaction.user.id
-                                )
+                                notes["additional_recipients"].remove(interaction.user.id)
                                 await timer_cog.update_timer(
-                                    datetime.datetime.fromtimestamp(
-                                        timer.expires, tz=datetime.timezone.utc
-                                    ),
+                                    datetime.datetime.fromtimestamp(timer.expires, tz=datetime.timezone.utc),
                                     self.timer_id,
                                     self.ctx.guild.id,
                                     new_notes=json.dumps(notes),
@@ -531,9 +489,7 @@ class Timers(commands.Cog):
                                     description="Removed you from the list of recipients!",
                                     color=self.ctx.bot.embedGreen,
                                 )
-                                await interaction.response.send_message(
-                                    embed=embed, ephemeral=True
-                                )
+                                await interaction.response.send_message(embed=embed, ephemeral=True)
 
                 logger.debug(f"Timestrs length is: {len(timestr)}")
                 if timestr is None or len(timestr) == 0:
@@ -545,9 +501,7 @@ class Timers(commands.Cog):
                 }
                 embed = discord.Embed(
                     title="✅ " + self._("Reminder set"),
-                    description=self._(
-                        "Reminder set for:  {timestamp} ({timestampR})"
-                    ).format(
+                    description=self._("Reminder set for:  {timestamp} ({timestampR})").format(
                         timestamp=discord.utils.format_dt(time),
                         timestampR=discord.utils.format_dt(time, style="R"),
                     ),
@@ -562,9 +516,7 @@ class Timers(commands.Cog):
                     channel_id=ctx.channel.id,
                     notes=json.dumps(reminder_data),
                 )
-                reminder_msg = await ctx.send(
-                    embed=embed, view=ReminderView(ctx, timer.id, timeout=300)
-                )
+                reminder_msg = await ctx.send(embed=embed, view=ReminderView(ctx, timer.id, timeout=300))
 
     @commands.command(
         usage="reminders",
@@ -614,9 +566,9 @@ class Timers(commands.Cog):
                         + f"**ID: {timer.id}** - {discord.utils.format_dt(time)} ({discord.utils.format_dt(time, style='R')})\n"
                     )
         else:
-            reminderstr = self._(
-                "You have no reminders. You can set one via `{prefix}reminder`!"
-            ).format(prefix=ctx.prefix)
+            reminderstr = self._("You have no reminders. You can set one via `{prefix}reminder`!").format(
+                prefix=ctx.prefix
+            )
         embed = discord.Embed(
             title="✉️ " + self._("Your reminders:"),
             description=reminderstr,
@@ -647,9 +599,7 @@ class Timers(commands.Cog):
                 )
                 embed = discord.Embed(
                     title="✅ " + self._("Reminder deleted"),
-                    description=self._("Reminder **{ID}** has been deleted.").format(
-                        ID=ID
-                    ),
+                    description=self._("Reminder **{ID}** has been deleted.").format(ID=ID),
                     color=self.bot.embedGreen,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
@@ -661,9 +611,7 @@ class Timers(commands.Cog):
             else:
                 embed = discord.Embed(
                     title="❌ " + self._("Reminder not found"),
-                    description=self._("Cannot find reminder with ID **{ID}**.").format(
-                        ID=ID
-                    ),
+                    description=self._("Cannot find reminder with ID **{ID}**.").format(ID=ID),
                     color=self.bot.errorColor,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)

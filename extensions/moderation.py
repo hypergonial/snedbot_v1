@@ -77,9 +77,7 @@ class Moderation(commands.Cog):
             mod_settings = default_mod_settings()
         return mod_settings
 
-    def format_reason(
-        self, reason: str = None, moderator: discord.Member = None
-    ) -> str:
+    def format_reason(self, reason: str = None, moderator: discord.Member = None) -> str:
         """Format reason for audit logs"""
 
         if not reason:
@@ -103,17 +101,12 @@ class Moderation(commands.Cog):
             self = args[0]
             ctx = args[1]
             user = args[2]
-            reason = (
-                kwargs["reason"] if "reason" in kwargs.keys() else "No reason provided"
-            )
+            reason = kwargs["reason"] if "reason" in kwargs.keys() else "No reason provided"
 
             if ctx.author.id == user.id:
                 embed = discord.Embed(
-                    title="❌ "
-                    + self._("You cannot {pwn} yourself.").format(pwn=ctx.command.name),
-                    description=self._("You cannot {pwn} your own account.").format(
-                        pwn=ctx.command.name
-                    ),
+                    title="❌ " + self._("You cannot {pwn} yourself.").format(pwn=ctx.command.name),
+                    description=self._("You cannot {pwn} your own account.").format(pwn=ctx.command.name),
                     color=self.bot.errorColor,
                 )
                 await ctx.send(embed=embed)
@@ -161,9 +154,7 @@ class Moderation(commands.Cog):
                         + "You have been {pwned} {guild}".format(
                             pwned=types_conj[ctx.command.name], guild=ctx.guild.name
                         ),
-                        description=self._(
-                            "You have been {pwned} **{guild}**.\n**Reason:** ```{reason}```"
-                        ).format(
+                        description=self._("You have been {pwned} **{guild}**.\n**Reason:** ```{reason}```").format(
                             pwned=types_conj[ctx.command.name],
                             guild=ctx.guild.name,
                             reason=reason,
@@ -205,24 +196,20 @@ class Moderation(commands.Cog):
 
         return inner
 
-    async def warn(
-        self, ctx, member: discord.Member, moderator: discord.Member, reason: str = None
-    ):
+    async def warn(self, ctx, member: discord.Member, moderator: discord.Member, reason: str = None):
         """
         Warn a member, increasing their warning count and logging it.
         Requires userlog extension for full functionality.
         """
         db_user = await self.bot.global_config.get_user(member.id, ctx.guild.id)
         db_user.warns += 1
-        await self.bot.global_config.update_user(
-            db_user
-        )  # Update warns for user by incrementing it
+        await self.bot.global_config.update_user(db_user)  # Update warns for user by incrementing it
         if reason is None:
             embed = discord.Embed(
                 title="⚠️ " + self._("Warning issued"),
-                description=self._(
-                    "**{offender}** has been warned by **{moderator}**."
-                ).format(offender=member, moderator=moderator),
+                description=self._("**{offender}** has been warned by **{moderator}**.").format(
+                    offender=member, moderator=moderator
+                ),
                 color=self.bot.warnColor,
             )
             warnembed = discord.Embed(
@@ -249,9 +236,7 @@ class Moderation(commands.Cog):
         except (AttributeError, discord.Forbidden):
             pass
         reason = self.format_reason(reason)
-        await self.add_note(
-            member.id, ctx.guild.id, f"⚠️ **Warned by {moderator}:** {reason}"
-        )
+        await self.add_note(member.id, ctx.guild.id, f"⚠️ **Warned by {moderator}:** {reason}")
 
     async def timeout(
         self,
@@ -274,9 +259,7 @@ class Moderation(commands.Cog):
         await member.timeout(duration[0], reason=reason)
         return duration[0]
 
-    async def remove_timeout(
-        self, ctx, member: discord.Member, moderator: discord.Member, reason: str = None
-    ):
+    async def remove_timeout(self, ctx, member: discord.Member, moderator: discord.Member, reason: str = None):
         """
         Removes timeout from a user with the specified reason.
         """
@@ -327,9 +310,9 @@ class Moderation(commands.Cog):
             await ctx.guild.ban(user, reason=reason, delete_message_days=days_to_delete)
             embed = discord.Embed(
                 title="🔨 " + self._("User banned"),
-                description=self._(
-                    "**{offender}** has been banned.\n**Reason:** ```{raw_reason}```"
-                ).format(offender=user, raw_reason=raw_reason),
+                description=self._("**{offender}** has been banned.\n**Reason:** ```{raw_reason}```").format(
+                    offender=user, raw_reason=raw_reason
+                ),
                 color=self.bot.errorColor,
             )
             await ctx.send(embed=embed)
@@ -364,9 +347,7 @@ class Moderation(commands.Cog):
             await ctx.send(embed=embed)
             return
 
-    async def kick(
-        self, ctx, member: discord.Member, moderator: discord.Member, reason: str = None
-    ):
+    async def kick(self, ctx, member: discord.Member, moderator: discord.Member, reason: str = None):
         """
         Handles the kicking of a user.
         """
@@ -379,18 +360,16 @@ class Moderation(commands.Cog):
             if raw_reason:
                 embed = discord.Embed(
                     title="🚪👈 " + self._("User kicked"),
-                    description=self._(
-                        "**{offender}** has been kicked.\n**Reason:** ```{raw_reason}```"
-                    ).format(offender=member, raw_reason=raw_reason),
+                    description=self._("**{offender}** has been kicked.\n**Reason:** ```{raw_reason}```").format(
+                        offender=member, raw_reason=raw_reason
+                    ),
                     color=self.bot.errorColor,
                 )
                 await ctx.send(embed=embed)
             else:
                 embed = discord.Embed(
                     title="🚪👈 " + self._("User kicked"),
-                    description=self._("**{offender}** has been kicked.").format(
-                        offender=member
-                    ),
+                    description=self._("**{offender}** has been kicked.").format(offender=member),
                     color=self.bot.errorColor,
                 )
                 await ctx.send(embed=embed)
@@ -416,9 +395,7 @@ class Moderation(commands.Cog):
 
         db_user = await self.bot.global_config.get_user(user_id, guild_id)
         notes = db_user.notes if db_user.notes else []
-        notes.append(
-            f"{discord.utils.format_dt(discord.utils.utcnow(), style='d')}: {new_note}"
-        )
+        notes.append(f"{discord.utils.format_dt(discord.utils.utcnow(), style='d')}: {new_note}")
         db_user.notes = notes
         await self.bot.global_config.update_user(db_user)
 
@@ -461,9 +438,7 @@ class Moderation(commands.Cog):
                 )
                 embed_list.append(embed)
 
-            menu_paginator = components.SnedMenuPaginator(
-                pages=embed_list, show_disabled=True, show_indicator=True
-            )
+            menu_paginator = components.SnedMenuPaginator(pages=embed_list, show_disabled=True, show_indicator=True)
 
             await menu_paginator.send(ctx, ephemeral=False)
         else:
@@ -484,15 +459,11 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     async def notes_add_cmd(self, ctx, member: discord.Member, *, note: str):
         try:
-            await self.add_note(
-                member.id, ctx.guild.id, f"💬 **Note by {ctx.author}:** {note}"
-            )
+            await self.add_note(member.id, ctx.guild.id, f"💬 **Note by {ctx.author}:** {note}")
         except ValueError:
             embed = discord.Embed(
                 title="❌ " + self._("Journal entry too long"),
-                description=self._(
-                    "Journal entry cannot exceed **256** characters. Please try again!"
-                ),
+                description=self._("Journal entry cannot exceed **256** characters. Please try again!"),
                 color=self.bot.errorColor,
             )
             await ctx.send(embed=embed)
@@ -543,9 +514,7 @@ class Moderation(commands.Cog):
         if reason is None:
             embed = discord.Embed(
                 title="✅ " + self._("Warnings cleared"),
-                description=self._(
-                    "**{offender}**'s warnings have been cleared."
-                ).format(offender=offender),
+                description=self._("**{offender}**'s warnings have been cleared.").format(offender=offender),
                 color=self.bot.embedGreen,
             )
             warnembed = discord.Embed(
@@ -556,9 +525,9 @@ class Moderation(commands.Cog):
         else:
             embed = discord.Embed(
                 title="✅ " + self._("Warnings cleared"),
-                description=self._(
-                    "**{offender}**'s warnings have been cleared.\n**Reason:** ```{reason}```"
-                ).format(offender=offender, reason=reason),
+                description=self._("**{offender}**'s warnings have been cleared.\n**Reason:** ```{reason}```").format(
+                    offender=offender, reason=reason
+                ),
                 color=self.bot.embedGreen,
             )
             warnembed = discord.Embed(
@@ -592,18 +561,14 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(moderate_members=True)
     @commands.guild_only()
     @mod_punish
-    async def timeout_cmd(
-        self, ctx, member: discord.Member, duration: str, *, reason: str = None
-    ):
+    async def timeout_cmd(self, ctx, member: discord.Member, duration: str, *, reason: str = None):
         """
         Temporarily times out a member
         """
         await ctx.channel.trigger_typing()
         if not member.timed_out:
             try:
-                muted_until = await self.timeout(
-                    ctx, member, ctx.author, duration, reason
-                )
+                muted_until = await self.timeout(ctx, member, ctx.author, duration, reason)
             except ValueError:
                 embed = discord.Embed(
                     title="❌ Invalid data entered",
@@ -666,9 +631,7 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(moderate_members=True)
     @commands.guild_only()
     @mod_command
-    async def remove_timeout_cmd(
-        self, ctx, member: discord.Member, *, reason: str = None
-    ):
+    async def remove_timeout_cmd(self, ctx, member: discord.Member, *, reason: str = None):
 
         if member.timed_out:
             await self.remove_timeout(ctx, member, moderator=ctx.author, reason=reason)
@@ -677,9 +640,9 @@ class Moderation(commands.Cog):
                 reason = "No reason specified"
             embed = discord.Embed(
                 title="🔉 " + self._("User timeout removed"),
-                description=self._(
-                    "**{offender}**'s timeout was removed.\n**Reason:** ```{reason}```"
-                ).format(offender=member, reason=reason),
+                description=self._("**{offender}**'s timeout was removed.\n**Reason:** ```{reason}```").format(
+                    offender=member, reason=reason
+                ),
                 color=self.bot.embedGreen,
             )
             await ctx.send(embed=embed)
@@ -724,9 +687,7 @@ class Moderation(commands.Cog):
         await ctx.channel.trigger_typing()
 
         try:
-            await self.ban(
-                ctx, user, ctx.author, duration=None, soft=False, reason=reason
-            )
+            await self.ban(ctx, user, ctx.author, duration=None, soft=False, reason=reason)
         except discord.Forbidden:
             embed = discord.Embed(
                 title="❌ " + self._("Bot has insufficient permissions"),
@@ -773,18 +734,16 @@ class Moderation(commands.Cog):
             if raw_reason:
                 embed = discord.Embed(
                     title="✅ " + self._("User unbanned"),
-                    description=self._(
-                        "**{offender}** has been unbanned.\n**Reason:** ```{raw_reason}```"
-                    ).format(offender=offender, raw_reason=raw_reason),
+                    description=self._("**{offender}** has been unbanned.\n**Reason:** ```{raw_reason}```").format(
+                        offender=offender, raw_reason=raw_reason
+                    ),
                     color=self.bot.embedGreen,
                 )
                 await ctx.send(embed=embed)
             else:
                 embed = discord.Embed(
                     title="✅ " + self._("User unbanned"),
-                    description=self._("**{offender}** has been unbanned.").format(
-                        offender=offender
-                    ),
+                    description=self._("**{offender}** has been unbanned.").format(offender=offender),
                     color=self.bot.embedGreen,
                 )
                 await ctx.send(embed=embed)
@@ -917,30 +876,23 @@ class Moderation(commands.Cog):
                             )
                 else:
                     failed += 1
-                    if (
-                        " - Exceeded maximum amount (100) of users bannable by this command."
-                        not in errors
-                    ):
-                        errors.append(
-                            " - Exceeded maximum amount (100) of users bannable by this command."
-                        )
+                    if " - Exceeded maximum amount (100) of users bannable by this command." not in errors:
+                        errors.append(" - Exceeded maximum amount (100) of users bannable by this command.")
             await self.bot.get_cog("Logging").unfreeze_logging(ctx.guild.id)
 
             if failed == 0:
                 embed = discord.Embed(
                     title="🔨 " + self._("Massban successful"),
-                    description=self._(
-                        "Successfully banned **{amount}** users.\n**Reason:** ```{reason}```"
-                    ).format(amount=len(user_ids_conv), reason=reason),
+                    description=self._("Successfully banned **{amount}** users.\n**Reason:** ```{reason}```").format(
+                        amount=len(user_ids_conv), reason=reason
+                    ),
                     color=self.bot.embedGreen,
                 )
                 await ctx.send(embed=embed)
             else:
                 embed = discord.Embed(
                     title="🔨 " + self._("Massban concluded with failures"),
-                    description=self._(
-                        "Banned **{amount}/{total}** users.\n**Reason:** ```{reason}```"
-                    ).format(
+                    description=self._("Banned **{amount}/{total}** users.\n**Reason:** ```{reason}```").format(
                         amount=len(user_ids) - failed,
                         total=len(user_ids),
                         reason=reason,
@@ -950,9 +902,9 @@ class Moderation(commands.Cog):
                 await ctx.send(embed=embed)
                 embed = discord.Embed(
                     title="🔨 " + self._("Failures encountered:"),
-                    description=self._(
-                        "Some errors were encountered during the mass-ban: \n```{errors}```"
-                    ).format(errors="\n".join(errors)),
+                    description=self._("Some errors were encountered during the mass-ban: \n```{errors}```").format(
+                        errors="\n".join(errors)
+                    ),
                     color=self.bot.warnColor,
                 )
                 await ctx.send(embed=embed)
@@ -1045,9 +997,7 @@ class Moderation(commands.Cog):
 
         if args.created:
 
-            def created(
-                member, *, offset=now - datetime.timedelta(minutes=args.created)
-            ):
+            def created(member, *, offset=now - datetime.timedelta(minutes=args.created)):
                 return member.created_at > offset
 
             checks.append(created)
@@ -1066,29 +1016,19 @@ class Moderation(commands.Cog):
             joined_after = ctx.guild.get_member(int(args.joined_after))
 
             def joined_after(member, *, joined_after=joined_after):
-                return (
-                    member.joined_at
-                    and joined_after.joined_at
-                    and member.joined_at > joined_after.joined_at
-                )
+                return member.joined_at and joined_after.joined_at and member.joined_at > joined_after.joined_at
 
             checks.append(joined_after)
         if args.joined_before:
             joined_before = ctx.guild.get_member(int(args.joined_before))
 
             def joined_before(member, *, joined_before=joined_before):
-                return (
-                    member.joined_at
-                    and joined_before.joined_at
-                    and member.joined_at < joined_before.joined_at
-                )
+                return member.joined_at and joined_before.joined_at and member.joined_at < joined_before.joined_at
 
             checks.append(joined_before)
 
         # Add to to_ban list if all checks succeed
-        to_ban = {
-            member for member in members if all(check(member) for check in checks)
-        }
+        to_ban = {member for member in members if all(check(member) for check in checks)}
 
         if len(to_ban) == 0:
             embed = discord.Embed(
@@ -1102,13 +1042,9 @@ class Moderation(commands.Cog):
         members = sorted(to_ban)
         content = [f"Total members to ban: {len(members)}\n"]
         for member in members:
-            content.append(
-                f"{member} ({member.id}) | Joined: {member.joined_at} | Created: {member.created_at}"
-            )
+            content.append(f"{member} ({member.id}) | Joined: {member.joined_at} | Created: {member.created_at}")
         content = "\n".join(content)
-        file = discord.File(
-            io.BytesIO(content.encode("utf-8")), filename="members_to_ban.txt"
-        )
+        file = discord.File(io.BytesIO(content.encode("utf-8")), filename="members_to_ban.txt")
 
         if args.show:
             return await ctx.send(file=file)
@@ -1146,12 +1082,8 @@ class Moderation(commands.Cog):
                     description=f"Banned **{count}/{len(to_ban)}** users.\n**Moderator:** `{ctx.author} ({ctx.author.id if ctx.author else '0'})`\n**Reason:** ```{reason}```",
                     color=self.bot.errorColor,
                 )
-                file = discord.File(
-                    io.BytesIO(content.encode("utf-8")), filename="members_banned.txt"
-                )
-                await self.bot.get_cog("Logging").log(
-                    "ban", log_embed, ctx.guild.id, file=file, bypass=True
-                )
+                file = discord.File(io.BytesIO(content.encode("utf-8")), filename="members_banned.txt")
+                await self.bot.get_cog("Logging").log("ban", log_embed, ctx.guild.id, file=file, bypass=True)
                 await asyncio.sleep(1)
                 await self.bot.get_cog("Logging").unfreeze_logging(ctx.guild.id)
 
@@ -1289,9 +1221,7 @@ class Moderation(commands.Cog):
 
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
-            description=self._("**{count}** messages have been deleted.").format(
-                count=len(purged)
-            ),
+            description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
             color=self.bot.errorColor,
         )
         await ctx.send(embed=embed, delete_after=20.0)
@@ -1325,9 +1255,7 @@ class Moderation(commands.Cog):
 
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
-            description=self._("**{count}** messages have been deleted.").format(
-                count=len(purged)
-            ),
+            description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
             color=self.bot.errorColor,
         )
         await ctx.send(embed=embed, delete_after=20.0)
@@ -1361,9 +1289,7 @@ class Moderation(commands.Cog):
 
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
-            description=self._("**{count}** messages have been deleted.").format(
-                count=len(purged)
-            ),
+            description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
             color=self.bot.errorColor,
         )
         await ctx.send(embed=embed, delete_after=20.0)
@@ -1397,9 +1323,7 @@ class Moderation(commands.Cog):
 
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
-            description=self._("**{count}** messages have been deleted.").format(
-                count=len(purged)
-            ),
+            description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
             color=self.bot.errorColor,
         )
         await ctx.send(embed=embed, delete_after=20.0)
@@ -1433,9 +1357,7 @@ class Moderation(commands.Cog):
 
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
-            description=self._("**{count}** messages have been deleted.").format(
-                count=len(purged)
-            ),
+            description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
             color=self.bot.errorColor,
         )
         await ctx.send(embed=embed, delete_after=20.0)
@@ -1462,9 +1384,7 @@ class Moderation(commands.Cog):
             return await ctx.send(embed=embed, delete_after=20.0)
 
         def check(message):
-            link_regex = re.compile(
-                r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
-            )
+            link_regex = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
             link_matches = link_regex.findall(message.content)
             return len(link_matches) > 0
 
@@ -1474,9 +1394,7 @@ class Moderation(commands.Cog):
 
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
-            description=self._("**{count}** messages have been deleted.").format(
-                count=len(purged)
-            ),
+            description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
             color=self.bot.errorColor,
         )
         await ctx.send(embed=embed, delete_after=20.0)
@@ -1503,9 +1421,7 @@ class Moderation(commands.Cog):
             return await ctx.send(embed=embed, delete_after=20.0)
 
         def check(message):
-            invite_regex = re.compile(
-                r"(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?"
-            )
+            invite_regex = re.compile(r"(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?")
             invite_matches = invite_regex.findall(message.content)
             return len(invite_matches) > 0
 
@@ -1515,9 +1431,7 @@ class Moderation(commands.Cog):
 
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
-            description=self._("**{count}** messages have been deleted.").format(
-                count=len(purged)
-            ),
+            description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
             color=self.bot.errorColor,
         )
         await ctx.send(embed=embed, delete_after=20.0)
@@ -1552,9 +1466,7 @@ class Moderation(commands.Cog):
 
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
-            description=self._("**{count}** messages have been deleted.").format(
-                count=len(purged)
-            ),
+            description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
             color=self.bot.errorColor,
         )
         await ctx.send(embed=embed, delete_after=20.0)
@@ -1586,16 +1498,12 @@ class Moderation(commands.Cog):
         cleared = await ctx.channel.purge(limit=limit + 1, check=check)
         embed = discord.Embed(
             title="🗑️ " + self._("Messages cleared"),
-            description=self._("**{count}** bot messages have been removed.").format(
-                count=len(cleared)
-            ),
+            description=self._("**{count}** bot messages have been removed.").format(count=len(cleared)),
             color=self.bot.errorColor,
         )
         await ctx.send(embed=embed, delete_after=20.0)
 
-    async def whois(
-        self, ctx, user: Union[discord.User, discord.Member]
-    ) -> discord.Embed:
+    async def whois(self, ctx, user: Union[discord.User, discord.Member]) -> discord.Embed:
         if user in ctx.guild.members:
             db_user = await self.bot.global_config.get_user(user.id, ctx.guild.id)
             member = ctx.guild.get_member(user.id)
@@ -1636,12 +1544,8 @@ class Moderation(commands.Cog):
             embed.set_thumbnail(url=user.display_avatar.url)
 
         if await self.bot.is_owner(ctx.author):
-            records = await self.bot.caching.get(
-                table="blacklist", guild_id=0, user_id=user.id
-            )
-            is_blacklisted = (
-                True if records and records[0]["user_id"] == user.id else False
-            )
+            records = await self.bot.caching.get(table="blacklist", guild_id=0, user_id=user.id)
+            is_blacklisted = True if records and records[0]["user_id"] == user.id else False
             embed.description = f"{embed.description}\nBlacklisted: `{is_blacklisted}`"
 
         embed = self.bot.add_embed_footer(ctx, embed)

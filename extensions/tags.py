@@ -111,9 +111,7 @@ class TagHandler:
         """
         Returns a list of all tags for the specified guild.
         """
-        results = await self.bot.pool.fetch(
-            """SELECT * FROM tags WHERE guild_id = $1""", guild_id
-        )
+        results = await self.bot.pool.fetch("""SELECT * FROM tags WHERE guild_id = $1""", guild_id)
         if len(results) != 0:
             tags = []
             for result in results:
@@ -134,9 +132,7 @@ class TagHandler:
             guild_id,
         )
 
-    async def migrate(
-        self, origin_id: int, destination_id: int, invoker_id: int, tag_name: str
-    ):
+    async def migrate(self, origin_id: int, destination_id: int, invoker_id: int, tag_name: str):
         """
         Migrates a tag from one guild to another.
         """
@@ -144,21 +140,15 @@ class TagHandler:
         if not dest_tag:
             tag = await self.get(tag_name, origin_id)
             if tag:
-                tag.guild_id = (
-                    destination_id  # Change it's ID so it belongs to the new guild
-                )
+                tag.guild_id = destination_id  # Change it's ID so it belongs to the new guild
                 tag.tag_owner_id = invoker_id  # New owner is whoever imported the tag
                 await self.create(tag)
             else:
                 raise TagNotFound("This tag does not exist at origin, cannot migrate.")
         else:
-            raise TagAlreadyExists(
-                "This tag already exists at destination, cannot migrate."
-            )
+            raise TagAlreadyExists("This tag already exists at destination, cannot migrate.")
 
-    async def migrate_all(
-        self, origin_id: int, destination_id: int, invoker_id: int, strategy: str
-    ):
+    async def migrate_all(self, origin_id: int, destination_id: int, invoker_id: int, strategy: str):
         """
         Migrates all tags from one server to a different one. 'strategy' defines overriding behaviour.
 
@@ -216,9 +206,9 @@ class Tags(commands.Cog):
         self._ = self.bot.get_localization("tags", self.bot.lang)
 
     async def cog_check(self, ctx):
-        return await ctx.bot.custom_checks.has_permissions(
-            ctx, "tags"
-        ) or await ctx.bot.custom_checks.has_permissions(ctx, "mod_permitted")
+        return await ctx.bot.custom_checks.has_permissions(ctx, "tags") or await ctx.bot.custom_checks.has_permissions(
+            ctx, "mod_permitted"
+        )
 
     @commands.group(
         help="Calls a tag. See subcommands for tag creation & management.",
@@ -233,13 +223,9 @@ class Tags(commands.Cog):
         if name:
             tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
             if tag:
-                if (
-                    ctx.message.reference != None
-                ):  # If the original command was invoked as a reply to someone
+                if ctx.message.reference != None:  # If the original command was invoked as a reply to someone
                     try:
-                        replytomsg = ctx.channel.get_partial_message(
-                            ctx.message.reference.message_id
-                        )
+                        replytomsg = ctx.channel.get_partial_message(ctx.message.reference.message_id)
                         await replytomsg.reply(
                             content=tag.tag_content, mention_author=True
                         )  # Then the invoked tag will also reply to that message
@@ -280,9 +266,7 @@ class Tags(commands.Cog):
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.channel.send(embed=embed)
         else:
-            if (
-                len(ctx.message.attachments) > 0 and ctx.message.attachments[0]
-            ):  # Attachment support for tags
+            if len(ctx.message.attachments) > 0 and ctx.message.attachments[0]:  # Attachment support for tags
                 content = f"{content}\n{ctx.message.attachments[0].url}"
 
             new_tag = Tag(
@@ -295,9 +279,9 @@ class Tags(commands.Cog):
             await self.tag_handler.create(new_tag)
             embed = discord.Embed(
                 title="✅ " + self._("Tag created!"),
-                description=self._(
-                    "You can now call it with `{prefix}tag {name}`"
-                ).format(prefix=ctx.prefix, name=name),
+                description=self._("You can now call it with `{prefix}tag {name}`").format(
+                    prefix=ctx.prefix, name=name
+                ),
                 color=self.bot.embedGreen,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
@@ -319,11 +303,10 @@ class Tags(commands.Cog):
             else:
                 aliases = None
             embed = discord.Embed(
-                title="💬 "
-                + self._("Tag Info: {tag_name}").format(tag_name=tag.tag_name),
-                description=self._(
-                    "**Aliases:** `{aliases}`\n**Tag owner:** {owner}\n"
-                ).format(aliases=aliases, owner=owner.mention),
+                title="💬 " + self._("Tag Info: {tag_name}").format(tag_name=tag.tag_name),
+                description=self._("**Aliases:** `{aliases}`\n**Tag owner:** {owner}\n").format(
+                    aliases=aliases, owner=owner.mention
+                ),
                 color=self.bot.embedBlue,
             )
             embed.set_author(name=str(owner), icon_url=owner.avatar.url)
@@ -349,9 +332,7 @@ class Tags(commands.Cog):
         if alias_tag:
             embed = discord.Embed(
                 title="❌ " + self._("Error: Already taken"),
-                description=self._(
-                    "A tag or alias is already created with the same name."
-                ),
+                description=self._("A tag or alias is already created with the same name."),
                 color=self.bot.errorColor,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
@@ -375,9 +356,7 @@ class Tags(commands.Cog):
                 else:
                     embed = discord.Embed(
                         title="❌ " + self._("Error: Too many aliases"),
-                        description=self._(
-                            "Tag `{tag}` can only have up to **5** aliases."
-                        ).format(tag=tag.tag_name),
+                        description=self._("Tag `{tag}` can only have up to **5** aliases.").format(tag=tag.tag_name),
                         color=self.bot.errorColor,
                     )
                     embed = self.bot.add_embed_footer(ctx, embed)
@@ -396,9 +375,9 @@ class Tags(commands.Cog):
                 await self.tag_handler.create(new_tag)
                 embed = discord.Embed(
                     title="✅ " + self._("Alias created"),
-                    description=self._(
-                        "You can now call it with `{prefix}tag {name}`"
-                    ).format(prefix=ctx.prefix, name=alias.lower()),
+                    description=self._("You can now call it with `{prefix}tag {name}`").format(
+                        prefix=ctx.prefix, name=alias.lower()
+                    ),
                     color=self.bot.embedGreen,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
@@ -407,9 +386,9 @@ class Tags(commands.Cog):
             else:
                 embed = discord.Embed(
                     title="❌ " + self._("Error: Duplicate alias"),
-                    description=self._(
-                        "Tag `{tag}` already has an alias called `{alias}`."
-                    ).format(tag=tag.tag_name, alias=alias),
+                    description=self._("Tag `{tag}` already has an alias called `{alias}`.").format(
+                        tag=tag.tag_name, alias=alias
+                    ),
                     color=self.bot.errorColor,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
@@ -417,9 +396,7 @@ class Tags(commands.Cog):
         else:
             embed = discord.Embed(
                 title="❌ " + self._("Error: Invalid tag"),
-                description=self._(
-                    "You either do not own this tag or it does not exist."
-                ),
+                description=self._("You either do not own this tag or it does not exist."),
                 color=self.bot.errorColor,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
@@ -450,9 +427,9 @@ class Tags(commands.Cog):
                 await self.tag_handler.create(new_tag)
                 embed = discord.Embed(
                     title="✅ " + self._("Alias deleted"),
-                    description=self._(
-                        "Alias `{alias}` for tag `{name}` has been deleted."
-                    ).format(alias=alias.lower(), name=new_tag.tag_name),
+                    description=self._("Alias `{alias}` for tag `{name}` has been deleted.").format(
+                        alias=alias.lower(), name=new_tag.tag_name
+                    ),
                     color=self.bot.embedGreen,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
@@ -460,9 +437,9 @@ class Tags(commands.Cog):
             else:
                 embed = discord.Embed(
                     title="❌ " + self._("Error: Unknown alias"),
-                    description=self._(
-                        "Tag `{tag}` does not have an alias called `{alias}`."
-                    ).format(tag=tag.tag_name, alias=alias),
+                    description=self._("Tag `{tag}` does not have an alias called `{alias}`.").format(
+                        tag=tag.tag_name, alias=alias
+                    ),
                     color=self.bot.errorColor,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
@@ -470,9 +447,7 @@ class Tags(commands.Cog):
         else:
             embed = discord.Embed(
                 title="❌ " + self._("Error: Invalid tag"),
-                description=self._(
-                    "You either do not own this tag or it does not exist."
-                ),
+                description=self._("You either do not own this tag or it does not exist."),
                 color=self.bot.errorColor,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
@@ -486,12 +461,7 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def transfer(self, ctx, name, receiver: discord.Member):
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
-        if (
-            tag
-            and tag.tag_owner_id == ctx.author.id
-            or tag
-            and await has_mod_perms(ctx)
-        ):
+        if tag and tag.tag_owner_id == ctx.author.id or tag and await has_mod_perms(ctx):
             await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
             new_tag = Tag(
                 guild_id=ctx.guild.id,
@@ -503,9 +473,9 @@ class Tags(commands.Cog):
             await self.tag_handler.create(new_tag)
             embed = discord.Embed(
                 title="✅ " + self._("Tag transferred"),
-                description=self._(
-                    "Tag `{name}`'s ownership was successfully transferred to {receiver}"
-                ).format(name=new_tag.tag_name, receiver=receiver.mention),
+                description=self._("Tag `{name}`'s ownership was successfully transferred to {receiver}").format(
+                    name=new_tag.tag_name, receiver=receiver.mention
+                ),
                 color=self.bot.embedGreen,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
@@ -513,9 +483,7 @@ class Tags(commands.Cog):
         else:
             embed = discord.Embed(
                 title="❌ " + self._("Error: Invalid tag"),
-                description=self._(
-                    "You either do not own this tag or it does not exist."
-                ),
+                description=self._("You either do not own this tag or it does not exist."),
                 color=self.bot.errorColor,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
@@ -542,9 +510,7 @@ class Tags(commands.Cog):
             await self.tag_handler.create(new_tag)
             embed = discord.Embed(
                 title="✅ " + self._("Tag claimed"),
-                description=self._("Tag `{name}` now belongs to you.").format(
-                    name=new_tag.tag_name
-                ),
+                description=self._("Tag `{name}` now belongs to you.").format(name=new_tag.tag_name),
                 color=self.bot.embedGreen,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
@@ -580,9 +546,7 @@ class Tags(commands.Cog):
         if tag and tag.tag_owner_id == ctx.author.id:
             await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
 
-            if (
-                len(ctx.message.attachments) > 0 and ctx.message.attachments[0]
-            ):  # Attachment support for tags
+            if len(ctx.message.attachments) > 0 and ctx.message.attachments[0]:  # Attachment support for tags
                 new_content = f"{new_content}\n{ctx.message.attachments[0].url}"
 
             new_tag = Tag(
@@ -595,9 +559,7 @@ class Tags(commands.Cog):
             await self.tag_handler.create(new_tag)
             embed = discord.Embed(
                 title="✅ " + self._("Tag edited"),
-                description=self._("Tag `{name}` has been successfully edited.").format(
-                    name=new_tag.tag_name
-                ),
+                description=self._("Tag `{name}` has been successfully edited.").format(name=new_tag.tag_name),
                 color=self.bot.embedGreen,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
@@ -605,9 +567,7 @@ class Tags(commands.Cog):
         else:
             embed = discord.Embed(
                 title="❌ " + self._("Error: Invalid tag"),
-                description=self._(
-                    "You either do not own this tag or it does not exist."
-                ),
+                description=self._("You either do not own this tag or it does not exist."),
                 color=self.bot.errorColor,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
@@ -623,17 +583,12 @@ class Tags(commands.Cog):
     async def delete(self, ctx, *, name):
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
         if (
-            tag
-            and tag.tag_owner_id == ctx.author.id
-            or tag
-            and await has_mod_perms(ctx)
+            tag and tag.tag_owner_id == ctx.author.id or tag and await has_mod_perms(ctx)
         ):  # We only allow deletion if the user owns the tag or is a bot admin
             await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
             embed = discord.Embed(
                 title="✅ " + self._("Tag deleted"),
-                description=self._("Tag `{name}` has been deleted.").format(
-                    name=name.lower()
-                ),
+                description=self._("Tag `{name}` has been deleted.").format(name=name.lower()),
                 color=self.bot.embedGreen,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
@@ -685,9 +640,9 @@ class Tags(commands.Cog):
         else:
             embed = discord.Embed(
                 title="✅ " + self._("Tag imported"),
-                description=self._(
-                    "Tag `{name}` has been successfully imported from **{guild}**."
-                ).format(name=name.lower(), guild=self.bot.get_guild(origin_id).name),
+                description=self._("Tag `{name}` has been successfully imported from **{guild}**.").format(
+                    name=name.lower(), guild=self.bot.get_guild(origin_id).name
+                ),
                 color=self.bot.embedGreen,
             )
             await ctx.send(embed=embed)
@@ -708,15 +663,11 @@ class Tags(commands.Cog):
         """
         if strategy and strategy in ["keep", "override"]:
             try:
-                await self.tag_handler.migrate_all(
-                    origin_id, ctx.guild.id, ctx.author.id, strategy
-                )
+                await self.tag_handler.migrate_all(origin_id, ctx.guild.id, ctx.author.id, strategy)
             except Exception as error:
                 embed = discord.Embed(
                     title="❌ " + self._("Error: Tag import error"),
-                    description=self._(
-                        "An import error occurred.\n**Error:** ```{error}```"
-                    ).format(error=error),
+                    description=self._("An import error occurred.\n**Error:** ```{error}```").format(error=error),
                     color=self.bot.errorColor,
                 )
                 await ctx.send(embed=embed)
@@ -725,9 +676,7 @@ class Tags(commands.Cog):
                     title="✅ " + self._("Tags imported"),
                     description=self._(
                         "All tags have been successfully imported from **{guild}** with strategy **{strategy}**."
-                    ).format(
-                        guild=self.bot.get_guild(origin_id).name, strategy=strategy
-                    ),
+                    ).format(guild=self.bot.get_guild(origin_id).name, strategy=strategy),
                     color=self.bot.embedGreen,
                 )
                 await ctx.send(embed=embed)
@@ -756,10 +705,7 @@ class Tags(commands.Cog):
             tags_fmt = []
             for i, tag in enumerate(tags):
                 tags_fmt.append(f"**#{i+1}** {tag.tag_name}")
-            tags_fmt = [
-                tags_fmt[i * 10 : (i + 1) * 10]
-                for i in range((len(tags_fmt) + 10 - 1) // 10)
-            ]
+            tags_fmt = [tags_fmt[i * 10 : (i + 1) * 10] for i in range((len(tags_fmt) + 10 - 1) // 10)]
             embed_list = []
             for page_contents in tags_fmt:
                 embed = discord.Embed(
@@ -769,16 +715,14 @@ class Tags(commands.Cog):
                 )
                 embed_list.append(embed)
 
-            menu_paginator = components.SnedMenuPaginator(
-                pages=embed_list, show_disabled=True, show_indicator=True
-            )
+            menu_paginator = components.SnedMenuPaginator(pages=embed_list, show_disabled=True, show_indicator=True)
             await menu_paginator.send(ctx, ephemeral=False)
         else:
             embed = discord.Embed(
                 title="💬 " + self._("Available tags for this server:"),
-                description=self._(
-                    "There are currently no tags! You can create one via `{prefix}tag create`"
-                ).format(prefix=ctx.prefix),
+                description=self._("There are currently no tags! You can create one via `{prefix}tag create`").format(
+                    prefix=ctx.prefix
+                ),
                 color=self.bot.embedBlue,
             )
             await ctx.send(embed=embed)
@@ -826,9 +770,7 @@ class Tags(commands.Cog):
             else:
                 embed = discord.Embed(
                     title="🔎 " + self._("Not found"),
-                    description=self._("Unable to find tags with that name.").format(
-                        prefix=ctx.prefix
-                    ),
+                    description=self._("Unable to find tags with that name.").format(prefix=ctx.prefix),
                     color=self.bot.errorColor,
                 )
                 await ctx.send(embed=embed)

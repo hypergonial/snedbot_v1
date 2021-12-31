@@ -21,9 +21,8 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
         self.bot = bot
 
     async def cog_check(self, ctx):
-        return (
-            ctx.guild.id in self.bot.whitelisted_guilds
-            and await ctx.bot.custom_checks.has_permissions(ctx, "admin_permitted")
+        return ctx.guild.id in self.bot.whitelisted_guilds and await ctx.bot.custom_checks.has_permissions(
+            ctx, "admin_permitted"
         )
 
     @commands.Cog.listener()
@@ -34,9 +33,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
         """
         if self.bot.is_ready() and self.bot.caching.is_ready:
             if message.guild and message.guild.id in self.bot.whitelisted_guilds:
-                records = await self.bot.caching.get(
-                    table="ktp", guild_id=message.guild.id
-                )
+                records = await self.bot.caching.get(table="ktp", guild_id=message.guild.id)
                 if records:
                     for record in records:
                         if (
@@ -45,9 +42,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
                             and record["ktp_msg_id"] != message.id
                         ):
                             channel = message.channel
-                            previous_top = channel.get_partial_message(
-                                record["ktp_msg_id"]
-                            )
+                            previous_top = channel.get_partial_message(record["ktp_msg_id"])
                             try:
                                 await previous_top.delete()  # Necessary to put in a try/except otherwise on a spammy channel this might spam the console to hell
                             except discord.errors.NotFound:
@@ -59,9 +54,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
                                 message.guild.id,
                                 record["ktp_id"],
                             )
-                            await self.bot.caching.refresh(
-                                table="ktp", guild_id=message.guild.id
-                            )
+                            await self.bot.caching.refresh(table="ktp", guild_id=message.guild.id)
                             break
 
     @commands.group(
@@ -126,15 +119,10 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
         try:
 
             def check(payload):
-                return (
-                    payload.author == ctx.author
-                    and payload.channel.id == ctx.channel.id
-                )
+                return payload.author == ctx.author and payload.channel.id == ctx.channel.id
 
             payload = await self.bot.wait_for("message", timeout=60.0, check=check)
-            ktp_channel = await commands.TextChannelConverter().convert(
-                ctx, payload.content
-            )
+            ktp_channel = await commands.TextChannelConverter().convert(ctx, payload.content)
 
             if records:
                 for record in records:
@@ -200,9 +188,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
         usage="keepontop delete <ID>",
     )
     async def ktp_delete(self, ctx, id: int):
-        records = await self.bot.caching.get(
-            table="ktp", guild_id=ctx.guild.id, ktp_id=id
-        )
+        records = await self.bot.caching.get(table="ktp", guild_id=ctx.guild.id, ktp_id=id)
         if records:
             await self.bot.pool.execute(
                 """DELETE FROM ktp WHERE guild_id = $1 AND ktp_id = $2""",

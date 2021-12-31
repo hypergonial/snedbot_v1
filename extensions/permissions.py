@@ -55,9 +55,7 @@ class Permissions(commands.Cog):
     async def get_perms(self, guild: discord.Guild, ptype: str) -> list[int]:
         """Get a permission node's roles"""
         if ptype in self.VALID_TYPES.keys():
-            records = await self.bot.caching.get(
-                table="permissions", guild_id=guild.id, ptype=ptype
-            )
+            records = await self.bot.caching.get(table="permissions", guild_id=guild.id, ptype=ptype)
             if records and records[0]["role_ids"] and len(records[0]["role_ids"]) > 0:
                 return records[0]["role_ids"]
             else:
@@ -76,9 +74,7 @@ class Permissions(commands.Cog):
         if ptype in self.VALID_TYPES:
             for role_id in role_ids:
                 if role_id not in guild_role_ids:
-                    raise ValueError(
-                        "One of the role_ids specified is invalid, or not found in the current guild."
-                    )
+                    raise ValueError("One of the role_ids specified is invalid, or not found in the current guild.")
 
             await self.bot.pool.execute(
                 """
@@ -97,9 +93,7 @@ class Permissions(commands.Cog):
 
     async def add_perms(self, guild: discord.Guild, ptype: str, role_id: int) -> None:
         role = guild.get_role(role_id)
-        records = await self.bot.caching.get(
-            table="permissions", guild_id=guild.id, ptype=ptype
-        )
+        records = await self.bot.caching.get(table="permissions", guild_id=guild.id, ptype=ptype)
         role_ids = records[0]["role_ids"] if records and records[0]["role_ids"] else []
         if role_id not in role_ids:
             role_ids.append(role_id)
@@ -119,9 +113,7 @@ class Permissions(commands.Cog):
             raise ValueError("Role already added to permission node.")
 
     async def del_perms(self, guild: discord.Guild, ptype: str, role_id: int) -> None:
-        records = await self.bot.caching.get(
-            table="permissions", guild_id=guild.id, ptype=ptype
-        )
+        records = await self.bot.caching.get(table="permissions", guild_id=guild.id, ptype=ptype)
         role_ids = records[0]["role_ids"] if records and records[0]["role_ids"] else []
         if role_id in role_ids:
             role_ids.remove(role_id)
@@ -168,12 +160,7 @@ class Permissions(commands.Cog):
                 if role_ids and len(role_ids) > 0:
                     embed.add_field(
                         name=self.VALID_TYPES[record["ptype"]],
-                        value=", ".join(
-                            [
-                                ctx.guild.get_role(role_id).mention
-                                for role_id in role_ids
-                            ]
-                        ),
+                        value=", ".join([ctx.guild.get_role(role_id).mention for role_id in role_ids]),
                     )
                 else:
                     embed.add_field(
@@ -182,14 +169,10 @@ class Permissions(commands.Cog):
                     )
                 ptypes.remove(record["ptype"])
             for ptype in ptypes:
-                embed.add_field(
-                    name=self.VALID_TYPES[ptype], value=str(self.DEFAULT_PERMS[ptype])
-                )
+                embed.add_field(name=self.VALID_TYPES[ptype], value=str(self.DEFAULT_PERMS[ptype]))
         else:
             for ptype in self.VALID_TYPES:
-                embed.add_field(
-                    name=self.VALID_TYPES[ptype], value=str(self.DEFAULT_PERMS[ptype])
-                )
+                embed.add_field(name=self.VALID_TYPES[ptype], value=str(self.DEFAULT_PERMS[ptype]))
         embed.insert_field_at(7, name="​", value="​")  # Spacer
         await ctx.send(embed=embed)
 
@@ -217,9 +200,7 @@ class Permissions(commands.Cog):
                 role_ids = await self.get_perms(ctx.guild, key)
 
                 if role_ids and len(role_ids) > 0:
-                    roles = ", ".join(
-                        [ctx.guild.get_role(role_id).mention for role_id in role_ids]
-                    )
+                    roles = ", ".join([ctx.guild.get_role(role_id).mention for role_id in role_ids])
                 else:
                     roles = "*None*"
 

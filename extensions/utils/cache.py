@@ -77,24 +77,16 @@ class Caching:
                 if len(records) > 0:
                     for (key, value) in kwargs.items():
                         if key in records.keys():  # If the key is found in cache
-                            matches[key] = [
-                                i for i, x in enumerate(records[key]) if x == value
-                            ]
+                            matches[key] = [i for i, x in enumerate(records[key]) if x == value]
                         else:
                             raise ValueError("Invalid key passed.")
                     # Find common elements present in all match lists
                     intersection = list(set.intersection(*map(set, matches.values())))
                     if len(intersection) > 0:
                         filtered_records = {key: [] for key in records.keys()}
-                        for (
-                            match
-                        ) in (
-                            intersection
-                        ):  # Go through every list, and check the matched positions,
+                        for match in intersection:  # Go through every list, and check the matched positions,
                             for (key, value) in records.items():
-                                filtered_records[key].append(
-                                    value[match]
-                                )  # Then filter them out
+                                filtered_records[key].append(value[match])  # Then filter them out
                         if len(filtered_records) > 0:
                             return await self.format_records(filtered_records)
             else:
@@ -146,9 +138,7 @@ class Caching:
         automatically calls this function.
         """
         self.cache[table][guild_id] = {}
-        records = await self.bot.pool.fetch(
-            f"""SELECT * FROM {table} WHERE guild_id = $1""", guild_id
-        )
+        records = await self.bot.pool.fetch(f"""SELECT * FROM {table} WHERE guild_id = $1""", guild_id)
         for record in records:
             for (field, value) in record.items():
                 if field in self.cache[table][guild_id].keys():

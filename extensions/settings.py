@@ -174,30 +174,22 @@ class SettingsMainView(components.AuthorOnlyView):
         self.value = None
 
     @discord.ui.button(label="Moderation", style=discord.ButtonStyle.primary)
-    async def mod_button(
-        self, button: discord.ui.Button, interaction: discord.Interaction
-    ):
+    async def mod_button(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = "moderation"
         self.stop()
 
     @discord.ui.button(label="Automoderator", style=discord.ButtonStyle.primary)
-    async def automod_button(
-        self, button: discord.ui.Button, interaction: discord.Interaction
-    ):
+    async def automod_button(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = "automod"
         self.stop()
 
     @discord.ui.button(label="Logging", style=discord.ButtonStyle.primary)
-    async def logging_button(
-        self, button: discord.ui.Button, interaction: discord.Interaction
-    ):
+    async def logging_button(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = "logging"
         self.stop()
 
     @discord.ui.button(label="Quit", style=discord.ButtonStyle.danger)
-    async def quit_button(
-        self, button: discord.ui.Button, interaction: discord.Interaction
-    ):
+    async def quit_button(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.value = "quit"
         self.stop()
 
@@ -337,14 +329,8 @@ class LoggingConfMainView(components.AuthorOnlyView):
 
         options = []
         for i, key in enumerate(logging_channels.keys()):
-            options.append(
-                discord.SelectOption(value=key, label=log_event_strings[key])
-            )
-        self.add_item(
-            self.MenuChannelSelect(
-                options=options, placeholder="Select an event to modify..."
-            )
-        )
+            options.append(discord.SelectOption(value=key, label=log_event_strings[key]))
+        self.add_item(self.MenuChannelSelect(options=options, placeholder="Select an event to modify..."))
 
         self.add_item(
             self.MenuSelectButton(
@@ -429,9 +415,7 @@ class Settings(commands.Cog):
 
             for field in options.__dataclass_fields__:
                 value = getattr(options, field)
-                embed.add_field(
-                    name=f"{mod_settings_strings[field]}", value=value, inline=True
-                )
+                embed.add_field(name=f"{mod_settings_strings[field]}", value=value, inline=True)
                 options_dict[field] = mod_settings_strings[field]
 
             view = ModConfMainView(ctx, options_dict)
@@ -441,10 +425,7 @@ class Settings(commands.Cog):
                 await self.bot.maybe_edit(message, embed=embed, view=view)
 
             def check(message):
-                return (
-                    message.author.id == ctx.author.id
-                    and ctx.channel.id == message.channel.id
-                )
+                return message.author.id == ctx.author.id and ctx.channel.id == message.channel.id
 
             await view.wait()
             if not view.value:
@@ -463,9 +444,7 @@ class Settings(commands.Cog):
                     ctx.guild.id,
                     not options.dm_users_on_punish,
                 )
-                await self.bot.caching.refresh(
-                    table="mod_config", guild_id=ctx.guild.id
-                )
+                await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                 await show_mod_menu(self, message)
 
             elif view.value == "clean_up_mod_commands":
@@ -478,9 +457,7 @@ class Settings(commands.Cog):
                     ctx.guild.id,
                     not options.clean_up_mod_commands,
                 )
-                await self.bot.caching.refresh(
-                    table="mod_config", guild_id=ctx.guild.id
-                )
+                await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                 await show_mod_menu(self, message)
 
         await show_mod_menu(self, message)
@@ -518,9 +495,7 @@ class Settings(commands.Cog):
             else:
                 await show_policy_options(self, view.value, message)
 
-        async def show_policy_options(
-            self, offense_str: str, message: discord.Message = None
-        ):
+        async def show_policy_options(self, offense_str: str, message: discord.Message = None):
             policies = await automod.get_policies(ctx.guild.id)
             policy_data = policies[offense_str]
             embed = discord.Embed(
@@ -540,9 +515,7 @@ class Settings(commands.Cog):
                     inline=False,
                 )
 
-            embed.add_field(
-                name="State:", value=policy_data["state"].capitalize(), inline=False
-            )
+            embed.add_field(name="State:", value=policy_data["state"].capitalize(), inline=False)
             button_labels["state"] = "State"
 
             if policy_data["state"] != "disabled":
@@ -568,9 +541,7 @@ class Settings(commands.Cog):
                         )
                         button_labels["delete"] = "Deletion"
                     elif key == "count":
-                        embed.add_field(
-                            name="Count:", value=policy_data[key], inline=False
-                        )
+                        embed.add_field(name="Count:", value=policy_data[key], inline=False)
                         button_labels["count"] = "Count"
                     elif key == "words_list":
                         bad_words = ", ".join(policy_data[key])
@@ -597,9 +568,7 @@ class Settings(commands.Cog):
                         if len(channels) > 0:
                             embed.add_field(
                                 name="Excluded channels:",
-                                value=" ".join(
-                                    [channel.mention for channel in channels]
-                                ),
+                                value=" ".join([channel.mention for channel in channels]),
                             )
                         else:
                             embed.add_field(name="Excluded channels:", value="None set")
@@ -610,10 +579,7 @@ class Settings(commands.Cog):
             await view.wait()
 
             def check(message):
-                return (
-                    message.author.id == ctx.author.id
-                    and ctx.channel.id == message.channel.id
-                )
+                return message.author.id == ctx.author.id and ctx.channel.id == message.channel.id
 
             """Menu navigation for policy options"""
 
@@ -659,17 +625,13 @@ class Settings(commands.Cog):
                     policies[offense_str]["temp_dur"] = 40320
 
                 await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
-                await self.bot.caching.refresh(
-                    table="mod_config", guild_id=ctx.guild.id
-                )
+                await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                 await show_policy_options(self, offense_str, message)
 
             elif view.value == "delete":
                 policies[offense_str]["delete"] = not policies[offense_str]["delete"]
                 await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
-                await self.bot.caching.refresh(
-                    table="mod_config", guild_id=ctx.guild.id
-                )
+                await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                 await show_policy_options(self, offense_str, message)
 
             elif view.value == "temp_dur":
@@ -694,12 +656,8 @@ class Settings(commands.Cog):
                         if temp_dur < 1 or temp_dur > max_dur:
                             raise ValueError
                         policies[offense_str]["temp_dur"] = temp_dur
-                        await self.bot.pool.execute(
-                            sql, json.dumps(policies), ctx.guild.id
-                        )
-                        await self.bot.caching.refresh(
-                            table="mod_config", guild_id=ctx.guild.id
-                        )
+                        await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
+                        await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                         await self.bot.maybe_delete(input)
                         await show_policy_options(self, offense_str, message)
 
@@ -736,12 +694,8 @@ class Settings(commands.Cog):
                         if count < 1 or count > 50:
                             raise ValueError
                         policies[offense_str]["count"] = count
-                        await self.bot.pool.execute(
-                            sql, json.dumps(policies), ctx.guild.id
-                        )
-                        await self.bot.caching.refresh(
-                            table="mod_config", guild_id=ctx.guild.id
-                        )
+                        await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
+                        await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                         await self.bot.maybe_delete(input)
                         await show_policy_options(self, offense_str, message)
 
@@ -781,9 +735,7 @@ class Settings(commands.Cog):
 
                     policies[offense_str]["words_list"] = words_list
                     await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
-                    await self.bot.caching.refresh(
-                        table="mod_config", guild_id=ctx.guild.id
-                    )
+                    await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                     await self.bot.maybe_delete(input)
                     await show_policy_options(self, offense_str, message)
 
@@ -807,9 +759,7 @@ class Settings(commands.Cog):
 
                     policies[offense_str]["words_list_wildcard"] = words_list
                     await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
-                    await self.bot.caching.refresh(
-                        table="mod_config", guild_id=ctx.guild.id
-                    )
+                    await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                     await self.bot.maybe_delete(input)
                     await show_policy_options(self, offense_str, message)
 
@@ -832,9 +782,7 @@ class Settings(commands.Cog):
                         channel_ids = []
                         try:
                             for channel_mention in channel_mentions:
-                                channel = await commands.TextChannelConverter().convert(
-                                    ctx, channel_mention
-                                )
+                                channel = await commands.TextChannelConverter().convert(ctx, channel_mention)
                                 channel_ids.append(channel.id)
                         except commands.ChannelNotFound:
                             embed = discord.Embed(
@@ -847,9 +795,7 @@ class Settings(commands.Cog):
 
                     policies[offense_str]["excluded_channels"] = channel_ids
                     await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
-                    await self.bot.caching.refresh(
-                        table="mod_config", guild_id=ctx.guild.id
-                    )
+                    await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
                     await self.bot.maybe_delete(input)
                     await show_policy_options(self, offense_str, message)
 
@@ -911,9 +857,7 @@ class Settings(commands.Cog):
             )
             for channel in ctx.guild.channels:
                 if isinstance(channel, (discord.TextChannel)):
-                    select_options.append(
-                        discord.SelectOption(label="#" + channel.name, value=channel.id)
-                    )
+                    select_options.append(discord.SelectOption(label="#" + channel.name, value=channel.id))
             embed = discord.Embed(
                 title="Logging Settings",
                 description=f"Please select a channel where the following event should be logged: `{log_event_strings[event]}`\nType/select `Disable` to disable this event.",
@@ -934,9 +878,7 @@ class Settings(commands.Cog):
             elif value and asked:
                 if value.lower() != "disable":
                     try:
-                        logging_channel = (
-                            await commands.GuildChannelConverter().convert(ctx, value)
-                        )
+                        logging_channel = await commands.GuildChannelConverter().convert(ctx, value)
                         if logging_channel.type not in [
                             discord.ChannelType.news,
                             discord.ChannelType.text,
@@ -951,9 +893,7 @@ class Settings(commands.Cog):
                             await view.wait()
                             await show_logging_menu(
                                 self, message
-                            ) if view.value == "back" else await self.bot.maybe_delete(
-                                message
-                            )
+                            ) if view.value == "back" else await self.bot.maybe_delete(message)
                     except commands.ChannelNotFound:
                         embed = discord.Embed(
                             title="❌ Error: Channel not found.",
@@ -963,9 +903,7 @@ class Settings(commands.Cog):
                         view = components.BackButtonView(ctx)
                         await message.edit(embed=embed, view=view)
                         await view.wait()
-                        await show_logging_menu(
-                            self, message
-                        ) if view.value == "back" else await self.bot.maybe_delete(
+                        await show_logging_menu(self, message) if view.value == "back" else await self.bot.maybe_delete(
                             message
                         )
             if logging_channel:

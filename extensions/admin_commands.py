@@ -48,10 +48,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         if should_delete == True:
 
             def check(payload):
-                return (
-                    payload.channel.id == ctx.channel.id
-                    and payload.author == ctx.author
-                )
+                return payload.channel.id == ctx.channel.id and payload.author == ctx.author
 
             embed = discord.Embed(
                 title="Confirmation",
@@ -102,9 +99,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         Sets the bot's nick to the specified name
         """
         try:
-            if (
-                nick.lower() == "none" or nick.lower() == "null"
-            ):  # Simple way to clear nick
+            if nick.lower() == "none" or nick.lower() == "null":  # Simple way to clear nick
                 nick = None
             await ctx.guild.me.edit(nick=nick)
             embed = discord.Embed(
@@ -134,9 +129,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         """
         Prefix management commands/features are found here
         """
-        records = await self.bot.caching.get(
-            table="global_config", guild_id=ctx.guild.id
-        )
+        records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
         if records and records[0]["prefix"] and len(records[0]["prefix"]) > 0:
             prefixes = records[0]["prefix"]
             desc = ""
@@ -169,9 +162,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         prefix = prefix.replace("'", "")
         if prefix == "":
             return
-        records = await self.bot.caching.get(
-            table="global_config", guild_id=ctx.guild.id
-        )
+        records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
         if (
             not records
             or not records[0]["prefix"]
@@ -221,9 +212,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         prefix = prefix.replace("'", "")
         if prefix == "":
             return
-        records = await self.bot.caching.get(
-            table="global_config", guild_id=ctx.guild.id
-        )
+        records = await self.bot.caching.get(table="global_config", guild_id=ctx.guild.id)
         if records and records[0]["prefix"] and prefix in records[0]["prefix"]:
             await self.bot.pool.execute(
                 """
@@ -310,9 +299,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
                 )
                 await ctx.send(embed=embed)
             else:
-                embed = (
-                    message.embeds[0] if message.embeds and message.embeds[0] else None
-                )
+                embed = message.embeds[0] if message.embeds and message.embeds[0] else None
                 await ctx.send(content=message.content, embed=embed)
         else:
             embed = discord.Embed(
@@ -356,18 +343,12 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         for cog in disabled_cogs:
             try:
                 disabled_list = disabled_list + [
-                    command.name.lower()
-                    for command in self.bot.get_cog(cog).get_commands()
+                    command.name.lower() for command in self.bot.get_cog(cog).get_commands()
                 ]
                 disabled_list = disabled_list + [
                     alias.lower()
                     for alias in list(
-                        itertools.chain(
-                            *[
-                                command.aliases
-                                for command in self.bot.get_cog(cog).get_commands()
-                            ]
-                        )
+                        itertools.chain(*[command.aliases for command in self.bot.get_cog(cog).get_commands()])
                     )
                 ]
             except AttributeError:  # Ignore missing cogs
@@ -429,9 +410,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         )
         confirmed = await ctx.confirm(embed=embed)
         if confirmed:
-            embed = discord.Embed(
-                title="🚪 See you soon! (hopefully)", color=self.bot.errorColor
-            )
+            embed = discord.Embed(title="🚪 See you soon! (hopefully)", color=self.bot.errorColor)
             await ctx.channel.send(embed=embed)
             await ctx.guild.leave()
         else:
@@ -453,19 +432,13 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
     async def blacklist(self, ctx):
         await ctx.send_help(ctx.command)
 
-    @blacklist.command(
-        name="add", help="Adds a member to the blacklist.", usage="blacklist add <user>"
-    )
+    @blacklist.command(name="add", help="Adds a member to the blacklist.", usage="blacklist add <user>")
     @commands.is_owner()
     async def blacklist_add(self, ctx, user: discord.User):
-        records = await self.bot.caching.get(
-            table="blacklist", guild_id=0, user_id=user.id
-        )
+        records = await self.bot.caching.get(table="blacklist", guild_id=0, user_id=user.id)
         print(records)
         if not records or len(records) == 0:
-            await self.bot.pool.execute(
-                """INSERT INTO blacklist (user_id) VALUES ($1)""", user.id
-            )
+            await self.bot.pool.execute("""INSERT INTO blacklist (user_id) VALUES ($1)""", user.id)
             await self.bot.caching.refresh(table="blacklist", guild_id=0)
             embed = discord.Embed(
                 title="✅ User blacklisted",
@@ -489,13 +462,9 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
     )
     @commands.is_owner()
     async def blacklist_del(self, ctx, user: discord.User):
-        records = await self.bot.caching.get(
-            table="blacklist", guild_id=0, user_id=user.id
-        )
+        records = await self.bot.caching.get(table="blacklist", guild_id=0, user_id=user.id)
         if records and records[0]["user_id"] == user.id:
-            await self.bot.pool.execute(
-                """DELETE FROM blacklist WHERE user_id = $1""", user.id
-            )
+            await self.bot.pool.execute("""DELETE FROM blacklist WHERE user_id = $1""", user.id)
             await self.bot.caching.refresh(table="blacklist", guild_id=0)
             embed = discord.Embed(
                 title="✅ User removed from blacklist",

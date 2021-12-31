@@ -38,14 +38,10 @@ async def backup_database(dsn: str) -> discord.File:
 
     now = datetime.datetime.now(datetime.timezone.utc)
 
-    filename = (
-        f"{now.year}-{now.month}-{now.day}_{now.hour}_{now.minute}_{now.second}.sql"
-    )
+    filename = f"{now.year}-{now.month}-{now.day}_{now.hour}_{now.minute}_{now.second}.sql"
     backup_path = os.path.join(filepath, "db_backup", filename)
 
-    os.system(
-        f"pg_dump -c -U {username} -d {db_name} -h {hostname} -p {port} -w > {backup_path}"
-    )
+    os.system(f"pg_dump -c -U {username} -d {db_name} -h {hostname} -p {port} -w > {backup_path}")
 
     logging.info("Database backup complete!")
     return discord.File(backup_path)

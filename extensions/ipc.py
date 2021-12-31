@@ -45,9 +45,7 @@ class IpcRoutes(commands.Cog):
         If there is no entry for a given module, then it falls back to True.
 
         """
-        record = await self.bot.caching.get(
-            table="modules", guild_id=guild_id, module_name=module_name
-        )
+        record = await self.bot.caching.get(table="modules", guild_id=guild_id, module_name=module_name)
         if record:
             return record[0]["is_enabled"]
         else:
@@ -154,9 +152,7 @@ class IpcRoutes(commands.Cog):
         records = await self.bot.caching.get(table="mod_config", guild_id=guild.id)
         mod_settings_dict = {
             "dm_users_on_punish": records[0]["dm_users_on_punish"] if records else True,
-            "clean_up_mod_commands": records[0]["clean_up_mod_commands"]
-            if records
-            else False,
+            "clean_up_mod_commands": records[0]["clean_up_mod_commands"] if records else False,
         }
 
         response = {
@@ -251,9 +247,7 @@ class IpcRoutes(commands.Cog):
         guild_id = data.guild_id
         escalate_policy = data.policy
 
-        automod_policies = await self.bot.get_cog("Moderation").get_policies(
-            data.guild_id
-        )
+        automod_policies = await self.bot.get_cog("Moderation").get_policies(data.guild_id)
         automod_policies["escalate"] = escalate_policy
 
         await self.bot.pool.execute(

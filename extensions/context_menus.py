@@ -14,9 +14,9 @@ async def has_mod_perms(ctx) -> bool:
 
 
 async def has_fun_perms(ctx) -> bool:
-    return await ctx.bot.custom_checks.has_permissions(
-        ctx, "fun"
-    ) or await ctx.bot.custom_checks.has_permissions(ctx, "mod_permitted")
+    return await ctx.bot.custom_checks.has_permissions(ctx, "fun") or await ctx.bot.custom_checks.has_permissions(
+        ctx, "mod_permitted"
+    )
 
 
 class ContextMenus(commands.Cog):
@@ -32,9 +32,7 @@ class ContextMenus(commands.Cog):
     @user_command(name="Show Userinfo")
     async def whois_context(self, ctx, member: discord.Member):
         if await has_mod_perms(ctx):
-            await ctx.respond(
-                embed=await self.mod_cog.whois(ctx, member), ephemeral=True
-            )
+            await ctx.respond(embed=await self.mod_cog.whois(ctx, member), ephemeral=True)
         else:
             await ctx.respond(embed=self.checkfailure_embed, ephemeral=True)
 
@@ -59,9 +57,7 @@ class ContextMenus(commands.Cog):
                     )
                     embed_list.append(embed)
 
-                menu_paginator = components.SnedMenuPaginator(
-                    pages=embed_list, show_disabled=True, show_indicator=True
-                )
+                menu_paginator = components.SnedMenuPaginator(pages=embed_list, show_disabled=True, show_indicator=True)
 
                 await menu_paginator.send(ctx, ephemeral=True)
             else:

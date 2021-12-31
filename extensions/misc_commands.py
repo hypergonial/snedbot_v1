@@ -20,9 +20,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     def __init__(self, bot):
         self.bot = bot
         self._ = self.bot.get_localization("misc_commands", self.bot.lang)
-        psutil.cpu_percent(
-            interval=1
-        )  # We need to do this here so that subsequent CPU % calls will be non-blocking
+        psutil.cpu_percent(interval=1)  # We need to do this here so that subsequent CPU % calls will be non-blocking
 
         # Gets the ping of the bot.
 
@@ -35,9 +33,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     async def ping(self, ctx):
         embed = discord.Embed(
             title="🏓 Pong!",
-            description=self._("Latency: `{latency}ms`").format(
-                latency=round(self.bot.latency * 1000)
-            ),
+            description=self._("Latency: `{latency}ms`").format(latency=round(self.bot.latency * 1000)),
             color=self.bot.miscColor,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
@@ -114,9 +110,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         if args.color:
             try:
                 color = await commands.ColorConverter().convert(ctx, args.color)
-                genEmbed = discord.Embed(
-                    title=f"{args.title}", description=f"{args.desc}", color=color
-                )
+                genEmbed = discord.Embed(title=f"{args.title}", description=f"{args.desc}", color=color)
             except commands.BadArgument:
                 embed = discord.Embed(
                     title="❌ " + self._("Invalid color"),
@@ -141,9 +135,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         except discord.HTTPException as e:
             embed = discord.Embed(
                 title="❌ " + self._("Failed parsing arguments."),
-                description=self._("**Exception:** ```{exception}```").format(
-                    exception=str(e)
-                ),
+                description=self._("**Exception:** ```{exception}```").format(exception=str(e)),
                 color=self.bot.errorColor,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
@@ -193,9 +185,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
             invite_url = f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=3691506934&scope=bot%20applications.commands"
             embed = discord.Embed(
                 title="🌟 Yay!",
-                description=self._(
-                    "[Click here]({invite_url}) for an invite link!"
-                ).format(invite_url=invite_url),
+                description=self._("[Click here]({invite_url}) for an invite link!").format(invite_url=invite_url),
                 color=self.bot.miscColor,
             )
             embed = self.bot.add_embed_footer(ctx, embed)

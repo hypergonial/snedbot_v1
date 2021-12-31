@@ -14,9 +14,7 @@ It is also really old & may need a rewrite to properly handle buttons, and just 
 """
 # Check to see if matchmaking is set up or not
 async def is_setup(ctx):
-    result = await ctx.bot.pool.fetch(
-        """SELECT * FROM matchmaking_config WHERE guild_id = $1""", ctx.guild.id
-    )
+    result = await ctx.bot.pool.fetch("""SELECT * FROM matchmaking_config WHERE guild_id = $1""", ctx.guild.id)
     if len(result) != 0 and result[0]:
         if result[0].get("announce_channel_id"):
             return True
@@ -33,9 +31,7 @@ class Matchmaking_Config:
         self.bot = bot
 
     async def load(self, data: str, guild_id: int):
-        result = await self.bot.pool.fetch(
-            """SELECT * FROM matchmaking_config WHERE guild_id = $1""", guild_id
-        )
+        result = await self.bot.pool.fetch("""SELECT * FROM matchmaking_config WHERE guild_id = $1""", guild_id)
         if len(result) != 0 and result[0]:
             return result[0].get(data)
 
@@ -74,9 +70,7 @@ class Listings:
         self.bot = bot
 
     async def retrieve(self, id):
-        result = await self.bot.pool.fetch(
-            """SELECT * FROM matchmaking_listings WHERE id = $1""", id
-        )
+        result = await self.bot.pool.fetch("""SELECT * FROM matchmaking_listings WHERE id = $1""", id)
         if len(result) != 0 and result[0]:
             listing = Listing(
                 id=result[0].get("id"),
@@ -95,9 +89,7 @@ class Listings:
             return listing
 
     async def retrieve_all(self):
-        results = await self.bot.pool.fetch(
-            """SELECT * FROM matchmaking_listings ORDER BY timestamp"""
-        )
+        results = await self.bot.pool.fetch("""SELECT * FROM matchmaking_listings ORDER BY timestamp""")
 
         if len(results) != 0:
             listings = []
@@ -173,10 +165,7 @@ class Matchmaking(commands.Cog):
         try:
             # Gathering info
             def check(payload):
-                return (
-                    payload.author == ctx.author
-                    and payload.channel.id == ctx.channel.id
-                )
+                return payload.author == ctx.author and payload.channel.id == ctx.channel.id
 
             payload = await self.bot.wait_for("message", timeout=60.0, check=check)
             if payload.content == "disable":
@@ -188,9 +177,7 @@ class Matchmaking(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
             else:
-                cmdchannel = await commands.TextChannelConverter().convert(
-                    ctx, payload.content
-                )
+                cmdchannel = await commands.TextChannelConverter().convert(ctx, payload.content)
                 cmdchannel_id = cmdchannel.id
                 embed = discord.Embed(
                     title="🛠️ Matchmaking setup",
@@ -206,9 +193,7 @@ class Matchmaking(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
             payload = await self.bot.wait_for("message", timeout=60.0, check=check)
-            announcechannel = await commands.TextChannelConverter().convert(
-                ctx, payload.content
-            )
+            announcechannel = await commands.TextChannelConverter().convert(ctx, payload.content)
             embed = discord.Embed(
                 title="🛠️ Matchmaking setup",
                 description=f"Multiplayer listings channel set to {announcechannel.mention}",
@@ -323,15 +308,13 @@ class Matchmaking(commands.Cog):
         # It sends these seperately to ideally grab the user's attention, but can be merged.
         embed = discord.Embed(
             title=self._("**Starting matchmaking...**"),
-            description=self._(
-                "Started matchmaking for **{name}#{discrim}**. Please check your DMs!"
-            ).format(name=ctx.author.name, discrim=ctx.author.discriminator),
+            description=self._("Started matchmaking for **{name}#{discrim}**. Please check your DMs!").format(
+                name=ctx.author.name, discrim=ctx.author.discriminator
+            ),
             color=mpEmbedColor,
         )
         embed.set_footer(
-            text=self._(
-                "If you didn't receive a DM, make sure you have direct messages enabled from server members."
-            )
+            text=self._("If you didn't receive a DM, make sure you have direct messages enabled from server members.")
         )
         await ctx.channel.send(embed=embed)
         embed = discord.Embed(
@@ -372,17 +355,13 @@ class Matchmaking(commands.Cog):
                     return payload.author == ctx.author and payload.guild is None
 
                 try:
-                    payload = await self.bot.wait_for(
-                        "message", timeout=300.0, check=usernamecheck
-                    )
+                    payload = await self.bot.wait_for("message", timeout=300.0, check=usernamecheck)
                     # 32char username limit
                     if len(payload.content) > 32:
                         await msg.delete()
                         embed = discord.Embed(
                             title=self.bot.warnDataTitle,
-                            description=self._(
-                                "Username too long. Maximum 32 characters"
-                            ),
+                            description=self._("Username too long. Maximum 32 characters"),
                             color=self.bot.warnColor,
                         )
                         await ctx.author.send(embed=embed)
@@ -391,9 +370,9 @@ class Matchmaking(commands.Cog):
                         await modifymatchmaking(qType, payload.content, isModifying)
                         embed = discord.Embed(
                             title="✅ " + self._("Username set."),
-                            description=self._(
-                                "Your Ubisoft Connect username is: **{name}**"
-                            ).format(name=payload.content),
+                            description=self._("Your Ubisoft Connect username is: **{name}**").format(
+                                name=payload.content
+                            ),
                             color=mpEmbedColor,
                         )
                         await ctx.author.send(embed=embed)
@@ -425,15 +404,10 @@ class Matchmaking(commands.Cog):
                 # We check if the message ID is the same, so this is not a different message.
                 # We also check if the user who reacted was the user who sent the command.
                 def gamemodecheck(payload):
-                    return (
-                        payload.message_id == msg.id
-                        and payload.user_id == ctx.author.id
-                    )
+                    return payload.message_id == msg.id and payload.user_id == ctx.author.id
 
                 try:
-                    payload = await self.bot.wait_for(
-                        "raw_reaction_add", timeout=300.0, check=gamemodecheck
-                    )
+                    payload = await self.bot.wait_for("raw_reaction_add", timeout=300.0, check=gamemodecheck)
                     # Check reaction emoji
                     i = 0
                     gamemode = "Default"
@@ -458,9 +432,7 @@ class Matchmaking(commands.Cog):
 
                     embed = discord.Embed(
                         title="✅ " + self._("Gamemode set."),
-                        description=self._(
-                            "Your gamemode is set to:  **{gamemode}**."
-                        ).format(gamemode=gamemode),
+                        description=self._("Your gamemode is set to:  **{gamemode}**.").format(gamemode=gamemode),
                         color=mpEmbedColor,
                     )
                     await ctx.author.send(embed=embed)
@@ -477,14 +449,11 @@ class Matchmaking(commands.Cog):
             elif qType == "PlayerCount":
                 embed = discord.Embed(
                     title=self._("How many players you want to play with?"),
-                    description="2️⃣ - 2 \n 3️⃣ - 3 \n 4️⃣ - 4 \n ♾️ -"
-                    + self._("5 or more"),
+                    description="2️⃣ - 2 \n 3️⃣ - 3 \n 4️⃣ - 4 \n ♾️ -" + self._("5 or more"),
                     color=mpEmbedColor,
                 )
                 embed.set_footer(
-                    text=self._(
-                        "This should be the minimum amount of players you are willing to play with!"
-                    )
+                    text=self._("This should be the minimum amount of players you are willing to play with!")
                 )
                 msg = await ctx.author.send(embed=embed)
                 # Saving the ID of this message we just sent
@@ -497,14 +466,10 @@ class Matchmaking(commands.Cog):
                 # We check if the message ID is the same, so this is not a different message.
                 # We also check if the user who reacted was the user who sent the command.
                 def playercountcheck(payload):
-                    return (
-                        payload.message_id == msgid and payload.user_id == ctx.author.id
-                    )
+                    return payload.message_id == msgid and payload.user_id == ctx.author.id
 
                 try:
-                    payload = await self.bot.wait_for(
-                        "raw_reaction_add", timeout=300.0, check=playercountcheck
-                    )
+                    payload = await self.bot.wait_for("raw_reaction_add", timeout=300.0, check=playercountcheck)
                     i = 0
                     playernum = "Default"
                     # Check if emoj is invalid, otherwise check for match & break on match
@@ -527,9 +492,7 @@ class Matchmaking(commands.Cog):
                     await modifymatchmaking(qType, playernum, isModifying)
                     embed = discord.Embed(
                         title="✅ " + self._("Number of players set."),
-                        description=self._("Number of players: **{playernum}**").format(
-                            playernum=playernum
-                        ),
+                        description=self._("Number of players: **{playernum}**").format(playernum=playernum),
                         color=mpEmbedColor,
                     )
                     await ctx.author.send(embed=embed)
@@ -563,9 +526,9 @@ class Matchmaking(commands.Cog):
                     color=mpEmbedColor,
                 )
                 embed.set_footer(
-                    text=self._(
-                        "Note: If you do not own any DLC, just simply press {check} to continue."
-                    ).format(check="✅")
+                    text=self._("Note: If you do not own any DLC, just simply press {check} to continue.").format(
+                        check="✅"
+                    )
                 )
                 msg = await ctx.author.send(embed=embed)
                 # Add to the list of DLC here. Note: the emojies & DLC must be in the same order, & a green tick must be at the end of emojies.
@@ -588,15 +551,11 @@ class Matchmaking(commands.Cog):
                 # We also check if the user who reacted was the user who sent the command.
                 def confirmDLCcheck(payload):
                     return (
-                        payload.message_id == msg.id
-                        and payload.user_id == ctx.author.id
-                        and str(payload.emoji) == "✅"
+                        payload.message_id == msg.id and payload.user_id == ctx.author.id and str(payload.emoji) == "✅"
                     )
 
                 try:
-                    payload = await self.bot.wait_for(
-                        "raw_reaction_add", timeout=300.0, check=confirmDLCcheck
-                    )
+                    payload = await self.bot.wait_for("raw_reaction_add", timeout=300.0, check=confirmDLCcheck)
                     # We have to fetch here otherwise reaction counting does not work for some reason..?
                     msg = await ctx.author.fetch_message(msg.id)
                     # Count all the emojies
@@ -627,9 +586,7 @@ class Matchmaking(commands.Cog):
                     await msg.delete()
                     embed = discord.Embed(
                         title="✅ " + self._("DLC set."),
-                        description=self._("Your DLC for this match: {DLC}").format(
-                            DLC=DLC
-                        ),
+                        description=self._("Your DLC for this match: {DLC}").format(DLC=DLC),
                         color=mpEmbedColor,
                     )
                     await ctx.author.send(embed=embed)
@@ -663,15 +620,10 @@ class Matchmaking(commands.Cog):
                 modemojies = ["✅", "❌"]
 
                 def modcheck(payload):
-                    return (
-                        payload.message_id == msg.id
-                        and payload.user_id == ctx.author.id
-                    )
+                    return payload.message_id == msg.id and payload.user_id == ctx.author.id
 
                 try:
-                    payload = await self.bot.wait_for(
-                        "raw_reaction_add", timeout=300.0, check=modcheck
-                    )
+                    payload = await self.bot.wait_for("raw_reaction_add", timeout=300.0, check=modcheck)
                     # Check reaction emoji
                     if str(payload.emoji) == "✅":
                         modded = "Yes"
@@ -692,9 +644,7 @@ class Matchmaking(commands.Cog):
                     await msg.delete()
                     embed = discord.Embed(
                         title="✅ " + self._("Mods set."),
-                        description=self._("Modded: **{is_modded}**").format(
-                            is_modded=modded
-                        ),
+                        description=self._("Modded: **{is_modded}**").format(is_modded=modded),
                         color=mpEmbedColor,
                     )
                     await ctx.author.send(embed=embed)
@@ -712,9 +662,7 @@ class Matchmaking(commands.Cog):
             elif qType == "TimeZone":
                 embed = discord.Embed(
                     title=self._("Specify your timezone as an UTC offset!"),
-                    description=self._(
-                        "For example: If your timezone is UTC+1, **type in 1!**"
-                    ),
+                    description=self._("For example: If your timezone is UTC+1, **type in 1!**"),
                     color=mpEmbedColor,
                 )
                 embed.set_footer(
@@ -728,9 +676,7 @@ class Matchmaking(commands.Cog):
                     return payload.author == ctx.author and payload.guild is None
 
                 try:
-                    payload = await self.bot.wait_for(
-                        "message", timeout=300.0, check=timezonecheck
-                    )
+                    payload = await self.bot.wait_for("message", timeout=300.0, check=timezonecheck)
                     try:
                         # We will check if it is an int
                         int(payload.content)
@@ -747,15 +693,11 @@ class Matchmaking(commands.Cog):
                         # If it is smaller than 0, we will make it UTC-
                         elif int(payload.content) < 0:
                             timezone = int(payload.content)
-                            await modifymatchmaking(
-                                qType, f"UTC{timezone}", isModifying
-                            )
+                            await modifymatchmaking(qType, f"UTC{timezone}", isModifying)
                             await msg.delete()
                             embed = discord.Embed(
                                 title="✅ " + self._("Timezone set."),
-                                description=self._(
-                                    "Your timezone: UTC{timezone}"
-                                ).format(timezone=timezone),
+                                description=self._("Your timezone: UTC{timezone}").format(timezone=timezone),
                                 color=mpEmbedColor,
                             )
                             await ctx.author.send(embed=embed)
@@ -763,15 +705,11 @@ class Matchmaking(commands.Cog):
                         # Otherwise UTC+
                         else:
                             timezone = int(payload.content)
-                            await modifymatchmaking(
-                                qType, f"UTC+{timezone}", isModifying
-                            )
+                            await modifymatchmaking(qType, f"UTC+{timezone}", isModifying)
                             await msg.delete()
                             embed = discord.Embed(
                                 title="✅ " + self._("Timezone set."),
-                                description=self._(
-                                    "Your timezone: UTC+{timezone}"
-                                ).format(timezone=timezone),
+                                description=self._("Your timezone: UTC+{timezone}").format(timezone=timezone),
                                 color=mpEmbedColor,
                             )
                             await ctx.author.send(embed=embed)
@@ -796,28 +734,20 @@ class Matchmaking(commands.Cog):
 
             elif qType == "Additional":
                 embed = discord.Embed(
-                    title=self._(
-                        "If you want to add additional notes to your listing, type it in now!"
-                    ),
+                    title=self._("If you want to add additional notes to your listing, type it in now!"),
                     description=self._(
                         "Examples of what to include (not mandatory): When you want to start, Duration of a match, Mods (if any)"
                     ),
                     color=mpEmbedColor,
                 )
-                embed.set_footer(
-                    text=self._(
-                        "Type in 'skip' to skip this step! Max length: 256 characters"
-                    )
-                )
+                embed.set_footer(text=self._("Type in 'skip' to skip this step! Max length: 256 characters"))
                 msg = await ctx.author.send(embed=embed)
 
                 def additionalinfocheck(payload):
                     return payload.author == ctx.author and payload.guild is None
 
                 try:
-                    payload = await self.bot.wait_for(
-                        "message", timeout=300.0, check=additionalinfocheck
-                    )
+                    payload = await self.bot.wait_for("message", timeout=300.0, check=additionalinfocheck)
                     if len(payload.content) > 256:
                         await msg.delete()
                         embed = discord.Embed(
@@ -845,9 +775,7 @@ class Matchmaking(commands.Cog):
                             await msg.delete()
                             embed = discord.Embed(
                                 title="✅ " + self._("Additional info set."),
-                                description=self._("You typed: ```{content}```").format(
-                                    content=payload.content
-                                ),
+                                description=self._("You typed: ```{content}```").format(content=payload.content),
                                 color=mpEmbedColor,
                             )
                             await ctx.author.send(embed=embed)
@@ -904,9 +832,7 @@ class Matchmaking(commands.Cog):
                 # Called to create a new multiplayer posting
                 async def createposting(mpsessiondata):
                     try:
-                        channel = self.bot.get_channel(
-                            await self.config.load("announce_channel_id", ctx.guild.id)
-                        )
+                        channel = self.bot.get_channel(await self.config.load("announce_channel_id", ctx.guild.id))
                         lfgrole_id = await self.config.load("lfg_role_id", ctx.guild.id)
                         listingID = uuid.uuid4()
                         listing_timestamp = int(round(time.time()))
@@ -972,9 +898,7 @@ class Matchmaking(commands.Cog):
                                     listing_id=listingID
                                 )
                             )
-                            posting = await channel.send(
-                                embed=embed, content=lfgrole.mention
-                            )
+                            posting = await channel.send(embed=embed, content=lfgrole.mention)
                             await posting.add_reaction("⏫")
                             logger.info(
                                 f"{ctx.author} User created new multiplayer listing with ID {listingID}. Session data dump: {mpsessiondata}"
@@ -1033,15 +957,10 @@ class Matchmaking(commands.Cog):
                         await msg.add_reaction(emoji)
 
                     def confirmModifyCheck(payload):
-                        return (
-                            payload.message_id == msg.id
-                            and payload.user_id == ctx.author.id
-                        )
+                        return payload.message_id == msg.id and payload.user_id == ctx.author.id
 
                     try:
-                        payload = await self.bot.wait_for(
-                            "raw_reaction_add", timeout=300.0, check=confirmModifyCheck
-                        )
+                        payload = await self.bot.wait_for("raw_reaction_add", timeout=300.0, check=confirmModifyCheck)
 
                         if str(payload.emoji) in modifyEmojies:
                             # We get the index, and now we know which question to re-run
@@ -1060,8 +979,7 @@ class Matchmaking(commands.Cog):
                                 else:
                                     if warns == 2:
                                         embed = discord.Embed(
-                                            title="❌ "
-                                            + self._("Exceeded error limit."),
+                                            title="❌ " + self._("Exceeded error limit."),
                                             description=self._(
                                                 "You have made too many errors. Please retry your submission."
                                             ),
@@ -1096,16 +1014,11 @@ class Matchmaking(commands.Cog):
                 # We check if the message ID is the same, so this is not a different message.
                 # We also check if the user who reacted was the user who sent the command.
                 def confirmcheck(payload):
-                    return (
-                        payload.message_id == msg.id
-                        and payload.user_id == ctx.author.id
-                    )
+                    return payload.message_id == msg.id and payload.user_id == ctx.author.id
 
                 # Now we will try to wait for a reaction add event for 60 seconds
                 try:
-                    payload = await self.bot.wait_for(
-                        "raw_reaction_add", timeout=300.0, check=confirmcheck
-                    )
+                    payload = await self.bot.wait_for("raw_reaction_add", timeout=300.0, check=confirmcheck)
                     # Check reaction emoji
                     if str(payload.emoji) == "✅":
                         if await createposting(mpsessiondata) == -1:
@@ -1208,9 +1121,7 @@ class Matchmaking(commands.Cog):
                         color=self.bot.errorColor,
                     )
                     await ctx.author.send(embed=embed)
-                    logger.info(
-                        f"{ctx.author} exceeded listing edit limit in matchmaking."
-                    )
+                    logger.info(f"{ctx.author} exceeded listing edit limit in matchmaking.")
                     ctx.command.reset_cooldown(ctx)
                     return
                 else:
@@ -1220,22 +1131,16 @@ class Matchmaking(commands.Cog):
                 if warns == 4:
                     embed = discord.Embed(
                         title="❌ " + self._("Exceeded error limit."),
-                        description=self._(
-                            "You have made too many errors. Please retry your submission."
-                        ),
+                        description=self._("You have made too many errors. Please retry your submission."),
                         color=self.bot.errorColor,
                     )
                     await ctx.author.send(embed=embed)
-                    logger.info(
-                        f"{ctx.author} exceeded listing error limit in matchmaking."
-                    )
+                    logger.info(f"{ctx.author} exceeded listing error limit in matchmaking.")
                     ctx.command.reset_cooldown(ctx)
                     return
                 else:
                     warns += 1
-        logger.info(
-            f"Matchmaking command executed successfully. Generated listing for {ctx.author}!"
-        )
+        logger.info(f"Matchmaking command executed successfully. Generated listing for {ctx.author}!")
 
     @matchmaking.error
     async def matchmaking_error(self, ctx, error):
@@ -1243,9 +1148,7 @@ class Matchmaking(commands.Cog):
         if isinstance(error, commands.MaxConcurrencyReached):
             embed = discord.Embed(
                 title=self.bot.errorMaxConcurrencyReachedTitle,
-                description=self._(
-                    "You already have a matchmaking request in progress."
-                ),
+                description=self._("You already have a matchmaking request in progress."),
                 color=self.bot.errorColor,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
@@ -1260,9 +1163,7 @@ class Matchmaking(commands.Cog):
             for listing in listings:
                 if (int(round(time.time())) - listing.timestamp) > 604800:
                     await self.listings.delete(listing.id)
-                    logger.info(
-                        "Deleted listing {ID} from database.".format(ID=listing.id)
-                    )
+                    logger.info("Deleted listing {ID} from database.".format(ID=listing.id))
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -1271,17 +1172,12 @@ class Matchmaking(commands.Cog):
         """
         # Check if we are in a guild so we dont bombard the database with Null errors.
         if payload.guild_id != None and payload.guild_id in self.bot.anno_guilds:
-            if (
-                await self.config.load("announce_channel_id", payload.guild_id)
-                == payload.channel_id
-            ):
+            if await self.config.load("announce_channel_id", payload.guild_id) == payload.channel_id:
                 guild = self.bot.get_guild(payload.guild_id)
                 # I put a fair number of logging in here to track abuse of this feature
                 if str(payload.emoji) == "⏫" and payload.user_id != self.bot.user.id:
                     # The listing message
-                    listing = await guild.get_channel(payload.channel_id).fetch_message(
-                        payload.message_id
-                    )
+                    listing = await guild.get_channel(payload.channel_id).fetch_message(payload.message_id)
                     # The person who reacted
                     member = guild.get_member(payload.user_id)
                     # Get context for this message
@@ -1293,9 +1189,7 @@ class Matchmaking(commands.Cog):
                     db_listing = await self.listings.retrieve(listingID)
                     # Detect missing data
                     if db_listing == None:
-                        logger.info(
-                            f"{member} tried to subscribe to an expired listing."
-                        )
+                        logger.info(f"{member} tried to subscribe to an expired listing.")
                         return
                     # The second line contains information about playercount
                     playerCount = db_listing.playercount
@@ -1307,9 +1201,7 @@ class Matchmaking(commands.Cog):
                     for player in interestedPlayers:
                         if player.bot == True or player.id == host.id:
                             interestedPlayers.remove(player)
-                    interestedMentions = ", ".join(
-                        [member.mention for member in interestedPlayers]
-                    )
+                    interestedMentions = ", ".join([member.mention for member in interestedPlayers])
                     # Convert the playercount to int, subtract 1 as to not count the host itself
                     try:
                         playerCount = int(playerCount) - 1
@@ -1318,10 +1210,7 @@ class Matchmaking(commands.Cog):
                     # Sending confirmation to user who signed up
                     if member.id != host.id:
                         embed = discord.Embed(
-                            title="📝 "
-                            + self._(
-                                "You have subscribed to {hostname}'s game!"
-                            ).format(hostname=host.name),
+                            title="📝 " + self._("You have subscribed to {hostname}'s game!").format(hostname=host.name),
                             description=self._(
                                 "They will receive a notification when their desired playercap has been reached."
                             ),
@@ -1332,15 +1221,12 @@ class Matchmaking(commands.Cog):
                             f"{member.name}#{member.discriminator} expressed interest to join {host.name}#{host.discriminator}'s game."
                         )
                     else:
-                        logger.info(
-                            f"{host.name} tried to subscribe to their own listing."
-                        )
+                        logger.info(f"{host.name} tried to subscribe to their own listing.")
                         return  # Return so that the host can't ping themselves lol
                     # If we have reached the desired playercount, we will message to the host. This message will get every time a new player reacts.
                     if len(interestedPlayers) >= playerCount:
                         embed = discord.Embed(
-                            title="📝 "
-                            + self._("Your listing reached your set playercap!"),
+                            title="📝 " + self._("Your listing reached your set playercap!"),
                             description=self._(
                                 "Hello! Just letting you know that your multiplayer listing on **{guild_name}** has reached {player_count} or more interested players.\nPlayers who want to play with you in this match: {interested_mentions}"
                             ).format(
@@ -1351,9 +1237,7 @@ class Matchmaking(commands.Cog):
                             color=self.bot.embedGreen,
                         )
                         embed.set_footer(
-                            text=self._(
-                                "If you believe that this feature was abused, contact a moderator immediately!"
-                            )
+                            text=self._("If you believe that this feature was abused, contact a moderator immediately!")
                         )
                         await host.send(
                             embed=embed,
@@ -1362,28 +1246,21 @@ class Matchmaking(commands.Cog):
                         # Add a little emoji as feedback that the listing has reached max subscriber cap
                         if "🎉" not in str(listing.reactions):
                             await listing.add_reaction("🎉")
-                        logger.info(
-                            f"{host.name}#{host.discriminator}'s listing reached cap. Host notified."
-                        )
+                        logger.info(f"{host.name}#{host.discriminator}'s listing reached cap. Host notified.")
                     return
 
     # Same thing but in reverse
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
         if payload.guild_id != None and payload.guild_id in self.bot.anno_guilds:
-            if (
-                await self.config.load("announce_channel_id", payload.guild_id)
-                == payload.channel_id
-            ):
+            if await self.config.load("announce_channel_id", payload.guild_id) == payload.channel_id:
                 guild = self.bot.get_guild(payload.guild_id)
                 # I put a fair number of logging in here to track abuse of this feature
                 if str(payload.emoji) == "⏫" and payload.user_id != self.bot.user.id:
                     # The person who reacted
                     member = guild.get_member(payload.user_id)
                     # Listing
-                    listing = await guild.get_channel(payload.channel_id).fetch_message(
-                        payload.message_id
-                    )
+                    listing = await guild.get_channel(payload.channel_id).fetch_message(payload.message_id)
                     # Context
                     ctx = await self.bot.get_context(listing)
                     # More listing
@@ -1395,17 +1272,11 @@ class Matchmaking(commands.Cog):
                         return
                     host = ctx.guild.get_member(db_listing.host_id)
                     if member.id != host.id:
-                        logger.info(
-                            f"{member.name}#{member.discriminator} removed themselves from a listing."
-                        )
+                        logger.info(f"{member.name}#{member.discriminator} removed themselves from a listing.")
                         embed = discord.Embed(
                             title=f"📝 "
-                            + self._(
-                                "You have unsubscribed from {hostname}'s listing."
-                            ).format(hostname=host.name),
-                            description=self._(
-                                "The host will no longer see you signed up to this listing."
-                            ),
+                            + self._("You have unsubscribed from {hostname}'s listing.").format(hostname=host.name),
+                            description=self._("The host will no longer see you signed up to this listing."),
                             color=self.bot.errorColor,
                         )
                         await member.send(embed=embed)

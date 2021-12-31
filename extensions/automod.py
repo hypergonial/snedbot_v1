@@ -102,24 +102,12 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
         self.bot = bot
         self.mod_cog = self.bot.get_cog("Moderation")
 
-        self.spam_cd_mapping = commands.CooldownMapping.from_cooldown(
-            8, 10, commands.BucketType.member
-        )
-        self.spam_punish_cooldown_cd_mapping = commands.CooldownMapping.from_cooldown(
-            1, 30, commands.BucketType.member
-        )
-        self.attach_spam_cd_mapping = commands.CooldownMapping.from_cooldown(
-            1, 30, commands.BucketType.member
-        )
-        self.link_spam_cd_mapping = commands.CooldownMapping.from_cooldown(
-            1, 30, commands.BucketType.member
-        )
-        self.escalate_prewarn_cd_mapping = commands.CooldownMapping.from_cooldown(
-            1, 30, commands.BucketType.member
-        )
-        self.escalate_cd_mapping = commands.CooldownMapping.from_cooldown(
-            2, 30, commands.BucketType.member
-        )
+        self.spam_cd_mapping = commands.CooldownMapping.from_cooldown(8, 10, commands.BucketType.member)
+        self.spam_punish_cooldown_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
+        self.attach_spam_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
+        self.link_spam_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
+        self.escalate_prewarn_cd_mapping = commands.CooldownMapping.from_cooldown(1, 30, commands.BucketType.member)
+        self.escalate_cd_mapping = commands.CooldownMapping.from_cooldown(2, 30, commands.BucketType.member)
 
         self.default_automod_policies = default_automod_policies
 
@@ -130,31 +118,19 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
         """
         records = await self.bot.caching.get(table="mod_config", guild_id=guild_id)
 
-        policies = (
-            json.loads(records[0]["automod_policies"])
-            if records
-            else self.default_automod_policies
-        )
+        policies = json.loads(records[0]["automod_policies"]) if records else self.default_automod_policies
 
-        for (
-            key
-        ) in self.default_automod_policies.keys():  # Ensure that values always exist
+        for key in self.default_automod_policies.keys():  # Ensure that values always exist
             if key not in policies:
                 policies[key] = self.default_automod_policies[key]
 
-            for nested_key in self.default_automod_policies[
-                key
-            ].keys():  # Ensure that nested values always exist
+            for nested_key in self.default_automod_policies[key].keys():  # Ensure that nested values always exist
                 if nested_key not in policies[key]:
-                    policies[key][nested_key] = self.default_automod_policies[key][
-                        nested_key
-                    ]
+                    policies[key][nested_key] = self.default_automod_policies[key][nested_key]
 
         invalid = []
         for key in policies:
-            if (
-                key not in self.default_automod_policies.keys()
-            ):  # Ensure that invalid values don't exist
+            if key not in self.default_automod_policies.keys():  # Ensure that invalid values don't exist
                 invalid.append(key)  # To avoid modifying dict size during iteration
         for key in invalid:
             policies.pop(key)
@@ -185,9 +161,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
             "escalate",
         ]
         if offense not in valid_offenses:
-            raise ValueError(
-                f"{offense} is not a valid offense-type. Valid types are: {', '.join(valid_offenses)}"
-            )
+            raise ValueError(f"{offense} is not a valid offense-type. Valid types are: {', '.join(valid_offenses)}")
 
         ctx = await self.bot.get_context(message)
 
@@ -218,22 +192,15 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
 
         policies = await self.get_policies(ctx.guild.id)
 
-        if (
-            not original_offense
-            and ctx.channel.id in policies[offense]["excluded_channels"]
-        ):
+        if not original_offense and ctx.channel.id in policies[offense]["excluded_channels"]:
             return
 
-        policy_state = policies[offense][
-            "state"
-        ]  # This will decide the type of punishment
+        policy_state = policies[offense]["state"]  # This will decide the type of punishment
         if not original_offense:
             temp_dur = policies[offense]["temp_dur"]  # Get temporary duration
             should_delete = policies[offense]["delete"] if offense != "spam" else False
         else:
-            temp_dur = policies[original_offense][
-                "temp_dur"
-            ]  # Original offense overrides current, if present
+            temp_dur = policies[original_offense]["temp_dur"]  # Original offense overrides current, if present
             should_delete = False
 
         if policy_state not in [
@@ -243,9 +210,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
             "notice",
             "escalate",
         ]:  # Get temporary punishment duration in minutes
-            records = await self.bot.caching.get(
-                table="mod_config", guild_id=ctx.guild.id
-            )
+            records = await self.bot.caching.get(table="mod_config", guild_id=ctx.guild.id)
             # TODO: Implement this
             dm_users_on_punish = records[0]["dm_users_on_punish"] if records else False
 
@@ -371,10 +336,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
 
         policies = await self.get_policies(message.guild.id)
 
-        mentions = sum(
-            member.id != message.author.id and not member.bot
-            for member in message.mentions
-        )
+        mentions = sum(member.id != message.author.id and not member.bot for member in message.mentions)
         if mentions >= policies["mass_mentions"]["count"]:
             """Mass Mentions"""
             await self.automod_punish(
@@ -384,24 +346,16 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                 reason=f"spamming {mentions} mentions in a single message",
             )
 
-        elif self.spam_cd_mapping.get_bucket(
-            message
-        ).update_rate_limit():  # If user exceeded spam limits
+        elif self.spam_cd_mapping.get_bucket(message).update_rate_limit():  # If user exceeded spam limits
             """Spam"""
             punish_cd_bucket = self.spam_punish_cooldown_cd_mapping.get_bucket(message)
-            if (
-                not punish_cd_bucket.update_rate_limit()
-            ):  # Only try punishing once every 30 seconds
-                await self.automod_punish(
-                    message, offender=message.author, offense="spam", reason="spam"
-                )
+            if not punish_cd_bucket.update_rate_limit():  # Only try punishing once every 30 seconds
+                await self.automod_punish(message, offender=message.author, offense="spam", reason="spam")
 
         elif len(message.content) > 7:
             """Caps"""
             upper = 0
-            msg_content = "".join(
-                char for char in message.content if char.isalnum()
-            )  # Remove non-alphanumerical chars
+            msg_content = "".join(char for char in message.content if char.isalnum())  # Remove non-alphanumerical chars
             for char in msg_content:
                 if char.isupper():
                     upper += 1
@@ -422,9 +376,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                     reason=f"usage of bad words",
                 )
             else:
-                for bad_word in policies["bad_words"][
-                    "words_list"
-                ]:  # Check bad_words with spaces in them
+                for bad_word in policies["bad_words"]["words_list"]:  # Check bad_words with spaces in them
                     if " " in bad_word and bad_word in message.content:
                         return await self.automod_punish(
                             message,
@@ -444,12 +396,8 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
 
         else:  # If the obvious stuff didn't work
             """Discord Invites, Links, Attachments & Zalgo"""
-            invite_regex = re.compile(
-                r"(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?"
-            )
-            link_regex = re.compile(
-                r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
-            )
+            invite_regex = re.compile(r"(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?")
+            link_regex = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
             invite_matches = invite_regex.findall(message.content)
             link_matches = link_regex.findall(message.content)
             if invite_matches:

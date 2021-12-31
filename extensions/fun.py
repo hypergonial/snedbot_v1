@@ -31,9 +31,9 @@ class Fun(commands.Cog):
         self._ = self.bot.get_localization("fun", self.bot.lang)
 
     async def cog_check(self, ctx):
-        return await ctx.bot.custom_checks.has_permissions(
-            ctx, "fun"
-        ) or await ctx.bot.custom_checks.has_permissions(ctx, "mod_permitted")
+        return await ctx.bot.custom_checks.has_permissions(ctx, "fun") or await ctx.bot.custom_checks.has_permissions(
+            ctx, "mod_permitted"
+        )
 
     def easter_eggs(func):
         """Occasionally sends a random easter-egg instead of what the command intended."""
@@ -49,15 +49,11 @@ class Fun(commands.Cog):
                 to_stick_bug_or_not_to_stick_bug = random.randint(1, 2) == 1
                 if to_stick_bug_or_not_to_stick_bug:
                     embed = discord.Embed(title="Get stick bugged lol", color=0xD76B00)
-                    embed.set_image(
-                        url="https://c.tenor.com/JTyF_DiQb2kAAAAd/get-bugged.gif"
-                    )
+                    embed.set_image(url="https://c.tenor.com/JTyF_DiQb2kAAAAd/get-bugged.gif")
                     embed.set_footer(text="Bet you did not see this coming!")
                     await ctx.send(embed=embed)
                 else:
-                    embed = discord.Embed(
-                        title="You've just got a legendary encounter!", color=0xD76B00
-                    )
+                    embed = discord.Embed(title="You've just got a legendary encounter!", color=0xD76B00)
                     embed.set_image(
                         url="https://cdn.discordapp.com/attachments/800542220390367243/924478488264728646/5DQgDDPZT47S.jpg"
                     )
@@ -101,13 +97,9 @@ class Fun(commands.Cog):
     async def avatar_global(self, ctx, member: discord.Member = None):
         if not member:
             member = ctx.author
-        avatar = (
-            member.avatar if member.avatar else member.display_avatar
-        )  # Avoid empty avatars
+        avatar = member.avatar if member.avatar else member.display_avatar  # Avoid empty avatars
         embed = discord.Embed(
-            title=self._("{member_name}'s global avatar:").format(
-                member_name=member.name
-            ),
+            title=self._("{member_name}'s global avatar:").format(member_name=member.name),
             color=member.colour,
         )
         embed.set_image(url=avatar.url)
@@ -130,9 +122,9 @@ class Fun(commands.Cog):
         ):
             embed = discord.Embed(
                 title="🏁 " + self._("Typeracer"),
-                description=self._(
-                    "Invalid data entered! Check `{prefix}help typeracer` for more information."
-                ).format(prefix=ctx.prefix),
+                description=self._("Invalid data entered! Check `{prefix}help typeracer` for more information.").format(
+                    prefix=ctx.prefix
+                ),
                 color=self.bot.errorColor,
             )
             await ctx.send(embed=embed)
@@ -161,24 +153,17 @@ class Fun(commands.Cog):
             img = Image.new("RGBA", (1, 1), color=0)  # img of size 1x1 full transparent
             draw = ImageDraw.Draw(img)
             font = ImageFont.truetype("arial.ttf", 40)  # Font
-            textwidth, textheight = draw.textsize(
-                text, font
-            )  # Size text will take up on image
+            textwidth, textheight = draw.textsize(text, font)  # Size text will take up on image
             margin = 20
-            img = img.resize(
-                (textwidth + margin, textheight + margin)
-            )  # Resize image to size of text
-            draw = ImageDraw.Draw(
-                img
-            )  # This needs to be redefined after resizing image
+            img = img.resize((textwidth + margin, textheight + margin))  # Resize image to size of text
+            draw = ImageDraw.Draw(img)  # This needs to be redefined after resizing image
             draw.text(
                 (margin / 2, margin / 2), text, font=font, fill="white"
             )  # Draw the text in between the two margins
             img.save(tempimg_path)
             with open(tempimg_path, "rb") as fp:
                 embed = discord.Embed(
-                    description="🏁 "
-                    + self._("Type in the text from above as fast as you can!"),
+                    description="🏁 " + self._("Type in the text from above as fast as you can!"),
                     color=self.bot.embedBlue,
                 )
                 await ctx.send(embed=embed, file=discord.File(fp, "snedtyperace.png"))
@@ -195,21 +180,16 @@ class Fun(commands.Cog):
             if ctx.channel.id == message.channel.id and message.channel == ctx.channel:
                 if typeracer_text.lower() == message.content.lower():
                     winners[message.author] = (
-                        datetime.datetime.now(datetime.timezone.utc).timestamp()
-                        - start_time
+                        datetime.datetime.now(datetime.timezone.utc).timestamp() - start_time
                     )  # Add winner to list
                     self.bot.loop.create_task(message.add_reaction("✅"))
                     ending.set()  # Set the event ending, which starts the ending code
                 # If it is close enough, we will add a marker to show that it is incorrect
-                elif (
-                    lev.distance(typeracer_text.lower(), message.content.lower()) < 3
-                ):  # pylint: disable=<no-member>
+                elif lev.distance(typeracer_text.lower(), message.content.lower()) < 3:  # pylint: disable=<no-member>
                     self.bot.loop.create_task(message.add_reaction("❌"))
 
         # This is basically an on_message created temporarily, since the check will never return True
-        listen_for_msg = ctx.bot.loop.create_task(
-            self.bot.wait_for("message", check=tr_check)
-        )
+        listen_for_msg = ctx.bot.loop.create_task(self.bot.wait_for("message", check=tr_check))
 
         # Wait for ending to be set, which happens on the first message that meets check
         try:
@@ -318,12 +298,8 @@ class Fun(commands.Cog):
                 embed.set_thumbnail(url="https://i.imgur.com/w9aiD6F.png")
                 await nitro_msg.edit(view=self, embed=embed)
 
-            @discord.ui.button(
-                style=discord.ButtonStyle.green, label="          Accept          "
-            )
-            async def callback(
-                self, button: discord.ui.Button, interaction: discord.Interaction
-            ):
+            @discord.ui.button(style=discord.ButtonStyle.green, label="          Accept          ")
+            async def callback(self, button: discord.ui.Button, interaction: discord.Interaction):
                 await interaction.response.send_message(
                     "https://images-ext-1.discordapp.net/external/AoV9l5YhsWBj92gcKGkzyJAAXoYpGiN6BdtfzM-00SU/https/i.imgur.com/NQinKJB.mp4",
                     ephemeral=True,
@@ -345,9 +321,7 @@ class Fun(commands.Cog):
     @easter_eggs
     async def boom(self, ctx):
         embed = discord.Embed(title="💥 BOOM!", color=discord.Colour.gold())
-        embed.set_image(
-            url="https://media1.tenor.com/images/ed5f49e5717a642812b019deb19ad264/tenor.gif"
-        )
+        embed.set_image(url="https://media1.tenor.com/images/ed5f49e5717a642812b019deb19ad264/tenor.gif")
         await ctx.send(embed=embed)
 
     @commands.group(
@@ -460,9 +434,7 @@ class Fun(commands.Cog):
         msg = await ctx.send(embed=embed)
         # Get a json file from thecatapi as response, then take url from dict
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                "https://api.thecatapi.com/v1/images/search"
-            ) as response:
+            async with session.get("https://api.thecatapi.com/v1/images/search") as response:
                 if response.status == 200:
                     catjson = await response.json()
                     # Print kitten to user
@@ -548,9 +520,7 @@ class Fun(commands.Cog):
         msg = await ctx.send(embed=embed)
         # Get a json file from thedogapi as response, then take url from dict
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                "https://api.thedogapi.com/v1/images/search"
-            ) as response:
+            async with session.get("https://api.thedogapi.com/v1/images/search") as response:
                 if response.status == 200:
                     dogjson = await response.json()
                     # Print doggo to user
@@ -587,9 +557,7 @@ class Fun(commands.Cog):
             color=self.bot.embedBlue,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
-        embed.set_image(
-            url="https://media1.tenor.com/images/203c3c6047b3c905962fc55ac7fa9548/tenor.gif"
-        )
+        embed.set_image(url="https://media1.tenor.com/images/203c3c6047b3c905962fc55ac7fa9548/tenor.gif")
         await ctx.send(embed=embed)
 
     @commands.command(
@@ -606,9 +574,7 @@ class Fun(commands.Cog):
         link = "https://en.wikipedia.org/w/api.php?action=opensearch&search={query}&limit=5"
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                link.format(query=query.replace(" ", "+"))
-            ) as response:
+            async with session.get(link.format(query=query.replace(" ", "+"))) as response:
                 results_dict = await response.json()
                 results_text = results_dict[1]  # 2nd element contains text, 4th links
                 results_link = results_dict[3]

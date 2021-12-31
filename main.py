@@ -78,9 +78,7 @@ async def get_prefix(bot, message):
     if message.guild is None:
         return bot.DEFAULT_PREFIX
     else:
-        records = await bot.caching.get(
-            table="global_config", guild_id=message.guild.id
-        )
+        records = await bot.caching.get(table="global_config", guild_id=message.guild.id)
         if records:
             prefixes = records[0]["prefix"]
             if prefixes and len(prefixes) > 0:
@@ -95,9 +93,7 @@ class SnedBot(commands.Bot):
     """The bot class"""
 
     def __init__(self):
-        allowed_mentions = discord.AllowedMentions(
-            everyone=False, users=True, roles=True, replied_user=True
-        )
+        allowed_mentions = discord.AllowedMentions(everyone=False, users=True, roles=True, replied_user=True)
         activity = discord.Activity(name="@Sned", type=discord.ActivityType.listening)
         # Disabled: presences, typing, integrations, webhooks, voice_states
         intents = discord.Intents(
@@ -135,9 +131,7 @@ class SnedBot(commands.Bot):
         self.DEFAULT_PREFIX = "sn "
         if self.EXPERIMENTAL == True:
             self.DEFAULT_PREFIX = "snx "
-            self.debug_guilds = [
-                config["home_guild"] if isinstance(config["home_guild"], int) else None
-            ]
+            self.debug_guilds = [config["home_guild"] if isinstance(config["home_guild"], int) else None]
             logging.basicConfig(level=logging.INFO)
             DB_NAME = "sned_exp"
         else:
@@ -160,9 +154,7 @@ class SnedBot(commands.Bot):
             627876365223591976,
             818223666143690783,
         )  # Guilds whitelisted for Anno-related commands
-        self.cmd_cd_mapping = commands.CooldownMapping.from_cooldown(
-            10, 10, commands.BucketType.channel
-        )
+        self.cmd_cd_mapping = commands.CooldownMapping.from_cooldown(10, 10, commands.BucketType.channel)
         self.current_version = current_version
 
         self.loop.create_task(self.startup())
@@ -186,9 +178,7 @@ class SnedBot(commands.Bot):
 
         logging.info("Initialized as {0.user}".format(self))
         if self.EXPERIMENTAL == True:
-            logging.warning(
-                "\n--------------\nExperimental mode is enabled!\n--------------"
-            )
+            logging.warning("\n--------------\nExperimental mode is enabled!\n--------------")
             cogs = await self.current_cogs()
             logging.info(f"Cogs loaded: {', '.join(cogs)}")
         # Insert all guilds the bot is member of into the db global config on startup
@@ -229,12 +219,8 @@ class SnedBot(commands.Bot):
         if message.author.bot:
             return
 
-        records = await self.caching.get(
-            table="blacklist", guild_id=0, user_id=ctx.author.id
-        )
-        is_blacklisted = (
-            True if records and records[0]["user_id"] == ctx.author.id else False
-        )
+        records = await self.caching.get(table="blacklist", guild_id=0, user_id=ctx.author.id)
+        is_blacklisted = True if records and records[0]["user_id"] == ctx.author.id else False
 
         if is_blacklisted:
             return
@@ -252,9 +238,7 @@ class SnedBot(commands.Bot):
                 # length (Thanks Nitro :) )
                 mentions = [f"<@{bot.user.id}>", f"<@!{bot.user.id}>"]
                 if message.content in mentions:
-                    records = await self.caching.get(
-                        table="global_config", guild_id=message.guild.id
-                    )
+                    records = await self.caching.get(table="global_config", guild_id=message.guild.id)
                     if not records:
                         prefix = [self.DEFAULT_PREFIX]
                     else:
@@ -278,16 +262,12 @@ class SnedBot(commands.Bot):
                 pass  # Ignore requests that would exceed rate-limits
 
     async def on_command(self, ctx):
-        logging.info(
-            f"{ctx.author} called command {ctx.message.content} in guild {ctx.guild.id}"
-        )
+        logging.info(f"{ctx.author} called command {ctx.message.content} in guild {ctx.guild.id}")
 
     async def on_guild_join(self, guild):
         """Generate guild entry for DB"""
 
-        await self.pool.execute(
-            "INSERT INTO global_config (guild_id) VALUES ($1)", guild.id
-        )
+        await self.pool.execute("INSERT INTO global_config (guild_id) VALUES ($1)", guild.id)
         if guild.system_channel is not None:
             try:
                 embed = discord.Embed(
@@ -309,13 +289,9 @@ class SnedBot(commands.Bot):
         The reason this does not use GlobalConfig.deletedata() is to not recreate the entry for the guild
         """
 
-        await self.pool.execute(
-            """DELETE FROM global_config WHERE guild_id = $1""", guild.id
-        )
+        await self.pool.execute("""DELETE FROM global_config WHERE guild_id = $1""", guild.id)
         await self.caching.wipe(guild.id)
-        logging.info(
-            f"Bot has been removed from guild {guild.id}, correlating data erased."
-        )
+        logging.info(f"Bot has been removed from guild {guild.id}, correlating data erased.")
 
     async def on_error(self, event_method: str, *args, **kwargs):
         """
@@ -337,9 +313,7 @@ class SnedBot(commands.Bot):
         """
 
         if isinstance(error, commands.CheckFailure):
-            logging.info(
-                f"{ctx.author} tried calling a command but did not meet checks."
-            )
+            logging.info(f"{ctx.author} tried calling a command but did not meet checks.")
             if isinstance(error, commands.BotMissingPermissions):
                 embed = discord.Embed(
                     title="❌ " + _("Bot missing permissions"),
@@ -385,9 +359,7 @@ class SnedBot(commands.Bot):
             if len(matches) > 0:
                 embed = discord.Embed(
                     title=self.unknownCMDstr,
-                    description=_("Did you mean `{prefix}{match}`?").format(
-                        prefix=ctx.prefix, match=matches[0]
-                    ),
+                    description=_("Did you mean `{prefix}{match}`?").format(prefix=ctx.prefix, match=matches[0]),
                     color=self.unknownColor,
                 )
                 embed = self.add_embed_footer(ctx, embed)
@@ -395,9 +367,7 @@ class SnedBot(commands.Bot):
             elif len(aliasmatches) > 0:
                 embed = discord.Embed(
                     title=self.unknownCMDstr,
-                    description=_("Did you mean `{prefix}{match}`?").format(
-                        prefix=ctx.prefix, match=aliasmatches[0]
-                    ),
+                    description=_("Did you mean `{prefix}{match}`?").format(prefix=ctx.prefix, match=aliasmatches[0]),
                     color=self.unknownColor,
                 )
                 embed = self.add_embed_footer(ctx, embed)
@@ -412,9 +382,7 @@ class SnedBot(commands.Bot):
                 color=self.errorColor,
             )
             embed.set_footer(
-                text=bot.requestFooter.format(
-                    user_name=ctx.author.name, discrim=ctx.author.discriminator
-                ),
+                text=bot.requestFooter.format(user_name=ctx.author.name, discrim=ctx.author.discriminator),
                 icon_url=ctx.author.avatar.url,
             )
             return await ctx.send(embed=embed)
@@ -482,9 +450,9 @@ class SnedBot(commands.Bot):
         elif isinstance(error, discord.Forbidden):
             embed = discord.Embed(
                 title="❌ " + _("Permissions error"),
-                description=_(
-                    "This action has failed due to a lack of permissions.\n**Error:** {error}"
-                ).format(error=error),
+                description=_("This action has failed due to a lack of permissions.\n**Error:** {error}").format(
+                    error=error
+                ),
                 color=self.errorColor,
             )
             embed = self.add_embed_footer(ctx, embed)
@@ -506,9 +474,7 @@ class SnedBot(commands.Bot):
             IMPORTANT!!! If you remove this, your command errors will not get output to console."""
 
             logging.error("Ignoring exception in command {}:".format(ctx.command))
-            exception_msg = "\n".join(
-                traceback.format_exception(type(error), error, error.__traceback__)
-            )
+            exception_msg = "\n".join(traceback.format_exception(type(error), error, error.__traceback__))
 
             try:
                 await self.get_cog("HomeGuild").log_error(exception_msg, ctx)
@@ -587,9 +553,7 @@ bot.errorCooldownTitle = "🕘 " + _("Error: This command is on cooldown")
 bot.errorMissingModuleTitle = "❌ " + _("Error: Missing module")
 bot.errorMissingModuleDesc = _("This operation is missing a module")
 bot.errorMaxConcurrencyReachedTitle = "❌ " + _("Error: Max concurrency reached!")
-bot.errorMaxConcurrencyReachedDesc = _(
-    "You have reached the maximum amount of instances for this command."
-)
+bot.errorMaxConcurrencyReachedDesc = _("You have reached the maximum amount of instances for this command.")
 # Warns:
 bot.warnColor = 0xFFCC4D
 bot.warnDataTitle = "⚠️ " + _("Warning: Invalid data entered")
@@ -634,9 +598,7 @@ class GlobalConfig:
         """Clean up garbage userdata from db"""
 
         await bot.wait_until_ready()
-        await self.bot.pool.execute(
-            "DELETE FROM users WHERE flags IS NULL and warns = 0 AND notes IS NULL"
-        )
+        await self.bot.pool.execute("DELETE FROM users WHERE flags IS NULL and warns = 0 AND notes IS NULL")
 
     async def deletedata(self, guild_id):
         """
@@ -646,13 +608,9 @@ class GlobalConfig:
 
         # The nuclear option c:
         async with self.bot.pool.acquire() as con:
-            await con.execute(
-                """DELETE FROM global_config WHERE guild_id = $1""", guild_id
-            )
+            await con.execute("""DELETE FROM global_config WHERE guild_id = $1""", guild_id)
             # This one is necessary so that the list of guilds the bot is in stays accurate
-            await con.execute(
-                """INSERT INTO global_config (guild_id) VALUES ($1)""", guild_id
-            )
+            await con.execute("""INSERT INTO global_config (guild_id) VALUES ($1)""", guild_id)
 
         await self.caching.wipe(guild_id)
         logging.warning(f"Config reset and cache wiped for guild {guild_id}.")
@@ -700,9 +658,7 @@ class GlobalConfig:
             )
             return user
         else:
-            user = self.User(
-                user_id=user_id, guild_id=guild_id
-            )  # Generate a new db user if none exists
+            user = self.User(user_id=user_id, guild_id=guild_id)  # Generate a new db user if none exists
             await self.update_user(user)
             return user
 
@@ -711,9 +667,7 @@ class GlobalConfig:
         Returns all users related to a specific guild as a list of GlobalConfig.User
         Return None if no users are contained in the database
         """
-        results = await self.bot.pool.fetch(
-            """SELECT * FROM users WHERE guild_id = $1""", guild_id
-        )
+        results = await self.bot.pool.fetch("""SELECT * FROM users WHERE guild_id = $1""", guild_id)
         if results:
             users = []
             for result in results:
@@ -742,17 +696,11 @@ class DBBackup:
     @tasks.loop(hours=24.0)
     async def backup_bot_db(self):
         if self.first_run == True:
-            self.first_run = (
-                False  # Prevent quick bot restarts from triggering the system
-            )
+            self.first_run = False  # Prevent quick bot restarts from triggering the system
             return
         file = await db_backup.backup_database(self.bot.dsn)
         await self.bot.wait_until_ready()
-        if (
-            self.bot.config["home_guild"]
-            and self.bot.config["db_backup_channel"]
-            and self.bot.is_ready()
-        ):
+        if self.bot.config["home_guild"] and self.bot.config["db_backup_channel"] and self.bot.is_ready():
             guild = self.bot.get_guild(self.bot.config["home_guild"])
             backup_channel = guild.get_channel(self.bot.config["db_backup_channel"])
             if guild and backup_channel:
@@ -795,9 +743,7 @@ class CustomChecks:
         True if the invoker is either bot or guild owner
         """
         if ctx.guild:
-            return (
-                ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id
-            )
+            return ctx.author.id == ctx.bot.owner_id or ctx.author.id == ctx.guild.owner_id
         else:
             return ctx.author.id == ctx.bot.owner_id
 
@@ -806,9 +752,7 @@ class CustomChecks:
         True if module is enabled, false otherwise. module_name is the extension filename.
         """
 
-        records = await bot.caching.get(
-            table="modules", guild_id=ctx.guild.id, module_name=module_name
-        )
+        records = await bot.caching.get(table="modules", guild_id=ctx.guild.id, module_name=module_name)
         if records and records[0]["is_enabled"]:
             return records[0]["is_enabled"]
         else:
@@ -822,12 +766,8 @@ class CustomChecks:
 
         if ctx.guild:
             user_role_ids = [x.id for x in ctx.author.roles]
-            role_ids = await ctx.bot.get_cog("Permissions").get_perms(
-                ctx.guild, perm_node
-            )
-            admin_role_ids = await ctx.bot.get_cog("Permissions").get_perms(
-                ctx.guild, "admin_permitted"
-            )
+            role_ids = await ctx.bot.get_cog("Permissions").get_perms(ctx.guild, perm_node)
+            admin_role_ids = await ctx.bot.get_cog("Permissions").get_perms(ctx.guild, "admin_permitted")
             return (
                 any(role in user_role_ids for role in admin_role_ids)
                 or any(role in user_role_ids for role in role_ids)
