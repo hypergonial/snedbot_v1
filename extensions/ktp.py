@@ -45,7 +45,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
                             previous_top = channel.get_partial_message(record["ktp_msg_id"])
                             try:
                                 await previous_top.delete()  # Necessary to put in a try/except otherwise on a spammy channel this might spam the console to hell
-                            except discord.errors.NotFound:
+                            except discord.NotFound:
                                 return
                             new_top = await channel.send(content=record["ktp_content"])
                             await self.bot.pool.execute(
