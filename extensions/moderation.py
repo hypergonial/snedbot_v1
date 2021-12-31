@@ -7,11 +7,10 @@ import logging
 import re
 import shlex
 from dataclasses import dataclass
-from typing import TypeVar, Union
+from typing import Union
 
 import discord
-from discord.errors import HTTPException
-from discord.ext import commands, pages
+from discord.ext import commands
 from discord.ext.commands.core import max_concurrency
 from discord.ext.commands.errors import UserInputError
 
