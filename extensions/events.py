@@ -5,7 +5,6 @@ import uuid
 
 import discord
 from discord.ext import commands
-from discord.ext.commands.errors import UserInputError
 
 from extensions.utils import components, exceptions
 
