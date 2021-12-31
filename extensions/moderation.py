@@ -121,7 +121,10 @@ class Moderation(commands.Cog):
                 return
 
             if user.bot:
-                embed = discord.Embed(title="❌ " + self._("Cannot execute on bots."),description=self._("This command cannot be executed on bots."),color=self.bot.errorColor,
+                embed = discord.Embed(
+                    title="❌ " + self._("Cannot execute on bots."),
+                    description=self._("This command cannot be executed on bots."),
+                    color=self.bot.errorColor,
                 )
                 await ctx.send(embed=embed)
                 return
