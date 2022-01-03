@@ -368,7 +368,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                 )
 
         for word in message.content.split(" "):
-            if word in policies["bad_words"]["words_list"]:
+            if word.lower() in policies["bad_words"]["words_list"]:
                 return await self.automod_punish(
                     message,
                     offender=message.author,
@@ -377,7 +377,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                 )
             else:
                 for bad_word in policies["bad_words"]["words_list"]:  # Check bad_words with spaces in them
-                    if " " in bad_word and bad_word in message.content:
+                    if " " in bad_word and bad_word.lower() in message.content:
                         return await self.automod_punish(
                             message,
                             offender=message.author,
@@ -386,7 +386,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                         )
                     else:
                         for word in policies["bad_words"]["words_list_wildcard"]:
-                            if word in message.content:
+                            if word.lower() in message.content:
                                 return await self.automod_punish(
                                     message,
                                     offender=message.author,

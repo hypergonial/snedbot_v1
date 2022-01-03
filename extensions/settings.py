@@ -730,7 +730,7 @@ class Settings(commands.Cog):
                 else:
                     words_list = input.content.split(",")
                     for i, item in enumerate(words_list):
-                        words_list[i] = item.strip()
+                        words_list[i] = item.strip().lower()
                     words_list = list(filter(None, words_list))  # Remove empty values
 
                     policies[offense_str]["words_list"] = words_list
@@ -754,7 +754,7 @@ class Settings(commands.Cog):
                 else:
                     words_list = input.content.split(",")
                     for i, item in enumerate(words_list):
-                        words_list[i] = item.strip()
+                        words_list[i] = item.strip().lower()
                     words_list = list(filter(None, words_list))  # Remove empty values
 
                     policies[offense_str]["words_list_wildcard"] = words_list
