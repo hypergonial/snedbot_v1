@@ -1503,6 +1503,29 @@ class Moderation(commands.Cog):
         await ctx.send(embed=embed, delete_after=20.0)
 
     async def whois(self, ctx, user: Union[discord.User, discord.Member]) -> discord.Embed:
+
+        badge_emojies = {  # TODO: Add emoji IDs and shit
+            "bug_hunter": str(self.bot.get_emoji(927590809241530430)),
+            "bug_hunter_level_2": str(self.bot.get_emoji(927590820448710666)),
+            "discord_certified_moderator": str(self.bot.get_emoji(927582595808657449)),
+            "early_supporter": str(self.bot.get_emoji(927582684123914301)),
+            "verified_bot_developer": str(self.bot.get_emoji(927582706974462002)),
+            "hypesquad": str(self.bot.get_emoji(927582724523450368)),
+            "hypesquad_balance": str(self.bot.get_emoji(927582757587136582)),
+            "hypesquad_bravery": str(self.bot.get_emoji(927582770329444434)),
+            "hypesquad_brilliance": str(self.bot.get_emoji(927582740977684491)),
+            "partner": str(self.bot.get_emoji(927591117304778772)),
+            "staff": str(self.bot.get_emoji(927591104902201385)),
+        }
+
+        def get_badges(user: Union[discord.User, discord.Member]):
+            """Return user badge emojies as a list"""
+            badges = []
+            for badge, value in iter(user.public_flags):
+                if value and badge in badge_emojies.keys():
+                    badges.append(badge_emojies[badge])
+            return badges
+
         if user in ctx.guild.members:
             db_user = await self.bot.global_config.get_user(user.id, ctx.guild.id)
             member = ctx.guild.get_member(user.id)
@@ -1517,6 +1540,7 @@ class Moderation(commands.Cog):
             Bot: `{member.bot}`
             Account creation date: {discord.utils.format_dt(member.created_at)} ({discord.utils.format_dt(member.created_at, style='R')})
             Join date: {discord.utils.format_dt(member.joined_at)} ({discord.utils.format_dt(member.joined_at, style='R')})
+            Badges: {"   ".join(get_badges(member))}
             Warns: `{db_user.warns}`
             Timed out: `{member.timed_out}`
             Flags: `{db_user.flags}`
@@ -1525,6 +1549,9 @@ class Moderation(commands.Cog):
                 color=member.colour,
             )
             embed.set_thumbnail(url=member.display_avatar.url)
+            user = await self.bot.fetch_user(user.id)
+            if user.banner:  # Workaround for Member.banner not working
+                embed.set_image(url=user.banner.url)
 
         else:  # Retrieve limited information about the user if they are not in the guild
             embed = discord.Embed(
@@ -1536,11 +1563,14 @@ class Moderation(commands.Cog):
             Bot: `{user.bot}` 
             Account creation date: {discord.utils.format_dt(user.created_at)} ({discord.utils.format_dt(user.created_at, style='R')})
             Join date: `-`
+            Badges: {"   ".join(get_badges(user))}
             Roles: `-`
             *Note: This user is not a member of this server*""",
                 color=self.bot.embedBlue,
             )
             embed.set_thumbnail(url=user.display_avatar.url)
+            if user.banner:
+                embed.set_image(url=user.banner.url)
 
         if await self.bot.is_owner(ctx.author):
             records = await self.bot.caching.get(table="blacklist", guild_id=0, user_id=user.id)
