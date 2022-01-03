@@ -1540,7 +1540,7 @@ class Moderation(commands.Cog):
             Bot: `{member.bot}`
             Account creation date: {discord.utils.format_dt(member.created_at)} ({discord.utils.format_dt(member.created_at, style='R')})
             Join date: {discord.utils.format_dt(member.joined_at)} ({discord.utils.format_dt(member.joined_at, style='R')})
-            Badges: {"   ".join(get_badges(member))}
+            Badges: {"   ".join(get_badges(member)) if len(get_badges(member)) > 0 else "`-`"}
             Warns: `{db_user.warns}`
             Timed out: `{member.timed_out}`
             Flags: `{db_user.flags}`
@@ -1563,7 +1563,7 @@ class Moderation(commands.Cog):
             Bot: `{user.bot}` 
             Account creation date: {discord.utils.format_dt(user.created_at)} ({discord.utils.format_dt(user.created_at, style='R')})
             Join date: `-`
-            Badges: {"   ".join(get_badges(user))}
+            Badges: {"   ".join(get_badges(user)) if len(get_badges(user)) > 0 else "`-`"}
             Roles: `-`
             *Note: This user is not a member of this server*""",
                 color=self.bot.embedBlue,
