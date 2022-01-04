@@ -390,7 +390,7 @@ class Moderation(commands.Cog):
     async def add_note(self, user_id: int, guild_id: int, new_note: str):
         """Add a new moderation note for the specified user. Gets automatically Discord timestamped."""
         if len(new_note) > 256:
-            raise ValueError("Note cannot exceed 256 characters!")
+            new_note = new_note[:250] + "..."
 
         db_user = await self.bot.global_config.get_user(user_id, guild_id)
         notes = db_user.notes if db_user.notes else []
