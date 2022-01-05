@@ -1535,17 +1535,17 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title=f"User information: {member.name}",
                 description=f"""Username: `{member.name}`
-            Nickname: `{member.display_name if member.display_name != member.name else "-"}`
-            User ID: `{member.id}`
-            Bot: `{member.bot}`
-            Account creation date: {discord.utils.format_dt(member.created_at)} ({discord.utils.format_dt(member.created_at, style='R')})
-            Join date: {discord.utils.format_dt(member.joined_at)} ({discord.utils.format_dt(member.joined_at, style='R')})
-            Badges: {"   ".join(get_badges(member)) if len(get_badges(member)) > 0 else "`-`"}
-            Warns: `{db_user.warns}`
-            Timed out: `{member.timed_out}`
-            Flags: `{db_user.flags}`
-            Journal: `{f"{len(db_user.notes)} entries" if db_user.notes else "No entries"}`
-            Roles: {roleformatted}""",
+Nickname: `{member.display_name if member.display_name != member.name else "-"}`
+User ID: `{member.id}`
+Bot: `{member.bot}`
+Account creation date: {discord.utils.format_dt(member.created_at)} ({discord.utils.format_dt(member.created_at, style='R')})
+Join date: {discord.utils.format_dt(member.joined_at)} ({discord.utils.format_dt(member.joined_at, style='R')})
+Badges: {"   ".join(get_badges(member)) if len(get_badges(member)) > 0 else "`-`"}
+Warns: `{db_user.warns}`
+Timed out: `{member.timed_out}`
+Flags: `{db_user.flags}`
+Journal: `{f"{len(db_user.notes)} entries" if db_user.notes else "No entries"}`
+Roles: {roleformatted}""",
                 color=member.colour,
             )
             embed.set_thumbnail(url=member.display_avatar.url)
@@ -1557,15 +1557,15 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title=f"User information: {user.name}",
                 description=f"""Username: `{user}`
-            Nickname: `-` 
-            User ID: `{user.id}` 
-            Status: `-` 
-            Bot: `{user.bot}` 
-            Account creation date: {discord.utils.format_dt(user.created_at)} ({discord.utils.format_dt(user.created_at, style='R')})
-            Join date: `-`
-            Badges: {"   ".join(get_badges(user)) if len(get_badges(user)) > 0 else "`-`"}
-            Roles: `-`
-            *Note: This user is not a member of this server*""",
+Nickname: `-` 
+User ID: `{user.id}` 
+Status: `-` 
+Bot: `{user.bot}` 
+Account creation date: {discord.utils.format_dt(user.created_at)} ({discord.utils.format_dt(user.created_at, style='R')})
+Join date: `-`
+Badges: {"   ".join(get_badges(user)) if len(get_badges(user)) > 0 else "`-`"}
+Roles: `-`
+*Note: This user is not a member of this server*""",
                 color=self.bot.embedBlue,
             )
             embed.set_thumbnail(url=user.display_avatar.url)
