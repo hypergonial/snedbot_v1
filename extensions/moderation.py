@@ -456,9 +456,9 @@ class Moderation(commands.Cog):
     )
     @commands.check(has_mod_perms)
     @commands.guild_only()
-    async def notes_add_cmd(self, ctx, member: discord.Member, *, note: str):
+    async def notes_add_cmd(self, ctx, user: discord.User, *, note: str):
         try:
-            await self.add_note(member.id, ctx.guild.id, f"💬 **Note by {ctx.author}:** {note}")
+            await self.add_note(user.id, ctx.guild.id, f"💬 **Note by {ctx.author}:** {note}")
         except ValueError:
             embed = discord.Embed(
                 title="❌ " + self._("Journal entry too long"),
@@ -469,7 +469,7 @@ class Moderation(commands.Cog):
 
         embed = discord.Embed(
             title="✅ " + self._("Journal entry added!"),
-            description=f"Added a new journal entry to user **{member}**. You can view this user's journal via the command `{ctx.prefix}journal {member}`.",
+            description=f"Added a new journal entry to user **{user}**. You can view this user's journal via the command `{ctx.prefix}journal {user}`.",
             color=self.bot.embedGreen,
         )
         await ctx.send(embed=embed)
