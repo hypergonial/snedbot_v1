@@ -227,7 +227,6 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         **Member count:** `{member_count}`
         **Channels:** `{channel_count}`
         **Roles:** `{role_count}`
-        **Region:** `{region}`
         **Filesize limit:** `{filecap}`
         **Nitro Boost count:** `{premium_sub_count}`
         **Nitro Boost level:** `{premium_tier}`"""
@@ -239,7 +238,6 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
                 member_count=guild.member_count,
                 channel_count=len(guild.channels),
                 role_count=len(guild.roles),
-                region=guild.region,
                 filecap=f"{guild.filesize_limit/1048576}MB",
                 premium_sub_count=guild.premium_subscription_count,
                 premium_tier=guild.premium_tier,
