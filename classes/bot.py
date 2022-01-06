@@ -64,7 +64,7 @@ class SnedBot(commands.Bot):
         # Bot vars
         self.config = config
         self.caching = cache.Caching(self)
-        self.BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        self.BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
         self.DEFAULT_PREFIX = "sn "
         self.current_version = "Deprecated"
         self.lang = "en"  # DEPRECATED
