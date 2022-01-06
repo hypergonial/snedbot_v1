@@ -219,7 +219,7 @@ Thank you for using Sned!
         # I chose not to implement help for cogs, but if you want to do something, do it here
         ctx = self.context
         embed = discord.Embed(
-            title=ctx.bot.unknownCMDstr,
+            title="❓ Unknown command!",
             description="Use `{prefix}help` for a list of available commands.".format(prefix=ctx.prefix),
             color=ctx.bot.unknown_color,
         )
@@ -268,7 +268,7 @@ Thank you for using Sned!
     async def send_error_message(self, error):  # Overriding the default help error message
         ctx = self.context
         embed = discord.Embed(
-            title=ctx.bot.unknownCMDstr,
+            title="❓ Unknown command!",
             description="Use `{prefix}help` for a list of available commands.".format(prefix=ctx.prefix),
             color=ctx.bot.unknown_color,
         )
