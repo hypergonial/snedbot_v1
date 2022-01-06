@@ -261,6 +261,12 @@ class SnedBot(commands.Bot):
             else:
                 pass  # Ignore requests that would exceed rate-limits
 
+    async def on_message_edit(self, before, after):
+        """Register message edits as possible command source"""
+        if self.is_ready() and self.caching.is_ready:
+            if before.content != after.content:
+                await self.process_commands(after)
+
     async def on_command(self, ctx):
         logging.info(f"{ctx.author} called command {ctx.message.content} in guild {ctx.guild.id}")
 
