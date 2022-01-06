@@ -429,7 +429,7 @@ class Logging(commands.Cog):
             await self.log("kick", embed, member.guild.id)
 
             if moderator != "Unknown" and moderator == self.bot.user:
-                moderator = reason.split(" ")[0] + "via Sned"  # Get actual moderator, not the bot
+                moderator = reason.split(" ")[0]  # Get actual moderator, not the bot
                 reason = reason.split("):", maxsplit=1)[1]  # Remove author
             if reason and len(reason) > 240:
                 reason = reason[:240] + "..."
@@ -472,7 +472,7 @@ class Logging(commands.Cog):
         await self.log("ban", embed, guild.id)
 
         if moderator != "Unknown" and moderator == self.bot.user:
-            moderator = reason.split(" ")[0] + "via Sned"  # Get actual moderator, not the bot
+            moderator = reason.split(" ")[0]  # Get actual moderator, not the bot
             reason = reason.split("):", maxsplit=1)[1]  # Remove author
         if reason and len(reason) > 240:
             reason = reason[:240] + "..."
@@ -519,7 +519,7 @@ class Logging(commands.Cog):
                 reason = reason[:200] + "..."
 
             if moderator != "Discord" and moderator == self.bot.user:
-                moderator = f"{reason.split(' ')[0]} via Sned"  # Get actual moderator, not the bot
+                moderator = reason.split(" ")[0]  # Get actual moderator, not the bot
                 reason = reason.split("):", maxsplit=1)[1]  # Remove author
 
             if (
