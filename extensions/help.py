@@ -94,19 +94,19 @@ class SnedHelp(commands.HelpCommand):
             color=ctx.bot.embedBlue,
             description="""**How to navigate this help dialogue**
 
-        Navigate to different sections of this help dialogue via the **dropdown** below!
+Navigate to different sections of this help dialogue via the **dropdown** below!
 
-        If you need support, please join the [support server](https://discord.gg/KNKr8FPmJa)!
+If you need support, please join the [support server](https://discord.gg/KNKr8FPmJa)!
 
-        **Command Usage & Syntax**
+**Command Usage & Syntax**
 
-        `<argument>` is a __required__ parameter
-        `[argument]` is an __optional__ parameter
-        `<foo|bar>` means foo __OR__ bar
+`<argument>` is a __required__ parameter
+`[argument]` is an __optional__ parameter
+`<foo|bar>` means foo __OR__ bar
 
-        *Do not include the brackets in your commands!*        
+*Do not include the brackets in your commands!*        
 
-        Thank you for using Sned!
+Thank you for using Sned!
         """,
         )
         embed = ctx.bot.add_embed_footer(ctx, help_home_embed)
