@@ -238,7 +238,7 @@ class Tags(commands.Cog):
                 embed = discord.Embed(
                     title="❌ " + self._("Error: Unknown tag"),
                     description=self._("Cannot find tag by that name."),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.channel.send(embed=embed)
@@ -261,7 +261,7 @@ class Tags(commands.Cog):
                 description=self._(
                     "This tag already exists. If the owner of this tag is no longer in the server, you can try doing `{prefix}tag claim {name}`"
                 ).format(prefix=ctx.prefix, name=name),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.channel.send(embed=embed)
@@ -282,7 +282,7 @@ class Tags(commands.Cog):
                 description=self._("You can now call it with `{prefix}tag {name}`").format(
                     prefix=ctx.prefix, name=name
                 ),
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -307,7 +307,7 @@ class Tags(commands.Cog):
                 description=self._("**Aliases:** `{aliases}`\n**Tag owner:** {owner}\n").format(
                     aliases=aliases, owner=owner.mention
                 ),
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             embed.set_author(name=str(owner), icon_url=owner.avatar.url)
             await ctx.send(embed=embed)
@@ -315,7 +315,7 @@ class Tags(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Error: Unknown tag"),
                 description=self._("Cannot find tag by that name."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -333,7 +333,7 @@ class Tags(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Error: Already taken"),
                 description=self._("A tag or alias is already created with the same name."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -357,7 +357,7 @@ class Tags(commands.Cog):
                     embed = discord.Embed(
                         title="❌ " + self._("Error: Too many aliases"),
                         description=self._("Tag `{tag}` can only have up to **5** aliases.").format(tag=tag.tag_name),
-                        color=self.bot.errorColor,
+                        color=self.bot.error_color,
                     )
                     embed = self.bot.add_embed_footer(ctx, embed)
                     await ctx.send(embed=embed)
@@ -378,7 +378,7 @@ class Tags(commands.Cog):
                     description=self._("You can now call it with `{prefix}tag {name}`").format(
                         prefix=ctx.prefix, name=alias.lower()
                     ),
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.send(embed=embed)
@@ -389,7 +389,7 @@ class Tags(commands.Cog):
                     description=self._("Tag `{tag}` already has an alias called `{alias}`.").format(
                         tag=tag.tag_name, alias=alias
                     ),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.send(embed=embed)
@@ -397,7 +397,7 @@ class Tags(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Error: Invalid tag"),
                 description=self._("You either do not own this tag or it does not exist."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -430,7 +430,7 @@ class Tags(commands.Cog):
                     description=self._("Alias `{alias}` for tag `{name}` has been deleted.").format(
                         alias=alias.lower(), name=new_tag.tag_name
                     ),
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.send(embed=embed)
@@ -440,7 +440,7 @@ class Tags(commands.Cog):
                     description=self._("Tag `{tag}` does not have an alias called `{alias}`.").format(
                         tag=tag.tag_name, alias=alias
                     ),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.send(embed=embed)
@@ -448,7 +448,7 @@ class Tags(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Error: Invalid tag"),
                 description=self._("You either do not own this tag or it does not exist."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -476,7 +476,7 @@ class Tags(commands.Cog):
                 description=self._("Tag `{name}`'s ownership was successfully transferred to {receiver}").format(
                     name=new_tag.tag_name, receiver=receiver.mention
                 ),
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -484,7 +484,7 @@ class Tags(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Error: Invalid tag"),
                 description=self._("You either do not own this tag or it does not exist."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -511,7 +511,7 @@ class Tags(commands.Cog):
             embed = discord.Embed(
                 title="✅ " + self._("Tag claimed"),
                 description=self._("Tag `{name}` now belongs to you.").format(name=new_tag.tag_name),
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -519,7 +519,7 @@ class Tags(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Error: Unknown tag"),
                 description=self._("Cannot find tag by that name."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -529,7 +529,7 @@ class Tags(commands.Cog):
                 description=self._(
                     "Tag owner is still in the server. You can only claim tags that have been abandoned."
                 ),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -560,7 +560,7 @@ class Tags(commands.Cog):
             embed = discord.Embed(
                 title="✅ " + self._("Tag edited"),
                 description=self._("Tag `{name}` has been successfully edited.").format(name=new_tag.tag_name),
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -568,7 +568,7 @@ class Tags(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Error: Invalid tag"),
                 description=self._("You either do not own this tag or it does not exist."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -589,7 +589,7 @@ class Tags(commands.Cog):
             embed = discord.Embed(
                 title="✅ " + self._("Tag deleted"),
                 description=self._("Tag `{name}` has been deleted.").format(name=name.lower()),
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -597,7 +597,7 @@ class Tags(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Error: Tag not owned"),
                 description=self._("You cannot delete someone else's tag."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -625,7 +625,7 @@ class Tags(commands.Cog):
                 description=self._(
                     "This tag either does not exist in the origin server, or the bot is not a member of this server."
                 ),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
         except TagAlreadyExists:
@@ -634,7 +634,7 @@ class Tags(commands.Cog):
                 description=self._(
                     "This tag already exists on this server. Try running `{prefix}tag delete {name}`"
                 ).format(prefix=ctx.prefix, name=name),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
         else:
@@ -643,7 +643,7 @@ class Tags(commands.Cog):
                 description=self._("Tag `{name}` has been successfully imported from **{guild}**.").format(
                     name=name.lower(), guild=self.bot.get_guild(origin_id).name
                 ),
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             await ctx.send(embed=embed)
 
@@ -668,7 +668,7 @@ class Tags(commands.Cog):
                 embed = discord.Embed(
                     title="❌ " + self._("Error: Tag import error"),
                     description=self._("An import error occurred.\n**Error:** ```{error}```").format(error=error),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.send(embed=embed)
             else:
@@ -677,7 +677,7 @@ class Tags(commands.Cog):
                     description=self._(
                         "All tags have been successfully imported from **{guild}** with strategy **{strategy}**."
                     ).format(guild=self.bot.get_guild(origin_id).name, strategy=strategy),
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 await ctx.send(embed=embed)
         else:
@@ -686,7 +686,7 @@ class Tags(commands.Cog):
                 description=self._(
                     "Your import strategy has not been specified or is invalid.\nYou **must** specify an import strategy in case of a bulk-import."
                 ),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 
@@ -711,7 +711,7 @@ class Tags(commands.Cog):
                 embed = discord.Embed(
                     title="💬 " + self._("Available tags for this server:"),
                     description="\n".join(page_contents),
-                    color=ctx.bot.embedBlue,
+                    color=ctx.bot.embed_blue,
                 )
                 embed_list.append(embed)
 
@@ -723,7 +723,7 @@ class Tags(commands.Cog):
                 description=self._("There are currently no tags! You can create one via `{prefix}tag create`").format(
                     prefix=ctx.prefix
                 ),
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await ctx.send(embed=embed)
 
@@ -763,7 +763,7 @@ class Tags(commands.Cog):
                 embed = discord.Embed(
                     title="🔎 " + self._("Search results:"),
                     description=f"{response}",
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.send(embed=embed)
@@ -771,7 +771,7 @@ class Tags(commands.Cog):
                 embed = discord.Embed(
                     title="🔎 " + self._("Not found"),
                     description=self._("Unable to find tags with that name.").format(prefix=ctx.prefix),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.send(embed=embed)
         else:
@@ -780,7 +780,7 @@ class Tags(commands.Cog):
                 description=self._(
                     "There are currently no tags in this guild. You can create one via `{prefix}tag create`"
                 ).format(prefix=ctx.prefix),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 

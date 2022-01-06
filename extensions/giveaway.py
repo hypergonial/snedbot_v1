@@ -49,16 +49,16 @@ class Giveaway(commands.Cog):
         cogs = await self.bot.current_cogs()
         if "Timers" not in cogs:
             embed = discord.Embed(
-                title=self.bot.errorMissingModuleTitle,
+                title="❌ Missing module",
                 description="This setup requires the extension `timers` to be active.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
             return
         embed = discord.Embed(
             title="🛠️ Giveaway creator",
             description="Please mention the channel where the giveaway message should be sent!",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         await ctx.channel.send(embed=embed)
 
@@ -71,7 +71,7 @@ class Giveaway(commands.Cog):
             embed = discord.Embed(
                 title="🛠️ Giveaway creator",
                 description="Now specify the amount of winners by typing in a number!",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await ctx.channel.send(embed=embed)
             message = await self.bot.wait_for("message", timeout=60.0, check=check)
@@ -81,7 +81,7 @@ class Giveaway(commands.Cog):
                 embed = discord.Embed(
                     title="❌ Error: Invalid value",
                     description="Invalid value entered. Operation cancelled.",
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.channel.send(embed=embed)
                 return
@@ -89,7 +89,7 @@ class Giveaway(commands.Cog):
             embed = discord.Embed(
                 title="🛠️ Giveaway creator",
                 description="How long should the giveaway last? Examples: `12 hours` or `7 days and 5 minutes`",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await ctx.channel.send(embed=embed)
             message = await self.bot.wait_for("message", timeout=60.0, check=check)
@@ -99,7 +99,7 @@ class Giveaway(commands.Cog):
                 embed = discord.Embed(
                     title="❌ Error: Invalid value",
                     description="Invalid time entered. Operation cancelled.",
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.channel.send(embed=embed)
                 return
@@ -107,7 +107,7 @@ class Giveaway(commands.Cog):
             embed = discord.Embed(
                 title="🛠️ Giveaway creator",
                 description="Now, as a last step, type in what you are going to give away! This will show up in the message part of the giveaway.",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await ctx.channel.send(embed=embed)
             message = await self.bot.wait_for("message", timeout=60.0, check=check)
@@ -128,14 +128,14 @@ class Giveaway(commands.Cog):
                 embed = discord.Embed(
                     title="✅ " + "Giveaway created",
                     description="Giveaway created successfully!",
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 await ctx.send(embed=embed)
             except Exception as error:
                 embed = discord.Embed(
                     title="❌ Error: Cannot send message",
                     description=f"Unable to send the giveaway message to the given channel.\n**Error:** ```{error}```",
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.channel.send(embed=embed)
                 return
@@ -153,15 +153,15 @@ class Giveaway(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Channel not found",
                 description="Unable to locate channel. Operation cancelled.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
             return
         except asyncio.TimeoutError:
             embed = discord.Embed(
-                title=self.bot.errorTimeoutTitle,
-                description=self.bot.errorTimeoutDesc,
-                color=self.bot.errorColor,
+                title="🕘 Error: Timed out",
+                description="Your session has expired. Execute the command again!",
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
             return
@@ -199,7 +199,7 @@ class Giveaway(commands.Cog):
         embed = discord.Embed(
             title="🎉 " + self._("List of giveaways:"),
             description=list_str,
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.send(embed=embed)
@@ -224,7 +224,7 @@ class Giveaway(commands.Cog):
                 embed = discord.Embed(
                     title="✅ " + self._("Giveaway deleted"),
                     description=self._("Giveaway **{ID}** has been cancelled and deleted.").format(ID=ID),
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 await ctx.send(embed=embed)
                 # If we just deleted the currently running timer, then we re-evaluate to find the next timer.
@@ -237,7 +237,7 @@ class Giveaway(commands.Cog):
                 embed = discord.Embed(
                     title="❌ " + self._("Giveaway not found"),
                     description=self._("Cannot find giveaway with ID **{ID}**.").format(ID=ID),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.send(embed=embed)
@@ -264,7 +264,7 @@ class Giveaway(commands.Cog):
                     description=self._(
                         "Giveaway **{ID}** has been forced to end, and winners have been calculated."
                     ).format(ID=ID),
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 await ctx.send(embed=embed)
                 # If we just deleted the currently running timer, then we re-evaluate to find the next timer.
@@ -309,7 +309,7 @@ class Giveaway(commands.Cog):
                     err_embed = discord.Embed(
                         title="🎉 Not enough participants",
                         description="The giveaway was forced to end by a moderator with insufficient participants.",
-                        color=self.bot.errorColor,
+                        color=self.bot.error_color,
                     )
                     err_embed.set_footer(text="Hint: You could try lowering the amount of winners.")
                     await channel.send(embed=err_embed)
@@ -318,7 +318,7 @@ class Giveaway(commands.Cog):
                 embed = discord.Embed(
                     title="❌ " + self._("Giveaway not found"),
                     description=self._("Cannot find giveaway with ID **{ID}**.").format(ID=ID),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.send(embed=embed)
@@ -357,7 +357,7 @@ class Giveaway(commands.Cog):
             err_embed = discord.Embed(
                 title="🎉 Not enough participants",
                 description="The giveaway ended with insufficient participants.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             err_embed.set_footer(text="Hint: You could try lowering the amount of winners.")
             await channel.send(embed=err_embed)

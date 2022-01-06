@@ -79,14 +79,14 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
             embed = discord.Embed(
                 title="Keep-On-Top messages for this server:",
                 description=text,
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await ctx.send(embed=embed)
         else:
             embed = discord.Embed(
                 title="❌ Error: No keep-on-top messages",
                 description="There are no keep-on-top messages for this server.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
 
@@ -105,7 +105,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
             embed = discord.Embed(
                 title="❌ Error: Too many keep-on-top messages",
                 description="A server can only have up to **5** keep-on-top message(s) at a time.\n__Note:__ If you deleted the keep-on-top message before deleting the entry, make sure to also delete the entry!",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
             return
@@ -113,7 +113,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
         embed = discord.Embed(
             title="🛠️ Keep-On-Top Setup",
             description="Specify the channel where you want to keep a message on the top by mentioning it!",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         await ctx.channel.send(embed=embed)
         try:
@@ -130,7 +130,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
                         embed = discord.Embed(
                             title="❌ Error: Duplicate entry",
                             description="You cannot have two keep-on-top messages in the same channel!",
-                            color=self.bot.errorColor,
+                            color=self.bot.error_color,
                         )
                         await ctx.channel.send(embed=embed)
                         return
@@ -138,14 +138,14 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
             embed = discord.Embed(
                 title="🛠️ Keep-On-Top Setup",
                 description=f"Channel set to {ktp_channel.mention}!",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await ctx.channel.send(embed=embed)
 
             embed = discord.Embed(
                 title="🛠️ Keep-On-Top Setup",
                 description="Now type in the message you want to be kept on top!",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await ctx.channel.send(embed=embed)
             payload = await self.bot.wait_for("message", timeout=300.0, check=check)
@@ -167,7 +167,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
             embed = discord.Embed(
                 title="🛠️ Keep-On-Top Setup",
                 description=f"✅ Setup completed. This message will now be kept on top of {ktp_channel.mention}!",
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             await ctx.channel.send(embed=embed)
 
@@ -175,7 +175,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
             embed = discord.Embed(
                 title="❌ Error: Unable to locate channel.",
                 description="The setup process has been cancelled.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
             return
@@ -199,14 +199,14 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
             embed = discord.Embed(
                 title="✅ Keep-on-top message deleted",
                 description="Keep-on-top message entry deleted and will no longer be kept in top!",
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             await ctx.channel.send(embed=embed)
         else:
             embed = discord.Embed(
                 title="❌ Error: Not found",
                 description="There is no keep-on-top entry by that ID.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
 

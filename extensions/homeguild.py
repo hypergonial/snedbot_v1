@@ -19,7 +19,7 @@ class HomeGuild(commands.Cog):
         paginator = commands.Paginator(prefix="```py\n")
         if ctx:
             paginator.add_line(
-                f"Error in guild '{ctx.guild.id}' during command '{ctx.command}' executed by user '{ctx.author}':",
+                f"Error in guild '{ctx.guild.name}' ({ctx.guild.id}) during command '{ctx.command}' executed by user '{ctx.author}' ({ctx.author.id}):",
                 empty=True,
             )
         elif event_method:

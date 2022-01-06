@@ -34,7 +34,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         embed = discord.Embed(
             title="🏓 Pong!",
             description=self._("Latency: `{latency}ms`").format(latency=round(self.bot.latency * 1000)),
-            color=self.bot.miscColor,
+            color=self.bot.misc_color,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.channel.send(embed=embed)
@@ -51,7 +51,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         embed = discord.Embed(
             title="JEEEEENKINS!",
             description=f"... Oh my god he just ran in. 👀 `{round(self.bot.latency * 1000)}ms`",
-            color=self.bot.miscColor,
+            color=self.bot.misc_color,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.channel.send(embed=embed)
@@ -80,7 +80,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
                 description=self._(
                     "Please see `{prefix}help embed` for argument formatting!\n**Exception:** ```{exception}```"
                 ).format(prefix=ctx.prefix, exception=str(e)),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -91,7 +91,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
                 description=self._(
                     "Please see `{prefix}help embed` for argument formatting!\n**Exception:** ```SystemExit: {exception}```\n**Note:** If you are trying to pass multiple words as an argument, wrap them in quotation marks."
                 ).format(prefix=ctx.prefix, exception=str(s)),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -102,7 +102,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
                 description=self._(
                     "You are missing a required argument. Please check `{prefix}help embed` for command usage."
                 ).format(prefix=ctx.prefix),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -117,7 +117,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
                     description=self._(
                         "For valid colors, see the [discord.py API reference](https://discordpy.readthedocs.io/en/latest/api.html#discord.Colour)"
                     ),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.send(embed=embed)
@@ -136,7 +136,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
             embed = discord.Embed(
                 title="❌ " + self._("Failed parsing arguments."),
                 description=self._("**Exception:** ```{exception}```").format(exception=str(e)),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
@@ -159,7 +159,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         **Invite:** [Invite me!](https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=3691506934&scope=bot%20applications.commands)
         **Support:** [Click here!](https://discord.gg/KNKr8FPmJa)
         Blob emoji is licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)""",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
         embed.set_thumbnail(url=self.bot.user.avatar.url)
@@ -186,7 +186,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
             embed = discord.Embed(
                 title="🌟 Yay!",
                 description=self._("[Click here]({invite_url}) for an invite link!").format(invite_url=invite_url),
-                color=self.bot.miscColor,
+                color=self.bot.misc_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.channel.send(embed=embed)
@@ -244,7 +244,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
                 premium_sub_count=guild.premium_subscription_count,
                 premium_tier=guild.premium_tier,
             ),
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
 
         embed = self.bot.add_embed_footer(ctx, embed)
@@ -279,9 +279,9 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         extensions = await self.bot.current_cogs()
         if "Moderation" not in extensions:
             embed = discord.Embed(
-                title=self.bot.errorMissingModuleTitle,
+                title="❌ Missing module",
                 description="This command requires the extension `moderation` to be active.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
             return
@@ -290,7 +290,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         embed = discord.Embed(
             title=self._("{user}'s warnings").format(user=user),
             description=self._("**Warnings:** `{warns}`").format(warns=warns),
-            color=self.bot.warnColor,
+            color=self.bot.warn_color,
         )
         if user.avatar:
             embed.set_thumbnail(url=user.avatar.url)

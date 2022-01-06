@@ -150,7 +150,7 @@ class Logging(commands.Cog):
             embed = discord.Embed(
                 title=f"🗑️ Message deleted by Moderator",
                 description=f"**Message author:** `{message.author} ({message.author.id})`\n**Moderator:** `{moderator} ({moderator.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{contentfield}```",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await self.log("message_delete_mod", embed, message.guild.id)
         else:
@@ -158,7 +158,7 @@ class Logging(commands.Cog):
             embed = discord.Embed(
                 title=f"🗑️ Message deleted",
                 description=f"**Message author:** `{message.author} ({message.author.id})`\n**Channel:** {message.channel.mention}\n**Message content:** ```{contentfield}```",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await self.log("message_delete", embed, message.guild.id)
 
@@ -178,7 +178,7 @@ class Logging(commands.Cog):
             embed = discord.Embed(
                 title=f"🖊️ Message edited",
                 description=f"**Message author:** `{after.author} ({after.author.id})`\n**Channel:** {after.channel.mention}\n**Before:** ```{before_content}``` \n**After:** ```{after_content}```\n[Jump!]({after.jump_url})",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await self.log("message_edit", embed, after.guild.id)
 
@@ -206,7 +206,7 @@ class Logging(commands.Cog):
         embed = discord.Embed(
             title=f"🗑️ Bulk message deletion",
             description=f"**Channel:** {channel.mention if channel else 'Unknown'}\n**Moderator:** `{moderator}`\n```Multiple messages have been purged.```",
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         await self.log("bulk_delete", embed, payload.guild_id)
 
@@ -216,7 +216,7 @@ class Logging(commands.Cog):
         embed = discord.Embed(
             title=f"🗑️ Invite deleted",
             description=f"**Invite:** `{invite}`",
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         await self.log("invites", embed, invite.guild.id)
 
@@ -240,7 +240,7 @@ class Logging(commands.Cog):
         embed = discord.Embed(
             title=f"🗑️ Role deleted",
             description=f"**Role:** `{role}`\n**Moderator:** `{moderator}`",
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         await self.log("roles", embed, role.guild.id)
 
@@ -262,7 +262,7 @@ class Logging(commands.Cog):
         embed = discord.Embed(
             title=f"#️⃣ Channel deleted",
             description=f"**Channel:** `{channel.name}` ({channel.type})\n**Moderator:** `{moderator} ({moderator})`",
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         await self.log("channels", embed, channel.guild.id)
 
@@ -287,7 +287,7 @@ class Logging(commands.Cog):
         embed = discord.Embed(
             title=f"#️⃣ Channel created",
             description=f"**Channel:** {channel.mention} `({channel.type})`\n**Moderator:** `{moderator}`",
-            color=self.bot.embedGreen,
+            color=self.bot.embed_green,
         )
         await self.log("channels", embed, channel.guild.id)
 
@@ -310,7 +310,7 @@ class Logging(commands.Cog):
         embed = discord.Embed(
             title=f"❇️ Role created",
             description=f"**Role:** `{role}`\n**Moderator:** `{moderator}`",
-            color=self.bot.embedGreen,
+            color=self.bot.embed_green,
         )
         await self.log("roles", embed, role.guild.id)
 
@@ -334,7 +334,7 @@ class Logging(commands.Cog):
             embed = discord.Embed(
                 title=f"🖊️ Role updated",
                 description=f"**Role:** `{after.name}` \n**Moderator:** `{moderator}`\n**Before:**```Name: {before.name}\nColor: {before.color}\nHoisted: {before.hoist}\nManaged: {before.managed}\nMentionable: {before.mentionable}\nPosition: {before.position}\nPermissions: {before.permissions}```\n**After:**\n```Name: {after.name}\nColor: {after.color}\nHoisted: {after.hoist}\nManaged: {after.managed}\nMentionable: {after.mentionable}\nPosition:{after.position}\nPermissions: {after.permissions}```",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await self.log("roles", embed, after.guild.id)
 
@@ -357,7 +357,7 @@ class Logging(commands.Cog):
             embed = discord.Embed(
                 title=f"🖊️ Guild updated",
                 description=f"Guild settings have been updated by `{moderator}`.",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await self.log("guild_settings", embed, after.id)
 
@@ -386,7 +386,7 @@ class Logging(commands.Cog):
         embed = discord.Embed(
             title=f"🔨 User unbanned",
             description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:** ```{reason}```",
-            color=self.bot.embedGreen,
+            color=self.bot.embed_green,
         )
         await self.log("ban", embed, guild.id)
 
@@ -424,7 +424,7 @@ class Logging(commands.Cog):
             embed = discord.Embed(
                 title=f"🚪👈 User was kicked",
                 description=f"**Offender:** `{member} ({member.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await self.log("kick", embed, member.guild.id)
 
@@ -439,7 +439,7 @@ class Logging(commands.Cog):
             embed = discord.Embed(
                 title=f"🚪 User left",
                 description=f"**User:** `{member} ({member.id})`\n**User count:** `{member.guild.member_count}`",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             if member.avatar:
                 embed.set_thumbnail(url=member.avatar.url)
@@ -467,7 +467,7 @@ class Logging(commands.Cog):
         embed = discord.Embed(
             title=f"🔨 User banned",
             description=f"**Offender:** `{user} ({user.id})`\n**Moderator:**`{moderator}`\n**Reason:**```{reason}```",
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         await self.log("ban", embed, guild.id)
 
@@ -483,7 +483,7 @@ class Logging(commands.Cog):
         embed = discord.Embed(
             title=f"🚪 User joined",
             description=f"**User:** `{member} ({member.id})`\n**User count:** `{member.guild.member_count}`",
-            color=self.bot.embedGreen,
+            color=self.bot.embed_green,
         )
         embed.add_field(
             name="Account created",
@@ -534,7 +534,7 @@ class Logging(commands.Cog):
                 embed = discord.Embed(
                     title=f"🔉 User timeout removed",
                     description=f"**User:** `{after.name} ({after.id})` \n**Moderator:** `{moderator}` \n**Reason:** ```{reason}```",
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 await self.log("timeout", embed, after.guild.id)
             else:  # Got timed out
@@ -546,7 +546,7 @@ class Logging(commands.Cog):
                 embed = discord.Embed(
                     title=f"🔇 User timed out",
                     description=f"**User:** `{after.name} ({after.id})` \n**Moderator:** `{moderator}` \n**Until:** {discord.utils.format_dt(after.communication_disabled_until)} ({discord.utils.format_dt(after.communication_disabled_until, style='R')})\n**Reason:** ```{reason}```",
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await self.log("timeout", embed, after.guild.id)
 
@@ -554,7 +554,7 @@ class Logging(commands.Cog):
             embed = discord.Embed(
                 title=f"🖊️ Nickname changed",
                 description=f"**User:** `{after.name} ({after.id})`\nNickname before: `{before.nick}`\nNickname after: `{after.nick}`",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await self.log("nickname", embed, after.guild.id)
 
@@ -582,13 +582,13 @@ class Logging(commands.Cog):
                 embed = discord.Embed(
                     title=f"🖊️ Member roles updated",
                     description=f"**User:** `{after} ({after.id})`\n**Moderator:** `{moderator}`\n**Role added:** `{add_diff[0]}`",
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
             elif len(rem_diff) != 0:
                 embed = discord.Embed(
                     title=f"🖊️ Member roles updated",
                     description=f"**User:** `{after} ({after.id})`\n**Moderator:** `{moderator}`\n**Role removed:** `{rem_diff[0]}`",
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
             # Role updates are considered elevated due to importance
             if isinstance(moderator, discord.User) or isinstance(moderator, discord.Member) and moderator.bot:

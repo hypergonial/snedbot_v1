@@ -41,7 +41,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         embed = discord.Embed(
             title="Are you sure you want to reset all settings?",
             description="This will also **erase** any created tags, pending moderation actions (e.g. tempbans), reminders, role-buttons and more.\n**This action is __irreversible__ and may break things!**",
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         should_delete = await ctx.confirm(embed=embed, delete_after=True)
 
@@ -53,7 +53,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(
                 title="Confirmation",
                 description="Please type in the name of the server to confirm deletion.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
             message = await self.bot.wait_for("message", timeout=30.0, check=check)
@@ -63,28 +63,28 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
                 embed = discord.Embed(
                     title="✅ Settings reset",
                     description="Goodbye cruel world! 😢",
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.channel.send(embed=embed)
             else:
                 embed = discord.Embed(
                     title="❌ Error: Incorrect server name",
                     description="Settings deletion cancelled.",
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.channel.send(embed=embed)
         elif should_delete == False:
             embed = discord.Embed(
                 title="❌ Cancelled",
                 description="Settings deletion aborted by user.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
         else:
             embed = discord.Embed(
-                title=self.bot.errorTimeoutTitle,
+                title="🕘 Error: Timed out",
                 description="Timed out. Settings deletion cancelled.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
 
@@ -105,14 +105,14 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(
                 title="✅ Nickname changed",
                 description=f"Bot nickname has been changed to `{nick}`.",
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             await ctx.send(embed=embed)
         except:
             embed = discord.Embed(
                 title="❌ Error: Unable to change nickname",
                 description=f"This could be due to a permissions issue.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 
@@ -138,14 +138,14 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(
                 title="❕ " + self._("**Active prefixes on this server**"),
                 description=desc,
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await ctx.send(embed=embed)
         else:
             embed = discord.Embed(
                 title="❕ " + self._("**Active prefixes on this server**"),
                 description=f"*#0* - `{self.bot.DEFAULT_PREFIX}` *(Default)*",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await ctx.send(embed=embed)
 
@@ -180,7 +180,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(
                 title="✅ Prefix added",
                 description=f"Prefix **{prefix}** has been added to the list of valid prefixes.\n\n**Note:** Setting a custom prefix disables the default prefix. If you forget your prefix, mention the bot!",
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             await ctx.send(embed=embed)
 
@@ -188,14 +188,14 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(
                 title="❌ Prefix already added",
                 description=f"This prefix is already added.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
         elif len(records[0]["prefix"]) > 5:
             embed = discord.Embed(
                 title="❌ Too many prefixes",
                 description=f"This server has reached the maximum amount of prefixes.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 
@@ -226,7 +226,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(
                 title="✅ Prefix removed",
                 description=f"Prefix **{prefix}** has been removed from the list of valid prefixes.\n\n**Note:** Removing all custom prefixes will re-enable the default prefix. If you forget your prefix, mention the bot!",
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             await ctx.send(embed=embed)
 
@@ -234,7 +234,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(
                 title="❌ Prefix not found",
                 description=f"The specified prefix cannot be removed as it is not found.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 
@@ -253,7 +253,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
                 embed = discord.Embed(
                     title="❌ Message not found",
                     description=f"Could not find this message.",
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.send(embed=embed)
             else:
@@ -262,21 +262,21 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
                     embed = discord.Embed(
                         title="✅ Message edited",
                         description=f"Message `{msg_id}` has been edited in {channel.mention}!",
-                        color=self.bot.embedGreen,
+                        color=self.bot.embed_green,
                     )
                     await ctx.send(embed=embed)
                 else:
                     embed = discord.Embed(
                         title="❌ Message not owned by bot",
                         description=f"This message was not posted by the bot, and cannot be edited by it.",
-                        color=self.bot.errorColor,
+                        color=self.bot.error_color,
                     )
                     await ctx.send(embed=embed)
         else:
             embed = discord.Embed(
                 title="❌ Channel not found",
                 description=f"Could not find this channel.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 
@@ -295,7 +295,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
                 embed = discord.Embed(
                     title="❌ Message not found",
                     description=f"Could not find this message.",
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.send(embed=embed)
             else:
@@ -305,7 +305,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(
                 title="❌ Channel not found",
                 description=f"Could not find this channel.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 
@@ -357,7 +357,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(
                 title="❌ Command unavailable",
                 description=f"👍 Nice try though...",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             return
@@ -365,7 +365,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(
                 title="❌ Command unavailable",
                 description=f"This command is not available while using `{ctx.prefix}sudo`",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             return
@@ -387,7 +387,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         embed = discord.Embed(
             title="Shutting down...",
             description="Closing all connections...",
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         # await ctx.send("https://media.tenor.com/images/529aed02dae515a28de82141cfd0b019/tenor.gif")
         await ctx.send(embed=embed)
@@ -406,18 +406,18 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
         embed = discord.Embed(
             title="Are you sure you want the bot to leave?",
             description="You need an invite link and `Manage Server` permissions to undo this.",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         confirmed = await ctx.confirm(embed=embed)
         if confirmed:
-            embed = discord.Embed(title="🚪 See you soon! (hopefully)", color=self.bot.errorColor)
+            embed = discord.Embed(title="🚪 See you soon! (hopefully)", color=self.bot.error_color)
             await ctx.channel.send(embed=embed)
             await ctx.guild.leave()
         else:
             embed = discord.Embed(
                 title="Leaving aborted",
                 description="The bot will stay in this server.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
 
@@ -443,14 +443,14 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(
                 title="✅ User blacklisted",
                 description=f"User has been blacklisted!",
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             await ctx.send(embed=embed)
         else:
             embed = discord.Embed(
                 title="❌ User already blacklisted",
                 description=f"User is already present in the blacklist!",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 
@@ -469,14 +469,14 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(
                 title="✅ User removed from blacklist",
                 description=f"User has been removed from the blacklist!",
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             await ctx.send(embed=embed)
         else:
             embed = discord.Embed(
                 title="❌ User is not in blacklist",
                 description=f"User is not present in the blacklist!",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 
@@ -516,7 +516,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
                     premium_sub_count=guild.premium_subscription_count,
                     premium_tier=guild.premium_tier,
                 ),
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
 
             if guild.icon:
@@ -530,7 +530,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             embed = discord.Embed(
                 title="❌ Guild not found",
                 description=f"Could not find a guild with this ID.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 

@@ -148,7 +148,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                 embed = discord.Embed(
                     title="Rolebuttons on this server:",
                     description=page,
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
                 embed_list.append(embed)
             menu_paginator = components.SnedMenuPaginator(pages=embed_list, show_disabled=True, show_indicator=True)
@@ -157,7 +157,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             embed = discord.Embed(
                 title="❌ Error: No role-buttons",
                 description="There are no role-buttons for this server.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
 
@@ -204,14 +204,14 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             embed = discord.Embed(
                 title="✅ Role-Button deleted",
                 description="Role-Button has been successfully deleted!",
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             await ctx.channel.send(embed=embed)
         else:
             embed = discord.Embed(
                 title="❌ Error: Not found",
                 description="There is no role-button by that ID.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
 
@@ -236,7 +236,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             embed = discord.Embed(
                 title="❌ Error: Too many role-buttons",
                 description="A server can only have up to **200** role-buttons at a time.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
             return
@@ -244,7 +244,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         embed = discord.Embed(
             title="🛠️ Role-Buttons Setup",
             description="Do you already have an existing message for the role-button?\nPlease note that the message must be a message from the bot.",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         has_msg = await ctx.confirm(embed=embed, delete_after=True)
 
@@ -264,7 +264,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             embed = discord.Embed(
                 title="🛠️ Role-Buttons setup",
                 description="Please specify the channel where you want the message to be sent!",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             value, asked, setup_msg = await components.select_or_ask(
                 ctx, options=options, placeholder="Select a channel", embed=embed
@@ -282,7 +282,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                         embed = discord.Embed(
                             title="❌ Error: Invalid channel",
                             description="Channel must be of type `text` or `news`. Operation cancelled.",
-                            color=self.bot.errorColor,
+                            color=self.bot.error_color,
                         )
                         await setup_msg.edit(embed=embed)
                         return
@@ -290,7 +290,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                     embed = discord.Embed(
                         title="❌ Error: Channel not found.",
                         description="Unable to locate channel. Operation cancelled.",
-                        color=self.bot.errorColor,
+                        color=self.bot.error_color,
                     )
                     await setup_msg.edit(embed=embed)
                     return
@@ -302,7 +302,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             embed = discord.Embed(
                 title="🛠️ Role-Buttons setup",
                 description="What should the content of the message be? Type it below!",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await setup_msg.edit(embed=embed, view=None)
             message = await self.bot.wait_for("message", timeout=60.0, check=idcheck)
@@ -323,7 +323,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                 embed = discord.Embed(
                     title="🛠️ Role-Buttons setup",
                     description="Please specify the channel where the message is located!",
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
                 value, asked, setup_msg = await components.select_or_ask(
                     ctx, options=options, placeholder="Select a channel", embed=embed
@@ -341,7 +341,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                             embed = discord.Embed(
                                 title="❌ Error: Invalid channel",
                                 description="Channel must be of type `text` or `news`. Operation cancelled.",
-                                color=self.bot.errorColor,
+                                color=self.bot.error_color,
                             )
                             await setup_msg.edit(embed=embed)
                             return
@@ -349,7 +349,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                         embed = discord.Embed(
                             title="❌ Error: Channel not found.",
                             description="Unable to locate channel. Operation cancelled.",
-                            color=self.bot.errorColor,
+                            color=self.bot.error_color,
                         )
                         await ctx.channel.send(embed=embed)
                         return
@@ -361,7 +361,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                 embed = discord.Embed(
                     title="🛠️ Role-Buttons setup",
                     description="Please specify the ID of the message. If you don't know how to get the ID of a message, [follow this link!](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-)",
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
                 await setup_msg.edit(embed=embed, view=None)
                 message = await self.bot.wait_for("message", timeout=60.0, check=idcheck)
@@ -372,7 +372,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                     embed = discord.Embed(
                         title="❌ Error: Message not by bot",
                         description="The message **must** be a message posted previously by the bot. Operation cancelled.",
-                        color=self.bot.errorColor,
+                        color=self.bot.error_color,
                     )
                     await setup_msg.edit(embed=embed)
                     return
@@ -380,16 +380,16 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                     embed = discord.Embed(
                         title="❌ Error: Too many components",
                         description="This message has too many components. Please try reducing the number of buttons. Operation cancelled.",
-                        color=self.bot.errorColor,
+                        color=self.bot.error_color,
                     )
                     await setup_msg.edit(embed=embed)
                     return
 
             except ValueError:
                 embed = discord.Embed(
-                    title=self.bot.errorDataTitle,
-                    description=self.bot.errorDataDesc,
-                    color=self.bot.errorColor,
+                    title="❌ Error: Invalid data entered",
+                    description="Operation cancelled.",
+                    color=self.bot.error_color,
                 )
                 await ctx.channel.send(embed=embed)
                 return
@@ -398,7 +398,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                 embed = discord.Embed(
                     title="❌ Error: Message not found.",
                     description="Unable to locate message. Operation cancelled.",
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await setup_msg.edit(embed=embed)
                 return
@@ -409,7 +409,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         embed = discord.Embed(
             title="🛠️ Role-Buttons setup",
             description="React **to this message** with the emoji you want to appear on the button! This can be any emoji, be it custom or Discord default!",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         await setup_msg.edit(embed=embed)
         reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=confirmemoji)
@@ -420,7 +420,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         embed = discord.Embed(
             title="🛠️ Role-Buttons setup",
             description="What text should be printed on the button? Type it below! Type `skip` to leave it empty.",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         await setup_msg.edit(embed=embed)
         message = await self.bot.wait_for("message", timeout=60.0, check=idcheck)
@@ -435,7 +435,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             embed = discord.Embed(
                 title="❌ Error: No valid roles",
                 description="There are no roles the bot could assign. Try changing the role hierarchy.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
             return
@@ -443,7 +443,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         embed = discord.Embed(
             title="🛠️ Role-Buttons setup",
             description="Select the role that will be handed out!",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         value, asked = await components.select_or_ask(
             ctx,
@@ -463,7 +463,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                 embed = discord.Embed(
                     title="❌ Error: Role not found",
                     description="Unable to locate role. Operation cancelled.",
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.channel.send(embed=embed)
                 return
@@ -478,7 +478,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         embed = discord.Embed(
             title="🛠️ Role-Buttons setup",
             description="Select the style of the button!",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         await setup_msg.edit(embed=embed, view=view)
         await view.wait()
@@ -508,7 +508,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                     embed = discord.Embed(
                         title="⚠️ Role-Buttons Setup",
                         description="This message already has buttons or other components attached. Any components that are not role-buttons will be **removed** from this message. (e.g. components from other bots) If you are trying to add multiple role-buttons to this message, ignore this warning.\n\n**Are you sure you want to proceed?**",
-                        color=self.bot.warnColor,
+                        color=self.bot.warn_color,
                     )
                     ignore_warning = await ctx.confirm(embed=embed, delete_after=True)
                     if ignore_warning:
@@ -541,7 +541,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             embed = discord.Embed(
                 title="❌ Error: No permissions",
                 description="The bot has no permissions to create the message. Please check if the bot can send and edit messages in the specified channel. Operation cancelled.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await setup_msg.edit(embed=embed, view=None)
             return
@@ -565,14 +565,14 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         embed = discord.Embed(
             title="🛠️ Role-Buttons setup",
             description="✅ Setup completed. Role-Button set up!",
-            color=self.bot.embedGreen,
+            color=self.bot.embed_green,
         )
         await setup_msg.edit(embed=embed, view=None)
 
         embed = discord.Embed(
             title="❇️ Role-Button was added",
             description=f"A role-button for role {reactionrole.mention} has been created by {ctx.author.mention} in channel {reactchannel.mention}.\n__Note:__ Anyone who can see this channel can now obtain this role!",
-            color=self.bot.embedGreen,
+            color=self.bot.embed_green,
         )
         try:
             await self.bot.get_cog("Logging").log("roles", embed, ctx.guild.id)

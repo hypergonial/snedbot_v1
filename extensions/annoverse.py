@@ -88,7 +88,7 @@ class Annoverse(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Wiki does not exist or unsupported"),
                 description=self._("This wiki is either not supported or does not exist!").format(query=query),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             return
@@ -111,7 +111,7 @@ class Annoverse(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Not found"),
                 description=self._("Could not find anything for `{query}`!").format(query=query),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 
@@ -132,7 +132,7 @@ class Annoverse(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Not found"),
                 description=self._("Could not find anything for `{query}`!").format(query=query),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 
@@ -153,7 +153,7 @@ class Annoverse(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Not found"),
                 description=self._("Could not find anything for `{query}`!").format(query=query),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 
@@ -174,7 +174,7 @@ class Annoverse(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Not found"),
                 description=self._("Could not find anything for `{query}`!").format(query=query),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 

@@ -94,7 +94,7 @@ class FallingFrontier(commands.Cog, name="Falling Frontier"):
             embed = discord.Embed(
                 title="❌ " + self._("Not found"),
                 description=self._("Could not find anything for `{query}`!").format(query=query),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 

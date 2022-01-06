@@ -388,7 +388,7 @@ class Timers(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Reminder too long"),
                 description=self._("Your reminder cannot exceed **1000** characters!"),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             return
@@ -399,19 +399,19 @@ class Timers(commands.Cog):
             print(timestr)
         except ValueError as error:
             embed = discord.Embed(
-                title=self.bot.errorDataTitle,
+                title="❌ Error: Invalid data entered",
                 description=self._(
                     "Your timeformat is invalid! Type `{prefix}help reminder` to see valid time formatting.\n**Error:** {error}"
                 ).format(prefix=ctx.prefix, error=error),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
         else:
             if (time - datetime.datetime.now(datetime.timezone.utc)).total_seconds() >= 31536000 * 5:
                 embed = discord.Embed(
-                    title=self.bot.errorDataTitle,
+                    title="❌ Error: Invalid data entered",
                     description=self._("Sorry, but that's a bit too far in the future.").format(prefix=ctx.prefix),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.send(embed=embed)
             else:
@@ -451,7 +451,7 @@ class Timers(commands.Cog):
                                 embed = discord.Embed(
                                     title="❌ Invalid interaction",
                                     description="You cannot do this on your own reminder.",
-                                    color=self.ctx.bot.errorColor,
+                                    color=self.ctx.bot.error_color,
                                 )
                                 return await interaction.response.send_message(embed=embed, ephemeral=True)
                             if interaction.user.id not in notes["additional_recipients"]:
@@ -466,14 +466,14 @@ class Timers(commands.Cog):
                                     embed = discord.Embed(
                                         title="✅ Signed up to reminder",
                                         description="You will also be notified when this reminder is due!",
-                                        color=self.ctx.bot.embedGreen,
+                                        color=self.ctx.bot.embed_green,
                                     )
                                     await interaction.response.send_message(embed=embed, ephemeral=True)
                                 else:
                                     embed = discord.Embed(
                                         title="❌ Invalid interaction",
                                         description="Oops! Looks like too many people signed up for this reminder. Try creating a new reminder! (Max cap: 50)",
-                                        color=self.ctx.bot.errorColor,
+                                        color=self.ctx.bot.error_color,
                                     )
                                     return await interaction.response.send_message(embed=embed, ephemeral=True)
                             else:
@@ -487,7 +487,7 @@ class Timers(commands.Cog):
                                 embed = discord.Embed(
                                     title="✅ Removed from reminder",
                                     description="Removed you from the list of recipients!",
-                                    color=self.ctx.bot.embedGreen,
+                                    color=self.ctx.bot.embed_green,
                                 )
                                 await interaction.response.send_message(embed=embed, ephemeral=True)
 
@@ -505,7 +505,7 @@ class Timers(commands.Cog):
                         timestamp=discord.utils.format_dt(time),
                         timestampR=discord.utils.format_dt(time, style="R"),
                     ),
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
                 timer = await self.create_timer(
@@ -572,7 +572,7 @@ class Timers(commands.Cog):
         embed = discord.Embed(
             title="✉️ " + self._("Your reminders:"),
             description=reminderstr,
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.send(embed=embed)
@@ -600,7 +600,7 @@ class Timers(commands.Cog):
                 embed = discord.Embed(
                     title="✅ " + self._("Reminder deleted"),
                     description=self._("Reminder **{ID}** has been deleted.").format(ID=ID),
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.send(embed=embed)
@@ -612,7 +612,7 @@ class Timers(commands.Cog):
                 embed = discord.Embed(
                     title="❌ " + self._("Reminder not found"),
                     description=self._("Cannot find reminder with ID **{ID}**.").format(ID=ID),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
                 await ctx.send(embed=embed)
@@ -630,7 +630,7 @@ class Timers(commands.Cog):
             embed = discord.Embed(
                 title="✉️ " + self._("{user}, your reminder:").format(user=user.name),
                 description=f"{notes['message']}\n\n[Jump to original message!]({notes['jump_url']})",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             pings = [user.mention]
             if len(notes["additional_recipients"]) > 0:

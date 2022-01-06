@@ -106,7 +106,7 @@ class Moderation(commands.Cog):
                 embed = discord.Embed(
                     title="❌ " + self._("You cannot {pwn} yourself.").format(pwn=ctx.command.name),
                     description=self._("You cannot {pwn} your own account.").format(pwn=ctx.command.name),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.send(embed=embed)
                 return
@@ -115,7 +115,7 @@ class Moderation(commands.Cog):
                 embed = discord.Embed(
                     title="❌ Stop hurting him!!",
                     description="I swear he did nothing wrong!",
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.send(embed=embed)
                 return
@@ -124,7 +124,7 @@ class Moderation(commands.Cog):
                 embed = discord.Embed(
                     title="❌ " + self._("Cannot execute on bots."),
                     description=self._("This command cannot be executed on bots."),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.send(embed=embed)
                 return
@@ -158,7 +158,7 @@ class Moderation(commands.Cog):
                             guild=ctx.guild.name,
                             reason=reason,
                         ),
-                        color=self.bot.errorColor,
+                        color=self.bot.error_color,
                     )
                     try:
                         await user.send(embed=embed)
@@ -209,12 +209,12 @@ class Moderation(commands.Cog):
                 description=self._("**{offender}** has been warned by **{moderator}**.").format(
                     offender=member, moderator=moderator
                 ),
-                color=self.bot.warnColor,
+                color=self.bot.warn_color,
             )
             warnembed = discord.Embed(
                 title="⚠️ Warning issued.",
                 description=f"{member.mention} has been warned by {moderator.mention}.\n**Warns:** {db_user.warns}\n\n[Jump!]({ctx.message.jump_url})",
-                color=self.bot.warnColor,
+                color=self.bot.warn_color,
             )
         else:
             embed = discord.Embed(
@@ -222,12 +222,12 @@ class Moderation(commands.Cog):
                 description=self._(
                     "**{offender}** has been warned by **{moderator}**.\n**Reason:** ```{reason}```"
                 ).format(offender=member, moderator=moderator, reason=reason),
-                color=self.bot.warnColor,
+                color=self.bot.warn_color,
             )
             warnembed = discord.Embed(
                 title="⚠️ Warning issued.",
                 description=f"{member.mention} has been warned by {moderator.mention}.\n**Warns:** {db_user.warns}\n**Reason:** ```{reason}```\n[Jump!]({ctx.message.jump_url})",
-                color=self.bot.warnColor,
+                color=self.bot.warn_color,
             )
         try:
             await self.bot.get_cog("Logging").log("warn", warnembed, ctx.guild.id)
@@ -291,11 +291,11 @@ class Moderation(commands.Cog):
 
             except ValueError:
                 embed = discord.Embed(
-                    title="❌ " + self.bot.errorDataTitle,
+                    title="❌ Invalid data entered",
                     description=self._(
                         "Your entered timeformat is invalid. Type `{prefix}help tempban` for more information."
                     ).format(prefix=ctx.prefix),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 return await ctx.send(embed=embed)
 
@@ -312,7 +312,7 @@ class Moderation(commands.Cog):
                 description=self._("**{offender}** has been banned.\n**Reason:** ```{raw_reason}```").format(
                     offender=user, raw_reason=raw_reason
                 ),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 
@@ -333,7 +333,7 @@ class Moderation(commands.Cog):
                         description=self._(
                             "This function requires an extension that is not enabled.\n**Error:** ```{error}```"
                         ).format(error=error),
-                        color=self.bot.errorColor,
+                        color=self.bot.error_color,
                     )
                     return await ctx.send(embed=embed)
 
@@ -341,7 +341,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Ban failed"),
                 description=self._("Ban failed, please try again later."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             return
@@ -362,14 +362,14 @@ class Moderation(commands.Cog):
                     description=self._("**{offender}** has been kicked.\n**Reason:** ```{raw_reason}```").format(
                         offender=member, raw_reason=raw_reason
                     ),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.send(embed=embed)
             else:
                 embed = discord.Embed(
                     title="🚪👈 " + self._("User kicked"),
                     description=self._("**{offender}** has been kicked.").format(offender=member),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.send(embed=embed)
 
@@ -377,7 +377,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Kick failed"),
                 description=self._("Kick failed, please try again later."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             return
@@ -433,7 +433,7 @@ class Moderation(commands.Cog):
                 embed = discord.Embed(
                     title="📒 " + "Journal entries for this user:",
                     description=page,
-                    color=ctx.bot.embedBlue,
+                    color=ctx.bot.embed_blue,
                 )
                 embed_list.append(embed)
 
@@ -444,7 +444,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="📒 " + "Journal entries for this user:",
                 description=f"There are no journal entries for this user yet. Any moderation-actions will leave a note here, or you can set one manually with `{ctx.prefix}journal add @{user.name}` ",
-                color=ctx.bot.embedBlue,
+                color=ctx.bot.embed_blue,
             )
             await ctx.send(embed=embed)
 
@@ -463,14 +463,14 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Journal entry too long"),
                 description=self._("Journal entry cannot exceed **256** characters. Please try again!"),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 
         embed = discord.Embed(
             title="✅ " + self._("Journal entry added!"),
             description=f"Added a new journal entry to user **{user}**. You can view this user's journal via the command `{ctx.prefix}journal {user}`.",
-            color=self.bot.embedGreen,
+            color=self.bot.embed_green,
         )
         await ctx.send(embed=embed)
 
@@ -514,12 +514,12 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="✅ " + self._("Warnings cleared"),
                 description=self._("**{offender}**'s warnings have been cleared.").format(offender=offender),
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             warnembed = discord.Embed(
                 title="⚠️ Warnings cleared.",
                 description=f"{offender.mention}'s warnings have been cleared by {ctx.author.mention}.\n\n[Jump!]({ctx.message.jump_url})",
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
         else:
             embed = discord.Embed(
@@ -527,12 +527,12 @@ class Moderation(commands.Cog):
                 description=self._("**{offender}**'s warnings have been cleared.\n**Reason:** ```{reason}```").format(
                     offender=offender, reason=reason
                 ),
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             warnembed = discord.Embed(
                 title="⚠️ Warnings cleared.",
                 description=f"{offender.mention}'s warnings have been cleared by {ctx.author.mention}.\n**Reason:** ```{reason}```\n[Jump!]({ctx.message.jump_url})",
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
         reason = self.format_reason(reason)
 
@@ -574,7 +574,7 @@ class Moderation(commands.Cog):
                     description="Your entered timeformat is invalid. Type `{prefix}help timeout` for more information.".format(
                         prefix=ctx.prefix
                     ),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.send(embed=embed)
                 raise PunishFailed
@@ -584,7 +584,7 @@ class Moderation(commands.Cog):
                     description="This function requires an extension that is not enabled.\n**Error:** ```{error}```".format(
                         error=error
                     ),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.send(embed=embed)
                 raise PunishFailed
@@ -594,7 +594,7 @@ class Moderation(commands.Cog):
                     description=self._(
                         "Timeout length exceeded maximum length of **28 days**! Please pick a shorter timeout duration."
                     ).format(prefix=ctx.prefix),
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.send(embed=embed)
                 raise PunishFailed
@@ -606,7 +606,7 @@ class Moderation(commands.Cog):
                         duration=discord.utils.format_dt(muted_until),
                         reason=reason,
                     ),
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 await ctx.send(embed=embed)
         else:
@@ -615,7 +615,7 @@ class Moderation(commands.Cog):
                 description="User is already timed out. Use `{prefix}timeout remove` to remove it.".format(
                     prefix=ctx.prefix
                 ),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             raise PunishFailed
@@ -642,14 +642,14 @@ class Moderation(commands.Cog):
                 description=self._("**{offender}**'s timeout was removed.\n**Reason:** ```{reason}```").format(
                     offender=member, reason=reason
                 ),
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             await ctx.send(embed=embed)
         else:
             embed = discord.Embed(
                 title="❌ Error: User not timed out",
                 description="User is not timed out.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             return await ctx.send(embed=embed)
 
@@ -691,7 +691,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Bot has insufficient permissions"),
                 description=self._("This user cannot be banned."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             raise PunishFailed
@@ -700,7 +700,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Ban failed"),
                 description=self._("Ban failed, please try again later."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             raise PunishFailed
@@ -736,21 +736,21 @@ class Moderation(commands.Cog):
                     description=self._("**{offender}** has been unbanned.\n**Reason:** ```{raw_reason}```").format(
                         offender=offender, raw_reason=raw_reason
                     ),
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 await ctx.send(embed=embed)
             else:
                 embed = discord.Embed(
                     title="✅ " + self._("User unbanned"),
                     description=self._("**{offender}** has been unbanned.").format(offender=offender),
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 await ctx.send(embed=embed)
         except discord.HTTPException:
             embed = discord.Embed(
                 title="❌ " + self._("Unban failed"),
                 description=self._("Unban failed, please try again later."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             raise PunishFailed
@@ -801,7 +801,7 @@ class Moderation(commands.Cog):
                 description=self._(
                     "The bot has insufficient permissions to perform the ban, or this user cannot be banned."
                 ),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             raise PunishFailed
@@ -809,7 +809,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Tempban failed"),
                 description=self._("Tempban failed, please try again later."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             raise PunishFailed
@@ -850,7 +850,7 @@ class Moderation(commands.Cog):
         embed = discord.Embed(
             title="⚠️ Confirm Massban",
             description=f"You are about to ban **{len(user_ids_conv)}** users. Are you sure you want to do this?",
-            color=self.bot.warnColor,
+            color=self.bot.warn_color,
         )
         confirm = await ctx.confirm(embed=embed, cancel_msg="Cancelling...")
         if confirm:
@@ -885,7 +885,7 @@ class Moderation(commands.Cog):
                     description=self._("Successfully banned **{amount}** users.\n**Reason:** ```{reason}```").format(
                         amount=len(user_ids_conv), reason=reason
                     ),
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 await ctx.send(embed=embed)
             else:
@@ -896,7 +896,7 @@ class Moderation(commands.Cog):
                         total=len(user_ids),
                         reason=reason,
                     ),
-                    color=self.bot.warnColor,
+                    color=self.bot.warn_color,
                 )
                 await ctx.send(embed=embed)
                 embed = discord.Embed(
@@ -904,7 +904,7 @@ class Moderation(commands.Cog):
                     description=self._("Some errors were encountered during the mass-ban: \n```{errors}```").format(
                         errors="\n".join(errors)
                     ),
-                    color=self.bot.warnColor,
+                    color=self.bot.warn_color,
                 )
                 await ctx.send(embed=embed)
 
@@ -953,7 +953,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ Argument parsing failed",
                 description=f"Failed parsing arguments: ```{str(error)}```",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(embed=embed)
@@ -980,7 +980,7 @@ class Moderation(commands.Cog):
                 embed = discord.Embed(
                     title="❌ Invalid regex passed",
                     description=f"Failed parsing regex: ```{str(error)}```",
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 ctx.command.reset_cooldown(ctx)
                 return await ctx.send(embed=embed)
@@ -1033,7 +1033,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ No members match criteria",
                 description=f"No members found that match all criteria.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(embed=embed)
@@ -1058,7 +1058,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="⚠️ Confirm Smartban",
                 description=f"You are about to ban **{len(to_ban)}** users. Are you sure you want to do this? Please review the attached list above for a full list of matched users. The user journals will not be updated.",
-                color=self.bot.warnColor,
+                color=self.bot.warn_color,
             )
             confirm = await ctx.confirm(
                 embed=embed,
@@ -1079,7 +1079,7 @@ class Moderation(commands.Cog):
                 log_embed = discord.Embed(
                     title="🔨 Smartban concluded",
                     description=f"Banned **{count}/{len(to_ban)}** users.\n**Moderator:** `{ctx.author} ({ctx.author.id if ctx.author else '0'})`\n**Reason:** ```{reason}```",
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 file = discord.File(io.BytesIO(content.encode("utf-8")), filename="members_banned.txt")
                 await self.bot.get_cog("Logging").log("ban", log_embed, ctx.guild.id, file=file, bypass=True)
@@ -1089,7 +1089,7 @@ class Moderation(commands.Cog):
                 embed = discord.Embed(
                     title="✅ Smartban finished",
                     description=f"Banned **{count}/{len(to_ban)}** users.",
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 await ctx.send(embed=embed)
 
@@ -1147,7 +1147,7 @@ class Moderation(commands.Cog):
                 description=self._(
                     "The bot has insufficient permissions to perform the ban, or this user cannot be banned."
                 ),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             raise PunishFailed
@@ -1155,7 +1155,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Ban failed"),
                 description=self._("Ban failed, please try again later."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             raise PunishFailed
@@ -1179,7 +1179,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Kick failed"),
                 description=self._("Kick failed, please try again later."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             raise PunishFailed
@@ -1203,7 +1203,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Limit too high"),
                 description=self._("You cannot remove more than **100** messages."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             return await ctx.send(embed=embed, delete_after=20.0)
         await ctx.channel.trigger_typing()
@@ -1221,7 +1221,7 @@ class Moderation(commands.Cog):
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
             description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1241,7 +1241,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Limit too high"),
                 description=self._("You cannot remove more than **100** messages."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             return await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1255,7 +1255,7 @@ class Moderation(commands.Cog):
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
             description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1275,7 +1275,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Limit too high"),
                 description=self._("You cannot remove more than **100** messages."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             return await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1289,7 +1289,7 @@ class Moderation(commands.Cog):
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
             description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1309,7 +1309,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Limit too high"),
                 description=self._("You cannot remove more than **100** messages."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             return await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1323,7 +1323,7 @@ class Moderation(commands.Cog):
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
             description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1343,7 +1343,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Limit too high"),
                 description=self._("You cannot remove more than **100** messages."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             return await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1357,7 +1357,7 @@ class Moderation(commands.Cog):
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
             description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1378,7 +1378,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Limit too high"),
                 description=self._("You cannot remove more than **100** messages."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             return await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1394,7 +1394,7 @@ class Moderation(commands.Cog):
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
             description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1415,7 +1415,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Limit too high"),
                 description=self._("You cannot remove more than **100** messages."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             return await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1431,7 +1431,7 @@ class Moderation(commands.Cog):
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
             description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1452,7 +1452,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Limit too high"),
                 description=self._("You cannot remove more than **100** messages."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             return await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1466,7 +1466,7 @@ class Moderation(commands.Cog):
         embed = discord.Embed(
             title="🗑️ " + self._("Messages purged"),
             description=self._("**{count}** messages have been deleted.").format(count=len(purged)),
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1484,7 +1484,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Limit too high"),
                 description=self._("You cannot clear more than **50** messages."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed, delete_after=20.0)
             return
@@ -1498,7 +1498,7 @@ class Moderation(commands.Cog):
         embed = discord.Embed(
             title="🗑️ " + self._("Messages cleared"),
             description=self._("**{count}** bot messages have been removed.").format(count=len(cleared)),
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
         await ctx.send(embed=embed, delete_after=20.0)
 
@@ -1566,7 +1566,7 @@ Join date: `-`
 Badges: {"   ".join(get_badges(user)) if len(get_badges(user)) > 0 else "`-`"}
 Roles: `-`
 *Note: This user is not a member of this server*""",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             embed.set_thumbnail(url=user.display_avatar.url)
             if user.banner:

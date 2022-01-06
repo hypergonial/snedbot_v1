@@ -232,7 +232,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
             embed = discord.Embed(
                 title="💬 Auto-Moderation Notice",
                 description=f"**{offender}**, please refrain from {notices[offense]}!",
-                color=self.bot.warnColor,
+                color=self.bot.warn_color,
             )
             await ctx.send(content=offender.mention, embed=embed, delete_after=20)
 
@@ -264,7 +264,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                 embed = discord.Embed(
                     title="💬 Auto-Moderation Notice",
                     description=f"**{offender}**, please refrain from {notices[offense]}!",
-                    color=self.bot.warnColor,
+                    color=self.bot.warn_color,
                 )
                 await ctx.send(content=offender.mention, embed=embed, delete_after=20)
 
@@ -281,7 +281,7 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                 description="**{offender}** has been timed out for **{temp_dur}** minutes.\n**Reason:**```Timed out by auto-moderator for {reason}.```".format(
                     offender=offender, temp_dur=temp_dur, reason=reason
                 ),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 

@@ -382,7 +382,7 @@ class Settings(commands.Cog):
             
             Here you can configure various aspects of the bot, such as moderation settings, automoderator, logging options, permissions, and more. 
             Click one of the buttons below to get started!""",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         view = SettingsMainView(ctx)
         if message:
@@ -410,7 +410,7 @@ class Settings(commands.Cog):
             embed = discord.Embed(
                 title="Moderation Settings",
                 description="Below you can see the current moderation settings, to change any of them, press the corresponding button!",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
 
             for field in options.__dataclass_fields__:
@@ -472,7 +472,7 @@ class Settings(commands.Cog):
             embed = discord.Embed(
                 title="Automoderation Settings",
                 description="Below you can see a summary of the current automoderation settings. To see more details about a specific entry or change their settings, press the corresponding button.",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
 
             for key in policies.keys():
@@ -501,7 +501,7 @@ class Settings(commands.Cog):
             embed = discord.Embed(
                 title=f"Options for: {policy_strings[offense_str]['name']}",
                 description=f"{policy_strings[offense_str]['description']}",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             button_labels = {}
 
@@ -597,7 +597,7 @@ class Settings(commands.Cog):
                 embed = discord.Embed(
                     title=f"Set state for {policy_strings[offense_str]['name']}",
                     description="Please change the current state of this moderation policy below!",
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
                 states = {}
                 for state, data in policy_states.items():
@@ -643,7 +643,7 @@ class Settings(commands.Cog):
                 embed = discord.Embed(
                     title=f"Temporary punishment duration for {policy_strings[offense_str]['name']}",
                     description=f"Please enter a valid integer value between **1 and {max_dur}**! This will set how long temporary punishments for this category should last, in minutes.",
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
                 await self.bot.maybe_edit(message, embed=embed, view=None)
                 try:
@@ -666,7 +666,7 @@ class Settings(commands.Cog):
                         embed = discord.Embed(
                             title="❌ Invalid data entered",
                             description=f"You did not enter a valid integer between 1 and {max_dur}.",
-                            color=self.bot.errorColor,
+                            color=self.bot.error_color,
                         )
                         await self.bot.maybe_edit(message, embed=embed, view=view)
                         await self.bot.maybe_delete(input)
@@ -681,7 +681,7 @@ class Settings(commands.Cog):
                 embed = discord.Embed(
                     title=f"Count for {policy_strings[offense_str]['name']}",
                     description="Please enter a valid integer value **between 1 and 50**! This will set how many infractions count as a breach of the rules. (E.g. in the case of mention spamming, the number of mentions that count as mention spam)",
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
                 await self.bot.maybe_edit(message, embed=embed, view=None)
                 try:
@@ -704,7 +704,7 @@ class Settings(commands.Cog):
                         embed = discord.Embed(
                             title="❌ Invalid data entered",
                             description="You did not enter a valid integer between 1 and 50.",
-                            color=self.bot.errorColor,
+                            color=self.bot.error_color,
                         )
                         await self.bot.maybe_edit(message, embed=embed, view=view)
                         await self.bot.maybe_delete(input)
@@ -720,7 +720,7 @@ class Settings(commands.Cog):
                 embed = discord.Embed(
                     title=f"Words list for {policy_strings[offense_str]['name']}",
                     description=f"Please enter a list of comma-separated words that will be blacklisted! Current list of bad words:\n ||{bad_words}||",
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
                 await self.bot.maybe_edit(message, embed=embed, view=None)
                 try:
@@ -744,7 +744,7 @@ class Settings(commands.Cog):
                 embed = discord.Embed(
                     title=f"Words list (wildcard) for {policy_strings[offense_str]['name']}",
                     description=f"Please enter a list of comma-separated words that will be blacklisted! Current list of bad words:\n ||{bad_words}||",
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
                 await self.bot.maybe_edit(message, embed=embed, view=None)
                 try:
@@ -767,7 +767,7 @@ class Settings(commands.Cog):
                 embed = discord.Embed(
                     title=f"Excluded channels for {policy_strings[offense_str]['name']}",
                     description=f"Please enter a list of channel-mentions **seperated by spaces**! Enter `None` to reset the list. These will be excluded from the current automoderation action.",
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
                 await self.bot.maybe_edit(message, embed=embed, view=None)
                 try:
@@ -788,7 +788,7 @@ class Settings(commands.Cog):
                             embed = discord.Embed(
                                 title="❌ Invalid data entered",
                                 description="Could not find one or more channels. Please make sure you seperate all mentions by spaces.",
-                                color=self.bot.errorColor,
+                                color=self.bot.error_color,
                             )
                             await self.bot.maybe_edit(message, embed=embed, view=view)
                             await self.bot.maybe_delete(input)
@@ -814,7 +814,7 @@ class Settings(commands.Cog):
             embed = discord.Embed(
                 title="Logging Settings",
                 description="Below you can see a list of logging events and channels associated with them. To change where a certain event's logs should be sent, click on the corresponding button.",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
 
             if not ctx.channel.permissions_for(ctx.guild.me).view_audit_log:
@@ -861,7 +861,7 @@ class Settings(commands.Cog):
             embed = discord.Embed(
                 title="Logging Settings",
                 description=f"Please select a channel where the following event should be logged: `{log_event_strings[event]}`\nType/select `Disable` to disable this event.",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             value, asked = await components.select_or_ask(
                 ctx,
@@ -886,7 +886,7 @@ class Settings(commands.Cog):
                             embed = discord.Embed(
                                 title="❌ Error: Invalid channel",
                                 description="Channel must be of type `text` or `news`. Operation cancelled.",
-                                color=self.bot.errorColor,
+                                color=self.bot.error_color,
                             )
                             view = components.BackButtonView(ctx)
                             await message.edit(embed=embed, view=view)
@@ -898,7 +898,7 @@ class Settings(commands.Cog):
                         embed = discord.Embed(
                             title="❌ Error: Channel not found.",
                             description="Unable to locate channel. Operation cancelled.",
-                            color=self.bot.errorColor,
+                            color=self.bot.error_color,
                         )
                         view = components.BackButtonView(ctx)
                         await message.edit(embed=embed, view=view)

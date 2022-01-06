@@ -159,7 +159,7 @@ class Matchmaking(commands.Cog):
         embed = discord.Embed(
             title="🛠️ Matchmaking setup",
             description="Please mention a channel where users should send the command to start matchmaking! Type `disable` to disable this feature.",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         await ctx.channel.send(embed=embed)
         try:
@@ -173,7 +173,7 @@ class Matchmaking(commands.Cog):
                 embed = discord.Embed(
                     title="🛠️ Matchmaking setup",
                     description="Commands channel **disabled.**",
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
                 await ctx.channel.send(embed=embed)
             else:
@@ -182,14 +182,14 @@ class Matchmaking(commands.Cog):
                 embed = discord.Embed(
                     title="🛠️ Matchmaking setup",
                     description=f"Commands channel set to {cmdchannel.mention}",
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
                 await ctx.channel.send(embed=embed)
 
             embed = discord.Embed(
                 title="🛠️ Matchmaking setup",
                 description="Now please mention the channel where the multiplayer listings should go.",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await ctx.channel.send(embed=embed)
             payload = await self.bot.wait_for("message", timeout=60.0, check=check)
@@ -197,14 +197,14 @@ class Matchmaking(commands.Cog):
             embed = discord.Embed(
                 title="🛠️ Matchmaking setup",
                 description=f"Multiplayer listings channel set to {announcechannel.mention}",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await ctx.channel.send(embed=embed)
 
             embed = discord.Embed(
                 title="🛠️ Matchmaking setup",
                 description=f"Now specify the role that should be mentioned when a new listing is created. Type `skip` to skip this step.",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await ctx.channel.send(embed=embed)
             message = await self.bot.wait_for("message", timeout=60.0, check=check)
@@ -216,7 +216,7 @@ class Matchmaking(commands.Cog):
                 embed = discord.Embed(
                     title="🛠️ Matchmaking setup",
                     description=f"Multiplayer LFG role set to {lfg_role.mention}",
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
                 await ctx.channel.send(embed=embed)
 
@@ -236,7 +236,7 @@ class Matchmaking(commands.Cog):
             embed = discord.Embed(
                 title="🛠️ Matchmaking setup",
                 description="✅ Setup completed. Matchmaking set up!",
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             await ctx.channel.send(embed=embed)
             return
@@ -245,7 +245,7 @@ class Matchmaking(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Channel not found.",
                 description="Unable to locate channel. Operation cancelled.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
             return
@@ -253,15 +253,15 @@ class Matchmaking(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Role not found.",
                 description="Unable to locate role. Operation cancelled.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
             return
         except asyncio.TimeoutError:
             embed = discord.Embed(
-                title=self.bot.errorTimeoutTitle,
-                description=self.bot.errorTimeoutDesc,
-                color=self.bot.errorColor,
+                title="🕘 Error: Timed out",
+                description="Your session has expired. Execute the command again!",
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
             return
@@ -360,9 +360,9 @@ class Matchmaking(commands.Cog):
                     if len(payload.content) > 32:
                         await msg.delete()
                         embed = discord.Embed(
-                            title=self.bot.warnDataTitle,
+                            title="⚠️ Invalid data entered",
                             description=self._("Username too long. Maximum 32 characters"),
-                            color=self.bot.warnColor,
+                            color=self.bot.warn_color,
                         )
                         await ctx.author.send(embed=embed)
                         return -2
@@ -380,9 +380,9 @@ class Matchmaking(commands.Cog):
 
                 except:
                     embed = discord.Embed(
-                        title=self.bot.errorTimeoutTitle,
-                        description=self.bot.errorTimeoutDesc,
-                        color=self.bot.errorColor,
+                        title="🕘 Error: Timed out",
+                        description="Your session has expired. Execute the command again!",
+                        color=self.bot.error_color,
                     )
                     await ctx.author.send(embed=embed)
                     return -1
@@ -415,9 +415,9 @@ class Matchmaking(commands.Cog):
                         if str(payload.emoji) not in gamemode_emoji:
                             await msg.delete()
                             embed = discord.Embed(
-                                title=self.bot.warnEmojiTitle,
-                                description=self.bot.warnEmojiDesc,
-                                color=self.bot.warnColor,
+                                title="⚠️ Invalid reaction entered",
+                                description="Please enter a valid reaction.",
+                                color=self.bot.warn_color,
                             )
                             await ctx.author.send(embed=embed)
                             return -2
@@ -439,9 +439,9 @@ class Matchmaking(commands.Cog):
                     return 0
                 except asyncio.TimeoutError:
                     embed = discord.Embed(
-                        title=self.bot.errorTimeoutTitle,
-                        description=self.bot.errorTimeoutDesc,
-                        color=self.bot.errorColor,
+                        title="🕘 Error: Timed out",
+                        description="Your session has expired. Execute the command again!",
+                        color=self.bot.error_color,
                     )
                     await ctx.author.send(embed=embed)
                     return -1
@@ -477,9 +477,9 @@ class Matchmaking(commands.Cog):
                         if str(payload.emoji) not in playersEmoji:
                             await msg.delete()
                             embed = discord.Embed(
-                                title=self.bot.warnEmojiTitle,
-                                description=self.bot.warnEmojiDesc,
-                                color=self.bot.warnColor,
+                                title="⚠️ Invalid reaction entered",
+                                description="Please enter a valid reaction.",
+                                color=self.bot.warn_color,
                             )
                             await ctx.author.send(embed=embed)
                             return -2
@@ -499,9 +499,9 @@ class Matchmaking(commands.Cog):
                     return 0
                 except asyncio.TimeoutError:
                     embed = discord.Embed(
-                        title=self.bot.errorTimeoutTitle,
-                        description=self.bot.errorTimeoutDesc,
-                        color=self.bot.errorColor,
+                        title="🕘 Error: Timed out",
+                        description="Your session has expired. Execute the command again!",
+                        color=self.bot.error_color,
                     )
                     await ctx.author.send(embed=embed)
                     return -1
@@ -565,9 +565,9 @@ class Matchmaking(commands.Cog):
                         if str(msg.reactions[i]) not in DLCemojies:
                             await msg.delete()
                             embed = discord.Embed(
-                                title=self.bot.warnEmojiTitle,
-                                description=self.bot.warnEmojiDesc,
-                                color=self.bot.warnColor,
+                                title="⚠️ Invalid reaction entered",
+                                description="Please enter a valid reaction.",
+                                color=self.bot.warn_color,
                             )
                             await ctx.author.send(embed=embed)
                             return -2
@@ -594,9 +594,9 @@ class Matchmaking(commands.Cog):
 
                 except asyncio.TimeoutError:
                     embed = discord.Embed(
-                        title=self.bot.errorTimeoutTitle,
-                        description=self.bot.errorTimeoutDesc,
-                        color=self.bot.errorColor,
+                        title="🕘 Error: Timed out",
+                        description="Your session has expired. Execute the command again!",
+                        color=self.bot.error_color,
                     )
                     await ctx.author.send(embed=embed)
                     return -1
@@ -633,9 +633,9 @@ class Matchmaking(commands.Cog):
                     elif str(payload.emoji) not in modemojies:
                         await msg.delete()
                         embed = discord.Embed(
-                            title=self.bot.warnEmojiTitle,
-                            description=self.bot.warnEmojiDesc,
-                            color=self.bot.warnColor,
+                            title="⚠️ Invalid reaction entered",
+                            description="Please enter a valid reaction.",
+                            color=self.bot.warn_color,
                         )
                         await ctx.author.send(embed=embed)
                         return -2
@@ -652,9 +652,9 @@ class Matchmaking(commands.Cog):
 
                 except asyncio.TimeoutError:
                     embed = discord.Embed(
-                        title=self.bot.errorTimeoutTitle,
-                        description=self.bot.errorTimeoutDesc,
-                        color=self.bot.errorColor,
+                        title="🕘 Error: Timed out",
+                        description="Your session has expired. Execute the command again!",
+                        color=self.bot.error_color,
                     )
                     await ctx.author.send(embed=embed)
                     return -1
@@ -686,7 +686,7 @@ class Matchmaking(commands.Cog):
                             embed = discord.Embed(
                                 title="⚠️ " + self._("Invalid timezone!"),
                                 description=self._("Please enter a valid timezone."),
-                                color=self.bot.warnColor,
+                                color=self.bot.warn_color,
                             )
                             await ctx.author.send(embed=embed)
                             return -2
@@ -719,15 +719,15 @@ class Matchmaking(commands.Cog):
                         embed = discord.Embed(
                             title="⚠️ " + self._("Invalid timezone!"),
                             description=self._("Please enter a valid timezone."),
-                            color=self.bot.warnColor,
+                            color=self.bot.warn_color,
                         )
                         await ctx.author.send(embed=embed)
                         return -2
                 except asyncio.TimeoutError:
                     embed = discord.Embed(
-                        title=self.bot.errorTimeoutTitle,
-                        description=self.bot.errorTimeoutDesc,
-                        color=self.bot.errorColor,
+                        title="🕘 Error: Timed out",
+                        description="Your session has expired. Execute the command again!",
+                        color=self.bot.error_color,
                     )
                     await ctx.author.send(embed=embed)
                     return -1
@@ -751,11 +751,11 @@ class Matchmaking(commands.Cog):
                     if len(payload.content) > 256:
                         await msg.delete()
                         embed = discord.Embed(
-                            title=self.bot.warnDataTitle,
+                            title="⚠️ Invalid data entered",
                             description=self._(
                                 "Additional info exceeded character limit! Maximum length: 256 characters"
                             ),
-                            color=self.bot.warnColor,
+                            color=self.bot.warn_color,
                         )
                         await ctx.author.send(embed=embed)
                         return -2
@@ -782,9 +782,9 @@ class Matchmaking(commands.Cog):
                             return 0
                 except:
                     embed = discord.Embed(
-                        title=self.bot.errorTimeoutTitle,
-                        description=self.bot.errorTimeoutDesc,
-                        color=self.bot.errorColor,
+                        title="🕘 Error: Timed out",
+                        description="Your session has expired. Execute the command again!",
+                        color=self.bot.error_color,
                     )
                     await ctx.author.send(embed=embed)
                     return -1
@@ -927,7 +927,7 @@ class Matchmaking(commands.Cog):
                             description=self._(
                                 "Failed to generated listing. Contact an administrator! Operation cancelled.\n**Exception:** ```{exception}```"
                             ).format(exception=error),
-                            color=self.bot.errorColor,
+                            color=self.bot.error_color,
                         )
                         await ctx.author.send(embed=embed)
                         return -1
@@ -983,7 +983,7 @@ class Matchmaking(commands.Cog):
                                             description=self._(
                                                 "You have made too many errors. Please retry your submission."
                                             ),
-                                            color=self.bot.errorColor,
+                                            color=self.bot.error_color,
                                         )
                                         await ctx.author.send(embed=embed)
                                         return -1
@@ -994,18 +994,18 @@ class Matchmaking(commands.Cog):
                         else:
                             # We have to cancel the entire command here, as it would be way too difficult to implement looping here as well
                             embed = discord.Embed(
-                                title=self.bot.errorEmojiTitle,
+                                title="❌ Invalid reaction entered",
                                 description=self._("Cancelled matchmaking."),
-                                color=self.bot.errorColor,
+                                color=self.bot.error_color,
                             )
                             await ctx.author.send(embed=embed)
                             return -1
 
                     except asyncio.TimeoutError:
                         embed = discord.Embed(
-                            title=self.bot.errorTimeoutTitle,
-                            description=self.bot.errorTimeoutDesc,
-                            color=self.bot.errorColor,
+                            title="🕘 Error: Timed out",
+                            description="Your session has expired. Execute the command again!",
+                            color=self.bot.error_color,
                         )
                         await ctx.author.send(embed=embed)
                         return -1
@@ -1029,7 +1029,7 @@ class Matchmaking(commands.Cog):
                                 description=self._(
                                     "Thanks for using the service! If you have found a bug or want to give feedback, please contact `Hyper#0001`!"
                                 ),
-                                color=self.bot.embedGreen,
+                                color=self.bot.embed_green,
                             )
                             await ctx.author.send(embed=embed)
                             return 1
@@ -1043,7 +1043,7 @@ class Matchmaking(commands.Cog):
                                 description=self._(
                                     "If you have found a bug or want to give feedback, please contact `Hyper#0001`!"
                                 ),
-                                color=self.bot.errorColor,
+                                color=self.bot.error_color,
                             )
                             await ctx.author.send(embed=embed)
                             logger.info(f"{ctx.author} User failed modification.")
@@ -1055,7 +1055,7 @@ class Matchmaking(commands.Cog):
                             description=self._(
                                 "If you have found a bug or want to give feedback, please contact `Hyper#0001`!"
                             ),
-                            color=self.bot.errorColor,
+                            color=self.bot.error_color,
                         )
                         await ctx.author.send(embed=embed)
                         logger.info(f"{ctx.author} User cancelled matchmaking.")
@@ -1063,18 +1063,18 @@ class Matchmaking(commands.Cog):
                     else:
                         await msg.delete()
                         embed = discord.Embed(
-                            title=self.bot.warnEmojiTitle,
-                            description=self.bot.warnEmojiDesc,
-                            color=self.bot.warnColor,
+                            title="⚠️ Invalid reaction entered",
+                            description="Please enter a valid reaction.",
+                            color=self.bot.warn_color,
                         )
                         await ctx.author.send(embed=embed)
                         return -2
 
                 except asyncio.TimeoutError:
                     embed = discord.Embed(
-                        title=self.bot.errorTimeoutTitle,
-                        description=self.bot.errorTimeoutDesc,
-                        color=self.bot.errorColor,
+                        title="🕘 Error: Timed out",
+                        description="Your session has expired. Execute the command again!",
+                        color=self.bot.error_color,
                     )
                     await ctx.author.send(embed=embed)
                     return -1
@@ -1118,7 +1118,7 @@ class Matchmaking(commands.Cog):
                         description=self._(
                             "You cannot make more edits to your submission. Please try executing the command again."
                         ),
-                        color=self.bot.errorColor,
+                        color=self.bot.error_color,
                     )
                     await ctx.author.send(embed=embed)
                     logger.info(f"{ctx.author} exceeded listing edit limit in matchmaking.")
@@ -1132,7 +1132,7 @@ class Matchmaking(commands.Cog):
                     embed = discord.Embed(
                         title="❌ " + self._("Exceeded error limit."),
                         description=self._("You have made too many errors. Please retry your submission."),
-                        color=self.bot.errorColor,
+                        color=self.bot.error_color,
                     )
                     await ctx.author.send(embed=embed)
                     logger.info(f"{ctx.author} exceeded listing error limit in matchmaking.")
@@ -1147,9 +1147,9 @@ class Matchmaking(commands.Cog):
         # Due to it's performance requirements and complexity, this command is limited to 1 per user
         if isinstance(error, commands.MaxConcurrencyReached):
             embed = discord.Embed(
-                title=self.bot.errorMaxConcurrencyReachedTitle,
+                title="❌ Max concurrency reached!",
                 description=self._("You already have a matchmaking request in progress."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.channel.send(embed=embed)
@@ -1214,7 +1214,7 @@ class Matchmaking(commands.Cog):
                             description=self._(
                                 "They will receive a notification when their desired playercap has been reached."
                             ),
-                            color=self.bot.embedGreen,
+                            color=self.bot.embed_green,
                         )
                         await member.send(embed=embed)
                         logger.info(
@@ -1234,7 +1234,7 @@ class Matchmaking(commands.Cog):
                                 player_count=playerCount,
                                 interested_mentions=interestedMentions,
                             ),
-                            color=self.bot.embedGreen,
+                            color=self.bot.embed_green,
                         )
                         embed.set_footer(
                             text=self._("If you believe that this feature was abused, contact a moderator immediately!")
@@ -1277,7 +1277,7 @@ class Matchmaking(commands.Cog):
                             title=f"📝 "
                             + self._("You have unsubscribed from {hostname}'s listing.").format(hostname=host.name),
                             description=self._("The host will no longer see you signed up to this listing."),
-                            color=self.bot.errorColor,
+                            color=self.bot.error_color,
                         )
                         await member.send(embed=embed)
                         return

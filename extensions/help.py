@@ -91,7 +91,7 @@ class SnedHelp(commands.HelpCommand):
 
         help_home_embed = discord.Embed(
             title="🏠 " + "__Help Home__",
-            color=ctx.bot.embedBlue,
+            color=ctx.bot.embed_blue,
             description="""**How to navigate this help dialogue**
 
 Navigate to different sections of this help dialogue via the **dropdown** below!
@@ -141,7 +141,7 @@ Thank you for using Sned!
                 description="**Tip:** You can also type **`{prefix}help [command]`** to get more information about a specific command, see usage syntax, and see any subcommands a command may have.\n\n {commands}".format(
                     prefix=ctx.prefix, commands=all_commands[cog_name]
                 ),
-                color=ctx.bot.embedBlue,
+                color=ctx.bot.embed_blue,
             )
             embed = ctx.bot.add_embed_footer(ctx, embed)
             cog_embeds[cog_name] = embed
@@ -182,12 +182,12 @@ Thank you for using Sned!
                     parent=command.full_parent_name,
                     command=command.name,
                 ),
-                color=ctx.bot.embedBlue,
+                color=ctx.bot.embed_blue,
             )
         else:
             detail_embed = discord.Embed(
                 title="⚙️ " + "Command: {prefix}{command}".format(prefix=ctx.clean_prefix, command=command.name),
-                color=ctx.bot.embedBlue,
+                color=ctx.bot.embed_blue,
             )
         if command.description:
             detail_embed.add_field(name="Description:", value=command.description)  # Getting command description
@@ -221,7 +221,7 @@ Thank you for using Sned!
         embed = discord.Embed(
             title=ctx.bot.unknownCMDstr,
             description="Use `{prefix}help` for a list of available commands.".format(prefix=ctx.prefix),
-            color=ctx.bot.unknownColor,
+            color=ctx.bot.unknown_color,
         )
         embed = ctx.bot.add_embed_footer(ctx, embed)
         channel = self.get_destination()
@@ -234,7 +234,7 @@ Thank you for using Sned!
             description="**Note:**\nTo see detailed information about one of the subcommands, type **`{prefix}help {group} [subcommand]`**".format(
                 prefix=ctx.prefix, group=group.name
             ),
-            color=ctx.bot.embedBlue,
+            color=ctx.bot.embed_blue,
         )
         if group.description:
             group_embed.add_field(name="Description:", value=group.description)  # Getting command description
@@ -270,7 +270,7 @@ Thank you for using Sned!
         embed = discord.Embed(
             title=ctx.bot.unknownCMDstr,
             description="Use `{prefix}help` for a list of available commands.".format(prefix=ctx.prefix),
-            color=ctx.bot.unknownColor,
+            color=ctx.bot.unknown_color,
         )
         embed = ctx.bot.add_embed_footer(ctx, embed)
         channel = self.get_destination()

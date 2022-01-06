@@ -26,7 +26,7 @@ class ContextMenus(commands.Cog):
         self.checkfailure_embed = discord.Embed(
             title="❌ Missing permissions",
             description="You require additional permissions to execute this action.",
-            color=self.bot.errorColor,
+            color=self.bot.error_color,
         )
 
     @user_command(name="Show Userinfo")
@@ -53,7 +53,7 @@ class ContextMenus(commands.Cog):
                     embed = discord.Embed(
                         title="📒 " + "Journal entries for this user:",
                         description=page,
-                        color=ctx.bot.embedBlue,
+                        color=ctx.bot.embed_blue,
                     )
                     embed_list.append(embed)
 
@@ -64,7 +64,7 @@ class ContextMenus(commands.Cog):
                 embed = discord.Embed(
                     title="📒 " + "Journal entries for this user:",
                     description=f"There are no journal entries for this user yet.",
-                    color=ctx.bot.embedBlue,
+                    color=ctx.bot.embed_blue,
                 )
                 await ctx.respond(embed=embed, ephemeral=True)
         else:

@@ -150,7 +150,7 @@ class Permissions(commands.Cog):
         To get more information about a node, use `{ctx.prefix}permission info <node>`
 
         *Hint: To add @everyone to a node, you can copy the ID of the server!*\n""",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         records = await self.bot.caching.get(table="permissions", guild_id=ctx.guild.id)
         if records:
@@ -189,7 +189,7 @@ class Permissions(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Invalid node",
                 description=f"Invalid permission node provided! See `{ctx.prefix}permissions` for valid node-types.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             return await ctx.send(embed=embed)
 
@@ -207,7 +207,7 @@ class Permissions(commands.Cog):
                 embed = discord.Embed(
                     title=f"🛠️ Permissions Configuration > Node: {node}",
                     description=info,
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
                 embed.add_field(name="Currently added roles", value=roles, inline=False)
                 await ctx.send(embed=embed)
@@ -230,7 +230,7 @@ class Permissions(commands.Cog):
                 embed = discord.Embed(
                     title="✅ Role added",
                     description=f"Role {role.mention} was added to `{node}`!",
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 await ctx.send(embed=embed)
             else:
@@ -240,7 +240,7 @@ class Permissions(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Invalid node",
                 description=f"Invalid permission node provided See `{ctx.prefix}permissions` for valid node-types.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             return await ctx.send(embed=embed)
 
@@ -248,7 +248,7 @@ class Permissions(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Invalid role",
                 description=f"This role is already added to this node.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             return await ctx.send(embed=embed)
 
@@ -270,7 +270,7 @@ class Permissions(commands.Cog):
                 embed = discord.Embed(
                     title="✅ Role removed",
                     description=f"Role {role.mention} was removed from `{node}`!",
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 await ctx.send(embed=embed)
             else:
@@ -280,7 +280,7 @@ class Permissions(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Invalid node",
                 description=f"Invalid permission node provided! See `{ctx.prefix}permissions` for valid node-types.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             return await ctx.send(embed=embed)
 
@@ -288,7 +288,7 @@ class Permissions(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Invalid role",
                 description=f"This role is not present on the permission-node.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             return await ctx.send(embed=embed)
 

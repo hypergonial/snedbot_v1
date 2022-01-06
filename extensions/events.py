@@ -344,13 +344,13 @@ class Events(commands.Cog):
             embed = discord.Embed(
                 title="🛠️ Event Categories setup",
                 description="Excellent! Now we will begin setting up the first category for this event! Please type the category's name below!\nMaximum **25** characters!\nExamples: `Red Team` or `Attackers`",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
         else:
             embed = discord.Embed(
                 title="🛠️ Event Categories setup",
                 description="Type the name of the category below!\nMaximum **25** characters!",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
         await invoke_msg.edit(embed=embed, view=None)
         message = await self.bot.wait_for("message", timeout=180.0, check=idcheck)
@@ -360,7 +360,7 @@ class Events(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Duplicate key",
                 description="You already have a category with the same name. Operation cancelled.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await invoke_msg.edit(embed=embed)
             raise exceptions.UserInputError("Duplicate key!")
@@ -368,7 +368,7 @@ class Events(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Title too long",
                 description="Category name cannot exceed **25** characters. Operation cancelled.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await invoke_msg.edit(embed=embed)
             raise exceptions.UserInputError("Title too long!")
@@ -377,7 +377,7 @@ class Events(commands.Cog):
         embed = discord.Embed(
             title="🛠️ Event Categories setup",
             description="React **to this message** with the emoji you want to appear on the sign-up button! This can be any emoji, be it custom or Discord default!",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         await invoke_msg.edit(embed=embed)
         reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=confirmemoji)
@@ -392,7 +392,7 @@ class Events(commands.Cog):
         embed = discord.Embed(
             title="🛠️ Event Categories setup",
             description="Select the style of the sign-up button!",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         await invoke_msg.edit(embed=embed, view=view)
         await view.wait()
@@ -404,7 +404,7 @@ class Events(commands.Cog):
         embed = discord.Embed(
             title="🛠️ Event Categories setup",
             description="Type in how many people should be able to join this category as a positive integer! If you do not wish to limit this, type `skip`.",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         await invoke_msg.edit(embed=embed, view=None)
         message = await self.bot.wait_for("message", timeout=180.0, check=idcheck)
@@ -417,7 +417,7 @@ class Events(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Invalid value",
                 description="Value must be positive integer below 100. Operation cancelled.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await invoke_msg.edit(embed=embed)
             raise exceptions.UserInputError("Invalid value for member_cap!")
@@ -433,7 +433,7 @@ class Events(commands.Cog):
             embed = discord.Embed(
                 title="🛠️ Event Categories setup",
                 description="Category added! Would you like to add another?",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             create_another = await ctx.confirm(embed=embed, delete_after=True)
             if create_another == True:
@@ -463,14 +463,14 @@ class Events(commands.Cog):
             embed = discord.Embed(
                 title="📅 Events active in this server:",
                 description=text,
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             await ctx.send(embed=embed)
         else:
             embed = discord.Embed(
                 title="❌ Error: No active events",
                 description=f"There are no active events in this server. Create one with `{ctx.prefix}event create`",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
 
@@ -503,14 +503,14 @@ class Events(commands.Cog):
                 embed = discord.Embed(
                     title="✅ Event deleted",
                     description="Event has been successfully deleted!",
-                    color=self.bot.embedGreen,
+                    color=self.bot.embed_green,
                 )
                 await ctx.channel.send(embed=embed)
         else:
             embed = discord.Embed(
                 title="❌ Error: Not found",
                 description="There is no event by that ID.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
 
@@ -544,7 +544,7 @@ class Events(commands.Cog):
                 embed = discord.Embed(
                     title="❌ Error: Not found",
                     description="There is no event by that ID.",
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await ctx.channel.send(embed=embed)
             else:
@@ -552,7 +552,7 @@ class Events(commands.Cog):
                 embed = discord.Embed(
                     title=f"🛠️ Editing {event_embed.title}",
                     description="Please select below what you would like to change!",
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
 
                 view = EditMainView(ctx)
@@ -564,7 +564,7 @@ class Events(commands.Cog):
                         embed = discord.Embed(
                             title=f"🛠️ Editing {event_embed.title}",
                             description="Enter a new title! Please note that your title cannot exceed **100** characters.",
-                            color=self.bot.embedBlue,
+                            color=self.bot.embed_blue,
                         )
                         await setup_msg.edit(embed=embed, view=None)
                         message = await self.bot.wait_for("message", timeout=180.0, check=check)
@@ -574,7 +574,7 @@ class Events(commands.Cog):
                             embed = discord.Embed(
                                 title="❌ Error: Title too long",
                                 description="Title cannot exceed **100** characters. Operation cancelled.",
-                                color=self.bot.errorColor,
+                                color=self.bot.error_color,
                             )
                             await setup_msg.edit(embed=embed)
                             return
@@ -583,7 +583,7 @@ class Events(commands.Cog):
                         embed = discord.Embed(
                             title=f"🛠️ Editing {event_embed.title}",
                             description="✅ Title edited successfully!",
-                            color=self.bot.embedGreen,
+                            color=self.bot.embed_green,
                         )
                         await setup_msg.edit(embed=embed, view=None)
 
@@ -591,7 +591,7 @@ class Events(commands.Cog):
                         embed = discord.Embed(
                             title=f"🛠️ Editing {event_embed.title}",
                             description="Enter a new description! Please note it cannot exceed **2500** characters.",
-                            color=self.bot.embedBlue,
+                            color=self.bot.embed_blue,
                         )
                         await setup_msg.edit(embed=embed, view=None)
                         message = await self.bot.wait_for("message", timeout=300.0, check=check)
@@ -601,7 +601,7 @@ class Events(commands.Cog):
                             embed = discord.Embed(
                                 title="❌ Error: Title too long",
                                 description="Title cannot exceed **2500** characters. Operation cancelled.",
-                                color=self.bot.errorColor,
+                                color=self.bot.error_color,
                             )
                             await setup_msg.edit(embed=embed)
                             return
@@ -610,7 +610,7 @@ class Events(commands.Cog):
                         embed = discord.Embed(
                             title=f"🛠️ Editing {event_embed.title}",
                             description="✅ Description edited successfully!",
-                            color=self.bot.embedGreen,
+                            color=self.bot.embed_green,
                         )
                         await setup_msg.edit(embed=embed, view=None)
 
@@ -654,7 +654,7 @@ class Events(commands.Cog):
                                 embed = discord.Embed(
                                     title=f"🛠️ Editing {event_embed.title}",
                                     description="✅ Category added!",
-                                    color=self.bot.embedGreen,
+                                    color=self.bot.embed_green,
                                 )
                                 await setup_msg.edit(embed=embed, view=None)
 
@@ -662,7 +662,7 @@ class Events(commands.Cog):
                             embed = discord.Embed(
                                 title="❌ Error: Category limit exceeded",
                                 description="The amount of categories cannot exceed **9**. Operation cancelled.",
-                                color=self.bot.errorColor,
+                                color=self.bot.error_color,
                             )
                             await setup_msg.edit(embed=embed, view=None)
                             return
@@ -678,7 +678,7 @@ class Events(commands.Cog):
                             embed = discord.Embed(
                                 title=f"🛠️ Editing {event_embed.title}",
                                 description="Select which category you would like to delete! Please note this will also remove all users who signed up for this category.",
-                                color=self.bot.embedBlue,
+                                color=self.bot.embed_blue,
                             )
                             await setup_msg.edit(embed=embed, view=view)
                             await view.wait()
@@ -711,7 +711,7 @@ class Events(commands.Cog):
                                 embed = discord.Embed(
                                     title=f"🛠️ Editing {event_embed.title}",
                                     description="✅ Category removed!",
-                                    color=self.bot.embedGreen,
+                                    color=self.bot.embed_green,
                                 )
                                 await setup_msg.edit(embed=embed, view=None)
 
@@ -722,7 +722,7 @@ class Events(commands.Cog):
                             embed = discord.Embed(
                                 title="❌ Error: Too few categories",
                                 description="An event needs to have at least **1** category. Operation cancelled.",
-                                color=self.bot.errorColor,
+                                color=self.bot.error_color,
                             )
                             await setup_msg.edit(embed=embed, view=None)
                             return
@@ -739,7 +739,7 @@ class Events(commands.Cog):
                         embed = discord.Embed(
                             title=f"🛠️ Editing {event_embed.title}",
                             description="✅ Event deleted!",
-                            color=self.bot.embedGreen,
+                            color=self.bot.embed_green,
                         )
                         await setup_msg.edit(embed=embed, view=None)
 
@@ -761,7 +761,7 @@ class Events(commands.Cog):
 
                             For more information about time and date formatting, please refer to the [documentation](https://sned.hypersden.com/docs/modules/reminders.html).
                             """,
-                            color=self.bot.embedBlue,
+                            color=self.bot.embed_blue,
                         )
                         await setup_msg.edit(embed=embed, view=None)
                         message = await self.bot.wait_for("message", timeout=300.0, check=check)
@@ -771,7 +771,7 @@ class Events(commands.Cog):
                             embed = discord.Embed(
                                 title="❌ Error: Date formatting error",
                                 description=f"Failed reading date. Operation cancelled.\n**Error:** ```{error}```",
-                                color=self.bot.errorColor,
+                                color=self.bot.error_color,
                             )
 
                             await setup_msg.edit(embed=embed)
@@ -805,7 +805,7 @@ class Events(commands.Cog):
                                 embed = discord.Embed(
                                     title=f"🛠️ Editing {event_embed.title}",
                                     description="✅ Timestamp updated!",
-                                    color=self.bot.embedGreen,
+                                    color=self.bot.embed_green,
                                 )
                                 await setup_msg.edit(embed=embed)
 
@@ -819,7 +819,7 @@ class Events(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Not found",
                 description="There is no event by that ID.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
 
@@ -842,7 +842,7 @@ class Events(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Too many events",
                 description="A server can only have up to **10** running events at a time.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.channel.send(embed=embed)
             return
@@ -861,7 +861,7 @@ class Events(commands.Cog):
         embed = discord.Embed(
             title="🛠️ Event setup",
             description="Please specify the channel where you want the event message to be sent!",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         value, asked, setup_msg = await components.select_or_ask(
             ctx, options=options, placeholder="Select a channel", embed=embed
@@ -879,7 +879,7 @@ class Events(commands.Cog):
                     embed = discord.Embed(
                         title="❌ Error: Invalid channel",
                         description="Channel must be of type `text` or `news`. Operation cancelled.",
-                        color=self.bot.errorColor,
+                        color=self.bot.error_color,
                     )
                     await setup_msg.edit(embed=embed)
                     return
@@ -887,7 +887,7 @@ class Events(commands.Cog):
                 embed = discord.Embed(
                     title="❌ Error: Channel not found.",
                     description="Unable to locate channel. Operation cancelled.",
-                    color=self.bot.errorColor,
+                    color=self.bot.error_color,
                 )
                 await setup_msg.edit(embed=embed)
                 return
@@ -898,7 +898,7 @@ class Events(commands.Cog):
         embed = discord.Embed(
             title="🛠️ Event setup",
             description="What is the title of the event? Type it below! Please note that your title cannot exceed **100** characters.",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         await setup_msg.edit(embed=embed, view=None)
         message = await self.bot.wait_for("message", timeout=180.0, check=idcheck)
@@ -908,7 +908,7 @@ class Events(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Title too long",
                 description="Title cannot exceed **100** characters. Operation cancelled.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await setup_msg.edit(embed=embed)
             return
@@ -917,7 +917,7 @@ class Events(commands.Cog):
         embed = discord.Embed(
             title="🛠️ Event setup",
             description="Great! Now type the description of the event down below! Please note there is a maximum length of **2500** characters.",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         await setup_msg.edit(embed=embed, view=None)
         message = await self.bot.wait_for("message", timeout=300.0, check=idcheck)
@@ -927,7 +927,7 @@ class Events(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Description too long",
                 description="Description cannot exceed **2500** characters. Operation cancelled.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await setup_msg.edit(embed=embed)
             return
@@ -950,7 +950,7 @@ class Events(commands.Cog):
 
         For more information about time and date formatting, please refer to the [documentation](https://sned.hypersden.com/docs/modules/reminders.html).
         """,
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         await setup_msg.edit(embed=embed, view=None)
         message = await self.bot.wait_for("message", timeout=300.0, check=idcheck)
@@ -960,7 +960,7 @@ class Events(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: Date formatting error",
                 description=f"Failed reading date. Operation cancelled.\n**Error:** ```{error}```",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await setup_msg.edit(embed=embed)
             return
@@ -1020,7 +1020,7 @@ class Events(commands.Cog):
             embed = discord.Embed(
                 title="🛠️ Event setup",
                 description="Select up to 5 roles that are allowed to sign up to this event! Press `Skip` if you want anyone to be able to sign up!",
-                color=self.bot.embedBlue,
+                color=self.bot.embed_blue,
             )
             view = RolesView()
             await setup_msg.edit(embed=embed, view=view)
@@ -1073,7 +1073,7 @@ class Events(commands.Cog):
             embed = discord.Embed(
                 title="❌ Error: No permissions",
                 description="The bot has no permissions to create the message. Please check if the bot can send messages & embeds in the specified channel. Operation cancelled.",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await setup_msg.edit(embed=embed, view=None)
             return
@@ -1105,7 +1105,7 @@ class Events(commands.Cog):
         embed = discord.Embed(
             title="🛠️ Event setup",
             description="✅ Setup completed. Event created!",
-            color=self.bot.embedGreen,
+            color=self.bot.embed_green,
         )
         await setup_msg.edit(embed=embed, view=None)
 

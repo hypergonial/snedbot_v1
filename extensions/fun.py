@@ -125,7 +125,7 @@ class Fun(commands.Cog):
                 description=self._("Invalid data entered! Check `{prefix}help typeracer` for more information.").format(
                     prefix=ctx.prefix
                 ),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
             return
@@ -133,7 +133,7 @@ class Fun(commands.Cog):
         embed = discord.Embed(
             title="🏁 " + self._("Typeracing begins in 10 seconds!"),
             description=self._("Prepare your keyboard of choice!"),
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         await ctx.send(embed=embed)
         await asyncio.sleep(10)
@@ -164,7 +164,7 @@ class Fun(commands.Cog):
             with open(tempimg_path, "rb") as fp:
                 embed = discord.Embed(
                     description="🏁 " + self._("Type in the text from above as fast as you can!"),
-                    color=self.bot.embedBlue,
+                    color=self.bot.embed_blue,
                 )
                 await ctx.send(embed=embed, file=discord.File(fp, "snedtyperace.png"))
             os.remove(tempimg_path)
@@ -200,7 +200,7 @@ class Fun(commands.Cog):
                 description=self._(
                     "Nobody was able to complete the typerace within **60** seconds. Typerace cancelled."
                 ),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
         else:
@@ -209,7 +209,7 @@ class Fun(commands.Cog):
                 description=self._(
                     "{winner} finished first, everyone else has **15 seconds** to submit their reply!"
                 ).format(winner=list(winners.keys())[0].mention),
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             await ctx.send(embed=embed)
             await asyncio.sleep(15)
@@ -219,7 +219,7 @@ class Fun(commands.Cog):
             embed = discord.Embed(
                 title="🏁 " + self._("Typeracing results"),
                 description=desc,
-                color=self.bot.embedGreen,
+                color=self.bot.embed_green,
             )
             await ctx.send(embed=embed)
         finally:
@@ -239,7 +239,7 @@ class Fun(commands.Cog):
         embed = discord.Embed(
             title=self._("Googled it for you!"),
             description=self._("[Click me!]({link})").format(link=link),
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.send(embed=embed)
@@ -259,7 +259,7 @@ class Fun(commands.Cog):
         embed = discord.Embed(
             title="🦆 " + self._("I ducked it for you!"),
             description=self._("[Click me!]({link})").format(link=link),
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.send(embed=embed)
@@ -339,7 +339,7 @@ class Fun(commands.Cog):
         embed = discord.Embed(
             title="🤔 Did you know?",
             description=f"{random.choice(fun_facts)}",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.send(embed=embed)
@@ -359,7 +359,7 @@ class Fun(commands.Cog):
         embed = discord.Embed(
             title="🤔 Did you know? - Minecraft Edition",
             description=f"{random.choice(fun_facts)}",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.send(embed=embed)
@@ -378,7 +378,7 @@ class Fun(commands.Cog):
         embed = discord.Embed(
             title="🐧 Penguin Fact",
             description=f"{random.choice(penguin_facts)}",
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.send(embed=embed)
@@ -400,7 +400,7 @@ class Fun(commands.Cog):
         embed = discord.Embed(
             title="🪙 " + self._("Flipping coin..."),
             description=self._("Hold on...").format(result=flip),
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
         msg = await ctx.send(embed=embed)
@@ -408,7 +408,7 @@ class Fun(commands.Cog):
         embed = discord.Embed(
             title="🪙 " + self._("Coin flipped"),
             description=self._("It's **{result}**!").format(result=flip),
-            color=self.bot.embedGreen,
+            color=self.bot.embed_green,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
         await msg.edit(embed=embed)
@@ -428,7 +428,7 @@ class Fun(commands.Cog):
         embed = discord.Embed(
             title="🐱 " + self._("Random kitten"),
             description=self._("Looking for kitty..."),
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
         msg = await ctx.send(embed=embed)
@@ -441,7 +441,7 @@ class Fun(commands.Cog):
                     embed = discord.Embed(
                         title="🐱 " + self._("Random kitten"),
                         description=self._("Found one!"),
-                        color=self.bot.embedBlue,
+                        color=self.bot.embed_blue,
                     )
                     embed = self.bot.add_embed_footer(ctx, embed)
                     embed = self.bot.add_embed_footer(ctx, embed)
@@ -453,7 +453,7 @@ class Fun(commands.Cog):
                         description=self._(
                             "Oops! Looks like the cat delivery service is unavailable! Check back later."
                         ),
-                        color=self.bot.errorColor,
+                        color=self.bot.error_color,
                     )
                     await msg.edit(embed=embed)
 
@@ -496,7 +496,7 @@ class Fun(commands.Cog):
                         description=self._(
                             "Oops! Looks like the fox delivery service is unavailable! Check back later."
                         ),
-                        color=self.bot.errorColor,
+                        color=self.bot.error_color,
                     )
                     await msg.edit(embed=embed)
 
@@ -514,7 +514,7 @@ class Fun(commands.Cog):
         embed = discord.Embed(
             title="🐶 " + self._("Random doggo"),
             description=self._("Looking for pupper..."),
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
         msg = await ctx.send(embed=embed)
@@ -527,7 +527,7 @@ class Fun(commands.Cog):
                     embed = discord.Embed(
                         title="🐶 " + self._("Random doggo"),
                         description=self._("Found one!"),
-                        color=self.bot.embedBlue,
+                        color=self.bot.embed_blue,
                     )
                     embed = self.bot.add_embed_footer(ctx, embed)
                     embed.set_image(url=dogjson[0]["url"])
@@ -538,7 +538,7 @@ class Fun(commands.Cog):
                         description=self._(
                             "Oops! Looks like the dog delivery service is unavailable! Check back later."
                         ),
-                        color=self.bot.errorColor,
+                        color=self.bot.error_color,
                     )
                     await msg.edit(embed=embed)
 
@@ -554,7 +554,7 @@ class Fun(commands.Cog):
     async def catdog(self, ctx):
         embed = discord.Embed(
             title="🐱🐶 " + self._("Ahh yes.. the legendary catdog!"),
-            color=self.bot.embedBlue,
+            color=self.bot.embed_blue,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
         embed.set_image(url="https://media1.tenor.com/images/203c3c6047b3c905962fc55ac7fa9548/tenor.gif")
@@ -586,13 +586,13 @@ class Fun(commands.Cog):
             embed = discord.Embed(
                 title=self._("Wikipedia: {query}").format(query=query),
                 description=desc,
-                color=self.bot.miscColor,
+                color=self.bot.misc_color,
             )
         else:
             embed = discord.Embed(
                 title="❌ " + self._("No results"),
                 description=self._("Could not find anything related to your query."),
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
         await ctx.send(embed=embed)
 
@@ -628,7 +628,7 @@ class Fun(commands.Cog):
     )
     @commands.guild_only()
     async def jumbo(self, ctx, emoji: discord.PartialEmoji):
-        embed = discord.Embed(color=self.bot.embedBlue)
+        embed = discord.Embed(color=self.bot.embed_blue)
         embed = self.bot.add_embed_footer(ctx, embed)
         embed.set_image(url=emoji.url)
         await ctx.send(embed=embed)
@@ -654,7 +654,7 @@ class Fun(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Error encoding to base64"),
                 description=f"An error occured while attempting to encode the string to base64: ```{error}```",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 
@@ -668,7 +668,7 @@ class Fun(commands.Cog):
             embed = discord.Embed(
                 title="❌ " + self._("Error decoding from base64"),
                 description=f"An error occured while attempting to decode base64 to string: ```{error}```",
-                color=self.bot.errorColor,
+                color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
 
