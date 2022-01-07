@@ -118,28 +118,41 @@ class TicTacToeView(discord.ui.View):
                 self.add_item(TicTacToeButton(x, y))
 
     def check_winner(self):
+        """Check game status"""
         blocked_list = [False, False, False, False]
 
+        blocked = []
         for line in self.board:
             if -1 in line and 1 in line:
-                blocked_list[0] = True
+                blocked.append(True)
+            else:
+                blocked.append(False)
             value = sum(line)
             if value == self.size:
                 return "O"
             elif value == -self.size:
                 return "X"
+        if blocked.count(True) == len(blocked):
+            blocked_list[0] = True
 
         values = []
         for line in range(self.size):
             value = 0
+            values.append([])
             for row in self.board:
                 value += row[line]
-                values.append(row[line])
+                values[line].append(row[line])
             if value == self.size:
                 return "O"
             elif value == -self.size:
                 return "X"
-        if -1 in values and 1 in values:
+        blocked = []
+        for row in values:
+            if -1 in row and 1 in row:
+                blocked.append(True)
+            else:
+                blocked.append(False)
+        if blocked.count(True) == len(blocked):
             blocked_list[1] = True
 
         values = []
