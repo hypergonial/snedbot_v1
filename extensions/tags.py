@@ -217,7 +217,7 @@ class Tags(commands.Cog):
         invoke_without_command=True,
         case_insensitive=True,
     )
-    @commands.cooldown(1, 20, type=commands.BucketType.member)
+    @commands.cooldown(1, 5, type=commands.BucketType.member)
     @commands.guild_only()
     async def tag(self, ctx, *, name=None):
         if name:
@@ -251,7 +251,7 @@ class Tags(commands.Cog):
         description="Creates a new tag that will be owned by you, with the specified content.",
         usage="tag create <tagname> <content>",
     )
-    @commands.cooldown(1, 20, type=commands.BucketType.member)
+    @commands.cooldown(1, 10, type=commands.BucketType.member)
     @commands.guild_only()
     async def create(self, ctx, name, *, content):
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
@@ -292,7 +292,7 @@ class Tags(commands.Cog):
         description="Shows information about a tag like the owner and aliases.",
         usage="tag info <tagname>",
     )
-    @commands.cooldown(1, 20, type=commands.BucketType.member)
+    @commands.cooldown(1, 10, type=commands.BucketType.member)
     @commands.guild_only()
     async def info(self, ctx, *, name):
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
