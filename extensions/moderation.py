@@ -1534,18 +1534,18 @@ class Moderation(commands.Cog):
             roleformatted = ", ".join(rolelist) if len(rolelist) > 0 else "`-`"
             embed = discord.Embed(
                 title=f"User information: {member.name}",
-                description=f"""Username: `{member.name}`
-Nickname: `{member.display_name if member.display_name != member.name else "-"}`
-User ID: `{member.id}`
-Bot: `{member.bot}`
-Account creation date: {discord.utils.format_dt(member.created_at)} ({discord.utils.format_dt(member.created_at, style='R')})
-Join date: {discord.utils.format_dt(member.joined_at)} ({discord.utils.format_dt(member.joined_at, style='R')})
-Badges: {"   ".join(get_badges(member)) if len(get_badges(member)) > 0 else "`-`"}
-Warns: `{db_user.warns}`
-Timed out: `{member.timed_out}`
-Flags: `{db_user.flags}`
-Journal: `{f"{len(db_user.notes)} entries" if db_user.notes else "No entries"}`
-Roles: {roleformatted}""",
+                description=f"""• Username: `{member.name}`
+**• Nickname:** `{member.display_name if member.display_name != member.name else "-"}`
+**• User ID:** `{member.id}`
+**• Bot:** `{member.bot}`
+**• Account creation date:** {discord.utils.format_dt(member.created_at)} ({discord.utils.format_dt(member.created_at, style='R')})
+**• Join date:** {discord.utils.format_dt(member.joined_at)} ({discord.utils.format_dt(member.joined_at, style='R')})
+**• Badges:** {"   ".join(get_badges(member)) if len(get_badges(member)) > 0 else "`-`"}
+**• Warns:** `{db_user.warns}`
+**• Timed out:** `{member.timed_out}`
+**• Flags:** `{db_user.flags}`
+**• Journal:** `{f"{len(db_user.notes)} entries" if db_user.notes else "No entries"}`
+**• Roles:** {roleformatted}""",
                 color=member.colour,
             )
             embed.set_thumbnail(url=member.display_avatar.url)
@@ -1557,14 +1557,14 @@ Roles: {roleformatted}""",
             embed = discord.Embed(
                 title=f"User information: {user.name}",
                 description=f"""Username: `{user}`
-Nickname: `-` 
-User ID: `{user.id}` 
-Status: `-` 
-Bot: `{user.bot}` 
-Account creation date: {discord.utils.format_dt(user.created_at)} ({discord.utils.format_dt(user.created_at, style='R')})
-Join date: `-`
-Badges: {"   ".join(get_badges(user)) if len(get_badges(user)) > 0 else "`-`"}
-Roles: `-`
+**• Nickname:** `-` 
+**• User ID:** `{user.id}` 
+**• Status:** `-` 
+**• Bot:** `{user.bot}` 
+**• Account creation date:** {discord.utils.format_dt(user.created_at)} ({discord.utils.format_dt(user.created_at, style='R')})
+**• Join date: `-`**
+**• Badges:** {"   ".join(get_badges(user)) if len(get_badges(user)) > 0 else "`-`"}
+**• Roles: `-`**
 *Note: This user is not a member of this server*""",
                 color=self.bot.embed_blue,
             )
@@ -1575,7 +1575,7 @@ Roles: `-`
         if await self.bot.is_owner(ctx.author):
             records = await self.bot.caching.get(table="blacklist", guild_id=0, user_id=user.id)
             is_blacklisted = True if records and records[0]["user_id"] == user.id else False
-            embed.description = f"{embed.description}\nBlacklisted: `{is_blacklisted}`"
+            embed.description = f"{embed.description}\n**• Blacklisted:** `{is_blacklisted}`"
 
         embed = self.bot.add_embed_footer(ctx, embed)
         return embed
