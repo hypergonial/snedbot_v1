@@ -234,6 +234,14 @@ class Fun(commands.Cog):
             )
             return await ctx.send(embed=embed)
 
+        if challenger.id == ctx.author.id:
+            embed = discord.Embed(
+                title="❌ Invoking self",
+                description=f"I'm sorry, but how would that even work?",
+                color=self.bot.error_color,
+            )
+            return await ctx.send(embed=embed)
+
         if not challenger.bot:
             embed = discord.Embed(
                 title="Tic Tac Toe!",
