@@ -241,11 +241,10 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
     @commands.command(
         help="Edits one of the bot's messages.",
         description="Edits one of the bot's messages via the specified channel and message ID.",
-        usage="edit <channel_ID> <message_ID> <new_content>",
+        usage="edit <channel> <message_ID> <new_content>",
     )
     @commands.guild_only()
-    async def edit(self, ctx, channel_id: int, msg_id: int, *, content: str):
-        channel = ctx.guild.get_channel(channel_id)
+    async def edit(self, ctx, channel: discord.TextChannel, msg_id: int, *, content: str):
         if channel:
             try:
                 message = await channel.fetch_message(msg_id)
