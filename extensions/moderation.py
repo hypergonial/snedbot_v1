@@ -1534,7 +1534,7 @@ class Moderation(commands.Cog):
             roleformatted = ", ".join(rolelist) if len(rolelist) > 0 else "`-`"
             embed = discord.Embed(
                 title=f"**• User information:** {member.name}",
-                description=f"""• Username: `{member}`
+                description=f"""**• Username:** `{member}`
 **• Nickname:** `{member.display_name if member.display_name != member.name else "-"}`
 **• User ID:** `{member.id}`
 **• Bot:** `{member.bot}`
