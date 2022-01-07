@@ -117,6 +117,14 @@ class TicTacToeView(discord.ui.View):
             for y in range(size):
                 self.add_item(TicTacToeButton(x, y))
 
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
+        embed = discord.Embed(
+            title="Tic Tac Toe!", description=f"This game timed out! Try starting a new one!", color=0xFF0000
+        )
+        await self.message.edit(embed=embed, view=self)
+
     def check_winner(self):
         """Check game status"""
         blocked_list = [False, False, False, False]
@@ -260,7 +268,8 @@ class Fun(commands.Cog):
                 color=self.bot.embed_blue,
             )
             embed.set_thumbnail(url=ctx.author.display_avatar)
-            await ctx.send(embed=embed, view=TicTacToeView(size, ctx.author, challenger))
+            view = TicTacToeView(size, ctx.author, challenger)
+            view.message = await ctx.send(embed=embed, view=view)
         else:
             embed = discord.Embed(
                 title="❌ Invalid user",
