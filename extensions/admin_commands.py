@@ -230,7 +230,7 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             )
             await ctx.send(embed=embed)
 
-        elif records and prefix not in records[0]["prefix"]:
+        else:
             embed = discord.Embed(
                 title="❌ Prefix not found",
                 description=f"The specified prefix cannot be removed as it is not found.",
