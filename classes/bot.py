@@ -442,8 +442,8 @@ class SnedBot(commands.Bot):
             try:
                 await self.get_cog("HomeGuild").log_error(exception_msg, ctx)
             except Exception as error:
-                logging.error(f"Failed to log to server: {error}", file=sys.stderr)
-            logging.error(exception_msg, file=sys.stderr)
+                logging.error(f"Failed to log to server: {error}")
+            logging.error(exception_msg)
 
             embed = discord.Embed(
                 title="❌ Unhandled exception",

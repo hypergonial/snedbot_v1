@@ -23,6 +23,146 @@ async def has_owner(ctx):
 logger = logging.getLogger(__name__)
 
 
+class TicTacToeButton(discord.ui.Button):
+    def __init__(self, x: int, y: int):
+        super().__init__(style=discord.ButtonStyle.secondary, label="\u200b", row=y)
+        self.x = x
+        self.y = y
+
+    async def callback(self, interaction: discord.Interaction):
+        if isinstance(self.view, TicTacToeView) and self.view.current_player.id == interaction.user.id:
+            view = self.view
+            value = view.board[self.y][self.x]
+            if value in (view.size, -view.size):
+                return
+
+            if view.current_player == view.playerx:
+                self.style = discord.ButtonStyle.danger
+                self.label = "X"
+                self.disabled = True
+                view.board[self.y][self.x] = -1
+                view.current_player = view.playery
+                embed = discord.Embed(
+                    title="Tic Tac Toe!", description=f"It is **{view.playery.display_name}**'s turn!", color=0x009DFF
+                )
+                embed.set_thumbnail(url=view.playery.display_avatar)
+
+            else:
+                self.style = discord.ButtonStyle.success
+                self.label = "O"
+                self.disabled = True
+                view.board[self.y][self.x] = 1
+                view.current_player = view.playerx
+                embed = discord.Embed(
+                    title="Tic Tac Toe!", description=f"It is **{view.playerx.display_name}**'s turn!", color=0x009DFF
+                )
+                embed.set_thumbnail(url=view.playerx.display_avatar)
+
+            winner = view.check_winner()
+            if winner:
+                if winner == "X":
+                    embed = discord.Embed(
+                        title="Tic Tac Toe!", description=f"**{view.playerx.display_name}** won!", color=0x77B255
+                    )
+                    embed.set_thumbnail(url=view.playerx.display_avatar)
+                elif winner == "O":
+                    embed = discord.Embed(
+                        title="Tic Tac Toe!", description=f"**{view.playery.display_name}** won!", color=0x77B255
+                    )
+                    embed.set_thumbnail(url=view.playery.display_avatar)
+                else:
+                    embed = discord.Embed(title="Tic Tac Toe!", description=f"It's a tie!", color=0x77B255)
+                    embed.remove_thumbnail()
+
+                for button in view.children:
+                    button.disabled = True
+
+                view.stop()
+
+            await interaction.response.edit_message(embed=embed, view=view)
+
+
+class TicTacToeView(discord.ui.View):
+    def __init__(self, size, playerx: discord.Member, playery: discord.Member):
+        super().__init__()
+        self.current_player = playerx
+        self.size = size
+        self.playerx = playerx
+        self.playery = playery
+        if size == 3:
+            self.board = [
+                [0, 0, 0],
+                [0, 0, 0],
+                [0, 0, 0],
+            ]
+        elif size == 4:
+            self.board = [
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+            ]
+        elif size == 5:
+            self.board = [
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+            ]
+        else:
+            raise TypeError("Invalid size specified. Must be either 3, 4, 5.")
+
+        for x in range(size):
+            for y in range(size):
+                self.add_item(TicTacToeButton(x, y))
+
+    def check_winner(self):
+
+        for line in self.board:
+            value = sum(line)
+            if value == self.size:
+                return "O"
+            elif value == -self.size:
+                return "X"
+
+        for line in range(self.size):
+            value = 0
+            for row in self.board:
+                value += row[line]
+            if value == self.size:
+                return "O"
+            elif value == -self.size:
+                return "X"
+
+        value = 0
+        diag_offset = self.size - 1
+        for i in range(0, self.size):
+            value += self.board[i][diag_offset]
+            diag_offset -= 1
+
+        print(value)
+        if value == self.size:
+            return "O"
+        elif value == -self.size:
+            return "X"
+
+        value = 0
+        diag_offset = 0
+        for i in range(0, self.size):
+            value += self.board[i][diag_offset]
+            diag_offset += 1
+
+        print(value)
+        if value == self.size:
+            return "O"
+        elif value == -self.size:
+            return "X"
+
+        if all(i != 0 for row in self.board for i in row):
+            return "Tie"
+
+
 class Fun(commands.Cog):
     """All the fun!"""
 
@@ -64,6 +204,39 @@ class Fun(commands.Cog):
 
         return inner
 
+    @commands.command(
+        help="Play tic-tac-toe!",
+        description="Play tic-tac-toe with your friends!\nYou can choose between the following sizes: `3`, `4`, `5`",
+        usage="tictactoe <user> [size]",
+    )
+    @commands.max_concurrency(1, per=commands.BucketType.member, wait=False)
+    @commands.guild_only()
+    @easter_eggs
+    async def tictactoe(self, ctx, challenger: discord.Member, size: int = 3):
+        if size not in (3, 4, 5):
+            embed = discord.Embed(
+                title="❌ Invalid size",
+                description=f"Size must be one of the following: `3`, `4`, `5`.",
+                color=self.bot.error_color,
+            )
+            return await ctx.send(embed=embed)
+
+        if not challenger.bot:
+            embed = discord.Embed(
+                title="Tic Tac Toe!",
+                description=f"**{challenger.display_name}** was challenged for a round of tic tac toe by **{ctx.author.display_name}**!\n\nIt is **{ctx.author.display_name}**'s turn!",
+                color=self.bot.embed_blue,
+            )
+            embed.set_thumbnail(url=ctx.author.display_avatar)
+            await ctx.send(embed=embed, view=TicTacToeView(size, ctx.author, challenger))
+        else:
+            embed = discord.Embed(
+                title="❌ Invalid user",
+                description=f"Sorry, but you cannot play with a bot.. yet...",
+                color=self.bot.error_color,
+            )
+            await ctx.send(embed=embed)
+
     @commands.group(
         help="Displays a user's avatar.",
         description="Displays a user's avatar for your viewing (or stealing) pleasure.",
@@ -71,7 +244,7 @@ class Fun(commands.Cog):
         invoke_without_command=True,
         case_insensitive=True,
     )
-    @commands.cooldown(1, 10, type=commands.BucketType.member)
+    @commands.cooldown(1, 5, type=commands.BucketType.member)
     @commands.guild_only()
     @easter_eggs
     async def avatar(self, ctx, member: discord.Member = None):
@@ -91,7 +264,7 @@ class Fun(commands.Cog):
         description="Displays a user's global avatar for your viewing (or stealing) pleasure.",
         usage=f"avatar global [user]",
     )
-    @commands.cooldown(1, 10, type=commands.BucketType.member)
+    @commands.cooldown(1, 5, type=commands.BucketType.member)
     @commands.guild_only()
     @easter_eggs
     async def avatar_global(self, ctx, member: discord.Member = None):
