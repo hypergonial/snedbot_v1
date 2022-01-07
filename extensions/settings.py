@@ -607,26 +607,29 @@ class Settings(commands.Cog):
                 view = StateChangeView(ctx, states)
                 await self.bot.maybe_edit(message, embed=embed, view=view)
                 await view.wait()
-                state = view.value["values"][0]
-                policies[offense_str]["state"] = state
+                if view.value:
+                    state = view.value["values"][0]
+                    policies[offense_str]["state"] = state
 
-                if (
-                    state == "timeout"
-                    and "temp_dur" in policies[offense_str].keys()
-                    and policies[offense_str]["temp_dur"] > 40320
-                ):  # Ensure timeouts remain within 28 days
-                    policies[offense_str]["temp_dur"] = 40320
-                elif (
-                    state == "escalate"
-                    and policies["escalate"] == "timeout"
-                    and "temp_dur" in policies[offense_str].keys()
-                    and policies[offense_str]["temp_dur"] > 40320
-                ):
-                    policies[offense_str]["temp_dur"] = 40320
+                    if (
+                        state == "timeout"
+                        and "temp_dur" in policies[offense_str].keys()
+                        and policies[offense_str]["temp_dur"] > 40320
+                    ):  # Ensure timeouts remain within 28 days
+                        policies[offense_str]["temp_dur"] = 40320
+                    elif (
+                        state == "escalate"
+                        and policies["escalate"] == "timeout"
+                        and "temp_dur" in policies[offense_str].keys()
+                        and policies[offense_str]["temp_dur"] > 40320
+                    ):
+                        policies[offense_str]["temp_dur"] = 40320
 
-                await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
-                await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
-                await show_policy_options(self, offense_str, message)
+                    await self.bot.pool.execute(sql, json.dumps(policies), ctx.guild.id)
+                    await self.bot.caching.refresh(table="mod_config", guild_id=ctx.guild.id)
+                    await show_policy_options(self, offense_str, message)
+                else:
+                    await self.bot.maybe_delete(message)
 
             elif view.value == "delete":
                 policies[offense_str]["delete"] = not policies[offense_str]["delete"]
