@@ -1038,7 +1038,7 @@ class Moderation(commands.Cog):
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(embed=embed)
 
-        members = sorted(to_ban)
+        members = to_ban
         content = [f"Total members to ban: {len(members)}\n"]
         for member in members:
             content.append(f"{member} ({member.id}) | Joined: {member.joined_at} | Created: {member.created_at}")
