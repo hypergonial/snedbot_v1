@@ -118,46 +118,59 @@ class TicTacToeView(discord.ui.View):
                 self.add_item(TicTacToeButton(x, y))
 
     def check_winner(self):
+        blocked_list = [False, False, False, False]
 
         for line in self.board:
+            if -1 in line and 1 in line:
+                blocked_list[0] = True
             value = sum(line)
-            if value == 3:
+            if value == self.size:
                 return "O"
-            elif value == -3:
+            elif value == -self.size:
                 return "X"
 
+        values = []
         for line in range(self.size):
             value = 0
             for row in self.board:
                 value += row[line]
-            if value == 3:
+                values.append(row[line])
+            if value == self.size:
                 return "O"
-            elif value == -3:
+            elif value == -self.size:
                 return "X"
+        if -1 in values and 1 in values:
+            blocked_list[1] = True
 
+        values = []
         value = 0
         diag_offset = self.size - 1
         for i in range(0, self.size):
             value += self.board[i][diag_offset]
+            values.append(self.board[i][diag_offset])
             diag_offset -= 1
-
-        if value == 3:
+        if value == self.size:
             return "O"
-        elif value == -3:
+        elif value == -self.size:
             return "X"
+        if -1 in values and 1 in values:
+            blocked_list[2] = True
 
+        values = []
         value = 0
         diag_offset = 0
         for i in range(0, self.size):
             value += self.board[i][diag_offset]
+            values.append(self.board[i][diag_offset])
             diag_offset += 1
-
-        if value == 3:
+        if value == self.size:
             return "O"
-        elif value == -3:
+        elif value == -self.size:
             return "X"
+        if -1 in values and 1 in values:
+            blocked_list[3] = True
 
-        if all(i != 0 for row in self.board for i in row):
+        if all(blocked == True for blocked in blocked_list):
             return "Tie"
 
 
@@ -222,7 +235,7 @@ class Fun(commands.Cog):
         if not challenger.bot:
             embed = discord.Embed(
                 title="Tic Tac Toe!",
-                description=f"**{challenger.display_name}** was challenged for a round of tic tac toe by **{ctx.author.display_name}**!\nFirst to a row of **3** wins!\nIt is **{ctx.author.display_name}**'s turn!",
+                description=f"**{challenger.display_name}** was challenged for a round of tic tac toe by **{ctx.author.display_name}**!\nFirst to a row of **{size} wins!**\nIt is **{ctx.author.display_name}**'s turn!",
                 color=self.bot.embed_blue,
             )
             embed.set_thumbnail(url=ctx.author.display_avatar)
