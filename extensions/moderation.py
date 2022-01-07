@@ -1533,8 +1533,8 @@ class Moderation(commands.Cog):
             rolelist.pop(0)
             roleformatted = ", ".join(rolelist) if len(rolelist) > 0 else "`-`"
             embed = discord.Embed(
-                title=f"User information: {member.name}",
-                description=f"""• Username: `{member.name}`
+                title=f"**• User information:** {member.name}",
+                description=f"""• Username: `{member}`
 **• Nickname:** `{member.display_name if member.display_name != member.name else "-"}`
 **• User ID:** `{member.id}`
 **• Bot:** `{member.bot}`
@@ -1555,8 +1555,8 @@ class Moderation(commands.Cog):
 
         else:  # Retrieve limited information about the user if they are not in the guild
             embed = discord.Embed(
-                title=f"User information: {user.name}",
-                description=f"""Username: `{user}`
+                title=f"**• User information:** {user.name}",
+                description=f"""**•Username:** `{user}`
 **• Nickname:** `-` 
 **• User ID:** `{user.id}` 
 **• Status:** `-` 
