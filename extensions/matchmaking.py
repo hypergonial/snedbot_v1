@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import discord
 from discord.ext import commands, tasks
 
-from types.bot import SnedBot
+from classes.bot import SnedBot
 
 logger = logging.getLogger(__name__)
 """

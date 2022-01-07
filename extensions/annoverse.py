@@ -4,7 +4,7 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-from types.bot import SnedBot
+from classes.bot import SnedBot
 
 
 async def has_owner(ctx):

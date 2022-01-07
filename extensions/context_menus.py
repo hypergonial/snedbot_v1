@@ -1,7 +1,7 @@
 import logging
 
 import discord
-from types.bot import SnedBot
+from classes.bot import SnedBot
 from discord.commands import user_command
 from discord.ext import commands
 

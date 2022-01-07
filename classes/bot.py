@@ -14,8 +14,8 @@ import discord
 from discord.ext import commands, ipc, tasks
 from extensions.utils import cache, context
 
-from types.checks import CustomChecks
-from types.config_handler import ConfigHandler
+from classes.checks import CustomChecks
+from classes.config_handler import ConfigHandler
 
 
 async def get_prefix(bot, message):

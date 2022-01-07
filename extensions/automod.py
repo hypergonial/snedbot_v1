@@ -4,7 +4,7 @@ import re
 import unicodedata
 
 import discord
-from types.bot import SnedBot
+from classes.bot import SnedBot
 from discord.ext import commands
 
 

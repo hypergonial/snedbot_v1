@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import Union
 
 import discord
-from types.bot import SnedBot
+from classes.bot import SnedBot
 from discord.ext import commands
 from discord.ext.commands.core import max_concurrency
 from discord.ext.commands.errors import UserInputError

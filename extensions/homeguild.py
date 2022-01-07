@@ -1,6 +1,6 @@
 import logging
 
-from types.bot import SnedBot
+from classes.bot import SnedBot
 from discord.ext import commands
 
 logger = logging.getLogger(__name__)
