@@ -6,6 +6,8 @@ import discord
 import psutil
 from discord.ext import commands
 
+from classes.bot import SnedBot
+
 
 async def has_mod_perms(ctx):
     return await ctx.bot.custom_checks.has_permissions(ctx, "mod_permitted")
@@ -17,7 +19,7 @@ logger = logging.getLogger(__name__)
 class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     """Commands that do not belong in any other category"""
 
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         self.bot = bot
         self._ = self.bot.get_localization("misc_commands", self.bot.lang)
         psutil.cpu_percent(interval=1)  # We need to do this here so that subsequent CPU % calls will be non-blocking
@@ -322,6 +324,6 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
         await channel.send(content=content)
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: MiscCommands...")
     bot.add_cog(MiscCommands(bot))

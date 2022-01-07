@@ -2,6 +2,7 @@ import logging
 
 import aiohttp
 import discord
+from classes.bot import SnedBot
 from discord.ext import commands
 
 
@@ -21,7 +22,7 @@ class FallingFrontier(commands.Cog, name="Falling Frontier"):
     Commands & functionality related to the Falling Frontier Discord
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         self.bot = bot
         self.ffwiki_color = discord.Colour.from_rgb(75, 170, 147)
 
@@ -99,6 +100,6 @@ class FallingFrontier(commands.Cog, name="Falling Frontier"):
             await ctx.send(embed=embed)
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: Falling Frontier...")
     bot.add_cog(FallingFrontier(bot))

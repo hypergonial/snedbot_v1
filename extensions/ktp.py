@@ -3,6 +3,8 @@ import logging
 import discord
 from discord.ext import commands
 
+from classes.bot import SnedBot
+
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
@@ -17,7 +19,7 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
     to whitelisted guilds
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         self.bot = bot
 
     async def cog_check(self, ctx):
@@ -211,6 +213,6 @@ class KeepOnTop(commands.Cog, name="Keep On Top"):
             await ctx.channel.send(embed=embed)
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: KeepOnTop...")
     bot.add_cog(KeepOnTop(bot))

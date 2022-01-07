@@ -12,6 +12,7 @@ import aiohttp
 import discord
 import Levenshtein as lev
 import uwuify
+from classes.bot import SnedBot
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
@@ -198,7 +199,7 @@ class TicTacToeView(discord.ui.View):
 class Fun(commands.Cog):
     """All the fun!"""
 
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         self.bot = bot
         self._ = self.bot.get_localization("fun", self.bot.lang)
 
@@ -898,6 +899,6 @@ class Fun(commands.Cog):
             await ctx.send(embed=embed)
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: Fun...")
     bot.add_cog(Fun(bot))

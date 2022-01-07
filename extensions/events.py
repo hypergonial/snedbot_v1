@@ -4,6 +4,7 @@ import logging
 import uuid
 
 import discord
+from classes.bot import SnedBot
 from discord.ext import commands
 
 from extensions.utils import components, exceptions
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class PersistentEventView(discord.ui.View):
-    def __init__(self, bot: commands.Bot, buttons: list = None):
+    def __init__(self, bot: SnedBot, buttons: list = None):
         super().__init__(timeout=None)
         self.bot = bot
         if buttons:
@@ -232,7 +233,7 @@ class Events(commands.Cog):
     Create and manage events that users can sign up to.
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         self.bot = bot
         self.button_styles = {
             "Blurple": discord.ButtonStyle.primary,
@@ -1110,6 +1111,6 @@ class Events(commands.Cog):
         await setup_msg.edit(embed=embed, view=None)
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: Events...")
     bot.add_cog(Events(bot))

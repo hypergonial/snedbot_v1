@@ -8,6 +8,8 @@ import discord
 import Levenshtein as lev
 from discord.ext import commands, tasks
 
+from classes.bot import SnedBot
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,7 +38,7 @@ class Timers(commands.Cog):
     creation, scheduling & dispatching of timers.
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
 
         self.bot = bot
         self.current_timer = None
@@ -650,6 +652,6 @@ class Timers(commands.Cog):
                     return
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: Timers...")
     bot.add_cog(Timers(bot))

@@ -1,11 +1,10 @@
 import asyncio
 import json
 import logging
-from typing import List
 
 import discord
-from discord.components import SelectOption
 from discord.ext import commands
+from classes.bot import SnedBot
 
 from extensions.utils import components
 
@@ -360,7 +359,7 @@ class LoggingConfMainView(components.AuthorOnlyView):
 
 
 class Settings(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         self.bot = bot
 
     @commands.command(
@@ -918,6 +917,6 @@ class Settings(commands.Cog):
         await show_logging_menu(self, message)
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: Settings...")
     bot.add_cog(Settings(bot))

@@ -2,6 +2,7 @@ import logging
 
 import discord
 from discord.ext import commands
+from classes.bot import SnedBot
 
 from extensions.utils import components
 
@@ -280,11 +281,11 @@ Thank you for using Sned!
 class Help(commands.Cog):
     """Cog that implements a custom help command"""
 
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         bot.help_command = SnedHelp()
         self.bot = bot
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: Help...")
     bot.add_cog(Help(bot))

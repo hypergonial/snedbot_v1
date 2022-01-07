@@ -3,6 +3,8 @@ import logging
 import discord
 from discord.ext import commands
 
+from classes.bot import SnedBot
+
 
 async def has_admin_perms(ctx):
     return await ctx.bot.custom_checks.has_permissions(ctx, "admin_permitted")
@@ -17,7 +19,7 @@ class Permissions(commands.Cog):
     Implementation of checks is outside the scope of this cog.
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         self.bot = bot
 
         self.VALID_TYPES = {
@@ -293,6 +295,6 @@ class Permissions(commands.Cog):
             return await ctx.send(embed=embed)
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: Permissions...")
     bot.add_cog(Permissions(bot))

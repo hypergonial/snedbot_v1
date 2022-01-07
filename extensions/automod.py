@@ -1,14 +1,11 @@
-import asyncio
 import json
 import logging
 import re
 import unicodedata
-from typing import Dict
 
 import discord
+from classes.bot import SnedBot
 from discord.ext import commands
-
-from extensions.utils import components
 
 
 async def has_mod_perms(ctx):
@@ -98,7 +95,7 @@ default_automod_policies = {
 
 
 class AutoMod(commands.Cog, name="Auto-Moderation"):
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         self.bot = bot
         self.mod_cog = self.bot.get_cog("Moderation")
 
@@ -450,6 +447,6 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
                         count = 0
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: Auto-Moderation...")
     bot.add_cog(AutoMod(bot))

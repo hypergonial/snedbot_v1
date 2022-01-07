@@ -2,6 +2,7 @@ import json
 import logging
 
 import discord
+from classes.bot import SnedBot
 from discord.ext import commands, ipc
 
 logger = logging.getLogger(__name__)
@@ -12,7 +13,7 @@ class IpcRoutes(commands.Cog):
     A cog handling all IPC for the website.
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         self.bot = bot
 
     async def get_role_dict(self, guild: discord.Guild, ptype: str = None) -> dict:
@@ -263,6 +264,6 @@ class IpcRoutes(commands.Cog):
         await self.bot.caching.refresh(table="mod_config", guild_id=guild_id)
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: IpcRoutes...")
     bot.add_cog(IpcRoutes(bot))

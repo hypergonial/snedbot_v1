@@ -1,6 +1,7 @@
 import logging
 
 import discord
+from classes.bot import SnedBot
 from discord.commands import user_command
 from discord.ext import commands
 
@@ -20,7 +21,7 @@ async def has_fun_perms(ctx) -> bool:
 
 
 class ContextMenus(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         self.bot = bot
         self.mod_cog = self.bot.get_cog("Moderation")
         self.checkfailure_embed = discord.Embed(

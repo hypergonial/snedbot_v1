@@ -3,6 +3,7 @@ import logging
 
 import discord
 from discord.ext import commands, pages
+from classes.bot import SnedBot
 
 from extensions.utils import components
 
@@ -68,7 +69,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     Formerly "reaction roles"
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         self.bot = bot
         self.button_styles = {
             "Blurple": discord.ButtonStyle.primary,
@@ -580,6 +581,6 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
             pass
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: Role Buttons...")
     bot.add_cog(RoleButtons(bot))

@@ -64,7 +64,7 @@ if __name__ == "__main__":
         try:
             bot.load_extension(extension)
         except Exception as e:
-            logging.error(f"Failed to load extension {extension}.", file=sys.stderr)
+            logging.error(f"Failed to load extension {extension}.")
             traceback.print_exc()
 
 

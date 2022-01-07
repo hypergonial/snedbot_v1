@@ -7,6 +7,8 @@ from dataclasses import dataclass
 import discord
 from discord.ext import commands, tasks
 
+from classes.bot import SnedBot
+
 logger = logging.getLogger(__name__)
 """
 Disclaimer: This extension is proprietary to Annoverse, and should not be used elsewhere without heavy modifications!
@@ -27,7 +29,7 @@ def is_anno_guild(ctx):
 
 # Managing the DB config
 class Matchmaking_Config:
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         self.bot = bot
 
     async def load(self, data: str, guild_id: int):
@@ -1283,6 +1285,6 @@ class Matchmaking(commands.Cog):
                         return
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: Matchmaking...")
     bot.add_cog(Matchmaking(bot))

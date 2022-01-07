@@ -5,6 +5,7 @@ from itertools import chain
 
 import discord
 from discord.ext import commands, pages
+from classes.bot import SnedBot
 
 from extensions.utils import components
 
@@ -200,7 +201,7 @@ class TagHandler:
 class Tags(commands.Cog):
     """All commands relating to tags"""
 
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         self.bot = bot
         self.tag_handler = TagHandler(bot)
         self._ = self.bot.get_localization("tags", self.bot.lang)
@@ -785,6 +786,6 @@ class Tags(commands.Cog):
             await ctx.send(embed=embed)
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: Tags...")
     bot.add_cog(Tags(bot))

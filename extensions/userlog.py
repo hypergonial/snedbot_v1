@@ -7,13 +7,15 @@ from typing import Union
 import discord
 from discord.ext import commands
 
+from classes.bot import SnedBot
+
 logger = logging.getLogger(__name__)
 
 # TODO: Move logging setup here from extensions/setup
 class Logging(commands.Cog):
     """User-facing logging support for important server events"""
 
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         self.bot = bot
         self.recently_edited = []
         self.recently_deleted = []
@@ -597,6 +599,6 @@ class Logging(commands.Cog):
                 await self.log("roles", embed, after.guild.id)
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: Logging...")
     bot.add_cog(Logging(bot))

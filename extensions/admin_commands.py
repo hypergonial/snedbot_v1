@@ -6,6 +6,8 @@ import logging
 import discord
 from discord.ext import commands
 
+from classes.bot import SnedBot
+
 
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
@@ -21,7 +23,7 @@ logger = logging.getLogger(__name__)
 class AdminCommands(commands.Cog, name="Admin Commands"):
     """All commands relating to the administration of the server"""
 
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
 
         self.bot = bot
         self._ = self.bot.get_localization("admin_commands", self.bot.lang)
@@ -551,6 +553,6 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             await ctx.send(embed=embed)
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: AdminCommands...")
     bot.add_cog(AdminCommands(bot))

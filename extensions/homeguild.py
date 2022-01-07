@@ -1,6 +1,6 @@
 import logging
 
-import discord
+from classes.bot import SnedBot
 from discord.ext import commands
 
 logger = logging.getLogger(__name__)
@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class HomeGuild(commands.Cog):
     """Functionality for the Home server of Sned"""
 
-    def __init__(self, bot):
+    def __init__(self, bot: SnedBot):
         self.bot = bot
 
     async def log_error(self, error_str: str, ctx=None, event_method: str = None):
@@ -40,6 +40,6 @@ class HomeGuild(commands.Cog):
                     return
 
 
-def setup(bot):
+def setup(bot: SnedBot):
     logger.info("Adding cog: HomeGuild...")
     bot.add_cog(HomeGuild(bot))
