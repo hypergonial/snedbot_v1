@@ -240,6 +240,7 @@ class Fun(commands.Cog):
         help="Play tic-tac-toe!",
         description="Play tic-tac-toe with your friends!\nYou can choose between the following sizes: `3`, `4`, `5`",
         usage="tictactoe <user> [size]",
+        aliases=["ttt"],
     )
     @commands.max_concurrency(1, per=commands.BucketType.member, wait=False)
     @commands.guild_only()
