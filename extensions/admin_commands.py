@@ -281,6 +281,25 @@ class AdminCommands(commands.Cog, name="Admin Commands"):
             await ctx.send(embed=embed)
 
     @commands.command(
+        help="Shows raw message content.",
+        description="Shows raw message content and escapes markdown.",
+        usage="raw <channel> <message_ID>",
+    )
+    @commands.guild_only()
+    async def raw(self, ctx, channel: discord.TextChannel, message_id: int):
+        try:
+            message = await channel.fetch_message(message_id)
+        except discord.NotFound:
+            embed = discord.Embed(
+                title="❌ Message not found",
+                description=f"Could not find this message.",
+                color=self.bot.error_color,
+            )
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send(f"```{message.content}```")
+
+    @commands.command(
         help="Copies a message to the current channel.",
         description="Copies the specified message to the specified channel. Can be used to create messages that are sent by the bot to then assign role-buttons or other interactions to it.",
         usage="copy <channel_ID> <message_ID>",
