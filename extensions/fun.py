@@ -121,18 +121,18 @@ class TicTacToeView(discord.ui.View):
 
         for line in self.board:
             value = sum(line)
-            if value == self.size:
+            if value == 3:
                 return "O"
-            elif value == -self.size:
+            elif value == -3:
                 return "X"
 
         for line in range(self.size):
             value = 0
             for row in self.board:
                 value += row[line]
-            if value == self.size:
+            if value == 3:
                 return "O"
-            elif value == -self.size:
+            elif value == -3:
                 return "X"
 
         value = 0
@@ -141,10 +141,9 @@ class TicTacToeView(discord.ui.View):
             value += self.board[i][diag_offset]
             diag_offset -= 1
 
-        print(value)
-        if value == self.size:
+        if value == 3:
             return "O"
-        elif value == -self.size:
+        elif value == -3:
             return "X"
 
         value = 0
@@ -153,10 +152,9 @@ class TicTacToeView(discord.ui.View):
             value += self.board[i][diag_offset]
             diag_offset += 1
 
-        print(value)
-        if value == self.size:
+        if value == 3:
             return "O"
-        elif value == -self.size:
+        elif value == -3:
             return "X"
 
         if all(i != 0 for row in self.board for i in row):
@@ -224,7 +222,7 @@ class Fun(commands.Cog):
         if not challenger.bot:
             embed = discord.Embed(
                 title="Tic Tac Toe!",
-                description=f"**{challenger.display_name}** was challenged for a round of tic tac toe by **{ctx.author.display_name}**!\n\nIt is **{ctx.author.display_name}**'s turn!",
+                description=f"**{challenger.display_name}** was challenged for a round of tic tac toe by **{ctx.author.display_name}**!\nFirst to a row of **3** wins!\nIt is **{ctx.author.display_name}**'s turn!",
                 color=self.bot.embed_blue,
             )
             embed.set_thumbnail(url=ctx.author.display_avatar)
