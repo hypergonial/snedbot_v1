@@ -170,8 +170,10 @@ class TicTacToeView(discord.ui.View):
         if -1 in values and 1 in values:
             blocked_list[3] = True
 
-        if all(blocked == True for blocked in blocked_list):
-            return "Tie"
+        for blocked in blocked_list:
+            if blocked == False:
+                return
+        return "Tie"
 
 
 class Fun(commands.Cog):
