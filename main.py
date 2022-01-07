@@ -2,7 +2,7 @@ import logging
 import sys
 import traceback
 
-from classes.bot import SnedBot
+from types.bot import SnedBot
 
 try:
     from config import config

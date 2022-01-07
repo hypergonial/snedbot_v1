@@ -3,7 +3,7 @@ import logging
 import discord
 from discord.ext import commands
 
-from classes.bot import SnedBot
+from types.bot import SnedBot
 
 
 async def has_admin_perms(ctx):

@@ -4,7 +4,7 @@ import logging
 import uuid
 
 import discord
-from classes.bot import SnedBot
+from types.bot import SnedBot
 from discord.ext import commands
 
 from extensions.utils import components, exceptions

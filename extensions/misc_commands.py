@@ -6,7 +6,7 @@ import discord
 import psutil
 from discord.ext import commands
 
-from classes.bot import SnedBot
+from types.bot import SnedBot
 
 
 async def has_mod_perms(ctx):

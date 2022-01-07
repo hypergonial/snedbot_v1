@@ -5,7 +5,7 @@ from itertools import chain
 
 import discord
 from discord.ext import commands, pages
-from classes.bot import SnedBot
+from types.bot import SnedBot
 
 from extensions.utils import components
 

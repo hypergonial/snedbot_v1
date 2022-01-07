@@ -12,7 +12,7 @@ import aiohttp
 import discord
 import Levenshtein as lev
 import uwuify
-from classes.bot import SnedBot
+from types.bot import SnedBot
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 

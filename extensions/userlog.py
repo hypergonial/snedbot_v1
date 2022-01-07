@@ -7,7 +7,7 @@ from typing import Union
 import discord
 from discord.ext import commands
 
-from classes.bot import SnedBot
+from types.bot import SnedBot
 
 logger = logging.getLogger(__name__)
 

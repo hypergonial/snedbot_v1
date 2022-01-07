@@ -8,7 +8,7 @@ import discord
 import Levenshtein as lev
 from discord.ext import commands, tasks
 
-from classes.bot import SnedBot
+from types.bot import SnedBot
 
 logger = logging.getLogger(__name__)
 
