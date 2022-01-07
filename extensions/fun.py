@@ -703,7 +703,17 @@ class Fun(commands.Cog):
                     )
                     embed = self.bot.add_embed_footer(ctx, embed)
                     embed = self.bot.add_embed_footer(ctx, embed)
-                    embed.set_image(url=foxjson["image"])
+                    if foxjson["image"] != "":
+                        embed.set_image(url=foxjson["image"])
+                        await msg.edit(embed=embed)
+                    else:
+                        embed = discord.Embed(
+                            title="🦊 " + self._("Random fox"),
+                            description=self._(
+                                "Oops! Looks like the fox delivery service is unavailable! Check back later."
+                            ),
+                            color=self.bot.error_color,
+                        )
                     await msg.edit(embed=embed)
                 else:
                     embed = discord.Embed(
