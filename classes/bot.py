@@ -68,6 +68,7 @@ class SnedBot(commands.Bot):
         self.DEFAULT_PREFIX = "sn "
         self.current_version = "Deprecated"
         self.lang = "en"  # DEPRECATED
+        self.skip_db_backup = True  # Set to True to skip the next daily db backup
 
         self.config.pop("token")
 
@@ -489,9 +490,7 @@ class SnedBot(commands.Bot):
 
     @tasks.loop(hours=24.0)
     async def backup_bot_db(self):
-        if (
-            self.uptime - discord.utils.utcnow()
-        ).total_seconds() > 3600.0:  # Prevent quick bot restarts from triggering the system
+        if self.skip_db_backup == False:  # Prevent quick bot restarts from triggering the system
             file = await db_backup.backup_database(self.bot.dsn)
             await self.wait_until_ready()
             if self.config["home_guild"] and self.config["db_backup_channel"] and self.is_ready():
@@ -503,3 +502,6 @@ class SnedBot(commands.Bot):
                         file=file,
                     )
                     logging.info("Database backed up to specified Discord channel.")
+        else:
+            logging.info("Skipping database backup for this day...")
+            self.skip_db_backup = False
