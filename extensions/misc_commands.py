@@ -155,12 +155,11 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
     async def about(self, ctx):
         embed = discord.Embed(
             title=f"ℹ️ About {self.bot.user.name}",
-            description=f"""**Version:** {self.bot.current_version} 
-        **Language:** {self.bot.lang} 
-        **Made by:** Hyper#0001
-        **Invite:** [Invite me!](https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=3691506934&scope=bot%20applications.commands)
-        **Support:** [Click here!](https://discord.gg/KNKr8FPmJa)
-        Blob emoji is licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)""",
+            description=f"""**• Made by:** `Hyper#0001`
+**• Servers:** `{len(self.bot.guilds)}`
+**• Invite:** [Invite me!](https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=3691506934&scope=bot%20applications.commands)
+**• Support:** [Click here!](https://discord.gg/KNKr8FPmJa)\n
+Blob emoji is licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)""",
             color=self.bot.embed_blue,
         )
         embed = self.bot.add_embed_footer(ctx, embed)
