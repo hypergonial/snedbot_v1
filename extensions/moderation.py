@@ -52,7 +52,7 @@ class PunishFailed(Exception):
 
 
 class Moderation(commands.Cog):
-    """All Moderation & Auto-Moderation related functionality"""
+    """All Moderation related functionality"""
 
     def __init__(self, bot: SnedBot):
 
