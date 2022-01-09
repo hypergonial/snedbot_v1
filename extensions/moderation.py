@@ -12,10 +12,9 @@ from typing import Union
 import discord
 from classes.bot import SnedBot
 from discord.ext import commands
-from discord.ext.commands.core import max_concurrency
-from discord.ext.commands.errors import UserInputError
 
 from extensions.utils import components
+from extensions.utils.exceptions import UserInputError
 
 logger = logging.getLogger(__name__)
 
