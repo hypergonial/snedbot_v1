@@ -356,9 +356,7 @@ class SnedBot(commands.Bot):
         elif isinstance(error, commands.MissingRequiredArgument):
             embed = discord.Embed(
                 title="❌ Missing argument",
-                description="One or more arguments are missing. \n__Hint:__ You can use `{prefix}help {command_name}` to view command usage.".format(
-                    prefix=ctx.prefix, command_name=ctx.command.qualified_name
-                ),
+                description=f"One or more arguments are missing.\n**Command usage:** `{ctx.prefix}{ctx.command.usage}`\n\n__Hint:__ You can use `{ctx.prefix}help {ctx.command.qualified_name}` to view more information about this command.",
                 color=self.error_color,
             )
             embed = self.add_embed_footer(ctx, embed)
