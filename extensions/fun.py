@@ -898,6 +898,27 @@ class Fun(commands.Cog):
             )
             await ctx.send(embed=embed)
 
+    @commands.command(
+        help="Generates an activity invite URL.",
+        description="Generates an activity invite URL for the specified voice channel. For valid activites see the [reference](https://docs.pycord.dev/en/master/api.html?highlight=embeddedactivity#discord.EmbeddedActivity).",
+        usage="activity <activity name> <voice channel>",
+    )
+    @commands.guild_only()
+    @commands.is_owner()
+    async def activity(self, ctx, activity_name: str, channel: discord.VoiceChannel):
+        if hasattr(discord.EmbeddedActivity, activity_name):
+            activity = getattr(discord.EmbeddedActivity, activity_name)
+            invite = await channel.create_activity_invite(activity, unique=False)
+            await ctx.send(content=invite.url)
+
+        else:
+            embed = discord.Embed(
+                title="❌ Invalid event name passed.",
+                description=f"Invalid event name passed. See [reference](https://docs.pycord.dev/en/master/api.html?highlight=embeddedactivity#discord.EmbeddedActivity) for valid values.",
+                color=self.bot.error_color,
+            )
+            await ctx.send(embed=embed)
+
 
 def setup(bot: SnedBot):
     logger.info("Adding cog: Fun...")
