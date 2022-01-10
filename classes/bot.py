@@ -333,7 +333,7 @@ class SnedBot(commands.Bot):
             elif len(aliasmatches) > 0:
                 embed = discord.Embed(
                     title="❓ Unknown command!",
-                    description=f"Did you mean `{ctx.prefix}{matches[0]}`?",
+                    description=f"Did you mean `{ctx.prefix}{aliasmatches[0]}`?",
                     color=self.unknown_color,
                 )
                 embed = self.add_embed_footer(ctx, embed)
