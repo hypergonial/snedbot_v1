@@ -519,17 +519,18 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                             msg_id=reactmsg.id,
                         )
                         buttons = []
-                        for record in records:
-                            emoji = discord.PartialEmoji.from_str(record.get("emoji"))
-                            buttons.append(
-                                ButtonRoleButton(
-                                    record.get("entry_id"),
-                                    ctx.guild.get_role(record.get("role_id")),
-                                    label=record.get("buttonlabel"),
-                                    style=self.button_styles[record.get("buttonstyle")],
-                                    emoji=emoji,
+                        if records:
+                            for record in records:
+                                emoji = discord.PartialEmoji.from_str(record.get("emoji"))
+                                buttons.append(
+                                    ButtonRoleButton(
+                                        record.get("entry_id"),
+                                        ctx.guild.get_role(record.get("role_id")),
+                                        label=record.get("buttonlabel"),
+                                        style=self.button_styles[record.get("buttonstyle")],
+                                        emoji=emoji,
+                                    )
                                 )
-                            )
 
                         buttons.append(button)
                         view = PersistentRoleView(buttons)
