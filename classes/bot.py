@@ -484,7 +484,7 @@ class SnedBot(commands.Bot):
     @tasks.loop(hours=24.0)
     async def backup_bot_db(self):
         if self.skip_db_backup == False:  # Prevent quick bot restarts from triggering the system
-            file = await db_backup.backup_database(self.bot.dsn)
+            file = await db_backup.backup_database(self.dsn)
             await self.wait_until_ready()
             if self.config["home_guild"] and self.config["db_backup_channel"] and self.is_ready():
                 guild = self.get_guild(self.config["home_guild"])
