@@ -498,38 +498,41 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def claim(self, ctx, *, name):
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
-        owner = await self.bot.fetch_user(tag.tag_owner_id)
-        if tag and owner not in ctx.guild.members:
-            await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
-            new_tag = Tag(
-                guild_id=ctx.guild.id,
-                tag_name=tag.tag_name,
-                tag_owner_id=ctx.author.id,
-                tag_aliases=tag.tag_aliases,
-                tag_content=tag.tag_content,
-            )
-            await self.tag_handler.create(new_tag)
-            embed = discord.Embed(
-                title="✅ " + self._("Tag claimed"),
-                description=self._("Tag `{name}` now belongs to you.").format(name=new_tag.tag_name),
-                color=self.bot.embed_green,
-            )
-            embed = self.bot.add_embed_footer(ctx, embed)
-            await ctx.send(embed=embed)
-        elif tag == None:
-            embed = discord.Embed(
-                title="❌ " + self._("Error: Unknown tag"),
-                description=self._("Cannot find tag by that name."),
-                color=self.bot.error_color,
-            )
+        if tag:
+            owner = await self.bot.fetch_user(tag.tag_owner_id)
+
+            if owner not in ctx.guild.members:
+                await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
+                new_tag = Tag(
+                    guild_id=ctx.guild.id,
+                    tag_name=tag.tag_name,
+                    tag_owner_id=ctx.author.id,
+                    tag_aliases=tag.tag_aliases,
+                    tag_content=tag.tag_content,
+                )
+                await self.tag_handler.create(new_tag)
+                embed = discord.Embed(
+                    title="✅ " + self._("Tag claimed"),
+                    description=self._("Tag `{name}` now belongs to you.").format(name=new_tag.tag_name),
+                    color=self.bot.embed_green,
+                )
+                embed = self.bot.add_embed_footer(ctx, embed)
+                await ctx.send(embed=embed)
+
+            else:
+                embed = discord.Embed(
+                    title="❌ " + self._("Error: Not owned"),
+                    description=self._(
+                        "Tag owner is still in the server. You can only claim tags that have been abandoned."
+                    ),
+                    color=self.bot.error_color,
+                )
             embed = self.bot.add_embed_footer(ctx, embed)
             await ctx.send(embed=embed)
         else:
             embed = discord.Embed(
-                title="❌ " + self._("Error: Not owned"),
-                description=self._(
-                    "Tag owner is still in the server. You can only claim tags that have been abandoned."
-                ),
+                title="❌ " + self._("Error: Unknown tag"),
+                description=self._("Cannot find tag by that name."),
                 color=self.bot.error_color,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
