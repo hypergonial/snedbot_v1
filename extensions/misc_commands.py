@@ -183,7 +183,7 @@ Blob emoji is licensed under [Apache License 2.0](https://www.apache.org/license
     )
     async def invite(self, ctx):
         if not self.bot.EXPERIMENTAL:
-            invite_url = f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=3691506934&scope=bot%20applications.commands"
+            invite_url = f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=1642892617798&scope=applications.commands%20bot"
             embed = discord.Embed(
                 title="🌟 Yay!",
                 description=self._("[Click here]({invite_url}) for an invite link!").format(invite_url=invite_url),
