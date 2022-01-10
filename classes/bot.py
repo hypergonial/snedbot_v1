@@ -59,6 +59,7 @@ class SnedBot(commands.Bot):
             case_insensitive=True,
             activity=activity,
             max_messages=10000,
+            owner_id=163979124820541440,
         )
 
         # Bot vars
