@@ -104,11 +104,6 @@ class SnedBot(commands.Bot):
             818223666143690783,
             836248845268680785,
         ]
-        self.anno_guilds = (
-            372128553031958529,
-            627876365223591976,
-            818223666143690783,
-        )  # Guilds whitelisted for Anno-related commands
 
         # Command invoke cooldown mapping
         self.cmd_cd_mapping = commands.CooldownMapping.from_cooldown(10, 10, commands.BucketType.channel)
