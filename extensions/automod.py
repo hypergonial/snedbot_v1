@@ -165,10 +165,11 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
         bot_perms = ctx.channel.permissions_for(ctx.guild.me)
         if (
             not bot_perms.ban_members
-            or not bot_perms.manage_roles
+            or not bot_perms.moderate_members
             or not bot_perms.manage_messages
             or not bot_perms.kick_members
         ):
+            logger.info(f"Failed executing an automod action in guild {ctx.guild.id} due to lacking permissions.")
             return
 
         if not await self.bot.custom_checks.module_is_enabled(ctx, "moderation"):
