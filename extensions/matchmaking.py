@@ -24,7 +24,7 @@ async def is_setup(ctx):
 
 
 def is_anno_guild(ctx):
-    return ctx.guild.id in ctx.bot.anno_guilds
+    return ctx.guild.id == 372128553031958529
 
 
 # Managing the DB config
