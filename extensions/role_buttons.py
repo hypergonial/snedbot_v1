@@ -172,6 +172,14 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     @commands.guild_only()
     async def rb_delete(self, ctx, id: int):
         records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id, entry_id=id)
+
+        await self.bot.pool.execute(
+            """DELETE FROM button_roles WHERE guild_id = $1 AND entry_id = $2""",
+            ctx.guild.id,
+            id,
+        )
+        await self.bot.caching.refresh(table="button_roles", guild_id=ctx.guild.id)
+
         if records:
             channel = ctx.guild.get_channel(records[0]["channel_id"])
             message = await channel.fetch_message(records[0]["msg_id"]) if channel else None
@@ -194,13 +202,6 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                     await message.edit(view=view)
                 except discord.NotFound:
                     pass
-
-            await self.bot.pool.execute(
-                """DELETE FROM button_roles WHERE guild_id = $1 AND entry_id = $2""",
-                ctx.guild.id,
-                id,
-            )
-            await self.bot.caching.refresh(table="button_roles", guild_id=ctx.guild.id)
 
             embed = discord.Embed(
                 title="✅ Role-Button deleted",
