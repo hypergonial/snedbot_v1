@@ -157,7 +157,7 @@ class MiscCommands(commands.Cog, name="Miscellaneous Commands"):
             title=f"ℹ️ About {self.bot.user.name}",
             description=f"""**• Made by:** `Hyper#0001`
 **• Servers:** `{len(self.bot.guilds)}`
-**• Invite:** [Invite me!](https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=3691506934&scope=bot%20applications.commands)
+**• Invite:** [Invite me!](https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=1643161053254&scope=bot%20applications.commands)
 **• Support:** [Click here!](https://discord.gg/KNKr8FPmJa)\n
 Blob emoji is licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)""",
             color=self.bot.embed_blue,
@@ -183,7 +183,7 @@ Blob emoji is licensed under [Apache License 2.0](https://www.apache.org/license
     )
     async def invite(self, ctx):
         if not self.bot.EXPERIMENTAL:
-            invite_url = f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=1642892617798&scope=applications.commands%20bot"
+            invite_url = f"https://discord.com/oauth2/authorize?client_id={self.bot.user.id}&permissions=1643161053254&scope=applications.commands%20bot"
             embed = discord.Embed(
                 title="🌟 Yay!",
                 description=self._("[Click here]({invite_url}) for an invite link!").format(invite_url=invite_url),
