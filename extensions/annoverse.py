@@ -7,12 +7,19 @@ from discord.ext import commands
 from classes.bot import SnedBot
 
 
+anno_guilds = (
+    372128553031958529,
+    627876365223591976,
+    581296099826860033,
+)
+
+
 async def has_owner(ctx):
     return await ctx.bot.custom_checks.has_owner(ctx)
 
 
 def is_anno_guild(ctx):
-    return ctx.guild.id in ctx.bot.anno_guilds
+    return ctx.guild.id in anno_guilds
 
 
 logger = logging.getLogger(__name__)
