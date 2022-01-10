@@ -1173,7 +1173,7 @@ class Matchmaking(commands.Cog):
         This is where listing subscriptions are handled via reactions
         """
         # Check if we are in a guild so we dont bombard the database with Null errors.
-        if payload.guild_id != None and payload.guild_id in self.bot.anno_guilds:
+        if payload.guild_id != None and payload.guild_id == 372128553031958529:
             if await self.config.load("announce_channel_id", payload.guild_id) == payload.channel_id:
                 guild = self.bot.get_guild(payload.guild_id)
                 # I put a fair number of logging in here to track abuse of this feature
@@ -1254,7 +1254,7 @@ class Matchmaking(commands.Cog):
     # Same thing but in reverse
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
-        if payload.guild_id != None and payload.guild_id in self.bot.anno_guilds:
+        if payload.guild_id != None and payload.guild_id == 372128553031958529:
             if await self.config.load("announce_channel_id", payload.guild_id) == payload.channel_id:
                 guild = self.bot.get_guild(payload.guild_id)
                 # I put a fair number of logging in here to track abuse of this feature
