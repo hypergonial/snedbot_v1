@@ -173,31 +173,36 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
     async def rb_delete(self, ctx, id: int):
         records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id, entry_id=id)
 
-        await self.bot.pool.execute(
-            """DELETE FROM button_roles WHERE guild_id = $1 AND entry_id = $2""",
-            ctx.guild.id,
-            id,
-        )
-        await self.bot.caching.refresh(table="button_roles", guild_id=ctx.guild.id)
+        if records:  # Button cleanup
 
-        if records:
+            await self.bot.pool.execute(
+                """DELETE FROM button_roles WHERE guild_id = $1 AND entry_id = $2""",
+                ctx.guild.id,
+                id,
+            )
+            await self.bot.caching.refresh(table="button_roles", guild_id=ctx.guild.id)
+
             channel = ctx.guild.get_channel(records[0]["channel_id"])
             message = await channel.fetch_message(records[0]["msg_id"]) if channel else None
             if message:  # Re-sync buttons if message still exists
                 records = await self.bot.caching.get(table="button_roles", guild_id=ctx.guild.id, msg_id=message.id)
                 buttons = []
-                for record in records:
-                    emoji = discord.PartialEmoji.from_str(record.get("emoji"))
-                    buttons.append(
-                        ButtonRoleButton(
-                            record.get("entry_id"),
-                            ctx.guild.get_role(record.get("role_id")),
-                            label=record.get("buttonlabel"),
-                            style=self.button_styles[record.get("buttonstyle")],
-                            emoji=emoji,
+                if records:
+                    for record in records:
+                        emoji = discord.PartialEmoji.from_str(record.get("emoji"))
+                        buttons.append(
+                            ButtonRoleButton(
+                                record.get("entry_id"),
+                                ctx.guild.get_role(record.get("role_id")),
+                                label=record.get("buttonlabel"),
+                                style=self.button_styles[record.get("buttonstyle")],
+                                emoji=emoji,
+                            )
                         )
-                    )
-                view = PersistentRoleView(buttons) if len(buttons) > 0 else None
+                    view = PersistentRoleView(buttons) if len(buttons) > 0 else None
+                else:
+                    view = None
+
                 try:
                     await message.edit(view=view)
                 except discord.NotFound:
