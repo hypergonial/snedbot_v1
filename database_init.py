@@ -58,7 +58,7 @@ try:
                 (
                     user_id bigint NOT NULL,
                     guild_id bigint NOT NULL,
-                    flags text[],
+                    flags json,
                     warns integer NOT NULL DEFAULT 0,
                     notes text[],
                     PRIMARY KEY (user_id, guild_id),

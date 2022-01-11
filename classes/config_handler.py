@@ -1,5 +1,7 @@
+import json
 import logging
 from dataclasses import dataclass
+from typing import List
 
 import asyncpg
 from discord.ext import tasks
@@ -19,9 +21,9 @@ class ConfigHandler:
 
         user_id: int
         guild_id: int
-        flags: list = None
+        flags: dict = None
         warns: int = 0
-        notes: list = None
+        notes: List[str] = None
 
     def __init__(self, bot):
         self.bot = bot
@@ -55,6 +57,7 @@ class ConfigHandler:
         """
 
         try:
+            user.flags = json.dumps(user.flags)
             await self.bot.pool.execute(
                 """
             INSERT INTO users (user_id, guild_id, flags, warns, notes) 
@@ -86,7 +89,7 @@ class ConfigHandler:
             user = self.User(
                 user_id=result[0].get("user_id"),
                 guild_id=result[0].get("guild_id"),
-                flags=result[0].get("flags"),
+                flags=json.loads(result[0].get("flags")),
                 warns=result[0].get("warns"),
                 notes=result[0].get("notes"),
             )
