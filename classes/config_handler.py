@@ -57,7 +57,7 @@ class ConfigHandler:
         """
 
         try:
-            user.flags = json.dumps(user.flags)
+            user.flags = json.dumps(user.flags) if user.flags else None
             await self.bot.pool.execute(
                 """
             INSERT INTO users (user_id, guild_id, flags, warns, notes) 
