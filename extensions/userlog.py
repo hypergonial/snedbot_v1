@@ -114,6 +114,7 @@ class Logging(commands.Cog):
 
     async def unfreeze_logging(self, guild_id):
         """Call to stop suspending the logging in a given guild."""
+        await asyncio.sleep(5)  # For any pending actions to stop
         if guild_id in self.frozen_guilds:
             self.frozen_guilds.remove(guild_id)
 
@@ -520,7 +521,11 @@ class Logging(commands.Cog):
             if reason and len(reason) > 200:
                 reason = reason[:200] + "..."
 
-            if moderator != "Discord" and moderator == self.bot.user:
+            if (
+                moderator != "Discord"
+                and moderator == self.bot.user
+                and reason != "Automatic timeout extension applied."
+            ):
                 moderator = reason.split(" ")[0]  # Get actual moderator, not the bot
                 reason = reason.split("):", maxsplit=1)[1]  # Remove author
 

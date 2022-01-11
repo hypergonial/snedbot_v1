@@ -89,7 +89,7 @@ class ConfigHandler:
             user = self.User(
                 user_id=result[0].get("user_id"),
                 guild_id=result[0].get("guild_id"),
-                flags=json.loads(result[0].get("flags")),
+                flags=json.loads(result[0].get("flags")) if result[0].get("flags") else {},
                 warns=result[0].get("warns"),
                 notes=result[0].get("notes"),
             )

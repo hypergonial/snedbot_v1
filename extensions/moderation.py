@@ -57,6 +57,7 @@ class Moderation(commands.Cog):
     def __init__(self, bot: SnedBot):
 
         self.bot = bot
+        self.max_timeout_seconds = 2246400  # Seconds to break timeouts up into
         self._ = self.bot.get_localization("moderation", self.bot.lang)
 
     async def cog_check(self, ctx) -> bool:
@@ -245,27 +246,30 @@ class Moderation(commands.Cog):
         expiry = int(timer.notes)
         if member:
 
-            if expiry - discord.utils.utcnow().total_seconds() > 2246400:
+            await self.bot.get_cog("Logging").freeze_logging(timer.guild_id)
+            if expiry - discord.utils.utcnow().timestamp() > self.max_timeout_seconds:
 
                 await self.bot.get_cog("Timers").create_timer(
-                    discord.utils.utcnow() + datetime.timedelta(days=26),
+                    discord.utils.utcnow() + datetime.timedelta(seconds=self.max_timeout_seconds),
                     "timeout_extend",
-                    timer.guild.id,
+                    timer.guild_id,
                     member.id,
                     notes=timer.notes,
                 )
                 await member.timeout(
-                    discord.utils.utcnow() + datetime.timedelta(days=26), reason="Automatic timeout extension applied."
+                    discord.utils.utcnow() + datetime.timedelta(seconds=self.max_timeout_seconds),
+                    reason="Automatic timeout extension applied.",
                 )
 
             else:
                 timeout_for = discord.utils.utcnow() + datetime.timedelta(
-                    seconds=expiry - round(discord.utils.utcnow().total_seconds())
+                    seconds=expiry - round(discord.utils.utcnow().timestamp())
                 )
                 await member.timeout(timeout_for, reason="Automatic timeout extension applied.")
 
-        else:
+            await self.bot.get_cog("Logging").unfreeze_logging(timer.guild_id)
 
+        else:
             db_user = await self.bot.global_config.get_user(timer.user_id, timer.guild_id)
             if "timeout_on_join" not in db_user.flags.keys():
                 db_user.flags["timeout_on_join"] = expiry
@@ -276,46 +280,55 @@ class Moderation(commands.Cog):
 
         db_user = await self.bot.global_config.get_user(member.id, member.guild.id)
 
-        if "timeout_on_join" in db_user.flags.keys():
+        if db_user.flags and "timeout_on_join" in db_user.flags.keys():
 
-            expiry = db_user["timeout_on_join"]
+            expiry = db_user.flags["timeout_on_join"]
 
-            if expiry - discord.utils.utcnow().total_seconds() > 0:
+            if expiry - discord.utils.utcnow().timestamp() > 0:
 
-                if expiry - discord.utils.utcnow().total_seconds() > 2246400:
+                await self.bot.get_cog("Logging").freeze_logging(member.guild.id)
+
+                if expiry - discord.utils.utcnow().timestamp() > self.max_timeout_seconds:
 
                     await self.bot.get_cog("Timers").create_timer(
-                        discord.utils.utcnow() + datetime.timedelta(days=26),
+                        discord.utils.utcnow() + datetime.timedelta(seconds=self.max_timeout_seconds),
                         "timeout_extend",
                         member.guild.id,
                         member.id,
                         notes=str(expiry),
                     )
                     await member.timeout(
-                        discord.utils.utcnow() + datetime.timedelta(days=26),
+                        discord.utils.utcnow() + datetime.timedelta(seconds=self.max_timeout_seconds),
                         reason="Automatic timeout extension applied.",
                     )
 
                 else:
                     await member.timeout(expiry, reason="Automatic timeout extension applied.")
+
+                await self.bot.get_cog("Logging").unfreeze_logging(member.guild.id)
+
             db_user.flags.pop("timeout_on_join")
             await self.bot.global_config.update_user(db_user)
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
-        if after.communication_disabled_until is None or after.communication_disabled_until < discord.utils.utcnow():
+        if before.communication_disabled_until != after.communication_disabled_until:
+            if (
+                after.communication_disabled_until is None
+                or after.communication_disabled_until < discord.utils.utcnow()
+            ):
 
-            records = self.bot.pool.fetch(
-                """SELECT * FROM timers WHERE guild_id = $1 AND user_id = $2 AND event = $3""",
-                after.guild.id,
-                after.id,
-                "timeout_extend",
-            )
+                records = await self.bot.pool.fetch(
+                    """SELECT * FROM timers WHERE guild_id = $1 AND user_id = $2 AND event = $3""",
+                    after.guild.id,
+                    after.id,
+                    "timeout_extend",
+                )
 
-            if records and len(records) > 0:
-                timer_cog = self.bot.get_cog("Timers")
-                for record in records:
-                    await timer_cog.cancel_timer(record.get("id"), after.guild.di)
+                if records and len(records) > 0:
+                    timer_cog = self.bot.get_cog("Timers")
+                    for record in records:
+                        await timer_cog.cancel_timer(record.get("id"), after.guild.id)
 
     async def timeout(
         self,
@@ -328,22 +341,25 @@ class Moderation(commands.Cog):
         """
         Times out a user for the specified duration, converts duration from string.
         """
+
         reason = self.format_reason(reason, moderator)
 
         timer_cog = self.bot.get_cog("Timers")
         duration = await timer_cog.converttime(duration)
 
-        if duration[0] > discord.utils.utcnow() + datetime.timedelta(days=26):
+        if duration[0] > discord.utils.utcnow() + datetime.timedelta(seconds=self.max_timeout_seconds):
             await timer_cog.create_timer(
-                discord.utils.utcnow() + datetime.timedelta(days=26),
+                discord.utils.utcnow() + datetime.timedelta(seconds=self.max_timeout_seconds),
                 "timeout_extend",
                 ctx.guild.id,
                 member.id,
-                notes=str(duration[0].total_seconds()),
+                notes=str(round(duration[0].timestamp())),
             )
-            await member.timeout(discord.utils.utcnow() + datetime.timedelta(days=26))
-
-        await member.timeout(duration[0], reason=reason)
+            await member.timeout(
+                discord.utils.utcnow() + datetime.timedelta(seconds=self.max_timeout_seconds), reason=reason
+            )
+        else:
+            await member.timeout(duration[0], reason=reason)
         return duration[0]
 
     async def remove_timeout(self, ctx, member: discord.Member, moderator: discord.Member, reason: str = None):
@@ -1618,8 +1634,9 @@ class Moderation(commands.Cog):
 
         if user in ctx.guild.members:
             member = ctx.guild.get_member(user.id)
-            rolelist = [role.mention for role in member.roles].reverse()
+            rolelist = [role.mention for role in member.roles]
             rolelist.pop(0)
+            rolelist.reverse()
             roleformatted = ", ".join(rolelist) if len(rolelist) > 0 else "`-`"
             embed = discord.Embed(
                 title=f"**User information:** {member.name}",
@@ -1632,7 +1649,7 @@ class Moderation(commands.Cog):
 **• Badges:** {"   ".join(get_badges(member)) if len(get_badges(member)) > 0 else "`-`"}
 **• Warns:** `{db_user.warns}`
 **• Timed out:** `{member.timed_out}`
-**• Flags:** `{",".join(list(db_user.flags.keys())) if len(db_user.flags) > 0 else "-"}`
+**• Flags:** `{",".join(list(db_user.flags.keys())) if db_user.flags and len(db_user.flags) > 0 else "-"}`
 **• Journal:** `{f"{len(db_user.notes)} entries" if db_user.notes else "No entries"}`
 **• Roles:** {roleformatted}""",
                 color=member.colour,
@@ -1653,7 +1670,7 @@ class Moderation(commands.Cog):
 **• Account creation date:** {discord.utils.format_dt(user.created_at)} ({discord.utils.format_dt(user.created_at, style='R')})
 **• Join date: `-`**
 **• Badges:** {"   ".join(get_badges(user)) if len(get_badges(user)) > 0 else "`-`"}
-**• Flags:** `{",".join(list(db_user.flags.keys())) if len(db_user.flags) > 0 else "-"}`
+**• Flags:** `{",".join(list(db_user.flags.keys())) if db_user.flags and len(db_user.flags) > 0 else "-"}`
 **• Journal:** `{f"{len(db_user.notes)} entries" if db_user.notes else "No entries"}`
 **• Roles: `-`**
 *Note: This user is not a member of this server*""",
