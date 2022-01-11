@@ -433,7 +433,7 @@ class Logging(commands.Cog):
 
             if moderator != "Unknown" and moderator == self.bot.user:
                 moderator = reason.split(" ")[0]  # Get actual moderator, not the bot
-                reason = reason.split("):", maxsplit=1)[1]  # Remove author
+                reason = reason.split("): ", maxsplit=1)[1]  # Remove author
             if reason and len(reason) > 240:
                 reason = reason[:240] + "..."
             await self.mod_cog.add_note(member.id, member.guild.id, f"🚪👈 **Kicked by {moderator}:** {reason}")
@@ -476,7 +476,7 @@ class Logging(commands.Cog):
 
         if moderator != "Unknown" and moderator == self.bot.user:
             moderator = reason.split(" ")[0]  # Get actual moderator, not the bot
-            reason = reason.split("):", maxsplit=1)[1]  # Remove author
+            reason = reason.split("): ", maxsplit=1)[1]  # Remove author
         if reason and len(reason) > 240:
             reason = reason[:240] + "..."
         await self.mod_cog.add_note(user.id, guild.id, f"🔨 **Banned by {moderator}:** {reason}")
@@ -527,7 +527,7 @@ class Logging(commands.Cog):
                 and reason != "Automatic timeout extension applied."
             ):
                 moderator = reason.split(" ")[0]  # Get actual moderator, not the bot
-                reason = reason.split("):", maxsplit=1)[1]  # Remove author
+                reason = reason.split("): ", maxsplit=1)[1]  # Remove author
 
             if (
                 after.communication_disabled_until is None
