@@ -80,7 +80,7 @@ class TagHandler:
 
     async def delete(self, name: str, guild_id: int):
         await self.bot.pool.execute(
-            """DELETE FROM tags WHERE name = $1 AND guild_id = $2""",
+            """DELETE FROM tags WHERE tag_name = $1 AND guild_id = $2""",
             name,
             guild_id,
         )
