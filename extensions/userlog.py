@@ -5,13 +5,12 @@ import logging
 from typing import Union
 
 import discord
-from discord.ext import commands
-
 from classes.bot import SnedBot
+from discord.ext import commands
 
 logger = logging.getLogger(__name__)
 
-# TODO: Move logging setup here from extensions/setup
+
 class Logging(commands.Cog):
     """User-facing logging support for important server events"""
 

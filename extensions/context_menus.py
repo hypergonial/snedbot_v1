@@ -5,7 +5,7 @@ from classes.bot import SnedBot
 from discord.commands import user_command
 from discord.ext import commands
 
-from extensions.utils import components
+from classes import components
 
 logger = logging.getLogger(__name__)
 

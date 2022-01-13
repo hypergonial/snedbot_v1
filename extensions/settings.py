@@ -13,7 +13,7 @@ from etc.settings_config import (
     log_event_strings,
 )
 
-from extensions.utils import components
+from classes import components
 
 logger = logging.getLogger(__name__)
 

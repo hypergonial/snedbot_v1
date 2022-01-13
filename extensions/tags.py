@@ -3,11 +3,13 @@ from difflib import get_close_matches
 from itertools import chain
 
 import discord
-from discord.ext import commands
 from classes.bot import SnedBot
+from classes.errors import TagAlreadyExists, TagNotFound
 from classes.tag import Tag
+from classes.tag_handler import TagHandler
+from discord.ext import commands
 
-from extensions.utils import components
+from classes import components
 
 
 async def has_owner(ctx):
@@ -19,170 +21,6 @@ async def has_mod_perms(ctx):
 
 
 logger = logging.getLogger(__name__)
-
-
-class TagAlreadyExists(Exception):
-    """
-    Raised when a tag is trying to get created but already exists
-    """
-
-    pass
-
-
-class TagNotFound(Exception):
-    """
-    Raised when a tag is not found, although most functions just return None when this happens
-    """
-
-    pass
-
-
-class TagHandler:
-    """
-    A class for common database operations regarding tags
-    """
-
-    def __init__(self, bot):
-        self.bot = bot
-
-    async def get(self, tag_name: str, guild_id: int):
-        """
-        Returns a Tag object for the given name & guild ID, returns None if not found.
-        Will try to find aliases too.
-        """
-        async with self.bot.pool.acquire() as con:
-            result = await self.bot.pool.fetch(
-                """SELECT * FROM tags WHERE tag_name = $1 AND guild_id = $2""",
-                tag_name.lower(),
-                guild_id,
-            )
-            if len(result) != 0:
-                tag = Tag(
-                    guild_id=result[0].get("guild_id"),
-                    tag_name=result[0].get("tag_name"),
-                    tag_owner_id=result[0].get("tag_owner_id"),
-                    tag_aliases=result[0].get("tag_aliases"),
-                    tag_content=result[0].get("tag_content"),
-                )
-                return tag
-            result = await con.fetch(
-                """SELECT * FROM tags WHERE $1 = ANY(tag_aliases) AND guild_id = $2""",
-                tag_name.lower(),
-                guild_id,
-            )
-            if len(result) != 0:
-                tag = Tag(
-                    guild_id=result[0].get("guild_id"),
-                    tag_name=result[0].get("tag_name"),
-                    tag_owner_id=result[0].get("tag_owner_id"),
-                    tag_aliases=result[0].get("tag_aliases"),
-                    tag_content=result[0].get("tag_content"),
-                )
-                return tag
-
-    async def create(self, tag: Tag):
-        """
-        Creates a new tag based on an instance of a Tag.
-        """
-        await self.bot.pool.execute(
-            """
-        INSERT INTO tags (guild_id, tag_name, tag_owner_id, tag_aliases, tag_content)
-        VALUES ($1, $2, $3, $4, $5)""",
-            tag.guild_id,
-            tag.tag_name,
-            tag.tag_owner_id,
-            tag.tag_aliases,
-            tag.tag_content,
-        )
-
-    async def get_all(self, guild_id: int):
-        """
-        Returns a list of all tags for the specified guild.
-        """
-        results = await self.bot.pool.fetch("""SELECT * FROM tags WHERE guild_id = $1""", guild_id)
-        if len(results) != 0:
-            tags = []
-            for result in results:
-                tag = Tag(
-                    guild_id=result.get("guild_id"),
-                    tag_name=result.get("tag_name"),
-                    tag_owner_id=result.get("tag_owner_id"),
-                    tag_aliases=result.get("tag_aliases"),
-                    tag_content=result.get("tag_content"),
-                )
-                tags.append(tag)
-            return tags
-
-    async def delete(self, tag_name: str, guild_id: int):
-        await self.bot.pool.execute(
-            """DELETE FROM tags WHERE tag_name = $1 AND guild_id = $2""",
-            tag_name,
-            guild_id,
-        )
-
-    async def migrate(self, origin_id: int, destination_id: int, invoker_id: int, tag_name: str):
-        """
-        Migrates a tag from one guild to another.
-        """
-        dest_tag = await self.get(tag_name, destination_id)
-        if not dest_tag:
-            tag = await self.get(tag_name, origin_id)
-            if tag:
-                tag.guild_id = destination_id  # Change it's ID so it belongs to the new guild
-                tag.tag_owner_id = invoker_id  # New owner is whoever imported the tag
-                await self.create(tag)
-            else:
-                raise TagNotFound("This tag does not exist at origin, cannot migrate.")
-        else:
-            raise TagAlreadyExists("This tag already exists at destination, cannot migrate.")
-
-    async def migrate_all(self, origin_id: int, destination_id: int, invoker_id: int, strategy: str):
-        """
-        Migrates all tags from one server to a different one. 'strategy' defines overriding behaviour.
-
-        override - Override all tags in the destination server.
-        keep - Keep conflicting tags in the destination server.
-
-        Note: Migration of all tags does not migrate aliases.
-        """
-        tags = await self.get_all(origin_id)
-        tags_unpacked = []
-        for tag in tags:
-            """
-            Unpack tag objects into a 2D list that contains all the info required about them,
-            for easy insertion into the database.
-            """
-            tag_unpacked = [
-                destination_id,
-                tag.tag_name,
-                invoker_id,
-                None,
-                tag.tag_content,
-            ]
-            tags_unpacked.append(tag_unpacked)
-
-        if strategy == "override":
-            async with self.bot.pool.acquire() as con:
-                await con.executemany(
-                    """
-                INSERT INTO tags (guild_id, tag_name, tag_owner_id, tag_aliases, tag_content)
-                VALUES ($1, $2, $3, $4, $5)
-                ON CONFLICT (guild_id, tag_name) DO
-                UPDATE SET tag_owner_id=$3, tag_aliases=$4, tag_content = $5""",
-                    tags_unpacked,
-                )
-        elif strategy == "keep":
-            async with self.bot.pool.acquire() as con:
-                await con.executemany(
-                    """
-                INSERT INTO tags (guild_id, tag_name, tag_owner_id, tag_aliases, tag_content)
-                VALUES ($1, $2, $3, $4, $5)
-                ON CONFLICT (guild_id, tag_name) DO
-                NOTHING""",
-                    tags_unpacked,
-                )
-        else:
-            raise ValueError("Invalid strategy specified.")
 
 
 class Tags(commands.Cog):
@@ -215,12 +53,12 @@ class Tags(commands.Cog):
                     try:
                         replytomsg = ctx.channel.get_partial_message(ctx.message.reference.message_id)
                         await replytomsg.reply(
-                            content=tag.tag_content, mention_author=True
+                            content=tag.content, mention_author=True
                         )  # Then the invoked tag will also reply to that message
                     except discord.HTTPException:
-                        await ctx.channel.send(content=tag.tag_content)
+                        await ctx.channel.send(content=tag.content)
                 else:
-                    await ctx.channel.send(content=tag.tag_content)
+                    await ctx.channel.send(content=tag.content)
 
             else:
                 embed = discord.Embed(
@@ -259,10 +97,10 @@ class Tags(commands.Cog):
 
             new_tag = Tag(
                 guild_id=ctx.guild.id,
-                tag_name=name.lower(),
-                tag_owner_id=ctx.author.id,
-                tag_aliases=None,
-                tag_content=content,
+                name=name.lower(),
+                owner_id=ctx.author.id,
+                aliases=None,
+                content=content,
             )
             await self.tag_handler.create(new_tag)
             embed = discord.Embed(
@@ -285,13 +123,13 @@ class Tags(commands.Cog):
     async def info(self, ctx, *, name):
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
         if tag:
-            owner = await self.bot.fetch_user(tag.tag_owner_id)
-            if tag.tag_aliases:
-                aliases = ", ".join(tag.tag_aliases)
+            owner = await self.bot.fetch_user(tag.owner_id)
+            if tag.aliases:
+                aliases = ", ".join(tag.aliases)
             else:
                 aliases = None
             embed = discord.Embed(
-                title="💬 " + self._("Tag Info: {tag_name}").format(tag_name=tag.tag_name),
+                title="💬 " + self._("Tag Info: {name}").format(name=tag.name),
                 description=self._("**Aliases:** `{aliases}`\n**Tag owner:** {owner}\n").format(
                     aliases=aliases, owner=owner.mention
                 ),
@@ -328,23 +166,18 @@ class Tags(commands.Cog):
             return
 
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
-        if tag and tag.tag_owner_id == ctx.author.id:
+        if tag and tag.owner_id == ctx.author.id:
             aliases = []
-            if (
-                tag.tag_aliases
-                and alias.lower() not in tag.tag_aliases
-                or tag.tag_aliases == None
-                or len(tag.tag_aliases) == 0
-            ):
-                if tag.tag_aliases == None:
+            if tag.aliases and alias.lower() not in tag.aliases or tag.aliases == None or len(tag.aliases) == 0:
+                if tag.aliases == None:
                     aliases.append(alias.lower())
-                elif len(tag.tag_aliases) <= 4:
-                    aliases = tag.tag_aliases
+                elif len(tag.aliases) <= 4:
+                    aliases = tag.aliases
                     aliases.append(alias.lower())
                 else:
                     embed = discord.Embed(
                         title="❌ " + self._("Error: Too many aliases"),
-                        description=self._("Tag `{tag}` can only have up to **5** aliases.").format(tag=tag.tag_name),
+                        description=self._("Tag `{tag}` can only have up to **5** aliases.").format(tag=tag.name),
                         color=self.bot.error_color,
                     )
                     embed = self.bot.add_embed_footer(ctx, embed)
@@ -352,13 +185,13 @@ class Tags(commands.Cog):
                     return
 
                 # Delete the tag, and recreate it with the new aliases
-                await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
+                await self.tag_handler.delete(tag.name, ctx.guild.id)
                 new_tag = Tag(
                     guild_id=ctx.guild.id,
-                    tag_name=tag.tag_name,
-                    tag_owner_id=tag.tag_owner_id,
-                    tag_aliases=aliases,
-                    tag_content=tag.tag_content,
+                    name=tag.name,
+                    owner_id=tag.owner_id,
+                    aliases=aliases,
+                    content=tag.content,
                 )
                 await self.tag_handler.create(new_tag)
                 embed = discord.Embed(
@@ -375,7 +208,7 @@ class Tags(commands.Cog):
                 embed = discord.Embed(
                     title="❌ " + self._("Error: Duplicate alias"),
                     description=self._("Tag `{tag}` already has an alias called `{alias}`.").format(
-                        tag=tag.tag_name, alias=alias
+                        tag=tag.name, alias=alias
                     ),
                     color=self.bot.error_color,
                 )
@@ -398,25 +231,25 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def delalias(self, ctx, name, *, alias):
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
-        if tag and tag.tag_owner_id == ctx.author.id:
+        if tag and tag.owner_id == ctx.author.id:
 
-            if tag.tag_aliases and alias in tag.tag_aliases:
-                aliases = tag.tag_aliases
+            if tag.aliases and alias in tag.aliases:
+                aliases = tag.aliases
                 aliases.remove(alias)
                 # Delete the tag, and recreate it with the new aliases
-                await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
+                await self.tag_handler.delete(tag.name, ctx.guild.id)
                 new_tag = Tag(
                     guild_id=ctx.guild.id,
-                    tag_name=tag.tag_name,
-                    tag_owner_id=tag.tag_owner_id,
-                    tag_aliases=aliases,
-                    tag_content=tag.tag_content,
+                    name=tag.name,
+                    owner_id=tag.owner_id,
+                    aliases=aliases,
+                    content=tag.content,
                 )
                 await self.tag_handler.create(new_tag)
                 embed = discord.Embed(
                     title="✅ " + self._("Alias deleted"),
                     description=self._("Alias `{alias}` for tag `{name}` has been deleted.").format(
-                        alias=alias.lower(), name=new_tag.tag_name
+                        alias=alias.lower(), name=new_tag.name
                     ),
                     color=self.bot.embed_green,
                 )
@@ -426,7 +259,7 @@ class Tags(commands.Cog):
                 embed = discord.Embed(
                     title="❌ " + self._("Error: Unknown alias"),
                     description=self._("Tag `{tag}` does not have an alias called `{alias}`.").format(
-                        tag=tag.tag_name, alias=alias
+                        tag=tag.name, alias=alias
                     ),
                     color=self.bot.error_color,
                 )
@@ -449,20 +282,20 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def transfer(self, ctx, name, receiver: discord.Member):
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
-        if tag and tag.tag_owner_id == ctx.author.id or tag and await has_mod_perms(ctx):
-            await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
+        if tag and tag.owner_id == ctx.author.id or tag and await has_mod_perms(ctx):
+            await self.tag_handler.delete(tag.name, ctx.guild.id)
             new_tag = Tag(
                 guild_id=ctx.guild.id,
-                tag_name=tag.tag_name,
-                tag_owner_id=receiver.id,
-                tag_aliases=tag.tag_aliases,
-                tag_content=tag.tag_content,
+                name=tag.name,
+                owner_id=receiver.id,
+                aliases=tag.aliases,
+                content=tag.content,
             )
             await self.tag_handler.create(new_tag)
             embed = discord.Embed(
                 title="✅ " + self._("Tag transferred"),
                 description=self._("Tag `{name}`'s ownership was successfully transferred to {receiver}").format(
-                    name=new_tag.tag_name, receiver=receiver.mention
+                    name=new_tag.name, receiver=receiver.mention
                 ),
                 color=self.bot.embed_green,
             )
@@ -486,21 +319,21 @@ class Tags(commands.Cog):
     async def claim(self, ctx, *, name):
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
         if tag:
-            owner = await self.bot.fetch_user(tag.tag_owner_id)
+            owner = await self.bot.fetch_user(tag.owner_id)
 
             if owner not in ctx.guild.members:
-                await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
+                await self.tag_handler.delete(tag.name, ctx.guild.id)
                 new_tag = Tag(
                     guild_id=ctx.guild.id,
-                    tag_name=tag.tag_name,
-                    tag_owner_id=ctx.author.id,
-                    tag_aliases=tag.tag_aliases,
-                    tag_content=tag.tag_content,
+                    name=tag.name,
+                    owner_id=ctx.author.id,
+                    aliases=tag.aliases,
+                    content=tag.content,
                 )
                 await self.tag_handler.create(new_tag)
                 embed = discord.Embed(
                     title="✅ " + self._("Tag claimed"),
-                    description=self._("Tag `{name}` now belongs to you.").format(name=new_tag.tag_name),
+                    description=self._("Tag `{name}` now belongs to you.").format(name=new_tag.name),
                     color=self.bot.embed_green,
                 )
                 embed = self.bot.add_embed_footer(ctx, embed)
@@ -534,23 +367,18 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def edit(self, ctx, name, *, new_content: str):
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
-        if tag and tag.tag_owner_id == ctx.author.id:
-            await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
+        if tag and tag.owner_id == ctx.author.id:
+            await self.tag_handler.delete(tag.name, ctx.guild.id)
 
             if len(ctx.message.attachments) > 0 and ctx.message.attachments[0]:  # Attachment support for tags
                 new_content = f"{new_content}\n{ctx.message.attachments[0].url}"
 
-            new_tag = Tag(
-                guild_id=ctx.guild.id,
-                tag_name=tag.tag_name,
-                tag_owner_id=tag.tag_owner_id,
-                tag_aliases=tag.tag_aliases,
-                tag_content=new_content,
-            )
-            await self.tag_handler.create(new_tag)
+            tag.content = new_content
+
+            await self.tag_handler.create(tag)
             embed = discord.Embed(
                 title="✅ " + self._("Tag edited"),
-                description=self._("Tag `{name}` has been successfully edited.").format(name=new_tag.tag_name),
+                description=self._("Tag `{name}` has been successfully edited.").format(name=tag.name),
                 color=self.bot.embed_green,
             )
             embed = self.bot.add_embed_footer(ctx, embed)
@@ -574,9 +402,9 @@ class Tags(commands.Cog):
     async def delete(self, ctx, *, name):
         tag = await self.tag_handler.get(name.lower(), ctx.guild.id)
         if (
-            tag and tag.tag_owner_id == ctx.author.id or tag and await has_mod_perms(ctx)
+            tag and tag.owner_id == ctx.author.id or tag and await has_mod_perms(ctx)
         ):  # We only allow deletion if the user owns the tag or is a bot admin
-            await self.tag_handler.delete(tag.tag_name, ctx.guild.id)
+            await self.tag_handler.delete(tag.name, ctx.guild.id)
             embed = discord.Embed(
                 title="✅ " + self._("Tag deleted"),
                 description=self._("Tag `{name}` has been deleted.").format(name=name.lower()),
@@ -597,7 +425,7 @@ class Tags(commands.Cog):
         name="import",
         help="Imports a tag from a different server.",
         description="Imports a tag from a different server. You must specify the ID of the server you wish to import the tag from.\nUse the `bulk` subcommand to import all tags from a given server.",
-        usage="tag import <tag_name> <origin_ID>",
+        usage="tag import <name> <origin_ID>",
         invoke_without_command=True,
         case_insensitive=True,
     )
@@ -695,7 +523,7 @@ class Tags(commands.Cog):
         if tags:
             tags_fmt = []
             for i, tag in enumerate(tags):
-                tags_fmt.append(f"**#{i+1}** {tag.tag_name}")
+                tags_fmt.append(f"**#{i+1}** {tag.name}")
             tags_fmt = [tags_fmt[i * 10 : (i + 1) * 10] for i in range((len(tags_fmt) + 10 - 1) // 10)]
             embed_list = []
             for page_contents in tags_fmt:
@@ -729,15 +557,15 @@ class Tags(commands.Cog):
     async def search_tags(self, ctx, query: str):
         tags = await self.tag_handler.get_all(ctx.guild.id)
         if tags:
-            tag_names = [tag.tag_name for tag in tags]
-            tag_aliases = []
+            names = [tag.name for tag in tags]
+            aliases = []
             for tag in tags:
-                if tag.tag_aliases:
-                    tag_aliases.append(tag.tag_aliases)
-            tag_aliases = list(chain(*tag_aliases))
+                if tag.aliases:
+                    aliases.append(tag.aliases)
+            aliases = list(chain(*aliases))
 
-            name_matches = get_close_matches(query, tag_names)
-            alias_matches = get_close_matches(query, tag_aliases)
+            name_matches = get_close_matches(query, names)
+            alias_matches = get_close_matches(query, aliases)
 
             response = []
             if len(name_matches) > 0:

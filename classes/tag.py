@@ -8,7 +8,7 @@ class Tag:
     """
 
     guild_id: int
-    tag_name: str
-    tag_owner_id: int
-    tag_aliases: list
-    tag_content: str
+    name: str
+    owner_id: int
+    aliases: list
+    content: str

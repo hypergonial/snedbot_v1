@@ -6,7 +6,7 @@ from discord.ext import commands, pages
 from classes.bot import SnedBot
 from typing import List
 
-from extensions.utils import components
+from classes import components
 
 
 async def has_owner(ctx):

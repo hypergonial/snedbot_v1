@@ -9,10 +9,11 @@ from difflib import get_close_matches
 from itertools import chain
 
 import asyncpg
+from classes import context
 import db_backup
 import discord
 from discord.ext import commands, ipc, tasks
-from extensions.utils import cache, context
+from extensions.utils import cache
 
 from classes.checks import CustomChecks
 from classes.config_handler import ConfigHandler

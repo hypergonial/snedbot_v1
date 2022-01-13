@@ -11,10 +11,10 @@ from typing import Union
 
 import discord
 from classes.bot import SnedBot
+from classes.errors import UserInputError
 from discord.ext import commands
 
-from extensions.utils import components
-from extensions.utils.exceptions import UserInputError
+from classes import components
 
 logger = logging.getLogger(__name__)
 

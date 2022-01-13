@@ -4,10 +4,11 @@ import logging
 import uuid
 
 import discord
+from classes import components
 from classes.bot import SnedBot
 from discord.ext import commands
 
-from extensions.utils import components, exceptions
+from classes.errors import UserInputError
 
 
 async def has_owner(ctx):
@@ -364,7 +365,7 @@ class Events(commands.Cog):
                 color=self.bot.error_color,
             )
             await invoke_msg.edit(embed=embed)
-            raise exceptions.UserInputError("Duplicate key!")
+            raise UserInputError("Duplicate key!")
         else:
             embed = discord.Embed(
                 title="❌ Error: Title too long",
@@ -372,7 +373,7 @@ class Events(commands.Cog):
                 color=self.bot.error_color,
             )
             await invoke_msg.edit(embed=embed)
-            raise exceptions.UserInputError("Title too long!")
+            raise UserInputError("Title too long!")
         await message.delete()
 
         embed = discord.Embed(
@@ -421,7 +422,7 @@ class Events(commands.Cog):
                 color=self.bot.error_color,
             )
             await invoke_msg.edit(embed=embed)
-            raise exceptions.UserInputError("Invalid value for member_cap!")
+            raise UserInputError("Invalid value for member_cap!")
 
         categories[category_name] = {
             "emoji": str(emoji),
@@ -621,7 +622,7 @@ class Events(commands.Cog):
                             try:
                                 new_categories = await self.add_category(ctx, setup_msg)
                                 categories.update(new_categories)
-                            except exceptions.UserInputError:
+                            except UserInputError:
                                 return
                             else:
                                 first = list(new_categories.keys())[0]  # lol
@@ -970,7 +971,7 @@ class Events(commands.Cog):
         """Category adding"""
         try:
             categories = await self.add_category(ctx, setup_msg, first=True, loop=True)
-        except exceptions.UserInputError:
+        except UserInputError:
             return
 
         """Role restrictions adding"""

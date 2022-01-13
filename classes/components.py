@@ -125,6 +125,41 @@ class CustomSelect(discord.ui.Select):
         self.view.stop()
 
 
+class Confirm(AuthorOnlyView):
+    """Confirmation view
+    verbose:bool - Decides if a response should be given
+    confirm_msg:str - If verbose, confirmation message contents
+    cancel_msg:str - If verbose, cancelation message contents"""
+
+    def __init__(
+        self,
+        ctx,
+        verbose: bool = False,
+        confirm_msg: str = None,
+        cancel_msg: str = None,
+    ):
+        super().__init__()
+        self.value = None
+        self.verbose = verbose
+        self.confirm_msg = confirm_msg if confirm_msg else "Confirmed!"
+        self.cancel_msg = cancel_msg if cancel_msg else "Cancelled!"
+        self.ctx = ctx
+
+    @discord.ui.button(emoji="✔️", style=discord.ButtonStyle.green)
+    async def confirm(self, button: discord.ui.Button, interaction: discord.Interaction):
+        if self.verbose:
+            await interaction.response.send_message(self.confirm_msg, ephemeral=True)
+        self.value = True
+        self.stop()
+
+    @discord.ui.button(emoji="❌", style=discord.ButtonStyle.grey)
+    async def cancel(self, button: discord.ui.Button, interaction: discord.Interaction):
+        if self.verbose:
+            await interaction.response.send_message(self.cancel_msg, ephemeral=True)
+        self.value = False
+        self.stop()
+
+
 class SnedMenuPaginator(pages.Paginator):
     """Custom menu-styling for the bot"""
 

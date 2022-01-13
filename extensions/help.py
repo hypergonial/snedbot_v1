@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from classes.bot import SnedBot
 
-from extensions.utils import components
+from classes import components
 from etc.help_menu_strings import help_menu_dropdown
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,10 @@ logger = logging.getLogger(__name__)
 
 class HelpView(components.AuthorOnlyView):
     async def on_timeout(self):
-        await self.message.edit(view=None)  # Remove timed out view
+        for item in self.children:
+            item.disabled = True
+
+        await self.message.edit(view=self)  # Disable timed out view
 
 
 class HelpSelect(discord.ui.Select):
