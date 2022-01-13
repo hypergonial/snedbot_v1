@@ -164,8 +164,9 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                     color=self.bot.embed_blue,
                 )
                 embed_list.append(embed)
+
             menu_paginator = components.SnedMenuPaginator(pages=embed_list, show_disabled=True, show_indicator=True)
-            await menu_paginator.send(ctx, ephemeral=False)
+            await menu_paginator.send(ctx)
         else:
             embed = discord.Embed(
                 title="❌ Error: No role-buttons",

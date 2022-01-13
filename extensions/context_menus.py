@@ -60,7 +60,7 @@ class ContextMenus(commands.Cog):
 
                 menu_paginator = components.SnedMenuPaginator(pages=embed_list, show_disabled=True, show_indicator=True)
 
-                await menu_paginator.send(ctx, ephemeral=True)
+                await menu_paginator.respond(ctx.interaction, ephemeral=True)
             else:
                 embed = discord.Embed(
                     title="📒 " + "Journal entries for this user:",

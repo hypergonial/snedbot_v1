@@ -129,24 +129,24 @@ class SnedMenuPaginator(pages.Paginator):
     """Custom menu-styling for the bot"""
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.customize_button(
-            button_name="first",
-            button_emoji="⏮️",
-            button_style=discord.ButtonStyle.blurple,
-        )
-        self.customize_button(
-            button_name="last",
-            button_emoji="⏭️",
-            button_style=discord.ButtonStyle.blurple,
-        )
-        self.customize_button(
-            button_name="next",
-            button_emoji="▶️",
-            button_style=discord.ButtonStyle.blurple,
-        )
-        self.customize_button(
-            button_name="prev",
-            button_emoji="◀️",
-            button_style=discord.ButtonStyle.blurple,
-        )
+
+        nav_buttons = [
+            pages.PaginatorButton("first", emoji="⏮️", style=discord.ButtonStyle.blurple, label=None),
+            pages.PaginatorButton(
+                "prev",
+                emoji="◀️",
+                style=discord.ButtonStyle.blurple,
+            ),
+            pages.PaginatorButton("page_indicator", style=discord.ButtonStyle.gray, disabled=True),
+            pages.PaginatorButton(
+                "next",
+                emoji="▶️",
+                style=discord.ButtonStyle.blurple,
+            ),
+            pages.PaginatorButton(
+                "last",
+                emoji="⏭️",
+                style=discord.ButtonStyle.blurple,
+            ),
+        ]
+        super().__init__(*args, use_default_buttons=False, custom_buttons=nav_buttons, **kwargs)

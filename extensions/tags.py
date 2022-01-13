@@ -707,7 +707,7 @@ class Tags(commands.Cog):
                 embed_list.append(embed)
 
             menu_paginator = components.SnedMenuPaginator(pages=embed_list, show_disabled=True, show_indicator=True)
-            await menu_paginator.send(ctx, ephemeral=False)
+            await menu_paginator.send(ctx)
         else:
             embed = discord.Embed(
                 title="💬 " + self._("Available tags for this server:"),
