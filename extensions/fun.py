@@ -599,6 +599,23 @@ class Fun(commands.Cog):
         embed = self.bot.add_embed_footer(ctx, embed)
         await ctx.send(embed=embed)
 
+    @commands.command(
+        name="8ball", help="Ask a question, and answers will reveal themselves.", usage="8ball <question>"
+    )
+    @commands.cooldown(1, 10, type=commands.BucketType.member)
+    @commands.guild_only()
+    @easter_eggs
+    async def eightball(self, ctx, *, question: str):
+        ball_path = Path(self.bot.BASE_DIR, "etc", "8ball.txt")
+        answers = open(ball_path, "r").readlines()
+        embed = discord.Embed(
+            title=f"🎱 {question}",
+            description=f"{random.choice(answers)}",
+            color=self.bot.embed_blue,
+        )
+        embed = self.bot.add_embed_footer(ctx, embed)
+        await ctx.send(embed=embed)
+
     # Coin flipper
     @commands.command(
         help="Flips a coin.",
