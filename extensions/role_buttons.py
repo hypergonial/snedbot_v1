@@ -401,7 +401,7 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
                 await ctx.channel.send(embed=embed)
                 return
 
-            except discord.errors.NotFound:
+            except discord.NotFound:
                 embed = discord.Embed(
                     title="❌ Error: Message not found.",
                     description="Unable to locate message. Operation cancelled.",

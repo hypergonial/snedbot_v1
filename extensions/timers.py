@@ -660,7 +660,7 @@ class Timers(commands.Cog):
                         pings.append(guild.get_member(user_id).mention)
             try:
                 await channel.send(embed=embed, content=" ".join(pings))
-            except (discord.Forbidden, discord.HTTPException, discord.errors.NotFound):
+            except (discord.Forbidden, discord.HTTPException, discord.NotFound):
                 try:  # Fallback to DM if cannot send in channel
                     await user.send(
                         embed=embed,

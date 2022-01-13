@@ -298,8 +298,8 @@ class SnedBot(commands.Bot):
             error.original, asyncio.exceptions.TimeoutError
         ):
             embed = discord.Embed(
-                title=self.errorTimeoutTitle,
-                description=self.errorTimeoutDesc,
+                title="❌ Action timed out",
+                description="Operation cancelled.",
                 color=self.error_color,
             )
             embed = self.add_embed_footer(ctx, embed)
