@@ -294,6 +294,14 @@ class SnedBot(commands.Bot):
                 return await ctx.send(embed=embed)
             return
 
+        elif isinstance(error, commands.UnexpectedQuoteError):
+            embed = discord.Embed(
+                title="❌ Argument parsing failed",
+                description="Unexpected quote in non-quoted string. Did you close your quotation marks?",
+                color=self.error_color,
+            )
+            return await ctx.send(embed=embed)
+
         elif isinstance(error, commands.CommandInvokeError) and isinstance(
             error.original, asyncio.exceptions.TimeoutError
         ):

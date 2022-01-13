@@ -131,7 +131,7 @@ class SnedMenuPaginator(pages.Paginator):
     def __init__(self, *args, **kwargs):
 
         nav_buttons = [
-            pages.PaginatorButton("first", emoji="⏮️", style=discord.ButtonStyle.blurple, label=None),
+            pages.PaginatorButton("first", emoji="⏮️", style=discord.ButtonStyle.blurple),
             pages.PaginatorButton(
                 "prev",
                 emoji="◀️",
