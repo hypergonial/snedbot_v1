@@ -67,7 +67,7 @@ class ButtonRoleButton(discord.ui.Button):
                         color=0x77B255,
                     )
                     embed.set_footer(text="If you would like it removed, click the button again!")
-                    await interaction.response.send_message(f"Added role: {self.role.mention}", ephemeral=True)
+                    await interaction.response.send_message(embed=embed, ephemeral=True)
             except discord.Forbidden:
                 embed = discord.Embed(
                     title="❌ Insufficient permissions",
