@@ -180,8 +180,8 @@ __Absolute:__
         if len(timestr) >= 1000:
 
             embed = discord.Embed(
-                title="❌ " + self._("Reminder too long"),
-                description=self._("Your reminder cannot exceed **1000** characters!"),
+                title="❌ Reminder too long",
+                description="Your reminder cannot exceed **1000** characters!",
                 color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
@@ -198,9 +198,7 @@ __Absolute:__
 
             embed = discord.Embed(
                 title="❌ Error: Invalid data entered",
-                description=self._(
-                    "Your timeformat is invalid! Type `{prefix}help reminder` to see valid time formatting.\n**Error:** {error}"
-                ).format(prefix=ctx.prefix, error=error),
+                description=f"Your timeformat is invalid! Type `{ctx.prefix}help reminder` to see valid time formatting.\n**Error:** {error}",
                 color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
@@ -211,7 +209,7 @@ __Absolute:__
 
                 embed = discord.Embed(
                     title="❌ Error: Invalid data entered",
-                    description=self._("Sorry, but that's a bit too far in the future.").format(prefix=ctx.prefix),
+                    description="Sorry, but that's a bit too far in the future.",
                     color=self.bot.error_color,
                 )
                 await ctx.send(embed=embed)
@@ -226,8 +224,8 @@ __Absolute:__
                     "additional_recipients": [],
                 }
                 embed = discord.Embed(
-                    title="✅ " + self._("Reminder set"),
-                    description=self._("Reminder set for:  {timestamp} ({timestampR})").format(
+                    title="✅ Reminder set",
+                    description="Reminder set for:  {timestamp} ({timestampR})".format(
                         timestamp=discord.utils.format_dt(time),
                         timestampR=discord.utils.format_dt(time, style="R"),
                     ),
@@ -297,11 +295,9 @@ __Absolute:__
                         + f"**ID: {timer.id}** - {discord.utils.format_dt(time)} ({discord.utils.format_dt(time, style='R')})\n"
                     )
         else:
-            reminderstr = self._("You have no reminders. You can set one via `{prefix}reminder`!").format(
-                prefix=ctx.prefix
-            )
+            reminderstr = f"You have no reminders. You can set one via `{ctx.prefix}reminder`!"
         embed = discord.Embed(
-            title="✉️ " + self._("Your reminders:"),
+            title="✉️ Your reminders:",
             description=reminderstr,
             color=self.bot.embed_blue,
         )
@@ -346,7 +342,7 @@ __Absolute:__
             user = guild.get_member(timer.user_id)
             notes = json.loads(timer.notes)
             embed = discord.Embed(
-                title="✉️ " + self._("{user}, your reminder:").format(user=user.name),
+                title=f"✉️ {user.display_name}, your reminder:",
                 description=f"{notes['message']}\n\n[Jump to original message!]({notes['jump_url']})",
                 color=self.bot.embed_blue,
             )
