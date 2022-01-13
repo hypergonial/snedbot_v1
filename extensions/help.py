@@ -21,7 +21,13 @@ class HelpSelect(discord.ui.Select):
         self.cog_embeds = cog_embeds
 
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.edit_message(embed=self.cog_embeds[interaction.data["values"][0]])
+        for option in self.options:
+            if option.value == interaction.data["values"][0]:
+                option.default = True
+            else:
+                option.default = False
+
+        await interaction.response.edit_message(embed=self.cog_embeds[interaction.data["values"][0]], view=self.view)
 
 
 class SnedHelp(commands.HelpCommand):
