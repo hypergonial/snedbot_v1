@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import logging
-import sys
 import traceback
 
 from classes.bot import SnedBot
