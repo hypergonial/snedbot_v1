@@ -53,7 +53,7 @@ class ButtonRoleButton(discord.ui.Button):
                     embed = discord.Embed(
                         title="✅ Role removed",
                         description=f"Removed role: {self.role.mention}",
-                        color=self.bot.embed_green,
+                        color=0x77B255,
                     )
                     await interaction.response.send_message(embed=embed, ephemeral=True)
                 else:
@@ -64,15 +64,17 @@ class ButtonRoleButton(discord.ui.Button):
                     embed = discord.Embed(
                         title="✅ Role added",
                         description=f"Added role: {self.role.mention}",
-                        color=self.bot.embed_green,
+                        color=0x77B255,
                     )
                     embed.set_footer(text="If you would like it removed, click the button again!")
                     await interaction.response.send_message(f"Added role: {self.role.mention}", ephemeral=True)
             except discord.Forbidden:
-                await interaction.response.send_message(
-                    f"Failed adding role due to an issue with permissions and/or role hierarchy! Please contact an administrator!",
-                    ephemeral=True,
+                embed = discord.Embed(
+                    title="❌ Insufficient permissions",
+                    description="Failed adding role due to an issue with permissions and/or role hierarchy! Please contact an administrator!",
+                    color=0xFF0000,
                 )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 class RoleButtons(commands.Cog, name="Role-Buttons"):
