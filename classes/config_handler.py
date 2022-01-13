@@ -1,29 +1,18 @@
 import json
 import logging
-from dataclasses import dataclass
 from typing import List
 
 import asyncpg
 from discord.ext import tasks
 
+from classes.db_user import User
+
 
 class ConfigHandler:
     """
-    Handles the global configuration & users within the database.
+    Handles the global configuration & userdata within the database.
     These tables are created automatically as they must exist.
     """
-
-    @dataclass
-    class User:
-        """
-        Represents a user stored inside the database
-        """
-
-        user_id: int
-        guild_id: int
-        flags: dict = None
-        warns: int = 0
-        notes: List[str] = None
 
     def __init__(self, bot):
         self.bot = bot
@@ -51,7 +40,7 @@ class ConfigHandler:
         await self.caching.wipe(guild_id)
         logging.warning(f"Config reset and cache wiped for guild {guild_id}.")
 
-    async def update_user(self, user):
+    async def update_user(self, user: User):
         """
         Takes an instance of GlobalConfig.User and tries to either update or create a new user entry if one does not exist already
         """
@@ -75,7 +64,7 @@ class ConfigHandler:
                 "Trying to update a guild db_user whose guild no longer exists. This could be due to pending timers."
             )
 
-    async def get_user(self, user_id, guild_id):
+    async def get_user(self, user_id, guild_id) -> User:
         """
         Gets an instance of GlobalConfig.User that contains basic information about the user in relation to a guild
         Returns None if not found
@@ -86,7 +75,7 @@ class ConfigHandler:
             guild_id,
         )
         if result:
-            user = self.User(
+            user = User(
                 user_id=result[0].get("user_id"),
                 guild_id=result[0].get("guild_id"),
                 flags=json.loads(result[0].get("flags")) if result[0].get("flags") else {},
@@ -95,11 +84,11 @@ class ConfigHandler:
             )
             return user
         else:
-            user = self.User(user_id=user_id, guild_id=guild_id)  # Generate a new db user if none exists
+            user = User(user_id=user_id, guild_id=guild_id)  # Generate a new db user if none exists
             await self.update_user(user)
             return user
 
-    async def get_all_guild_users(self, guild_id):
+    async def get_all_guild_users(self, guild_id) -> List[User]:
         """
         Returns all users related to a specific guild as a list of GlobalConfig.User
         Return None if no users are contained in the database
@@ -108,7 +97,7 @@ class ConfigHandler:
         if results:
             users = []
             for result in results:
-                user = self.User(
+                user = User(
                     user_id=result.get("user_id"),
                     guild_id=result.get("guild_id"),
                     flags=result.get("flags"),

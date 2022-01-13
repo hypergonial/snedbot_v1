@@ -6,6 +6,7 @@ import unicodedata
 import discord
 from classes.bot import SnedBot
 from discord.ext import commands
+from etc.settings_config import default_automod_policies
 
 
 async def has_mod_perms(ctx):
@@ -17,81 +18,6 @@ async def is_automod_excluded(ctx):
 
 
 logger = logging.getLogger(__name__)
-
-# The default set of automoderation policies
-
-default_automod_policies = {
-    "invites": {
-        "state": "disabled",
-        "temp_dur": 15,
-        "delete": True,
-        "excluded_channels": [],
-    },
-    "spam": {"state": "disabled", "temp_dur": 15, "excluded_channels": []},
-    "mass_mentions": {
-        "state": "disabled",
-        "temp_dur": 15,
-        "delete": True,
-        "count": 10,
-        "excluded_channels": [],
-    },
-    "zalgo": {
-        "state": "disabled",
-        "temp_dur": 15,
-        "delete": True,
-        "excluded_channels": [],
-    },
-    "attach_spam": {
-        "state": "disabled",
-        "temp_dur": 15,
-        "delete": True,
-        "excluded_channels": [],
-    },
-    "link_spam": {
-        "state": "disabled",
-        "temp_dur": 15,
-        "delete": True,
-        "excluded_channels": [],
-    },
-    "caps": {
-        "state": "disabled",
-        "temp_dur": 15,
-        "delete": True,
-        "excluded_channels": [],
-    },
-    "bad_words": {
-        "state": "disabled",
-        "temp_dur": 15,
-        "delete": True,
-        "excluded_channels": [],
-        "words_list": [
-            "motherfucker",
-            "cock",
-            "cockfucker",
-            "anal",
-            "cum",
-            "anus",
-            "porn",
-            "pornography",
-            "slut",
-            "whore",
-        ],
-        "words_list_wildcard": [
-            "blowjob",
-            "boner",
-            "dildo",
-            "faggot",
-            "dick",
-            "whore",
-            "pussy",
-            "nigg",
-            "cunt",
-            "cnut",
-            "d1ck",
-        ],
-    },
-    "escalate": {"state": "disabled"},
-}
 
 
 class AutoMod(commands.Cog, name="Auto-Moderation"):

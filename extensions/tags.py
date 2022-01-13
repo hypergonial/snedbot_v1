@@ -1,11 +1,11 @@
 import logging
-from dataclasses import dataclass
 from difflib import get_close_matches
 from itertools import chain
 
 import discord
-from discord.ext import commands, pages
+from discord.ext import commands
 from classes.bot import SnedBot
+from classes.tag import Tag
 
 from extensions.utils import components
 
@@ -19,19 +19,6 @@ async def has_mod_perms(ctx):
 
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class Tag:
-    """
-    Dataclass that represents a tag
-    """
-
-    guild_id: int
-    tag_name: str
-    tag_owner_id: int
-    tag_aliases: list
-    tag_content: str
 
 
 class TagAlreadyExists(Exception):

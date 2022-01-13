@@ -4,6 +4,7 @@ import logging
 import discord
 from discord.ext import commands, pages
 from classes.bot import SnedBot
+from typing import List
 
 from extensions.utils import components
 
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class PersistentRoleView(discord.ui.View):
-    def __init__(self, buttons: list = None):
+    def __init__(self, buttons: List[discord.ui.Button] = None):
         super().__init__(timeout=None)
         if buttons:
             for button in buttons:
@@ -49,12 +50,23 @@ class ButtonRoleButton(discord.ui.Button):
                         self.role,
                         reason=f"Removed by role-button (ID: {self.entry_id})",
                     )
-                    await interaction.response.send_message(f"Removed role: {self.role.mention}", ephemeral=True)
+                    embed = discord.Embed(
+                        title="✅ Role removed",
+                        description=f"Removed role: {self.role.mention}",
+                        color=self.bot.embed_green,
+                    )
+                    await interaction.response.send_message(embed=embed, ephemeral=True)
                 else:
                     await interaction.user.add_roles(
                         self.role,
                         reason=f"Granted by role-button (ID: {self.entry_id})",
                     )
+                    embed = discord.Embed(
+                        title="✅ Role added",
+                        description=f"Added role: {self.role.mention}",
+                        color=self.bot.embed_green,
+                    )
+                    embed.set_footer(text="If you would like it removed, click the button again!")
                     await interaction.response.send_message(f"Added role: {self.role.mention}", ephemeral=True)
             except discord.Forbidden:
                 await interaction.response.send_message(

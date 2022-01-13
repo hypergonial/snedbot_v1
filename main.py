@@ -44,6 +44,7 @@ initial_extensions = (
     "extensions.matchmaking",
     "extensions.tags",
     "extensions.userlog",
+    "extensions.reminders",
     "extensions.fun",
     "extensions.fallingfrontier",
     "extensions.annoverse",

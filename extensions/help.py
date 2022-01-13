@@ -5,59 +5,23 @@ from discord.ext import commands
 from classes.bot import SnedBot
 
 from extensions.utils import components
+from etc.help_menu_strings import help_menu_dropdown
 
 logger = logging.getLogger(__name__)
 
-help_menu_strings = {
-    "Permissions": {
-        "description": "All commands related to handling command permissions",
-        "emoji": "📖",
-    },
-    "Admin Commands": {
-        "description": "All commands related to admin duties & bot configuration",
-        "emoji": "🔑",
-    },
-    "Role-Buttons": {
-        "description": "Configure roles that can hand out roles to users",
-        "emoji": "🔘",
-    },
-    "Events": {"description": "Set up, organize, and manage events", "emoji": "📅"},
-    "Keep On Top": {"description": "Manage keep-on-top settings", "emoji": "⬆️"},
-    "Matchmaking": {
-        "description": "Show all Annoverse matchmaking related commands",
-        "emoji": discord.PartialEmoji.from_str("annoverse:923758544661143582"),
-    },
-    "Tags": {"description": "Call, create, claim, search for tags", "emoji": "💬"},
-    "Logging": {"description": "Manage logging configuration", "emoji": "📝"},
-    "Timers": {"description": "Create and manage timers and reminders", "emoji": "🕓"},
-    "Falling Frontier": {
-        "description": "Functionality exclusive to Falling Frontier",
-        "emoji": discord.PartialEmoji.from_str("ff_serverlogo:923759064230535199"),
-    },
-    "Annoverse": {
-        "description": "Functionality exclusive to Annoverse",
-        "emoji": discord.PartialEmoji.from_str("annoverse:923758544661143582"),
-    },
-    "Giveaway": {"description": "Create and manage giveaways", "emoji": "🎉"},
-    "Miscellaneous Commands": {
-        "description": "Commands that do not fit in other categories",
-        "emoji": "❔",
-    },
-    "Settings": {"description": "Configure and customize the bot", "emoji": "🔧"},
-    "Jishaku": {"description": "Owner-only, stop looking", "emoji": "🤫"},
-    "Auto-Moderation": {
-        "description": "Configure & customize automoderation filters & settings",
-        "emoji": "🤖",
-    },
-    "Fun": {
-        "description": "Commands that hopefully make your day a little better",
-        "emoji": "🙃",
-    },
-    "Moderation": {
-        "description": "All commands related to moderator duties",
-        "emoji": discord.PartialEmoji.from_str("mod_shield:923752735768190976"),
-    },
-}
+
+class HelpView(components.AuthorOnlyView):
+    async def on_timeout(self):
+        await self.message.edit(view=None)  # Remove timed out view
+
+
+class HelpSelect(discord.ui.Select):
+    def __init__(self, cog_embeds: dict, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cog_embeds = cog_embeds
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.edit_message(embed=self.cog_embeds[interaction.data["values"][0]])
 
 
 class SnedHelp(commands.HelpCommand):
@@ -131,10 +95,10 @@ Thank you for using Sned!
 
         for cog_name in all_commands.keys():
             emoji = (
-                help_menu_strings[cog_name]["emoji"]
-                if cog_name in help_menu_strings.keys()
-                and help_menu_strings[cog_name]["emoji"]
-                and isinstance(help_menu_strings[cog_name]["emoji"], str)
+                help_menu_dropdown[cog_name]["emoji"]
+                if cog_name in help_menu_dropdown.keys()
+                and help_menu_dropdown[cog_name]["emoji"]
+                and isinstance(help_menu_dropdown[cog_name]["emoji"], str)
                 else "⚙️"
             )
             embed = discord.Embed(
@@ -150,28 +114,16 @@ Thank you for using Sned!
                 discord.SelectOption(
                     label=cog_name,
                     value=cog_name,
-                    description=help_menu_strings[cog_name]["description"]
-                    if cog_name in help_menu_strings.keys()
+                    description=help_menu_dropdown[cog_name]["description"]
+                    if cog_name in help_menu_dropdown.keys()
                     else None,
-                    emoji=help_menu_strings[cog_name]["emoji"] if cog_name in help_menu_strings.keys() else None,
+                    emoji=help_menu_dropdown[cog_name]["emoji"] if cog_name in help_menu_dropdown.keys() else None,
                 )
             )
 
-        class HelpView(components.AuthorOnlyView):
-            async def on_timeout(self):
-                await message.edit(view=None)  # Remove timed out view
-
-        class HelpSelect(discord.ui.Select):
-            def __init__(self, cog_embeds: dict, *args, **kwargs):
-                super().__init__(*args, **kwargs)
-                self.cog_embeds = cog_embeds
-
-            async def callback(self, interaction: discord.Interaction):
-                await message.edit(embed=self.cog_embeds[interaction.data["values"][0]])
-
         view = HelpView(ctx)
         view.add_item(HelpSelect(cog_embeds, placeholder="Select a category...", options=select_options))
-        message = await ctx.send(embed=help_home_embed, view=view)
+        view.message = await ctx.send(embed=help_home_embed, view=view)
 
     async def send_command_help(self, command):
         ctx = self.context
