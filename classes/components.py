@@ -138,7 +138,7 @@ class Confirm(AuthorOnlyView):
         confirm_msg: str = None,
         cancel_msg: str = None,
     ):
-        super().__init__()
+        super().__init__(ctx)
         self.value = None
         self.verbose = verbose
         self.confirm_msg = confirm_msg if confirm_msg else "Confirmed!"
