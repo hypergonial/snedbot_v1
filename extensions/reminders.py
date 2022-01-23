@@ -252,7 +252,7 @@ __Absolute:__
     @commands.guild_only()
     async def reminders(self, ctx):
         results = await self.bot.pool.fetch(
-            """SELECT * FROM timers WHERE guild_id = $1 AND user_id = $2 AND event = 'event' ORDER BY expires LIMIT 10""",
+            """SELECT * FROM timers WHERE guild_id = $1 AND user_id = $2 AND event = 'reminder' ORDER BY expires LIMIT 10""",
             ctx.guild.id,
             ctx.author.id,
         )
