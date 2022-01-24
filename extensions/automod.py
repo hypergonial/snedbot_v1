@@ -276,14 +276,14 @@ class AutoMod(commands.Cog, name="Auto-Moderation"):
             if not punish_cd_bucket.update_rate_limit():  # Only try punishing once every 30 seconds
                 await self.automod_punish(message, offender=message.author, offense="spam", reason="spam")
 
-        elif len(message.content) > 7:
+        elif len(message.content) > 20:
             """Caps"""
             upper = 0
             msg_content = "".join(char for char in message.content if char.isalnum())  # Remove non-alphanumerical chars
             for char in msg_content:
                 if char.isupper():
                     upper += 1
-            if len(msg_content) > 0 and upper / len(msg_content) > 0.5:
+            if len(msg_content) > 0 and upper / len(msg_content) > 0.6:
                 await self.automod_punish(
                     message,
                     offender=message.author,
