@@ -155,9 +155,16 @@ class RoleButtons(commands.Cog, name="Role-Buttons"):
         if records:
             paginator = commands.Paginator(prefix="", suffix="", max_size=500)
             for record in records:
-                paginator.add_line(
-                    f"**#{record['entry_id']}** - {ctx.guild.get_channel(record['channel_id']).mention} - {ctx.guild.get_role(record['role_id']).mention}"
-                )
+                role = ctx.guild.get_role(record["role_id"])
+                channel = ctx.guild.get_channel(record["channel_id"])
+                if role and channel:
+                    paginator.add_line(
+                        f"**#{record['entry_id']}** - {ctx.guild.get_channel(record['channel_id']).mention} - {ctx.guild.get_role(record['role_id']).mention}"
+                    )
+                else:
+                    paginator.add_line(
+                        f"**#{record['entry_id']}** - C: {record['channel_id']} - R: {record['role_id']}"
+                    )
             embed_list = []
             for page in paginator.pages:
                 embed = discord.Embed(
