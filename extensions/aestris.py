@@ -24,7 +24,7 @@ class Aestris(commands.Cog, name="Aestris's Stuff"):
 
     def __init__(self, bot: SnedBot):
         self.bot = bot
-        self.ffwiki_color = discord.Colour.from_rgb(224, 161, 0)
+        self.svwiki_color = discord.Colour.from_rgb(224, 161, 0)
 
     def cog_check(self, ctx):
         return is_aestris_guild(ctx)
@@ -89,13 +89,13 @@ class Aestris(commands.Cog, name="Aestris's Stuff"):
             embed = discord.Embed(
                 title=f"Stardew Valley Wiki: {query}",
                 description=results,
-                color=self.ffwiki_color,
+                color=self.svwiki_color,
             )
             await self.maybe_reply_embed(ctx, embed)
         except NameError:
             embed = discord.Embed(
-                title="❌ " + self._("Not found"),
-                description=self._("Could not find anything for `{query}`!").format(query=query),
+                title="❌ Not found",
+                description="Could not find anything for `{query}`!".format(query=query),
                 color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
