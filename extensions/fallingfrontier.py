@@ -93,8 +93,8 @@ class FallingFrontier(commands.Cog, name="Falling Frontier"):
             await self.maybe_reply_embed(ctx, embed)
         except NameError:
             embed = discord.Embed(
-                title="❌ " + self._("Not found"),
-                description=self._("Could not find anything for `{query}`!").format(query=query),
+                title="❌ Not found",
+                description="Could not find anything for `{query}`!".format(query=query),
                 color=self.bot.error_color,
             )
             await ctx.send(embed=embed)
