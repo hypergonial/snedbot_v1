@@ -46,6 +46,7 @@ initial_extensions = (
     "extensions.reminders",
     "extensions.fun",
     "extensions.fallingfrontier",
+    "extensions.aestris",
     "extensions.annoverse",
     "extensions.giveaway",
     "extensions.ipc",
