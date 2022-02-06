@@ -313,7 +313,7 @@ __Absolute:__
     async def delreminder(self, ctx, entry_id: int):
 
         try:
-            self.timer_cog.cancel_timer(entry_id, ctx.guild.id)
+            await self.timer_cog.cancel_timer(entry_id, ctx.guild.id)
         except ValueError:
             embed = discord.Embed(
                 title="❌ Reminder not found",
